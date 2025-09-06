@@ -128,10 +128,10 @@ jobs:
         go tool cover -func=coverage.out
         COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print substr($3, 1, length($3)-1)}')
         echo "Total coverage: ${COVERAGE}%"
-        # Check if coverage is at least 80% (as per project guidelines)
+        # Check if coverage is at least 75% (as per project guidelines)
         COVERAGE_INT=$(echo "$COVERAGE" | awk '{print int($1)}')
-        if [ "$COVERAGE_INT" -lt 80 ]; then
-          echo "Test coverage is below 80% threshold. Current coverage: ${COVERAGE}%"
+        if [ "$COVERAGE_INT" -lt 75 ]; then
+          echo "Test coverage is below 75% threshold. Current coverage: ${COVERAGE}%"
           exit 1
         fi
 

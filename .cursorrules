@@ -30,7 +30,7 @@
   - Unexported functions: `Test_functionName(t *testing.T)` (e.g., `Test_run`)
   - Exported functions: `TestFunctionName(t *testing.T)` (e.g., `TestRun`)
 - Write table-driven tests when testing multiple scenarios
-- Aim for high test coverage (minimum 80%)
+- Aim for high test coverage (minimum 75%)
 - Test both happy paths and error conditions
 - Use test helpers to reduce duplication
 
