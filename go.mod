@@ -1,3 +1,3 @@
-module directory-api-v1
+module github.com/meitner-se/publicapis-gen
 
 go 1.21
