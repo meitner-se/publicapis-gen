@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/goccy/go-yaml"
 	"github.com/invopop/jsonschema"
+	"github.com/xeipuuv/gojsonschema"
 
 	"github.com/meitner-se/publicapis-gen/specification"
 )
@@ -196,4 +198,288 @@ func (sg *SchemaGenerator) GenerateServiceSchemaJSON() (string, error) {
 	}
 
 	return sg.SchemaToJSON(schema)
+}
+
+// ValidateService validates a JSON/YAML representation of a Service against its schema.
+func (sg *SchemaGenerator) ValidateService(data []byte) error {
+	schema, err := sg.GenerateServiceSchema()
+	if err != nil {
+		return fmt.Errorf("failed to generate Service schema: %w", err)
+	}
+
+	return sg.validateWithSchema(schema, data)
+}
+
+// ValidateEnum validates a JSON/YAML representation of an Enum against its schema.
+func (sg *SchemaGenerator) ValidateEnum(data []byte) error {
+	schema, err := sg.GenerateEnumSchema()
+	if err != nil {
+		return fmt.Errorf("failed to generate Enum schema: %w", err)
+	}
+
+	return sg.validateWithSchema(schema, data)
+}
+
+// ValidateObject validates a JSON/YAML representation of an Object against its schema.
+func (sg *SchemaGenerator) ValidateObject(data []byte) error {
+	schema, err := sg.GenerateObjectSchema()
+	if err != nil {
+		return fmt.Errorf("failed to generate Object schema: %w", err)
+	}
+
+	return sg.validateWithSchema(schema, data)
+}
+
+// ValidateResource validates a JSON/YAML representation of a Resource against its schema.
+func (sg *SchemaGenerator) ValidateResource(data []byte) error {
+	schema, err := sg.GenerateResourceSchema()
+	if err != nil {
+		return fmt.Errorf("failed to generate Resource schema: %w", err)
+	}
+
+	return sg.validateWithSchema(schema, data)
+}
+
+// ValidateField validates a JSON/YAML representation of a Field against its schema.
+func (sg *SchemaGenerator) ValidateField(data []byte) error {
+	schema, err := sg.GenerateFieldSchema()
+	if err != nil {
+		return fmt.Errorf("failed to generate Field schema: %w", err)
+	}
+
+	return sg.validateWithSchema(schema, data)
+}
+
+// ValidateResourceField validates a JSON/YAML representation of a ResourceField against its schema.
+func (sg *SchemaGenerator) ValidateResourceField(data []byte) error {
+	schema, err := sg.GenerateResourceFieldSchema()
+	if err != nil {
+		return fmt.Errorf("failed to generate ResourceField schema: %w", err)
+	}
+
+	return sg.validateWithSchema(schema, data)
+}
+
+// ValidateEndpoint validates a JSON/YAML representation of an Endpoint against its schema.
+func (sg *SchemaGenerator) ValidateEndpoint(data []byte) error {
+	schema, err := sg.GenerateEndpointSchema()
+	if err != nil {
+		return fmt.Errorf("failed to generate Endpoint schema: %w", err)
+	}
+
+	return sg.validateWithSchema(schema, data)
+}
+
+// ValidateEndpointRequest validates a JSON/YAML representation of an EndpointRequest against its schema.
+func (sg *SchemaGenerator) ValidateEndpointRequest(data []byte) error {
+	schema, err := sg.GenerateEndpointRequestSchema()
+	if err != nil {
+		return fmt.Errorf("failed to generate EndpointRequest schema: %w", err)
+	}
+
+	return sg.validateWithSchema(schema, data)
+}
+
+// ValidateEndpointResponse validates a JSON/YAML representation of an EndpointResponse against its schema.
+func (sg *SchemaGenerator) ValidateEndpointResponse(data []byte) error {
+	schema, err := sg.GenerateEndpointResponseSchema()
+	if err != nil {
+		return fmt.Errorf("failed to generate EndpointResponse schema: %w", err)
+	}
+
+	return sg.validateWithSchema(schema, data)
+}
+
+// validateWithSchema is a helper function that validates data against a JSON schema.
+func (sg *SchemaGenerator) validateWithSchema(schema *jsonschema.Schema, data []byte) error {
+	// Convert schema to JSON string
+	schemaJSON, err := sg.SchemaToJSON(schema)
+	if err != nil {
+		return fmt.Errorf("failed to convert schema to JSON: %w", err)
+	}
+
+	// Create schema loader
+	schemaLoader := gojsonschema.NewStringLoader(schemaJSON)
+
+	// Convert data to JSON if it might be YAML
+	jsonData, err := sg.convertToJSON(data)
+	if err != nil {
+		return fmt.Errorf("failed to convert data to JSON: %w", err)
+	}
+
+	// Create document loader
+	documentLoader := gojsonschema.NewBytesLoader(jsonData)
+
+	// Validate
+	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
+	if err != nil {
+		return fmt.Errorf("validation failed: %w", err)
+	}
+
+	if !result.Valid() {
+		return fmt.Errorf("validation errors: %v", result.Errors())
+	}
+
+	return nil
+}
+
+// convertToJSON converts YAML or JSON data to JSON format.
+func (sg *SchemaGenerator) convertToJSON(data []byte) ([]byte, error) {
+	// First, try to parse as JSON
+	var jsonData interface{}
+	if err := json.Unmarshal(data, &jsonData); err == nil {
+		// It's valid JSON, return as-is
+		return data, nil
+	}
+
+	// Try to parse as YAML
+	var yamlData interface{}
+	if err := yaml.Unmarshal(data, &yamlData); err != nil {
+		return nil, fmt.Errorf("data is neither valid JSON nor YAML: %w", err)
+	}
+
+	// Convert YAML data to JSON
+	jsonBytes, err := json.Marshal(yamlData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert YAML to JSON: %w", err)
+	}
+
+	return jsonBytes, nil
+}
+
+// ParseServiceFromJSON parses and validates a Service from JSON data.
+func (sg *SchemaGenerator) ParseServiceFromJSON(data []byte) (*specification.Service, error) {
+	// Validate against schema first
+	if err := sg.ValidateService(data); err != nil {
+		return nil, fmt.Errorf("validation failed: %w", err)
+	}
+
+	// Parse the JSON
+	var service specification.Service
+	if err := json.Unmarshal(data, &service); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
+	}
+
+	return &service, nil
+}
+
+// ParseServiceFromYAML parses and validates a Service from YAML data.
+func (sg *SchemaGenerator) ParseServiceFromYAML(data []byte) (*specification.Service, error) {
+	// Convert YAML to JSON for validation
+	jsonData, err := sg.convertToJSON(data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert YAML to JSON: %w", err)
+	}
+
+	// Validate against schema
+	if err := sg.ValidateService(jsonData); err != nil {
+		return nil, fmt.Errorf("validation failed: %w", err)
+	}
+
+	// Parse the YAML directly
+	var service specification.Service
+	if err := yaml.Unmarshal(data, &service); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal YAML: %w", err)
+	}
+
+	return &service, nil
+}
+
+// ParseEnumFromJSON parses and validates an Enum from JSON data.
+func (sg *SchemaGenerator) ParseEnumFromJSON(data []byte) (*specification.Enum, error) {
+	if err := sg.ValidateEnum(data); err != nil {
+		return nil, fmt.Errorf("validation failed: %w", err)
+	}
+
+	var enum specification.Enum
+	if err := json.Unmarshal(data, &enum); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
+	}
+
+	return &enum, nil
+}
+
+// ParseEnumFromYAML parses and validates an Enum from YAML data.
+func (sg *SchemaGenerator) ParseEnumFromYAML(data []byte) (*specification.Enum, error) {
+	jsonData, err := sg.convertToJSON(data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert YAML to JSON: %w", err)
+	}
+
+	if err := sg.ValidateEnum(jsonData); err != nil {
+		return nil, fmt.Errorf("validation failed: %w", err)
+	}
+
+	var enum specification.Enum
+	if err := yaml.Unmarshal(data, &enum); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal YAML: %w", err)
+	}
+
+	return &enum, nil
+}
+
+// ParseObjectFromJSON parses and validates an Object from JSON data.
+func (sg *SchemaGenerator) ParseObjectFromJSON(data []byte) (*specification.Object, error) {
+	if err := sg.ValidateObject(data); err != nil {
+		return nil, fmt.Errorf("validation failed: %w", err)
+	}
+
+	var object specification.Object
+	if err := json.Unmarshal(data, &object); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
+	}
+
+	return &object, nil
+}
+
+// ParseObjectFromYAML parses and validates an Object from YAML data.
+func (sg *SchemaGenerator) ParseObjectFromYAML(data []byte) (*specification.Object, error) {
+	jsonData, err := sg.convertToJSON(data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert YAML to JSON: %w", err)
+	}
+
+	if err := sg.ValidateObject(jsonData); err != nil {
+		return nil, fmt.Errorf("validation failed: %w", err)
+	}
+
+	var object specification.Object
+	if err := yaml.Unmarshal(data, &object); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal YAML: %w", err)
+	}
+
+	return &object, nil
+}
+
+// ParseResourceFromJSON parses and validates a Resource from JSON data.
+func (sg *SchemaGenerator) ParseResourceFromJSON(data []byte) (*specification.Resource, error) {
+	if err := sg.ValidateResource(data); err != nil {
+		return nil, fmt.Errorf("validation failed: %w", err)
+	}
+
+	var resource specification.Resource
+	if err := json.Unmarshal(data, &resource); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
+	}
+
+	return &resource, nil
+}
+
+// ParseResourceFromYAML parses and validates a Resource from YAML data.
+func (sg *SchemaGenerator) ParseResourceFromYAML(data []byte) (*specification.Resource, error) {
+	jsonData, err := sg.convertToJSON(data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert YAML to JSON: %w", err)
+	}
+
+	if err := sg.ValidateResource(jsonData); err != nil {
+		return nil, fmt.Errorf("validation failed: %w", err)
+	}
+
+	var resource specification.Resource
+	if err := yaml.Unmarshal(data, &resource); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal YAML: %w", err)
+	}
+
+	return &resource, nil
 }

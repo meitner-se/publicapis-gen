@@ -714,3 +714,875 @@ func TestAllStructTypesWithReflection(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateService(t *testing.T) {
+	generator := NewSchemaGenerator()
+
+	// Test valid service JSON
+	validServiceJSON := `{
+		"name": "UserAPI",
+		"enums": [],
+		"objects": [],
+		"resources": []
+	}`
+
+	err := generator.ValidateService([]byte(validServiceJSON))
+	assert.NoError(t, err)
+
+	// Test valid service YAML
+	validServiceYAML := `
+name: UserAPI
+enums: []
+objects: []
+resources: []
+`
+
+	err = generator.ValidateService([]byte(validServiceYAML))
+	assert.NoError(t, err)
+
+	// Test invalid service JSON (missing required field)
+	invalidServiceJSON := `{
+		"enums": [],
+		"objects": [],
+		"resources": []
+	}`
+
+	err = generator.ValidateService([]byte(invalidServiceJSON))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "validation errors")
+
+	// Test malformed JSON
+	malformedJSON := `{"name": "test", invalid json}`
+	err = generator.ValidateService([]byte(malformedJSON))
+	assert.Error(t, err)
+}
+
+func TestValidateEnum(t *testing.T) {
+	generator := NewSchemaGenerator()
+
+	// Test valid enum JSON
+	validEnumJSON := `{
+		"name": "Status",
+		"description": "Status enumeration",
+		"values": [
+			{"name": "Active", "description": "Active status"},
+			{"name": "Inactive", "description": "Inactive status"}
+		]
+	}`
+
+	err := generator.ValidateEnum([]byte(validEnumJSON))
+	assert.NoError(t, err)
+
+	// Test valid enum YAML
+	validEnumYAML := `
+name: Status
+description: Status enumeration
+values:
+  - name: Active
+    description: Active status
+  - name: Inactive
+    description: Inactive status
+`
+
+	err = generator.ValidateEnum([]byte(validEnumYAML))
+	assert.NoError(t, err)
+
+	// Test invalid enum JSON (missing required field)
+	invalidEnumJSON := `{
+		"description": "Status enumeration",
+		"values": []
+	}`
+
+	err = generator.ValidateEnum([]byte(invalidEnumJSON))
+	assert.Error(t, err)
+}
+
+func TestValidateObject(t *testing.T) {
+	generator := NewSchemaGenerator()
+
+	// Test valid object JSON
+	validObjectJSON := `{
+		"name": "User",
+		"description": "User object",
+		"fields": [
+			{"name": "id", "type": "UUID", "description": "User ID"},
+			{"name": "name", "type": "String", "description": "User name"}
+		]
+	}`
+
+	err := generator.ValidateObject([]byte(validObjectJSON))
+	assert.NoError(t, err)
+
+	// Test invalid object JSON
+	invalidObjectJSON := `{
+		"description": "User object",
+		"fields": []
+	}`
+
+	err = generator.ValidateObject([]byte(invalidObjectJSON))
+	assert.Error(t, err)
+}
+
+func TestValidateResource(t *testing.T) {
+	generator := NewSchemaGenerator()
+
+	// Test valid resource JSON
+	validResourceJSON := `{
+		"name": "Users",
+		"description": "User resource",
+		"operations": ["Create", "Read", "Update", "Delete"],
+		"fields": [],
+		"endpoints": []
+	}`
+
+	err := generator.ValidateResource([]byte(validResourceJSON))
+	assert.NoError(t, err)
+
+	// Test invalid resource JSON
+	invalidResourceJSON := `{
+		"description": "User resource",
+		"operations": [],
+		"fields": [],
+		"endpoints": []
+	}`
+
+	err = generator.ValidateResource([]byte(invalidResourceJSON))
+	assert.Error(t, err)
+}
+
+func TestValidateField(t *testing.T) {
+	generator := NewSchemaGenerator()
+
+	// Test valid field JSON
+	validFieldJSON := `{
+		"name": "username",
+		"description": "User's username",
+		"type": "String"
+	}`
+
+	err := generator.ValidateField([]byte(validFieldJSON))
+	assert.NoError(t, err)
+
+	// Test valid field with optional properties
+	validFieldWithOptionalJSON := `{
+		"name": "age",
+		"description": "User's age",
+		"type": "Int",
+		"default": "0",
+		"example": "25",
+		"modifiers": ["nullable"]
+	}`
+
+	err = generator.ValidateField([]byte(validFieldWithOptionalJSON))
+	assert.NoError(t, err)
+
+	// Test invalid field JSON
+	invalidFieldJSON := `{
+		"description": "User's username",
+		"type": "String"
+	}`
+
+	err = generator.ValidateField([]byte(invalidFieldJSON))
+	assert.Error(t, err)
+}
+
+func TestValidateResourceField(t *testing.T) {
+	generator := NewSchemaGenerator()
+
+	// Test valid resource field JSON
+	validResourceFieldJSON := `{
+		"name": "username",
+		"description": "User's username",
+		"type": "String",
+		"operations": ["Create", "Read", "Update"]
+	}`
+
+	err := generator.ValidateResourceField([]byte(validResourceFieldJSON))
+	assert.NoError(t, err)
+
+	// Test invalid resource field JSON
+	invalidResourceFieldJSON := `{
+		"description": "User's username",
+		"type": "String",
+		"operations": []
+	}`
+
+	err = generator.ValidateResourceField([]byte(invalidResourceFieldJSON))
+	assert.Error(t, err)
+}
+
+func TestValidateEndpoint(t *testing.T) {
+	generator := NewSchemaGenerator()
+
+	// Test valid endpoint JSON
+	validEndpointJSON := `{
+		"name": "GetUser",
+		"title": "Get User",
+		"description": "Get user by ID",
+		"method": "GET",
+		"path": "/users/{id}",
+		"request": {
+			"content_type": "",
+			"headers": [],
+			"path_params": [],
+			"query_params": [],
+			"body_params": []
+		},
+		"response": {
+			"content_type": "",
+			"status_code": 200,
+			"headers": [],
+			"body_fields": []
+		}
+	}`
+
+	err := generator.ValidateEndpoint([]byte(validEndpointJSON))
+	assert.NoError(t, err)
+
+	// Test invalid endpoint JSON
+	invalidEndpointJSON := `{
+		"title": "Get User",
+		"description": "Get user by ID",
+		"method": "GET",
+		"path": "/users/{id}",
+		"request": {},
+		"response": {}
+	}`
+
+	err = generator.ValidateEndpoint([]byte(invalidEndpointJSON))
+	assert.Error(t, err)
+}
+
+func TestValidateEndpointRequest(t *testing.T) {
+	generator := NewSchemaGenerator()
+
+	// Test valid endpoint request JSON
+	validEndpointRequestJSON := `{
+		"content_type": "application/json",
+		"headers": [],
+		"path_params": [],
+		"query_params": [],
+		"body_params": []
+	}`
+
+	err := generator.ValidateEndpointRequest([]byte(validEndpointRequestJSON))
+	assert.NoError(t, err)
+
+	// Test endpoint request with fields
+	validEndpointRequestWithFieldsJSON := `{
+		"content_type": "application/json",
+		"headers": [
+			{"name": "Authorization", "type": "String", "description": "Bearer token"}
+		],
+		"path_params": [
+			{"name": "id", "type": "UUID", "description": "Resource ID"}
+		],
+		"query_params": [
+			{"name": "limit", "type": "Int", "description": "Limit", "default": "10"}
+		],
+		"body_params": [
+			{"name": "name", "type": "String", "description": "Resource name"}
+		]
+	}`
+
+	err = generator.ValidateEndpointRequest([]byte(validEndpointRequestWithFieldsJSON))
+	assert.NoError(t, err)
+}
+
+func TestValidateEndpointResponse(t *testing.T) {
+	generator := NewSchemaGenerator()
+
+	// Test valid endpoint response JSON
+	validEndpointResponseJSON := `{
+		"content_type": "application/json",
+		"status_code": 200,
+		"headers": [],
+		"body_fields": []
+	}`
+
+	err := generator.ValidateEndpointResponse([]byte(validEndpointResponseJSON))
+	assert.NoError(t, err)
+
+	// Test endpoint response with body object
+	validEndpointResponseWithBodyObjectJSON := `{
+		"content_type": "application/json",
+		"status_code": 201,
+		"headers": [],
+		"body_fields": [],
+		"body_object": "User"
+	}`
+
+	err = generator.ValidateEndpointResponse([]byte(validEndpointResponseWithBodyObjectJSON))
+	assert.NoError(t, err)
+
+	// Test invalid endpoint response JSON (invalid status code type)
+	invalidEndpointResponseJSON := `{
+		"content_type": "application/json",
+		"status_code": "200",
+		"headers": [],
+		"body_fields": []
+	}`
+
+	err = generator.ValidateEndpointResponse([]byte(invalidEndpointResponseJSON))
+	assert.Error(t, err)
+}
+
+func TestConvertToJSON(t *testing.T) {
+	generator := NewSchemaGenerator()
+
+	// Test valid JSON
+	validJSON := `{"name": "test", "value": 123}`
+	result, err := generator.convertToJSON([]byte(validJSON))
+	require.NoError(t, err)
+	assert.JSONEq(t, validJSON, string(result))
+
+	// Test valid YAML
+	validYAML := `
+name: test
+value: 123
+`
+	result, err = generator.convertToJSON([]byte(validYAML))
+	require.NoError(t, err)
+	assert.Contains(t, string(result), "test")
+	assert.Contains(t, string(result), "123")
+
+	// Test invalid data
+	invalidData := `this is neither JSON nor YAML: {[}`
+	_, err = generator.convertToJSON([]byte(invalidData))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "neither valid JSON nor YAML")
+}
+
+func TestParseServiceFromJSON(t *testing.T) {
+	generator := NewSchemaGenerator()
+
+	// Test valid service JSON
+	validServiceJSON := `{
+		"name": "UserAPI",
+		"enums": [
+			{
+				"name": "Status",
+				"description": "Status enumeration",
+				"values": [
+					{"name": "Active", "description": "Active status"}
+				]
+			}
+		],
+		"objects": [
+			{
+				"name": "User",
+				"description": "User object",
+				"fields": [
+					{"name": "id", "type": "UUID", "description": "User ID"}
+				]
+			}
+		],
+		"resources": [
+			{
+				"name": "Users",
+				"description": "User resource",
+				"operations": ["Create", "Read"],
+				"fields": [
+					{
+						"name": "id",
+						"type": "UUID",
+						"description": "User ID",
+						"operations": ["Read"]
+					}
+				],
+				"endpoints": [
+					{
+						"name": "GetUser",
+						"title": "Get User",
+						"description": "Get user by ID",
+						"method": "GET",
+						"path": "/users/{id}",
+						"request": {
+							"content_type": "",
+							"headers": [],
+							"path_params": [],
+							"query_params": [],
+							"body_params": []
+						},
+						"response": {
+							"content_type": "application/json",
+							"status_code": 200,
+							"headers": [],
+							"body_fields": []
+						}
+					}
+				]
+			}
+		]
+	}`
+
+	service, err := generator.ParseServiceFromJSON([]byte(validServiceJSON))
+	require.NoError(t, err)
+	assert.NotNil(t, service)
+	assert.Equal(t, "UserAPI", service.Name)
+	assert.Len(t, service.Enums, 1)
+	assert.Len(t, service.Objects, 1)
+	assert.Len(t, service.Resources, 1)
+	assert.Equal(t, "Status", service.Enums[0].Name)
+	assert.Equal(t, "User", service.Objects[0].Name)
+	assert.Equal(t, "Users", service.Resources[0].Name)
+
+	// Test invalid service JSON (missing required field)
+	invalidServiceJSON := `{
+		"enums": [],
+		"objects": [],
+		"resources": []
+	}`
+
+	_, err = generator.ParseServiceFromJSON([]byte(invalidServiceJSON))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "validation failed")
+
+	// Test malformed JSON
+	malformedJSON := `{"name": "test", invalid}`
+	_, err = generator.ParseServiceFromJSON([]byte(malformedJSON))
+	assert.Error(t, err)
+}
+
+func TestParseServiceFromYAML(t *testing.T) {
+	generator := NewSchemaGenerator()
+
+	// Test valid service YAML
+	validServiceYAML := `
+name: UserAPI
+enums:
+  - name: Status
+    description: Status enumeration
+    values:
+      - name: Active
+        description: Active status
+objects:
+  - name: User
+    description: User object
+    fields:
+      - name: id
+        type: UUID
+        description: User ID
+resources:
+  - name: Users
+    description: User resource
+    operations: [Create, Read]
+    fields:
+      - name: id
+        type: UUID
+        description: User ID
+        operations: [Read]
+    endpoints:
+      - name: GetUser
+        title: Get User
+        description: Get user by ID
+        method: GET
+        path: /users/{id}
+        request:
+          content_type: ""
+          headers: []
+          path_params: []
+          query_params: []
+          body_params: []
+        response:
+          content_type: application/json
+          status_code: 200
+          headers: []
+          body_fields: []
+`
+
+	service, err := generator.ParseServiceFromYAML([]byte(validServiceYAML))
+	require.NoError(t, err)
+	assert.NotNil(t, service)
+	assert.Equal(t, "UserAPI", service.Name)
+	assert.Len(t, service.Enums, 1)
+	assert.Len(t, service.Objects, 1)
+	assert.Len(t, service.Resources, 1)
+
+	// Test invalid service YAML
+	invalidServiceYAML := `
+enums: []
+objects: []
+resources: []
+`
+
+	_, err = generator.ParseServiceFromYAML([]byte(invalidServiceYAML))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "validation failed")
+}
+
+func TestParseEnumFromJSON(t *testing.T) {
+	generator := NewSchemaGenerator()
+
+	// Test valid enum JSON
+	validEnumJSON := `{
+		"name": "Status",
+		"description": "Status enumeration",
+		"values": [
+			{"name": "Active", "description": "Active status"},
+			{"name": "Inactive", "description": "Inactive status"}
+		]
+	}`
+
+	enum, err := generator.ParseEnumFromJSON([]byte(validEnumJSON))
+	require.NoError(t, err)
+	assert.NotNil(t, enum)
+	assert.Equal(t, "Status", enum.Name)
+	assert.Equal(t, "Status enumeration", enum.Description)
+	assert.Len(t, enum.Values, 2)
+	assert.Equal(t, "Active", enum.Values[0].Name)
+	assert.Equal(t, "Inactive", enum.Values[1].Name)
+
+	// Test invalid enum JSON
+	invalidEnumJSON := `{
+		"description": "Status enumeration",
+		"values": []
+	}`
+
+	_, err = generator.ParseEnumFromJSON([]byte(invalidEnumJSON))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "validation failed")
+}
+
+func TestParseEnumFromYAML(t *testing.T) {
+	generator := NewSchemaGenerator()
+
+	// Test valid enum YAML
+	validEnumYAML := `
+name: Status
+description: Status enumeration
+values:
+  - name: Active
+    description: Active status
+  - name: Inactive
+    description: Inactive status
+`
+
+	enum, err := generator.ParseEnumFromYAML([]byte(validEnumYAML))
+	require.NoError(t, err)
+	assert.NotNil(t, enum)
+	assert.Equal(t, "Status", enum.Name)
+	assert.Equal(t, "Status enumeration", enum.Description)
+	assert.Len(t, enum.Values, 2)
+
+	// Test invalid enum YAML
+	invalidEnumYAML := `
+description: Status enumeration
+values: []
+`
+
+	_, err = generator.ParseEnumFromYAML([]byte(invalidEnumYAML))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "validation failed")
+}
+
+func TestParseObjectFromJSON(t *testing.T) {
+	generator := NewSchemaGenerator()
+
+	// Test valid object JSON
+	validObjectJSON := `{
+		"name": "User",
+		"description": "User object",
+		"fields": [
+			{"name": "id", "type": "UUID", "description": "User ID"},
+			{"name": "name", "type": "String", "description": "User name", "example": "John Doe"}
+		]
+	}`
+
+	object, err := generator.ParseObjectFromJSON([]byte(validObjectJSON))
+	require.NoError(t, err)
+	assert.NotNil(t, object)
+	assert.Equal(t, "User", object.Name)
+	assert.Equal(t, "User object", object.Description)
+	assert.Len(t, object.Fields, 2)
+	assert.Equal(t, "id", object.Fields[0].Name)
+	assert.Equal(t, "name", object.Fields[1].Name)
+
+	// Test invalid object JSON
+	invalidObjectJSON := `{
+		"description": "User object",
+		"fields": []
+	}`
+
+	_, err = generator.ParseObjectFromJSON([]byte(invalidObjectJSON))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "validation failed")
+}
+
+func TestParseObjectFromYAML(t *testing.T) {
+	generator := NewSchemaGenerator()
+
+	// Test valid object YAML
+	validObjectYAML := `
+name: User
+description: User object
+fields:
+  - name: id
+    type: UUID
+    description: User ID
+  - name: name
+    type: String
+    description: User name
+    example: John Doe
+`
+
+	object, err := generator.ParseObjectFromYAML([]byte(validObjectYAML))
+	require.NoError(t, err)
+	assert.NotNil(t, object)
+	assert.Equal(t, "User", object.Name)
+	assert.Equal(t, "User object", object.Description)
+	assert.Len(t, object.Fields, 2)
+
+	// Test invalid object YAML
+	invalidObjectYAML := `
+description: User object
+fields: []
+`
+
+	_, err = generator.ParseObjectFromYAML([]byte(invalidObjectYAML))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "validation failed")
+}
+
+func TestParseResourceFromJSON(t *testing.T) {
+	generator := NewSchemaGenerator()
+
+	// Test valid resource JSON
+	validResourceJSON := `{
+		"name": "Users",
+		"description": "User resource",
+		"operations": ["Create", "Read", "Update", "Delete"],
+		"fields": [
+			{
+				"name": "id",
+				"type": "UUID",
+				"description": "User ID",
+				"operations": ["Read"]
+			}
+		],
+		"endpoints": [
+			{
+				"name": "GetUser",
+				"title": "Get User",
+				"description": "Get user by ID",
+				"method": "GET",
+				"path": "/users/{id}",
+				"request": {
+					"content_type": "",
+					"headers": [],
+					"path_params": [],
+					"query_params": [],
+					"body_params": []
+				},
+				"response": {
+					"content_type": "application/json",
+					"status_code": 200,
+					"headers": [],
+					"body_fields": []
+				}
+			}
+		]
+	}`
+
+	resource, err := generator.ParseResourceFromJSON([]byte(validResourceJSON))
+	require.NoError(t, err)
+	assert.NotNil(t, resource)
+	assert.Equal(t, "Users", resource.Name)
+	assert.Equal(t, "User resource", resource.Description)
+	assert.Len(t, resource.Operations, 4)
+	assert.Len(t, resource.Fields, 1)
+	assert.Len(t, resource.Endpoints, 1)
+
+	// Test invalid resource JSON
+	invalidResourceJSON := `{
+		"description": "User resource",
+		"operations": [],
+		"fields": [],
+		"endpoints": []
+	}`
+
+	_, err = generator.ParseResourceFromJSON([]byte(invalidResourceJSON))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "validation failed")
+}
+
+func TestParseResourceFromYAML(t *testing.T) {
+	generator := NewSchemaGenerator()
+
+	// Test valid resource YAML
+	validResourceYAML := `
+name: Users
+description: User resource
+operations: [Create, Read, Update, Delete]
+fields:
+  - name: id
+    type: UUID
+    description: User ID
+    operations: [Read]
+endpoints:
+  - name: GetUser
+    title: Get User
+    description: Get user by ID
+    method: GET
+    path: /users/{id}
+    request:
+      content_type: ""
+      headers: []
+      path_params: []
+      query_params: []
+      body_params: []
+    response:
+      content_type: application/json
+      status_code: 200
+      headers: []
+      body_fields: []
+`
+
+	resource, err := generator.ParseResourceFromYAML([]byte(validResourceYAML))
+	require.NoError(t, err)
+	assert.NotNil(t, resource)
+	assert.Equal(t, "Users", resource.Name)
+	assert.Equal(t, "User resource", resource.Description)
+	assert.Len(t, resource.Operations, 4)
+	assert.Len(t, resource.Fields, 1)
+	assert.Len(t, resource.Endpoints, 1)
+
+	// Test invalid resource YAML
+	invalidResourceYAML := `
+description: User resource
+operations: []
+fields: []
+endpoints: []
+`
+
+	_, err = generator.ParseResourceFromYAML([]byte(invalidResourceYAML))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "validation failed")
+}
+
+func TestValidationErrorMessages(t *testing.T) {
+	generator := NewSchemaGenerator()
+
+	// Test validation with detailed error information
+	invalidServiceJSON := `{
+		"enums": "not an array",
+		"objects": [],
+		"resources": []
+	}`
+
+	err := generator.ValidateService([]byte(invalidServiceJSON))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "validation errors")
+
+	// The error should contain information about what's wrong
+	errorStr := err.Error()
+	assert.NotEmpty(t, errorStr)
+}
+
+func TestValidationWithComplexStructures(t *testing.T) {
+	generator := NewSchemaGenerator()
+
+	// Test complex valid service structure
+	complexValidServiceJSON := `{
+		"name": "ComplexAPI",
+		"enums": [
+			{
+				"name": "UserRole",
+				"description": "User roles in the system",
+				"values": [
+					{"name": "Admin", "description": "Administrator role"},
+					{"name": "User", "description": "Regular user role"}
+				]
+			}
+		],
+		"objects": [
+			{
+				"name": "Address",
+				"description": "Address information",
+				"fields": [
+					{"name": "street", "type": "String", "description": "Street address"},
+					{"name": "city", "type": "String", "description": "City"},
+					{"name": "zipCode", "type": "String", "description": "ZIP code", "modifiers": ["nullable"]}
+				]
+			}
+		],
+		"resources": [
+			{
+				"name": "Users",
+				"description": "User management",
+				"operations": ["Create", "Read", "Update", "Delete"],
+				"fields": [
+					{
+						"name": "id",
+						"type": "UUID",
+						"description": "User ID",
+						"operations": ["Read"]
+					},
+					{
+						"name": "role",
+						"type": "UserRole",
+						"description": "User role",
+						"default": "User",
+						"operations": ["Create", "Read", "Update"]
+					}
+				],
+				"endpoints": [
+					{
+						"name": "CreateUser",
+						"title": "Create New User",
+						"description": "Create a new user account",
+						"method": "POST",
+						"path": "/",
+						"request": {
+							"content_type": "application/json",
+							"headers": [
+								{"name": "Authorization", "type": "String", "description": "Bearer token"}
+							],
+							"path_params": [],
+							"query_params": [],
+							"body_params": [
+								{"name": "username", "type": "String", "description": "Username"},
+								{"name": "email", "type": "String", "description": "Email"},
+								{"name": "role", "type": "UserRole", "description": "User role"}
+							]
+						},
+						"response": {
+							"content_type": "application/json",
+							"status_code": 201,
+							"headers": [
+								{"name": "Location", "type": "String", "description": "Created resource URL"}
+							],
+							"body_fields": [
+								{"name": "id", "type": "UUID", "description": "Created user ID"},
+								{"name": "username", "type": "String", "description": "Username"}
+							]
+						}
+					}
+				]
+			}
+		]
+	}`
+
+	// This should validate successfully
+	err := generator.ValidateService([]byte(complexValidServiceJSON))
+	assert.NoError(t, err)
+
+	// And should parse successfully
+	service, err := generator.ParseServiceFromJSON([]byte(complexValidServiceJSON))
+	require.NoError(t, err)
+	assert.NotNil(t, service)
+	assert.Equal(t, "ComplexAPI", service.Name)
+	assert.Len(t, service.Enums, 1)
+	assert.Len(t, service.Objects, 1)
+	assert.Len(t, service.Resources, 1)
+
+	// Verify complex nested structures
+	assert.Equal(t, "UserRole", service.Enums[0].Name)
+	assert.Len(t, service.Enums[0].Values, 2)
+	assert.Equal(t, "Address", service.Objects[0].Name)
+	assert.Len(t, service.Objects[0].Fields, 3)
+	assert.Equal(t, "Users", service.Resources[0].Name)
+	assert.Len(t, service.Resources[0].Fields, 2)
+	assert.Len(t, service.Resources[0].Endpoints, 1)
+	assert.Equal(t, "CreateUser", service.Resources[0].Endpoints[0].Name)
+}
