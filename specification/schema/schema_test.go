@@ -760,7 +760,7 @@ resources: []
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "validation errors")
 	assert.Contains(t, err.Error(), "Additional property")
-	
+
 	// Test truly malformed JSON
 	trulyMalformedJSON := `{"name": "test", invalid`
 	err = generator.ValidateService([]byte(trulyMalformedJSON))
@@ -1178,7 +1178,7 @@ func TestParseServiceFromJSON(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "validation failed")
 	assert.Contains(t, err.Error(), "Additional property")
-	
+
 	// Test truly malformed JSON
 	trulyMalformedJSON := `{"name": "test", incomplete`
 	_, err = generator.ParseServiceFromJSON([]byte(trulyMalformedJSON))
@@ -1538,7 +1538,7 @@ func TestValidationErrorMessages(t *testing.T) {
 		"objects": [],
 		"resources": []
 	}`
-	
+
 	err = generator.ValidateService([]byte(missingFieldJSON))
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "validation errors")
@@ -1737,7 +1737,7 @@ func TestSpecificValidationScenarios(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "neither valid JSON nor YAML")
 
-	// Test invalid YAML structure  
+	// Test invalid YAML structure
 	invalidYAML := `
 name: TestService
 enums:
@@ -1751,7 +1751,7 @@ enums:
 	err = generator.ValidateService([]byte(invalidYAML))
 	require.Error(t, err)
 	// Could be either a YAML parsing error or validation error
-	assert.True(t, 
+	assert.True(t,
 		strings.Contains(err.Error(), "neither valid JSON nor YAML") ||
-		strings.Contains(err.Error(), "validation errors"))
+			strings.Contains(err.Error(), "validation errors"))
 }

@@ -44,15 +44,15 @@
 // Validation example:
 //
 //	generator := schema.NewSchemaGenerator()
-//	
+//
 //	// Validate JSON data
 //	jsonData := []byte(`{"name": "MyAPI", "enums": [], "objects": [], "resources": []}`)
 //	err := generator.ValidateService(jsonData)
 //	if err != nil {
 //	    log.Fatalf("Validation failed: %v", err)
 //	}
-//	
-//	// Validate YAML data  
+//
+//	// Validate YAML data
 //	yamlData := []byte(`
 //	name: MyAPI
 //	enums: []
@@ -71,7 +71,7 @@
 // Parsing example:
 //
 //	generator := schema.NewSchemaGenerator()
-//	
+//
 //	// Parse and validate JSON
 //	jsonData := []byte(`{
 //	    "name": "UserAPI",
@@ -88,12 +88,12 @@
 //	    "objects": [],
 //	    "resources": []
 //	}`)
-//	
+//
 //	service, err := generator.ParseServiceFromJSON(jsonData)
 //	if err != nil {
 //	    log.Fatalf("Failed to parse service: %v", err)
 //	}
-//	
+//
 //	// Parse and validate YAML
 //	yamlData := []byte(`
 //	name: UserAPI
@@ -107,7 +107,7 @@
 //	        description: Inactive user
 //	objects: []
 //	resources: []`)
-//	
+//
 //	service, err = generator.ParseServiceFromYAML(yamlData)
 //	if err != nil {
 //	    log.Fatalf("Failed to parse service: %v", err)

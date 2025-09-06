@@ -29,14 +29,14 @@
 // Validation functions verify that JSON or YAML data conforms to the generated schemas:
 //
 //	generator := schema.NewSchemaGenerator()
-//	
+//
 //	// Validate JSON data against Service schema
 //	jsonData := []byte(`{"name": "MyAPI", "enums": [], "objects": [], "resources": []}`)
 //	err := generator.ValidateService(jsonData)
 //	if err != nil {
 //	    log.Fatalf("Validation failed: %v", err)
 //	}
-//	
+//
 //	// Validate YAML data against Enum schema
 //	yamlData := []byte(`
 //	name: Status
@@ -54,14 +54,14 @@
 // Parsing functions combine validation and unmarshaling in a single operation:
 //
 //	generator := schema.NewSchemaGenerator()
-//	
+//
 //	// Parse and validate Service from JSON
 //	jsonData := []byte(`{"name": "UserAPI", "enums": [], "objects": [], "resources": []}`)
 //	service, err := generator.ParseServiceFromJSON(jsonData)
 //	if err != nil {
 //	    log.Fatalf("Failed to parse service: %v", err)
 //	}
-//	
+//
 //	// Parse and validate Enum from YAML
 //	yamlData := []byte(`
 //	name: Priority
