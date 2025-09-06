@@ -157,3 +157,86 @@ type EndpointResponse struct {
 	// If a full object is returned (instead of individual fields) - can be object or Resource
 	BodyObject *string `json:"body_object,omitempty"`
 }
+
+// containsOperation checks if a slice of operations contains a specific operation.
+func containsOperation(operations []string, operation string) bool {
+	for _, op := range operations {
+		if op == operation {
+			return true
+		}
+	}
+	return false
+}
+
+// ApplyOverlay applies an overlay to a specification, generating Objects from Resources.
+// It creates Objects for Resources that have the "Read" operation, including all fields
+// that support the "Read" operation in the generated Object.
+func ApplyOverlay(input *Service) *Service {
+	if input == nil {
+		return nil
+	}
+
+	// Create a deep copy of the input service
+	result := &Service{
+		Name:      input.Name,
+		Enums:     make([]Enum, len(input.Enums)),
+		Objects:   make([]Object, len(input.Objects)),
+		Resources: make([]Resource, len(input.Resources)),
+	}
+
+	// Copy enums
+	copy(result.Enums, input.Enums)
+
+	// Copy existing objects
+	copy(result.Objects, input.Objects)
+
+	// Copy resources
+	copy(result.Resources, input.Resources)
+
+	// Generate Objects from Resources that have Read operations
+	for _, resource := range input.Resources {
+		// Check if the resource has Read operation
+		if containsOperation(resource.Operations, "Read") {
+			// Check if an object with this name already exists
+			objectExists := false
+			for _, existingObj := range result.Objects {
+				if existingObj.Name == resource.Name {
+					objectExists = true
+					break
+				}
+			}
+
+			// Only create the object if it doesn't already exist
+			if !objectExists {
+				// Create a new Object based on the Resource
+				newObject := Object{
+					Name:        resource.Name,
+					Description: resource.Description,
+					Fields:      make([]Field, 0),
+				}
+
+				// Add all fields that support Read operation
+				for _, resourceField := range resource.Fields {
+					if containsOperation(resourceField.Operations, "Read") {
+						// Convert ResourceField to Field by copying the embedded Field
+						field := Field{
+							Name:        resourceField.Field.Name,
+							Description: resourceField.Field.Description,
+							Type:        resourceField.Field.Type,
+							Default:     resourceField.Field.Default,
+							Example:     resourceField.Field.Example,
+							Modifiers:   make([]string, len(resourceField.Field.Modifiers)),
+						}
+						copy(field.Modifiers, resourceField.Field.Modifiers)
+						newObject.Fields = append(newObject.Fields, field)
+					}
+				}
+
+				// Add the new object to the result
+				result.Objects = append(result.Objects, newObject)
+			}
+		}
+	}
+
+	return result
+}
