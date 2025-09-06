@@ -674,13 +674,13 @@ func TestServiceWithComplexHierarchy(t *testing.T) {
 	var unmarshaledService Service
 	err = json.Unmarshal(jsonData, &unmarshaledService)
 	require.NoError(t, err)
-	
+
 	// Verify structure integrity
 	assert.Equal(t, service.Name, unmarshaledService.Name)
 	assert.Equal(t, len(service.Enums), len(unmarshaledService.Enums))
 	assert.Equal(t, len(service.Objects), len(unmarshaledService.Objects))
 	assert.Equal(t, len(service.Resources), len(unmarshaledService.Resources))
-	
+
 	// Test nested structures
 	assert.Equal(t, len(service.Enums[0].Values), len(unmarshaledService.Enums[0].Values))
 	assert.Equal(t, len(service.Objects[0].Fields), len(unmarshaledService.Objects[0].Fields))

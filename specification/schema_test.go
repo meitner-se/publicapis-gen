@@ -380,11 +380,11 @@ func TestGenerateAllSchemasComprehensive(t *testing.T) {
 
 	// Test that we have all expected schemas
 	expectedSchemas := []string{
-		"Service", "Enum", "Object", "Resource", 
-		"Field", "ResourceField", "Endpoint", 
+		"Service", "Enum", "Object", "Resource",
+		"Field", "ResourceField", "Endpoint",
 		"EndpointRequest", "EndpointResponse",
 	}
-	
+
 	assert.Equal(t, len(expectedSchemas), len(schemas), "Should have exactly the expected number of schemas")
 
 	// Test each schema individually
@@ -407,7 +407,7 @@ func TestGenerateAllSchemasComprehensive(t *testing.T) {
 		err = json.Unmarshal([]byte(jsonStr), &jsonObj)
 		require.NoError(t, err, "Invalid JSON for %s schema", name)
 	}
-	
+
 	// Test that we can call GenerateAllSchemas multiple times consistently
 	schemas2, err2 := generator.GenerateAllSchemas()
 	require.NoError(t, err2)
@@ -468,14 +468,14 @@ func TestSchemaJSONSerialization(t *testing.T) {
 
 	// Test JSON serialization for all schema types
 	schemaGenerators := map[string]func() (*jsonschema.Schema, error){
-		"Service":         generator.GenerateServiceSchema,
-		"Enum":            generator.GenerateEnumSchema,
-		"Object":          generator.GenerateObjectSchema,
-		"Resource":        generator.GenerateResourceSchema,
-		"Field":           generator.GenerateFieldSchema,
-		"ResourceField":   generator.GenerateResourceFieldSchema,
-		"Endpoint":        generator.GenerateEndpointSchema,
-		"EndpointRequest": generator.GenerateEndpointRequestSchema,
+		"Service":          generator.GenerateServiceSchema,
+		"Enum":             generator.GenerateEnumSchema,
+		"Object":           generator.GenerateObjectSchema,
+		"Resource":         generator.GenerateResourceSchema,
+		"Field":            generator.GenerateFieldSchema,
+		"ResourceField":    generator.GenerateResourceFieldSchema,
+		"Endpoint":         generator.GenerateEndpointSchema,
+		"EndpointRequest":  generator.GenerateEndpointRequestSchema,
 		"EndpointResponse": generator.GenerateEndpointResponseSchema,
 	}
 
@@ -483,7 +483,7 @@ func TestSchemaJSONSerialization(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			schema, err := schemaFunc()
 			require.NoError(t, err)
-			
+
 			jsonStr, err := generator.SchemaToJSON(schema)
 			require.NoError(t, err)
 			assert.NotEmpty(t, jsonStr)
@@ -492,7 +492,7 @@ func TestSchemaJSONSerialization(t *testing.T) {
 			var jsonObj map[string]interface{}
 			err = json.Unmarshal([]byte(jsonStr), &jsonObj)
 			require.NoError(t, err)
-			
+
 			// All schemas should have basic structure
 			assert.Contains(t, jsonObj, "type")
 			assert.Contains(t, jsonObj, "properties")
@@ -502,7 +502,7 @@ func TestSchemaJSONSerialization(t *testing.T) {
 
 func TestGenerateServiceSchemaJSONIntegration(t *testing.T) {
 	generator := NewSchemaGenerator()
-	
+
 	// Test the complete flow from struct to JSON schema string
 	jsonSchema, err := generator.GenerateServiceSchemaJSON()
 	require.NoError(t, err)
@@ -521,20 +521,20 @@ func TestGenerateServiceSchemaJSONIntegration(t *testing.T) {
 
 func TestSchemaGeneratorConfiguration(t *testing.T) {
 	generator := NewSchemaGenerator()
-	
+
 	// Test that we can create multiple generators
 	generator2 := NewSchemaGenerator()
 	assert.True(t, generator != generator2, "Generators should be different instances")
-	
+
 	// Both should work independently
 	schema1, err1 := generator.GenerateServiceSchema()
 	schema2, err2 := generator2.GenerateServiceSchema()
-	
+
 	require.NoError(t, err1)
 	require.NoError(t, err2)
 	assert.NotNil(t, schema1)
 	assert.NotNil(t, schema2)
-	
+
 	// Test that both generators have the same configuration
 	assert.Equal(t, generator.reflector.AllowAdditionalProperties, generator2.reflector.AllowAdditionalProperties)
 	assert.Equal(t, generator.reflector.DoNotReference, generator2.reflector.DoNotReference)
@@ -543,7 +543,7 @@ func TestSchemaGeneratorConfiguration(t *testing.T) {
 
 func TestSchemaReflectorBehavior(t *testing.T) {
 	generator := NewSchemaGenerator()
-	
+
 	// Test reflector with various struct types
 	testStructs := []interface{}{
 		&Service{},
@@ -556,7 +556,7 @@ func TestSchemaReflectorBehavior(t *testing.T) {
 		&EndpointRequest{},
 		&EndpointResponse{},
 	}
-	
+
 	for i, testStruct := range testStructs {
 		schema := generator.reflector.Reflect(testStruct)
 		assert.NotNil(t, schema, "Schema %d should not be nil", i)
@@ -567,11 +567,11 @@ func TestSchemaReflectorBehavior(t *testing.T) {
 func TestSchemaGeneratorErrorScenarios(t *testing.T) {
 	// Test various edge cases that might help improve coverage
 	generator := NewSchemaGenerator()
-	
+
 	// Test with non-pointer types (which should still work)
 	schema := generator.reflector.Reflect(Service{})
 	assert.NotNil(t, schema)
-	
+
 	// Test with complex nested structures
 	complexService := Service{
 		Name: "Complex",
@@ -658,17 +658,17 @@ func TestSchemaGeneratorErrorScenarios(t *testing.T) {
 			},
 		},
 	}
-	
+
 	// Test that complex structures can generate schemas
 	schema = generator.reflector.Reflect(&complexService)
 	assert.NotNil(t, schema)
 	assert.Equal(t, "object", schema.Type)
-	
+
 	// Test JSON conversion with complex structure
 	jsonStr, err := generator.SchemaToJSON(schema)
 	require.NoError(t, err)
 	assert.NotEmpty(t, jsonStr)
-	
+
 	// Validate complex JSON structure
 	var jsonObj map[string]interface{}
 	err = json.Unmarshal([]byte(jsonStr), &jsonObj)
@@ -678,12 +678,12 @@ func TestSchemaGeneratorErrorScenarios(t *testing.T) {
 
 func TestAllStructTypesWithReflection(t *testing.T) {
 	generator := NewSchemaGenerator()
-	
+
 	// Test every struct type with both pointer and non-pointer variants
 	testCases := []struct {
-		name     string
-		ptrType  interface{}
-		valType  interface{}
+		name    string
+		ptrType interface{}
+		valType interface{}
 	}{
 		{"Service", &Service{}, Service{}},
 		{"Enum", &Enum{}, Enum{}},
@@ -696,17 +696,17 @@ func TestAllStructTypesWithReflection(t *testing.T) {
 		{"EndpointRequest", &EndpointRequest{}, EndpointRequest{}},
 		{"EndpointResponse", &EndpointResponse{}, EndpointResponse{}},
 	}
-	
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Test with pointer
 			schemaPtrType := generator.reflector.Reflect(tc.ptrType)
 			assert.NotNil(t, schemaPtrType, "%s pointer type should generate schema", tc.name)
-			
+
 			// Test with value
 			schemaValType := generator.reflector.Reflect(tc.valType)
 			assert.NotNil(t, schemaValType, "%s value type should generate schema", tc.name)
-			
+
 			// Both should have same basic structure
 			assert.Equal(t, schemaPtrType.Type, schemaValType.Type, "%s schemas should have same type", tc.name)
 		})
