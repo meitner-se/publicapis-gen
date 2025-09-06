@@ -50,15 +50,21 @@ func Test_Service_JSONMarshaling(t *testing.T) {
 				Endpoints: []Endpoint{
 					{
 						Name:        "GetUser",
+						Title:       "Get User",
 						Description: "Get a user by ID",
 						Method:      "GET",
-						Path:        "/users/{id}",
-						PathParameters: []Field{
-							{Name: "id", Type: "UUID", Description: "User ID"},
+						Path:        "/{id}",
+						Request: EndpointRequest{
+							PathParams: []Field{
+								{Name: "id", Type: "UUID", Description: "User ID"},
+							},
 						},
-						ResponseFields: []Field{
-							{Name: "id", Type: "UUID", Description: "User ID"},
-							{Name: "name", Type: "String", Description: "User name"},
+						Response: EndpointResponse{
+							StatusCode: 200,
+							BodyFields: []Field{
+								{Name: "id", Type: "UUID", Description: "User ID"},
+								{Name: "name", Type: "String", Description: "User name"},
+							},
 						},
 					},
 				},
@@ -122,11 +128,16 @@ func Test_Service_YAMLMarshaling(t *testing.T) {
 				Endpoints: []Endpoint{
 					{
 						Name:        "ListPeople",
+						Title:       "List People",
 						Description: "List all people",
 						Method:      "GET",
-						Path:        "/people",
-						ResponseFields: []Field{
-							{Name: "data", Type: "array", Description: "Array of people", Modifiers: []string{"array"}},
+						Path:        "/",
+						Request: EndpointRequest{},
+						Response: EndpointResponse{
+							StatusCode: 200,
+							BodyFields: []Field{
+								{Name: "data", Type: "array", Description: "Array of people", Modifiers: []string{"array"}},
+							},
 						},
 					},
 				},
@@ -232,22 +243,27 @@ func Test_ResourceField_InheritanceFromField(t *testing.T) {
 func Test_Endpoint_CompleteStructure(t *testing.T) {
 	endpoint := Endpoint{
 		Name:        "CreateUser",
+		Title:       "Create User",
 		Description: "Create a new user",
 		Method:      "POST",
-		Path:        "/users",
-		RequestFields: []Field{
-			{Name: "name", Type: "String", Description: "User name", Example: "John Doe"},
-			{Name: "email", Type: "String", Description: "User email", Example: "john@example.com"},
+		Path:        "/",
+		Request: EndpointRequest{
+			BodyParams: []Field{
+				{Name: "name", Type: "String", Description: "User name", Example: "John Doe"},
+				{Name: "email", Type: "String", Description: "User email", Example: "john@example.com"},
+			},
+			QueryParams: []Field{
+				{Name: "validate", Type: "Bool", Description: "Whether to validate the user", Default: "true"},
+			},
 		},
-		ResponseFields: []Field{
-			{Name: "id", Type: "UUID", Description: "Created user ID"},
-			{Name: "name", Type: "String", Description: "User name"},
-			{Name: "email", Type: "String", Description: "User email"},
+		Response: EndpointResponse{
+			StatusCode: 201,
+			BodyFields: []Field{
+				{Name: "id", Type: "UUID", Description: "Created user ID"},
+				{Name: "name", Type: "String", Description: "User name"},
+				{Name: "email", Type: "String", Description: "User email"},
+			},
 		},
-		QueryParameters: []Field{
-			{Name: "validate", Type: "Bool", Description: "Whether to validate the user", Default: "true"},
-		},
-		PathParameters: []Field{},
 	}
 
 	// Test JSON marshaling
@@ -255,18 +271,110 @@ func Test_Endpoint_CompleteStructure(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, string(jsonData), "CreateUser")
 	assert.Contains(t, string(jsonData), "POST")
-	assert.Contains(t, string(jsonData), "/users")
+	assert.Contains(t, string(jsonData), "\"/\"")
 
 	// Test JSON unmarshaling
 	var unmarshaledEndpoint Endpoint
 	err = json.Unmarshal(jsonData, &unmarshaledEndpoint)
 	require.NoError(t, err)
 	assert.Equal(t, endpoint.Name, unmarshaledEndpoint.Name)
+	assert.Equal(t, endpoint.Title, unmarshaledEndpoint.Title)
 	assert.Equal(t, endpoint.Method, unmarshaledEndpoint.Method)
 	assert.Equal(t, endpoint.Path, unmarshaledEndpoint.Path)
-	assert.Equal(t, len(endpoint.RequestFields), len(unmarshaledEndpoint.RequestFields))
-	assert.Equal(t, len(endpoint.ResponseFields), len(unmarshaledEndpoint.ResponseFields))
-	assert.Equal(t, len(endpoint.QueryParameters), len(unmarshaledEndpoint.QueryParameters))
+	assert.Equal(t, len(endpoint.Request.BodyParams), len(unmarshaledEndpoint.Request.BodyParams))
+	assert.Equal(t, len(endpoint.Response.BodyFields), len(unmarshaledEndpoint.Response.BodyFields))
+	assert.Equal(t, len(endpoint.Request.QueryParams), len(unmarshaledEndpoint.Request.QueryParams))
+}
+
+func Test_EndpointRequest_Structure(t *testing.T) {
+	endpointRequest := EndpointRequest{
+		ContentType: "application/json",
+		Headers: []Field{
+			{Name: "Authorization", Type: "String", Description: "Bearer token"},
+		},
+		PathParams: []Field{
+			{Name: "id", Type: "UUID", Description: "Resource ID"},
+		},
+		QueryParams: []Field{
+			{Name: "limit", Type: "Int", Description: "Number of items to return", Default: "10"},
+		},
+		BodyParams: []Field{
+			{Name: "name", Type: "String", Description: "Resource name"},
+			{Name: "active", Type: "Bool", Description: "Is resource active", Default: "true"},
+		},
+	}
+
+	// Test JSON marshaling
+	jsonData, err := json.Marshal(endpointRequest)
+	require.NoError(t, err)
+	assert.Contains(t, string(jsonData), "application/json")
+	assert.Contains(t, string(jsonData), "Authorization")
+	assert.Contains(t, string(jsonData), "Bearer token")
+
+	// Test JSON unmarshaling
+	var unmarshaledRequest EndpointRequest
+	err = json.Unmarshal(jsonData, &unmarshaledRequest)
+	require.NoError(t, err)
+	assert.Equal(t, endpointRequest.ContentType, unmarshaledRequest.ContentType)
+	assert.Equal(t, len(endpointRequest.Headers), len(unmarshaledRequest.Headers))
+	assert.Equal(t, len(endpointRequest.PathParams), len(unmarshaledRequest.PathParams))
+	assert.Equal(t, len(endpointRequest.QueryParams), len(unmarshaledRequest.QueryParams))
+	assert.Equal(t, len(endpointRequest.BodyParams), len(unmarshaledRequest.BodyParams))
+}
+
+func Test_EndpointResponse_Structure(t *testing.T) {
+	endpointResponse := EndpointResponse{
+		ContentType: "application/json",
+		StatusCode:  201,
+		Headers: []Field{
+			{Name: "Location", Type: "String", Description: "URL of created resource"},
+		},
+		BodyFields: []Field{
+			{Name: "id", Type: "UUID", Description: "Created resource ID"},
+			{Name: "created_at", Type: "Timestamp", Description: "Creation timestamp"},
+		},
+		BodyObject: nil,
+	}
+
+	// Test JSON marshaling
+	jsonData, err := json.Marshal(endpointResponse)
+	require.NoError(t, err)
+	assert.Contains(t, string(jsonData), "application/json")
+	assert.Contains(t, string(jsonData), "201")
+	assert.Contains(t, string(jsonData), "Location")
+
+	// Test JSON unmarshaling
+	var unmarshaledResponse EndpointResponse
+	err = json.Unmarshal(jsonData, &unmarshaledResponse)
+	require.NoError(t, err)
+	assert.Equal(t, endpointResponse.ContentType, unmarshaledResponse.ContentType)
+	assert.Equal(t, endpointResponse.StatusCode, unmarshaledResponse.StatusCode)
+	assert.Equal(t, len(endpointResponse.Headers), len(unmarshaledResponse.Headers))
+	assert.Equal(t, len(endpointResponse.BodyFields), len(unmarshaledResponse.BodyFields))
+}
+
+func Test_EndpointResponse_WithBodyObject(t *testing.T) {
+	objectName := "User"
+	endpointResponse := EndpointResponse{
+		ContentType: "application/json",
+		StatusCode:  200,
+		Headers:     []Field{},
+		BodyFields:  []Field{},
+		BodyObject:  &objectName,
+	}
+
+	// Test JSON marshaling
+	jsonData, err := json.Marshal(endpointResponse)
+	require.NoError(t, err)
+	assert.Contains(t, string(jsonData), "User")
+
+	// Test JSON unmarshaling
+	var unmarshaledResponse EndpointResponse
+	err = json.Unmarshal(jsonData, &unmarshaledResponse)
+	require.NoError(t, err)
+	assert.Equal(t, endpointResponse.StatusCode, unmarshaledResponse.StatusCode)
+	require.NotNil(t, unmarshaledResponse.BodyObject)
+	assert.Equal(t, "User", *unmarshaledResponse.BodyObject)
 }
 
 func Test_Resource_CompleteStructure(t *testing.T) {
@@ -296,11 +404,17 @@ func Test_Resource_CompleteStructure(t *testing.T) {
 		Endpoints: []Endpoint{
 			{
 				Name:        "GetProduct",
+				Title:       "Get Product",
 				Description: "Get product by ID",
 				Method:      "GET",
-				Path:        "/products/{id}",
-				PathParameters: []Field{
-					{Name: "id", Type: "UUID", Description: "Product ID"},
+				Path:        "/{id}",
+				Request: EndpointRequest{
+					PathParams: []Field{
+						{Name: "id", Type: "UUID", Description: "Product ID"},
+					},
+				},
+				Response: EndpointResponse{
+					StatusCode: 200,
 				},
 			},
 		},

@@ -138,20 +138,58 @@ func Test_GenerateEndpointSchema(t *testing.T) {
 	// Check that expected properties are present
 	_, hasName := schema.Properties.Get("name")
 	assert.True(t, hasName)
+	_, hasTitle := schema.Properties.Get("title")
+	assert.True(t, hasTitle)
 	_, hasDescription := schema.Properties.Get("description")
 	assert.True(t, hasDescription)
 	_, hasMethod := schema.Properties.Get("method")
 	assert.True(t, hasMethod)
 	_, hasPath := schema.Properties.Get("path")
 	assert.True(t, hasPath)
-	_, hasRequestFields := schema.Properties.Get("request_fields")
-	assert.True(t, hasRequestFields)
-	_, hasResponseFields := schema.Properties.Get("response_fields")
-	assert.True(t, hasResponseFields)
-	_, hasQueryParams := schema.Properties.Get("query_parameters")
-	assert.True(t, hasQueryParams)
-	_, hasPathParams := schema.Properties.Get("path_parameters")
+	_, hasRequest := schema.Properties.Get("request")
+	assert.True(t, hasRequest)
+	_, hasResponse := schema.Properties.Get("response")
+	assert.True(t, hasResponse)
+}
+
+func Test_GenerateEndpointRequestSchema(t *testing.T) {
+	generator := NewSchemaGenerator()
+	
+	schema, err := generator.GenerateEndpointRequestSchema()
+	require.NoError(t, err)
+	assert.NotNil(t, schema)
+	
+	// Check that expected properties are present
+	_, hasContentType := schema.Properties.Get("content_type")
+	assert.True(t, hasContentType)
+	_, hasHeaders := schema.Properties.Get("headers")
+	assert.True(t, hasHeaders)
+	_, hasPathParams := schema.Properties.Get("path_params")
 	assert.True(t, hasPathParams)
+	_, hasQueryParams := schema.Properties.Get("query_params")
+	assert.True(t, hasQueryParams)
+	_, hasBodyParams := schema.Properties.Get("body_params")
+	assert.True(t, hasBodyParams)
+}
+
+func Test_GenerateEndpointResponseSchema(t *testing.T) {
+	generator := NewSchemaGenerator()
+	
+	schema, err := generator.GenerateEndpointResponseSchema()
+	require.NoError(t, err)
+	assert.NotNil(t, schema)
+	
+	// Check that expected properties are present
+	_, hasContentType := schema.Properties.Get("content_type")
+	assert.True(t, hasContentType)
+	_, hasStatusCode := schema.Properties.Get("status_code")
+	assert.True(t, hasStatusCode)
+	_, hasHeaders := schema.Properties.Get("headers")
+	assert.True(t, hasHeaders)
+	_, hasBodyFields := schema.Properties.Get("body_fields")
+	assert.True(t, hasBodyFields)
+	_, hasBodyObject := schema.Properties.Get("body_object")
+	assert.True(t, hasBodyObject)
 }
 
 func Test_GenerateAllSchemas(t *testing.T) {
@@ -162,7 +200,7 @@ func Test_GenerateAllSchemas(t *testing.T) {
 	assert.NotNil(t, schemas)
 	
 	// Check that all expected schemas are present
-	expectedSchemas := []string{"Service", "Enum", "Object", "Resource", "Field", "ResourceField", "Endpoint"}
+	expectedSchemas := []string{"Service", "Enum", "Object", "Resource", "Field", "ResourceField", "Endpoint", "EndpointRequest", "EndpointResponse"}
 	for _, expectedSchema := range expectedSchemas {
 		assert.Contains(t, schemas, expectedSchema, "Schema %s should be present", expectedSchema)
 		assert.NotNil(t, schemas[expectedSchema], "Schema %s should not be nil", expectedSchema)

@@ -98,27 +98,65 @@ type ResourceField struct {
 
 // Endpoint represents an API endpoint within a resource.
 type Endpoint struct {
-	// Name of the endpoint, should be unique within the resource
+	// Resource that is used in the endpoint
+	Resource string `json:"-"` // no json tag, because it will be added automatically
+
+	// Name of the endpoint, Should be unique within the resource.
+	// For example: "Get", "Create", "Update", "Delete", "Search"...
 	Name string `json:"name"`
+
+	// Title for the endpoint, should be unique within the resource.
+	// For example: "Get School", "Create School", "Update School", "Delete School", "Search School"...
+	Title string `json:"title"`
 
 	// Description of the endpoint
 	Description string `json:"description"`
 
-	// HTTP method for the endpoint (GET, POST, PUT, DELETE, PATCH)
+	// HTTP method of the endpoint
 	Method string `json:"method"`
 
-	// Path pattern for the endpoint
+	// Path of the endpoint, "/:id". No need to include the resource name, it will be added automatically.
 	Path string `json:"path"`
 
-	// Request body fields for the endpoint
-	RequestFields []Field `json:"request_fields,omitempty"`
+	// Request that is used in the endpoint
+	Request EndpointRequest `json:"request"`
 
-	// Response fields for the endpoint
-	ResponseFields []Field `json:"response_fields,omitempty"`
+	// Response that is used in the endpoint on success
+	Response EndpointResponse `json:"response"`
+}
 
-	// Query parameters for the endpoint
-	QueryParameters []Field `json:"query_parameters,omitempty"`
+// EndpointRequest represents the request structure for an API endpoint.
+type EndpointRequest struct {
+	// Content-Type of the request
+	ContentType string `json:"content_type"`
 
-	// Path parameters for the endpoint
-	PathParameters []Field `json:"path_parameters,omitempty"`
+	// Headers that are used in the request
+	Headers []Field `json:"headers"`
+
+	// Path parameters that are used in the endpoint
+	PathParams []Field `json:"path_params"`
+
+	// Query parameters that are used in the endpoint
+	QueryParams []Field `json:"query_params"`
+
+	// Body parameters that are used in the endpoint
+	BodyParams []Field `json:"body_params"`
+}
+
+// EndpointResponse represents the response structure for an API endpoint.
+type EndpointResponse struct {
+	// Content-Type of the response
+	ContentType string `json:"content_type"`
+
+	// HTTP status code this response represents (e.g. 200, 201, 400)
+	StatusCode int `json:"status_code"`
+
+	// Headers returned in the response
+	Headers []Field `json:"headers"`
+
+	// Body fields returned in the response (flat or object)
+	BodyFields []Field `json:"body_fields"`
+
+	// If a full object is returned (instead of individual fields) - can be object or Resource
+	BodyObject *string `json:"body_object,omitempty"`
 }
