@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_Service_JSONMarshaling(t *testing.T) {
+func TestServiceJSONMarshaling(t *testing.T) {
 	service := Service{
 		Name: "TestService",
 		Enums: []Enum{
@@ -87,7 +87,7 @@ func Test_Service_JSONMarshaling(t *testing.T) {
 	assert.Equal(t, len(service.Resources), len(unmarshaledService.Resources))
 }
 
-func Test_Service_YAMLMarshaling(t *testing.T) {
+func TestServiceYAMLMarshaling(t *testing.T) {
 	service := Service{
 		Name: "TestService",
 		Enums: []Enum{
@@ -160,7 +160,7 @@ func Test_Service_YAMLMarshaling(t *testing.T) {
 	assert.Equal(t, len(service.Resources), len(unmarshaledService.Resources))
 }
 
-func Test_Enum_Structure(t *testing.T) {
+func TestEnumStructure(t *testing.T) {
 	enum := Enum{
 		Name:        "Priority",
 		Description: "Task priority levels",
@@ -188,7 +188,7 @@ func Test_Enum_Structure(t *testing.T) {
 	assert.Equal(t, len(enum.Values), len(unmarshaledEnum.Values))
 }
 
-func Test_Field_WithModifiers(t *testing.T) {
+func TestFieldWithModifiers(t *testing.T) {
 	field := Field{
 		Name:        "tags",
 		Description: "List of tags",
@@ -213,7 +213,7 @@ func Test_Field_WithModifiers(t *testing.T) {
 	assert.Equal(t, field.Modifiers, unmarshaledField.Modifiers)
 }
 
-func Test_ResourceField_InheritanceFromField(t *testing.T) {
+func TestResourceFieldInheritanceFromField(t *testing.T) {
 	resourceField := ResourceField{
 		Field: Field{
 			Name:        "username",
@@ -240,7 +240,7 @@ func Test_ResourceField_InheritanceFromField(t *testing.T) {
 	assert.Equal(t, resourceField.Operations, unmarshaledResourceField.Operations)
 }
 
-func Test_Endpoint_CompleteStructure(t *testing.T) {
+func TestEndpointCompleteStructure(t *testing.T) {
 	endpoint := Endpoint{
 		Name:        "CreateUser",
 		Title:       "Create User",
@@ -286,7 +286,7 @@ func Test_Endpoint_CompleteStructure(t *testing.T) {
 	assert.Equal(t, len(endpoint.Request.QueryParams), len(unmarshaledEndpoint.Request.QueryParams))
 }
 
-func Test_EndpointRequest_Structure(t *testing.T) {
+func TestEndpointRequestStructure(t *testing.T) {
 	endpointRequest := EndpointRequest{
 		ContentType: "application/json",
 		Headers: []Field{
@@ -322,7 +322,7 @@ func Test_EndpointRequest_Structure(t *testing.T) {
 	assert.Equal(t, len(endpointRequest.BodyParams), len(unmarshaledRequest.BodyParams))
 }
 
-func Test_EndpointResponse_Structure(t *testing.T) {
+func TestEndpointResponseStructure(t *testing.T) {
 	endpointResponse := EndpointResponse{
 		ContentType: "application/json",
 		StatusCode:  201,
@@ -353,7 +353,7 @@ func Test_EndpointResponse_Structure(t *testing.T) {
 	assert.Equal(t, len(endpointResponse.BodyFields), len(unmarshaledResponse.BodyFields))
 }
 
-func Test_EndpointResponse_WithBodyObject(t *testing.T) {
+func TestEndpointResponseWithBodyObject(t *testing.T) {
 	objectName := "User"
 	endpointResponse := EndpointResponse{
 		ContentType: "application/json",
@@ -377,7 +377,7 @@ func Test_EndpointResponse_WithBodyObject(t *testing.T) {
 	assert.Equal(t, "User", *unmarshaledResponse.BodyObject)
 }
 
-func Test_Resource_CompleteStructure(t *testing.T) {
+func TestResourceCompleteStructure(t *testing.T) {
 	resource := Resource{
 		Name:        "Products",
 		Description: "Product management resource",

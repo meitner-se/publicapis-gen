@@ -19,7 +19,7 @@ func NewSchemaGenerator() *SchemaGenerator {
 		DoNotReference:            false,
 		ExpandedStruct:            true,
 	}
-	
+
 	return &SchemaGenerator{
 		reflector: r,
 	}
@@ -31,7 +31,7 @@ func (sg *SchemaGenerator) GenerateServiceSchema() (*jsonschema.Schema, error) {
 	if schema == nil {
 		return nil, fmt.Errorf("failed to generate schema for Service")
 	}
-	
+
 	return schema, nil
 }
 
@@ -41,7 +41,7 @@ func (sg *SchemaGenerator) GenerateEnumSchema() (*jsonschema.Schema, error) {
 	if schema == nil {
 		return nil, fmt.Errorf("failed to generate schema for Enum")
 	}
-	
+
 	return schema, nil
 }
 
@@ -51,7 +51,7 @@ func (sg *SchemaGenerator) GenerateObjectSchema() (*jsonschema.Schema, error) {
 	if schema == nil {
 		return nil, fmt.Errorf("failed to generate schema for Object")
 	}
-	
+
 	return schema, nil
 }
 
@@ -61,7 +61,7 @@ func (sg *SchemaGenerator) GenerateResourceSchema() (*jsonschema.Schema, error) 
 	if schema == nil {
 		return nil, fmt.Errorf("failed to generate schema for Resource")
 	}
-	
+
 	return schema, nil
 }
 
@@ -71,7 +71,7 @@ func (sg *SchemaGenerator) GenerateFieldSchema() (*jsonschema.Schema, error) {
 	if schema == nil {
 		return nil, fmt.Errorf("failed to generate schema for Field")
 	}
-	
+
 	return schema, nil
 }
 
@@ -81,7 +81,7 @@ func (sg *SchemaGenerator) GenerateResourceFieldSchema() (*jsonschema.Schema, er
 	if schema == nil {
 		return nil, fmt.Errorf("failed to generate schema for ResourceField")
 	}
-	
+
 	return schema, nil
 }
 
@@ -91,7 +91,7 @@ func (sg *SchemaGenerator) GenerateEndpointSchema() (*jsonschema.Schema, error) 
 	if schema == nil {
 		return nil, fmt.Errorf("failed to generate schema for Endpoint")
 	}
-	
+
 	return schema, nil
 }
 
@@ -101,7 +101,7 @@ func (sg *SchemaGenerator) GenerateEndpointRequestSchema() (*jsonschema.Schema, 
 	if schema == nil {
 		return nil, fmt.Errorf("failed to generate schema for EndpointRequest")
 	}
-	
+
 	return schema, nil
 }
 
@@ -111,68 +111,68 @@ func (sg *SchemaGenerator) GenerateEndpointResponseSchema() (*jsonschema.Schema,
 	if schema == nil {
 		return nil, fmt.Errorf("failed to generate schema for EndpointResponse")
 	}
-	
+
 	return schema, nil
 }
 
 // GenerateAllSchemas generates JSON schemas for all main specification structs.
 func (sg *SchemaGenerator) GenerateAllSchemas() (map[string]*jsonschema.Schema, error) {
 	schemas := make(map[string]*jsonschema.Schema)
-	
+
 	serviceSchema, err := sg.GenerateServiceSchema()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate Service schema: %w", err)
 	}
 	schemas["Service"] = serviceSchema
-	
+
 	enumSchema, err := sg.GenerateEnumSchema()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate Enum schema: %w", err)
 	}
 	schemas["Enum"] = enumSchema
-	
+
 	objectSchema, err := sg.GenerateObjectSchema()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate Object schema: %w", err)
 	}
 	schemas["Object"] = objectSchema
-	
+
 	resourceSchema, err := sg.GenerateResourceSchema()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate Resource schema: %w", err)
 	}
 	schemas["Resource"] = resourceSchema
-	
+
 	fieldSchema, err := sg.GenerateFieldSchema()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate Field schema: %w", err)
 	}
 	schemas["Field"] = fieldSchema
-	
+
 	resourceFieldSchema, err := sg.GenerateResourceFieldSchema()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate ResourceField schema: %w", err)
 	}
 	schemas["ResourceField"] = resourceFieldSchema
-	
+
 	endpointSchema, err := sg.GenerateEndpointSchema()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate Endpoint schema: %w", err)
 	}
 	schemas["Endpoint"] = endpointSchema
-	
+
 	endpointRequestSchema, err := sg.GenerateEndpointRequestSchema()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate EndpointRequest schema: %w", err)
 	}
 	schemas["EndpointRequest"] = endpointRequestSchema
-	
+
 	endpointResponseSchema, err := sg.GenerateEndpointResponseSchema()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate EndpointResponse schema: %w", err)
 	}
 	schemas["EndpointResponse"] = endpointResponseSchema
-	
+
 	return schemas, nil
 }
 
@@ -182,7 +182,7 @@ func (sg *SchemaGenerator) SchemaToJSON(schema *jsonschema.Schema) (string, erro
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal schema to JSON: %w", err)
 	}
-	
+
 	return string(jsonBytes), nil
 }
 
@@ -192,6 +192,6 @@ func (sg *SchemaGenerator) GenerateServiceSchemaJSON() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	return sg.SchemaToJSON(schema)
 }

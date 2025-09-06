@@ -8,23 +8,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_NewSchemaGenerator(t *testing.T) {
+func TestNewSchemaGenerator(t *testing.T) {
 	generator := NewSchemaGenerator()
 	assert.NotNil(t, generator)
 	assert.NotNil(t, generator.reflector)
 }
 
-func Test_GenerateServiceSchema(t *testing.T) {
+func TestGenerateServiceSchema(t *testing.T) {
 	generator := NewSchemaGenerator()
-	
+
 	schema, err := generator.GenerateServiceSchema()
 	require.NoError(t, err)
 	assert.NotNil(t, schema)
-	
+
 	// Check that it's a valid schema
 	assert.NotEmpty(t, schema.Type)
 	assert.NotNil(t, schema.Properties)
-	
+
 	// Check that expected properties are present
 	_, hasName := schema.Properties.Get("name")
 	assert.True(t, hasName)
@@ -36,13 +36,13 @@ func Test_GenerateServiceSchema(t *testing.T) {
 	assert.True(t, hasResources)
 }
 
-func Test_GenerateEnumSchema(t *testing.T) {
+func TestGenerateEnumSchema(t *testing.T) {
 	generator := NewSchemaGenerator()
-	
+
 	schema, err := generator.GenerateEnumSchema()
 	require.NoError(t, err)
 	assert.NotNil(t, schema)
-	
+
 	// Check that expected properties are present
 	_, hasName := schema.Properties.Get("name")
 	assert.True(t, hasName)
@@ -52,13 +52,13 @@ func Test_GenerateEnumSchema(t *testing.T) {
 	assert.True(t, hasValues)
 }
 
-func Test_GenerateObjectSchema(t *testing.T) {
+func TestGenerateObjectSchema(t *testing.T) {
 	generator := NewSchemaGenerator()
-	
+
 	schema, err := generator.GenerateObjectSchema()
 	require.NoError(t, err)
 	assert.NotNil(t, schema)
-	
+
 	// Check that expected properties are present
 	_, hasName := schema.Properties.Get("name")
 	assert.True(t, hasName)
@@ -68,13 +68,13 @@ func Test_GenerateObjectSchema(t *testing.T) {
 	assert.True(t, hasFields)
 }
 
-func Test_GenerateResourceSchema(t *testing.T) {
+func TestGenerateResourceSchema(t *testing.T) {
 	generator := NewSchemaGenerator()
-	
+
 	schema, err := generator.GenerateResourceSchema()
 	require.NoError(t, err)
 	assert.NotNil(t, schema)
-	
+
 	// Check that expected properties are present
 	_, hasName := schema.Properties.Get("name")
 	assert.True(t, hasName)
@@ -88,13 +88,13 @@ func Test_GenerateResourceSchema(t *testing.T) {
 	assert.True(t, hasEndpoints)
 }
 
-func Test_GenerateFieldSchema(t *testing.T) {
+func TestGenerateFieldSchema(t *testing.T) {
 	generator := NewSchemaGenerator()
-	
+
 	schema, err := generator.GenerateFieldSchema()
 	require.NoError(t, err)
 	assert.NotNil(t, schema)
-	
+
 	// Check that expected properties are present
 	_, hasName := schema.Properties.Get("name")
 	assert.True(t, hasName)
@@ -110,13 +110,13 @@ func Test_GenerateFieldSchema(t *testing.T) {
 	assert.True(t, hasModifiers)
 }
 
-func Test_GenerateResourceFieldSchema(t *testing.T) {
+func TestGenerateResourceFieldSchema(t *testing.T) {
 	generator := NewSchemaGenerator()
-	
+
 	schema, err := generator.GenerateResourceFieldSchema()
 	require.NoError(t, err)
 	assert.NotNil(t, schema)
-	
+
 	// Check that expected properties are present (should include Field properties plus operations)
 	_, hasName := schema.Properties.Get("name")
 	assert.True(t, hasName)
@@ -128,13 +128,13 @@ func Test_GenerateResourceFieldSchema(t *testing.T) {
 	assert.True(t, hasOperations)
 }
 
-func Test_GenerateEndpointSchema(t *testing.T) {
+func TestGenerateEndpointSchema(t *testing.T) {
 	generator := NewSchemaGenerator()
-	
+
 	schema, err := generator.GenerateEndpointSchema()
 	require.NoError(t, err)
 	assert.NotNil(t, schema)
-	
+
 	// Check that expected properties are present
 	_, hasName := schema.Properties.Get("name")
 	assert.True(t, hasName)
@@ -152,13 +152,13 @@ func Test_GenerateEndpointSchema(t *testing.T) {
 	assert.True(t, hasResponse)
 }
 
-func Test_GenerateEndpointRequestSchema(t *testing.T) {
+func TestGenerateEndpointRequestSchema(t *testing.T) {
 	generator := NewSchemaGenerator()
-	
+
 	schema, err := generator.GenerateEndpointRequestSchema()
 	require.NoError(t, err)
 	assert.NotNil(t, schema)
-	
+
 	// Check that expected properties are present
 	_, hasContentType := schema.Properties.Get("content_type")
 	assert.True(t, hasContentType)
@@ -172,13 +172,13 @@ func Test_GenerateEndpointRequestSchema(t *testing.T) {
 	assert.True(t, hasBodyParams)
 }
 
-func Test_GenerateEndpointResponseSchema(t *testing.T) {
+func TestGenerateEndpointResponseSchema(t *testing.T) {
 	generator := NewSchemaGenerator()
-	
+
 	schema, err := generator.GenerateEndpointResponseSchema()
 	require.NoError(t, err)
 	assert.NotNil(t, schema)
-	
+
 	// Check that expected properties are present
 	_, hasContentType := schema.Properties.Get("content_type")
 	assert.True(t, hasContentType)
@@ -192,20 +192,20 @@ func Test_GenerateEndpointResponseSchema(t *testing.T) {
 	assert.True(t, hasBodyObject)
 }
 
-func Test_GenerateAllSchemas(t *testing.T) {
+func TestGenerateAllSchemas(t *testing.T) {
 	generator := NewSchemaGenerator()
-	
+
 	schemas, err := generator.GenerateAllSchemas()
 	require.NoError(t, err)
 	assert.NotNil(t, schemas)
-	
+
 	// Check that all expected schemas are present
 	expectedSchemas := []string{"Service", "Enum", "Object", "Resource", "Field", "ResourceField", "Endpoint", "EndpointRequest", "EndpointResponse"}
 	for _, expectedSchema := range expectedSchemas {
 		assert.Contains(t, schemas, expectedSchema, "Schema %s should be present", expectedSchema)
 		assert.NotNil(t, schemas[expectedSchema], "Schema %s should not be nil", expectedSchema)
 	}
-	
+
 	// Check that each schema has the correct structure
 	for name, schema := range schemas {
 		assert.NotEmpty(t, schema.Type, "Schema %s should have a type", name)
@@ -213,38 +213,38 @@ func Test_GenerateAllSchemas(t *testing.T) {
 	}
 }
 
-func Test_SchemaToJSON(t *testing.T) {
+func TestSchemaToJSON(t *testing.T) {
 	generator := NewSchemaGenerator()
-	
+
 	schema, err := generator.GenerateServiceSchema()
 	require.NoError(t, err)
-	
+
 	jsonStr, err := generator.SchemaToJSON(schema)
 	require.NoError(t, err)
 	assert.NotEmpty(t, jsonStr)
-	
+
 	// Verify it's valid JSON
 	var jsonObj map[string]interface{}
 	err = json.Unmarshal([]byte(jsonStr), &jsonObj)
 	require.NoError(t, err)
-	
+
 	// Check that essential schema elements are present
 	assert.Contains(t, jsonObj, "type")
 	assert.Contains(t, jsonObj, "properties")
 }
 
-func Test_GenerateServiceSchemaJSON(t *testing.T) {
+func TestGenerateServiceSchemaJSON(t *testing.T) {
 	generator := NewSchemaGenerator()
-	
+
 	jsonStr, err := generator.GenerateServiceSchemaJSON()
 	require.NoError(t, err)
 	assert.NotEmpty(t, jsonStr)
-	
+
 	// Verify it's valid JSON
 	var jsonObj map[string]interface{}
 	err = json.Unmarshal([]byte(jsonStr), &jsonObj)
 	require.NoError(t, err)
-	
+
 	// Check that service-specific properties are present
 	properties, ok := jsonObj["properties"].(map[string]interface{})
 	require.True(t, ok)
@@ -254,14 +254,14 @@ func Test_GenerateServiceSchemaJSON(t *testing.T) {
 	assert.Contains(t, properties, "resources")
 }
 
-func Test_SchemaGeneration_Integration(t *testing.T) {
+func TestSchemaGenerationIntegration(t *testing.T) {
 	// Test that we can generate schemas for a complete service specification
 	generator := NewSchemaGenerator()
-	
+
 	// Generate all schemas
 	schemas, err := generator.GenerateAllSchemas()
 	require.NoError(t, err)
-	
+
 	// Convert each to JSON and verify they're valid
 	for name, schema := range schemas {
 		jsonStr, err := generator.SchemaToJSON(schema)
@@ -278,7 +278,7 @@ func Test_SchemaGeneration_Integration(t *testing.T) {
 	}
 }
 
-func Test_SchemaGeneration_WithRealData(t *testing.T) {
+func TestSchemaGenerationWithRealData(t *testing.T) {
 	// Test schema generation with actual Service data
 	service := Service{
 		Name: "UserAPI",

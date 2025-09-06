@@ -98,9 +98,6 @@ type ResourceField struct {
 
 // Endpoint represents an API endpoint within a resource.
 type Endpoint struct {
-	// Resource that is used in the endpoint
-	Resource string `json:"-"` // no json tag, because it will be added automatically
-
 	// Name of the endpoint, Should be unique within the resource.
 	// For example: "Get", "Create", "Update", "Delete", "Search"...
 	Name string `json:"name"`
