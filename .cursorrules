@@ -1,0 +1,130 @@
+# Go Best Practices & Project Guidelines
+
+## Code Quality & Style
+
+- Follow Go conventions and idioms consistently
+- Use `gofmt` and `goimports` to format code automatically
+- Write code that is easy to read, understand, and maintain
+- Use meaningful variable and function names that clearly express intent
+- Keep functions small and focused on a single responsibility
+- Prefer composition over inheritance
+- Use interfaces to define contracts and enable testability
+
+## Package Management & Dependencies
+
+- Be extremely careful when adding 3rd party packages
+- Evaluate dependencies for security, maintenance status, and necessity
+- Prefer standard library solutions when possible
+- Keep dependencies minimal and well-justified
+- Use Go modules (`go.mod`) for dependency management
+- Pin dependency versions to ensure reproducible builds
+- Regularly audit and update dependencies for security vulnerabilities
+
+## Testing Requirements
+
+- **ALWAYS write tests for all new functionality** - no exceptions
+- Keep tests updated when updating functionality
+- Use `github.com/stretchr/testify/assert` for assertions
+- Use `github.com/stretchr/testify/require` for critical checks that should stop test execution
+- Follow naming conventions:
+  - Unexported functions: `Test_functionName(t *testing.T)` (e.g., `Test_run`)
+  - Exported functions: `TestFunctionName(t *testing.T)` (e.g., `TestRun`)
+- Write table-driven tests when testing multiple scenarios
+- Aim for high test coverage (minimum 80%)
+- Test both happy paths and error conditions
+- Use test helpers to reduce duplication
+- Write integration tests for critical API workflows
+
+## API Development Standards
+
+- Follow RESTful API design principles for resource-oriented APIs
+- Implement proper HTTP status codes and error responses
+- Use consistent JSON response formats
+- Validate all input data thoroughly
+- Implement proper authentication and authorization
+- Follow OpenAPI 3.0 specification standards
+- Design APIs with backwards compatibility in mind
+- Use semantic versioning for API versions
+
+## Documentation & Communication
+
+- **ALWAYS keep README.md updated** with any changes
+- Document public APIs with clear examples
+- Use Go doc comments for all exported functions, types, and packages
+- Include usage examples in documentation
+- Maintain CHANGELOG.md for version history
+- Document configuration options and environment variables
+- Provide clear error messages that help users understand issues
+
+## Git & Commit Standards
+
+- **Use conventional commit messages** - PR titles must follow conventional commit format since they become commit messages when merged
+- Format: `type(scope): description`
+- Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+- Examples:
+  - `feat(api): add user management endpoints`
+  - `fix(auth): resolve token validation issue`
+  - `docs(readme): update installation instructions`
+  - `test(users): add comprehensive user creation tests`
+- Keep commits atomic and focused
+- Write descriptive commit messages that explain the "why" not just the "what"
+
+## Security & Error Handling
+
+- Never log sensitive information (passwords, tokens, personal data)
+- Validate and sanitize all external inputs
+- Use proper error handling with meaningful error messages
+- Implement proper logging levels (debug, info, warn, error)
+- Follow principle of least privilege
+- Use secure defaults for all configurations
+- Implement proper rate limiting for API endpoints
+- Use HTTPS in production environments
+
+## Project Structure
+
+- Organize code using standard Go project layout
+- Keep `main.go` minimal - move logic to packages
+- Use internal packages for code not meant to be imported
+- Separate concerns: handlers, services, repositories, models
+- Create clear package boundaries with well-defined interfaces
+- Use dependency injection for better testability
+
+## Performance & Reliability
+
+- Profile code to identify bottlenecks before optimizing
+- Use context.Context for cancellation and timeouts
+- Implement proper connection pooling for databases
+- Handle graceful shutdowns for long-running services
+- Use appropriate data structures for the task
+- Minimize memory allocations in hot paths
+- Implement proper logging without performance impact
+
+## OpenAPI Specification Standards
+
+- Generate complete and valid OpenAPI 3.0 specifications
+- Include comprehensive examples for all endpoints
+- Document all request/response schemas
+- Use meaningful operation IDs and tags
+- Include proper error response schemas
+- Validate generated specs against OpenAPI standards
+- Ensure specifications are human-readable and well-organized
+
+## Code Review Guidelines
+
+- All code must be reviewed before merging
+- Reviewers should verify tests are included and comprehensive
+- Check for security vulnerabilities and best practices
+- Ensure documentation is updated
+- Verify conventional commit message format
+- Test the changes in a development environment
+- Ensure backwards compatibility for public APIs
+
+## Continuous Integration
+
+- Run all tests on every pull request
+- Ensure code builds successfully across supported Go versions
+- Run linting and formatting checks
+- Perform security scanning on dependencies
+- Validate generated OpenAPI specifications
+- Check test coverage thresholds
+- Run integration tests against real environments when possible
