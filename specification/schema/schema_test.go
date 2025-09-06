@@ -1,4 +1,4 @@
-package specification
+package schema
 
 import (
 	"encoding/json"
@@ -7,6 +7,8 @@ import (
 	"github.com/invopop/jsonschema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/meitner-se/publicapis-gen/specification"
 )
 
 func TestNewSchemaGenerator(t *testing.T) {
@@ -281,36 +283,36 @@ func TestSchemaGenerationIntegration(t *testing.T) {
 
 func TestSchemaGenerationWithRealData(t *testing.T) {
 	// Test schema generation with actual Service data
-	service := Service{
+	service := specification.Service{
 		Name: "UserAPI",
-		Enums: []Enum{
+		Enums: []specification.Enum{
 			{
 				Name:        "UserStatus",
 				Description: "Status of the user",
-				Values: []EnumValue{
+				Values: []specification.EnumValue{
 					{Name: "Active", Description: "User is active"},
 					{Name: "Inactive", Description: "User is inactive"},
 				},
 			},
 		},
-		Objects: []Object{
+		Objects: []specification.Object{
 			{
 				Name:        "User",
 				Description: "User entity",
-				Fields: []Field{
+				Fields: []specification.Field{
 					{Name: "id", Type: "UUID", Description: "User ID"},
 					{Name: "username", Type: "String", Description: "Username"},
 				},
 			},
 		},
-		Resources: []Resource{
+		Resources: []specification.Resource{
 			{
 				Name:        "Users",
 				Description: "User resource",
 				Operations:  []string{"Create", "Read", "Update", "Delete"},
-				Fields: []ResourceField{
+				Fields: []specification.ResourceField{
 					{
-						Field: Field{
+						Field: specification.Field{
 							Name:        "id",
 							Type:        "UUID",
 							Description: "User ID",
@@ -318,7 +320,7 @@ func TestSchemaGenerationWithRealData(t *testing.T) {
 						Operations: []string{"Read"},
 					},
 				},
-				Endpoints: []Endpoint{
+				Endpoints: []specification.Endpoint{
 					{
 						Name:        "GetUser",
 						Description: "Get user by ID",
@@ -362,7 +364,7 @@ func TestSchemaGeneratorWithInvalidJSON(t *testing.T) {
 
 	// Test JSON marshaling error by creating a mock schema that fails to marshal
 	// This tests the error path in SchemaToJSON
-	schema := generator.reflector.Reflect(&Service{})
+	schema := generator.reflector.Reflect(&specification.Service{})
 	require.NotNil(t, schema)
 
 	// Test that we get valid JSON (this should not fail with valid schema)
@@ -418,15 +420,15 @@ func TestSchemaGenerationEdgeCases(t *testing.T) {
 	generator := NewSchemaGenerator()
 
 	// Test generating schemas for empty structs
-	emptyService := Service{}
-	emptyEnum := Enum{}
-	emptyObject := Object{}
-	emptyResource := Resource{}
-	emptyField := Field{}
-	emptyResourceField := ResourceField{}
-	emptyEndpoint := Endpoint{}
-	emptyEndpointRequest := EndpointRequest{}
-	emptyEndpointResponse := EndpointResponse{}
+	emptyService := specification.Service{}
+	emptyEnum := specification.Enum{}
+	emptyObject := specification.Object{}
+	emptyResource := specification.Resource{}
+	emptyField := specification.Field{}
+	emptyResourceField := specification.ResourceField{}
+	emptyEndpoint := specification.Endpoint{}
+	emptyEndpointRequest := specification.EndpointRequest{}
+	emptyEndpointResponse := specification.EndpointResponse{}
 
 	// Test that schemas can be generated for empty structs
 	testCases := []struct {
@@ -546,15 +548,15 @@ func TestSchemaReflectorBehavior(t *testing.T) {
 
 	// Test reflector with various struct types
 	testStructs := []interface{}{
-		&Service{},
-		&Enum{},
-		&Object{},
-		&Resource{},
-		&Field{},
-		&ResourceField{},
-		&Endpoint{},
-		&EndpointRequest{},
-		&EndpointResponse{},
+		&specification.Service{},
+		&specification.Enum{},
+		&specification.Object{},
+		&specification.Resource{},
+		&specification.Field{},
+		&specification.ResourceField{},
+		&specification.Endpoint{},
+		&specification.EndpointRequest{},
+		&specification.EndpointResponse{},
 	}
 
 	for i, testStruct := range testStructs {
@@ -569,27 +571,27 @@ func TestSchemaGeneratorErrorScenarios(t *testing.T) {
 	generator := NewSchemaGenerator()
 
 	// Test with non-pointer types (which should still work)
-	schema := generator.reflector.Reflect(Service{})
+	schema := generator.reflector.Reflect(specification.Service{})
 	assert.NotNil(t, schema)
 
 	// Test with complex nested structures
-	complexService := Service{
+	complexService := specification.Service{
 		Name: "Complex",
-		Enums: []Enum{
+		Enums: []specification.Enum{
 			{
 				Name:        "TestEnum",
 				Description: "Test enumeration",
-				Values: []EnumValue{
+				Values: []specification.EnumValue{
 					{Name: "Value1", Description: "First value"},
 					{Name: "Value2", Description: "Second value"},
 				},
 			},
 		},
-		Objects: []Object{
+		Objects: []specification.Object{
 			{
 				Name:        "ComplexObject",
 				Description: "Complex object",
-				Fields: []Field{
+				Fields: []specification.Field{
 					{
 						Name:        "nestedField",
 						Type:        "String",
@@ -601,14 +603,14 @@ func TestSchemaGeneratorErrorScenarios(t *testing.T) {
 				},
 			},
 		},
-		Resources: []Resource{
+		Resources: []specification.Resource{
 			{
 				Name:        "ComplexResource",
 				Description: "Complex resource",
 				Operations:  []string{"Create", "Read", "Update", "Delete", "List"},
-				Fields: []ResourceField{
+				Fields: []specification.ResourceField{
 					{
-						Field: Field{
+						Field: specification.Field{
 							Name:        "resourceField",
 							Type:        "ComplexObject",
 							Description: "Complex field",
@@ -617,38 +619,38 @@ func TestSchemaGeneratorErrorScenarios(t *testing.T) {
 						Operations: []string{"Create", "Read", "Update"},
 					},
 				},
-				Endpoints: []Endpoint{
+				Endpoints: []specification.Endpoint{
 					{
 						Name:        "ComplexEndpoint",
 						Title:       "Complex Endpoint",
 						Description: "Complex endpoint with all fields",
 						Method:      "POST",
 						Path:        "/complex/{id}",
-						Request: EndpointRequest{
+						Request: specification.EndpointRequest{
 							ContentType: "application/json",
-							Headers: []Field{
+							Headers: []specification.Field{
 								{Name: "Authorization", Type: "String", Description: "Auth header"},
 								{Name: "Content-Type", Type: "String", Description: "Content type"},
 							},
-							PathParams: []Field{
+							PathParams: []specification.Field{
 								{Name: "id", Type: "UUID", Description: "Resource ID"},
 							},
-							QueryParams: []Field{
+							QueryParams: []specification.Field{
 								{Name: "filter", Type: "String", Description: "Filter parameter"},
 								{Name: "sort", Type: "String", Description: "Sort parameter"},
 							},
-							BodyParams: []Field{
+							BodyParams: []specification.Field{
 								{Name: "data", Type: "ComplexObject", Description: "Request data"},
 								{Name: "metadata", Type: "String", Description: "Metadata"},
 							},
 						},
-						Response: EndpointResponse{
+						Response: specification.EndpointResponse{
 							ContentType: "application/json",
 							StatusCode:  201,
-							Headers: []Field{
+							Headers: []specification.Field{
 								{Name: "Location", Type: "String", Description: "Resource location"},
 							},
-							BodyFields: []Field{
+							BodyFields: []specification.Field{
 								{Name: "id", Type: "UUID", Description: "Created ID"},
 								{Name: "status", Type: "String", Description: "Creation status"},
 							},
@@ -685,16 +687,16 @@ func TestAllStructTypesWithReflection(t *testing.T) {
 		ptrType interface{}
 		valType interface{}
 	}{
-		{"Service", &Service{}, Service{}},
-		{"Enum", &Enum{}, Enum{}},
-		{"EnumValue", &EnumValue{}, EnumValue{}},
-		{"Object", &Object{}, Object{}},
-		{"Resource", &Resource{}, Resource{}},
-		{"Field", &Field{}, Field{}},
-		{"ResourceField", &ResourceField{}, ResourceField{}},
-		{"Endpoint", &Endpoint{}, Endpoint{}},
-		{"EndpointRequest", &EndpointRequest{}, EndpointRequest{}},
-		{"EndpointResponse", &EndpointResponse{}, EndpointResponse{}},
+		{"Service", &specification.Service{}, specification.Service{}},
+		{"Enum", &specification.Enum{}, specification.Enum{}},
+		{"EnumValue", &specification.EnumValue{}, specification.EnumValue{}},
+		{"Object", &specification.Object{}, specification.Object{}},
+		{"Resource", &specification.Resource{}, specification.Resource{}},
+		{"Field", &specification.Field{}, specification.Field{}},
+		{"ResourceField", &specification.ResourceField{}, specification.ResourceField{}},
+		{"Endpoint", &specification.Endpoint{}, specification.Endpoint{}},
+		{"EndpointRequest", &specification.EndpointRequest{}, specification.EndpointRequest{}},
+		{"EndpointResponse", &specification.EndpointResponse{}, specification.EndpointResponse{}},
 	}
 
 	for _, tc := range testCases {

@@ -1,10 +1,12 @@
-package specification
+package schema
 
 import (
 	"encoding/json"
 	"fmt"
 
 	"github.com/invopop/jsonschema"
+
+	"github.com/meitner-se/publicapis-gen/specification"
 )
 
 // SchemaGenerator provides functionality to generate JSON schemas from specification structs.
@@ -27,7 +29,7 @@ func NewSchemaGenerator() *SchemaGenerator {
 
 // GenerateServiceSchema generates a JSON schema for the Service struct.
 func (sg *SchemaGenerator) GenerateServiceSchema() (*jsonschema.Schema, error) {
-	schema := sg.reflector.Reflect(&Service{})
+	schema := sg.reflector.Reflect(&specification.Service{})
 	if schema == nil {
 		return nil, fmt.Errorf("failed to generate schema for Service")
 	}
@@ -37,7 +39,7 @@ func (sg *SchemaGenerator) GenerateServiceSchema() (*jsonschema.Schema, error) {
 
 // GenerateEnumSchema generates a JSON schema for the Enum struct.
 func (sg *SchemaGenerator) GenerateEnumSchema() (*jsonschema.Schema, error) {
-	schema := sg.reflector.Reflect(&Enum{})
+	schema := sg.reflector.Reflect(&specification.Enum{})
 	if schema == nil {
 		return nil, fmt.Errorf("failed to generate schema for Enum")
 	}
@@ -47,7 +49,7 @@ func (sg *SchemaGenerator) GenerateEnumSchema() (*jsonschema.Schema, error) {
 
 // GenerateObjectSchema generates a JSON schema for the Object struct.
 func (sg *SchemaGenerator) GenerateObjectSchema() (*jsonschema.Schema, error) {
-	schema := sg.reflector.Reflect(&Object{})
+	schema := sg.reflector.Reflect(&specification.Object{})
 	if schema == nil {
 		return nil, fmt.Errorf("failed to generate schema for Object")
 	}
@@ -57,7 +59,7 @@ func (sg *SchemaGenerator) GenerateObjectSchema() (*jsonschema.Schema, error) {
 
 // GenerateResourceSchema generates a JSON schema for the Resource struct.
 func (sg *SchemaGenerator) GenerateResourceSchema() (*jsonschema.Schema, error) {
-	schema := sg.reflector.Reflect(&Resource{})
+	schema := sg.reflector.Reflect(&specification.Resource{})
 	if schema == nil {
 		return nil, fmt.Errorf("failed to generate schema for Resource")
 	}
@@ -67,7 +69,7 @@ func (sg *SchemaGenerator) GenerateResourceSchema() (*jsonschema.Schema, error) 
 
 // GenerateFieldSchema generates a JSON schema for the Field struct.
 func (sg *SchemaGenerator) GenerateFieldSchema() (*jsonschema.Schema, error) {
-	schema := sg.reflector.Reflect(&Field{})
+	schema := sg.reflector.Reflect(&specification.Field{})
 	if schema == nil {
 		return nil, fmt.Errorf("failed to generate schema for Field")
 	}
@@ -77,7 +79,7 @@ func (sg *SchemaGenerator) GenerateFieldSchema() (*jsonschema.Schema, error) {
 
 // GenerateResourceFieldSchema generates a JSON schema for the ResourceField struct.
 func (sg *SchemaGenerator) GenerateResourceFieldSchema() (*jsonschema.Schema, error) {
-	schema := sg.reflector.Reflect(&ResourceField{})
+	schema := sg.reflector.Reflect(&specification.ResourceField{})
 	if schema == nil {
 		return nil, fmt.Errorf("failed to generate schema for ResourceField")
 	}
@@ -87,7 +89,7 @@ func (sg *SchemaGenerator) GenerateResourceFieldSchema() (*jsonschema.Schema, er
 
 // GenerateEndpointSchema generates a JSON schema for the Endpoint struct.
 func (sg *SchemaGenerator) GenerateEndpointSchema() (*jsonschema.Schema, error) {
-	schema := sg.reflector.Reflect(&Endpoint{})
+	schema := sg.reflector.Reflect(&specification.Endpoint{})
 	if schema == nil {
 		return nil, fmt.Errorf("failed to generate schema for Endpoint")
 	}
@@ -97,7 +99,7 @@ func (sg *SchemaGenerator) GenerateEndpointSchema() (*jsonschema.Schema, error) 
 
 // GenerateEndpointRequestSchema generates a JSON schema for the EndpointRequest struct.
 func (sg *SchemaGenerator) GenerateEndpointRequestSchema() (*jsonschema.Schema, error) {
-	schema := sg.reflector.Reflect(&EndpointRequest{})
+	schema := sg.reflector.Reflect(&specification.EndpointRequest{})
 	if schema == nil {
 		return nil, fmt.Errorf("failed to generate schema for EndpointRequest")
 	}
@@ -107,7 +109,7 @@ func (sg *SchemaGenerator) GenerateEndpointRequestSchema() (*jsonschema.Schema, 
 
 // GenerateEndpointResponseSchema generates a JSON schema for the EndpointResponse struct.
 func (sg *SchemaGenerator) GenerateEndpointResponseSchema() (*jsonschema.Schema, error) {
-	schema := sg.reflector.Reflect(&EndpointResponse{})
+	schema := sg.reflector.Reflect(&specification.EndpointResponse{})
 	if schema == nil {
 		return nil, fmt.Errorf("failed to generate schema for EndpointResponse")
 	}
