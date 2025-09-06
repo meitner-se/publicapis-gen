@@ -2,6 +2,7 @@ package schema
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/invopop/jsonschema"
@@ -750,11 +751,21 @@ resources: []
 	err = generator.ValidateService([]byte(invalidServiceJSON))
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "validation errors")
+	assert.Contains(t, err.Error(), "name")
+	assert.Contains(t, err.Error(), "required")
 
-	// Test malformed JSON
+	// Test malformed JSON with invalid property
 	malformedJSON := `{"name": "test", invalid json}`
 	err = generator.ValidateService([]byte(malformedJSON))
 	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "validation errors")
+	assert.Contains(t, err.Error(), "Additional property")
+	
+	// Test truly malformed JSON
+	trulyMalformedJSON := `{"name": "test", invalid`
+	err = generator.ValidateService([]byte(trulyMalformedJSON))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "neither valid JSON nor YAML")
 }
 
 func TestValidateEnum(t *testing.T) {
@@ -795,6 +806,9 @@ values:
 
 	err = generator.ValidateEnum([]byte(invalidEnumJSON))
 	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "validation errors")
+	assert.Contains(t, err.Error(), "name")
+	assert.Contains(t, err.Error(), "required")
 }
 
 func TestValidateObject(t *testing.T) {
@@ -813,7 +827,7 @@ func TestValidateObject(t *testing.T) {
 	err := generator.ValidateObject([]byte(validObjectJSON))
 	assert.NoError(t, err)
 
-	// Test invalid object JSON
+	// Test invalid object JSON (missing required field)
 	invalidObjectJSON := `{
 		"description": "User object",
 		"fields": []
@@ -821,6 +835,9 @@ func TestValidateObject(t *testing.T) {
 
 	err = generator.ValidateObject([]byte(invalidObjectJSON))
 	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "validation errors")
+	assert.Contains(t, err.Error(), "name")
+	assert.Contains(t, err.Error(), "required")
 }
 
 func TestValidateResource(t *testing.T) {
@@ -838,7 +855,7 @@ func TestValidateResource(t *testing.T) {
 	err := generator.ValidateResource([]byte(validResourceJSON))
 	assert.NoError(t, err)
 
-	// Test invalid resource JSON
+	// Test invalid resource JSON (missing required field)
 	invalidResourceJSON := `{
 		"description": "User resource",
 		"operations": [],
@@ -848,6 +865,9 @@ func TestValidateResource(t *testing.T) {
 
 	err = generator.ValidateResource([]byte(invalidResourceJSON))
 	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "validation errors")
+	assert.Contains(t, err.Error(), "name")
+	assert.Contains(t, err.Error(), "required")
 }
 
 func TestValidateField(t *testing.T) {
@@ -876,7 +896,7 @@ func TestValidateField(t *testing.T) {
 	err = generator.ValidateField([]byte(validFieldWithOptionalJSON))
 	assert.NoError(t, err)
 
-	// Test invalid field JSON
+	// Test invalid field JSON (missing required field)
 	invalidFieldJSON := `{
 		"description": "User's username",
 		"type": "String"
@@ -884,6 +904,9 @@ func TestValidateField(t *testing.T) {
 
 	err = generator.ValidateField([]byte(invalidFieldJSON))
 	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "validation errors")
+	assert.Contains(t, err.Error(), "name")
+	assert.Contains(t, err.Error(), "required")
 }
 
 func TestValidateResourceField(t *testing.T) {
@@ -900,7 +923,7 @@ func TestValidateResourceField(t *testing.T) {
 	err := generator.ValidateResourceField([]byte(validResourceFieldJSON))
 	assert.NoError(t, err)
 
-	// Test invalid resource field JSON
+	// Test invalid resource field JSON (missing required field)
 	invalidResourceFieldJSON := `{
 		"description": "User's username",
 		"type": "String",
@@ -909,6 +932,9 @@ func TestValidateResourceField(t *testing.T) {
 
 	err = generator.ValidateResourceField([]byte(invalidResourceFieldJSON))
 	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "validation errors")
+	assert.Contains(t, err.Error(), "name")
+	assert.Contains(t, err.Error(), "required")
 }
 
 func TestValidateEndpoint(t *testing.T) {
@@ -939,7 +965,7 @@ func TestValidateEndpoint(t *testing.T) {
 	err := generator.ValidateEndpoint([]byte(validEndpointJSON))
 	assert.NoError(t, err)
 
-	// Test invalid endpoint JSON
+	// Test invalid endpoint JSON (missing required field)
 	invalidEndpointJSON := `{
 		"title": "Get User",
 		"description": "Get user by ID",
@@ -951,6 +977,9 @@ func TestValidateEndpoint(t *testing.T) {
 
 	err = generator.ValidateEndpoint([]byte(invalidEndpointJSON))
 	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "validation errors")
+	assert.Contains(t, err.Error(), "name")
+	assert.Contains(t, err.Error(), "required")
 }
 
 func TestValidateEndpointRequest(t *testing.T) {
@@ -1025,6 +1054,9 @@ func TestValidateEndpointResponse(t *testing.T) {
 
 	err = generator.ValidateEndpointResponse([]byte(invalidEndpointResponseJSON))
 	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "validation errors")
+	assert.Contains(t, err.Error(), "status_code")
+	assert.Contains(t, err.Error(), "integer")
 }
 
 func TestConvertToJSON(t *testing.T) {
@@ -1137,11 +1169,21 @@ func TestParseServiceFromJSON(t *testing.T) {
 	_, err = generator.ParseServiceFromJSON([]byte(invalidServiceJSON))
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "validation failed")
+	assert.Contains(t, err.Error(), "name")
+	assert.Contains(t, err.Error(), "required")
 
-	// Test malformed JSON
+	// Test malformed JSON with invalid property
 	malformedJSON := `{"name": "test", invalid}`
 	_, err = generator.ParseServiceFromJSON([]byte(malformedJSON))
 	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "validation failed")
+	assert.Contains(t, err.Error(), "Additional property")
+	
+	// Test truly malformed JSON
+	trulyMalformedJSON := `{"name": "test", incomplete`
+	_, err = generator.ParseServiceFromJSON([]byte(trulyMalformedJSON))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "neither valid JSON nor YAML")
 }
 
 func TestParseServiceFromYAML(t *testing.T) {
@@ -1199,7 +1241,7 @@ resources:
 	assert.Len(t, service.Objects, 1)
 	assert.Len(t, service.Resources, 1)
 
-	// Test invalid service YAML
+	// Test invalid service YAML (missing required field)
 	invalidServiceYAML := `
 enums: []
 objects: []
@@ -1209,6 +1251,8 @@ resources: []
 	_, err = generator.ParseServiceFromYAML([]byte(invalidServiceYAML))
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "validation failed")
+	assert.Contains(t, err.Error(), "name")
+	assert.Contains(t, err.Error(), "required")
 }
 
 func TestParseEnumFromJSON(t *testing.T) {
@@ -1233,7 +1277,7 @@ func TestParseEnumFromJSON(t *testing.T) {
 	assert.Equal(t, "Active", enum.Values[0].Name)
 	assert.Equal(t, "Inactive", enum.Values[1].Name)
 
-	// Test invalid enum JSON
+	// Test invalid enum JSON (missing required field)
 	invalidEnumJSON := `{
 		"description": "Status enumeration",
 		"values": []
@@ -1242,6 +1286,8 @@ func TestParseEnumFromJSON(t *testing.T) {
 	_, err = generator.ParseEnumFromJSON([]byte(invalidEnumJSON))
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "validation failed")
+	assert.Contains(t, err.Error(), "name")
+	assert.Contains(t, err.Error(), "required")
 }
 
 func TestParseEnumFromYAML(t *testing.T) {
@@ -1265,7 +1311,7 @@ values:
 	assert.Equal(t, "Status enumeration", enum.Description)
 	assert.Len(t, enum.Values, 2)
 
-	// Test invalid enum YAML
+	// Test invalid enum YAML (missing required field)
 	invalidEnumYAML := `
 description: Status enumeration
 values: []
@@ -1274,6 +1320,8 @@ values: []
 	_, err = generator.ParseEnumFromYAML([]byte(invalidEnumYAML))
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "validation failed")
+	assert.Contains(t, err.Error(), "name")
+	assert.Contains(t, err.Error(), "required")
 }
 
 func TestParseObjectFromJSON(t *testing.T) {
@@ -1298,7 +1346,7 @@ func TestParseObjectFromJSON(t *testing.T) {
 	assert.Equal(t, "id", object.Fields[0].Name)
 	assert.Equal(t, "name", object.Fields[1].Name)
 
-	// Test invalid object JSON
+	// Test invalid object JSON (missing required field)
 	invalidObjectJSON := `{
 		"description": "User object",
 		"fields": []
@@ -1307,6 +1355,8 @@ func TestParseObjectFromJSON(t *testing.T) {
 	_, err = generator.ParseObjectFromJSON([]byte(invalidObjectJSON))
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "validation failed")
+	assert.Contains(t, err.Error(), "name")
+	assert.Contains(t, err.Error(), "required")
 }
 
 func TestParseObjectFromYAML(t *testing.T) {
@@ -1333,7 +1383,7 @@ fields:
 	assert.Equal(t, "User object", object.Description)
 	assert.Len(t, object.Fields, 2)
 
-	// Test invalid object YAML
+	// Test invalid object YAML (missing required field)
 	invalidObjectYAML := `
 description: User object
 fields: []
@@ -1342,6 +1392,8 @@ fields: []
 	_, err = generator.ParseObjectFromYAML([]byte(invalidObjectYAML))
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "validation failed")
+	assert.Contains(t, err.Error(), "name")
+	assert.Contains(t, err.Error(), "required")
 }
 
 func TestParseResourceFromJSON(t *testing.T) {
@@ -1393,7 +1445,7 @@ func TestParseResourceFromJSON(t *testing.T) {
 	assert.Len(t, resource.Fields, 1)
 	assert.Len(t, resource.Endpoints, 1)
 
-	// Test invalid resource JSON
+	// Test invalid resource JSON (missing required field)
 	invalidResourceJSON := `{
 		"description": "User resource",
 		"operations": [],
@@ -1404,6 +1456,8 @@ func TestParseResourceFromJSON(t *testing.T) {
 	_, err = generator.ParseResourceFromJSON([]byte(invalidResourceJSON))
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "validation failed")
+	assert.Contains(t, err.Error(), "name")
+	assert.Contains(t, err.Error(), "required")
 }
 
 func TestParseResourceFromYAML(t *testing.T) {
@@ -1447,7 +1501,7 @@ endpoints:
 	assert.Len(t, resource.Fields, 1)
 	assert.Len(t, resource.Endpoints, 1)
 
-	// Test invalid resource YAML
+	// Test invalid resource YAML (missing required field)
 	invalidResourceYAML := `
 description: User resource
 operations: []
@@ -1458,12 +1512,14 @@ endpoints: []
 	_, err = generator.ParseResourceFromYAML([]byte(invalidResourceYAML))
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "validation failed")
+	assert.Contains(t, err.Error(), "name")
+	assert.Contains(t, err.Error(), "required")
 }
 
 func TestValidationErrorMessages(t *testing.T) {
 	generator := NewSchemaGenerator()
 
-	// Test validation with detailed error information
+	// Test validation with detailed error information - type mismatch
 	invalidServiceJSON := `{
 		"enums": "not an array",
 		"objects": [],
@@ -1473,10 +1529,21 @@ func TestValidationErrorMessages(t *testing.T) {
 	err := generator.ValidateService([]byte(invalidServiceJSON))
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "validation errors")
+	assert.Contains(t, err.Error(), "enums")
+	assert.Contains(t, err.Error(), "array")
 
-	// The error should contain information about what's wrong
-	errorStr := err.Error()
-	assert.NotEmpty(t, errorStr)
+	// Test missing required field
+	missingFieldJSON := `{
+		"enums": [],
+		"objects": [],
+		"resources": []
+	}`
+	
+	err = generator.ValidateService([]byte(missingFieldJSON))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "validation errors")
+	assert.Contains(t, err.Error(), "name")
+	assert.Contains(t, err.Error(), "required")
 }
 
 func TestValidationWithComplexStructures(t *testing.T) {
@@ -1585,4 +1652,106 @@ func TestValidationWithComplexStructures(t *testing.T) {
 	assert.Len(t, service.Resources[0].Fields, 2)
 	assert.Len(t, service.Resources[0].Endpoints, 1)
 	assert.Equal(t, "CreateUser", service.Resources[0].Endpoints[0].Name)
+}
+
+func TestValidationErrorTypes(t *testing.T) {
+	generator := NewSchemaGenerator()
+
+	// Test invalid type for array field
+	invalidArrayTypeJSON := `{
+		"name": "TestService",
+		"enums": "not an array",
+		"objects": [],
+		"resources": []
+	}`
+
+	err := generator.ValidateService([]byte(invalidArrayTypeJSON))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "validation errors")
+	assert.Contains(t, err.Error(), "enums")
+	assert.Contains(t, err.Error(), "array")
+
+	// Test invalid type for status code (should be number)
+	invalidStatusCodeJSON := `{
+		"content_type": "application/json",
+		"status_code": "not a number",
+		"headers": [],
+		"body_fields": []
+	}`
+
+	err = generator.ValidateEndpointResponse([]byte(invalidStatusCodeJSON))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "validation errors")
+	assert.Contains(t, err.Error(), "status_code")
+	assert.Contains(t, err.Error(), "integer")
+
+	// Test missing nested required fields in enum values
+	invalidEnumValuesJSON := `{
+		"name": "Status",
+		"description": "Status enum",
+		"values": [
+			{"description": "Missing name field"}
+		]
+	}`
+
+	err = generator.ValidateEnum([]byte(invalidEnumValuesJSON))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "validation errors")
+	assert.Contains(t, err.Error(), "name")
+	assert.Contains(t, err.Error(), "required")
+
+	// Test invalid field type structure
+	invalidFieldTypeJSON := `{
+		"name": "TestField",
+		"description": "Test field",
+		"type": 123
+	}`
+
+	err = generator.ValidateField([]byte(invalidFieldTypeJSON))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "validation errors")
+	assert.Contains(t, err.Error(), "type")
+	assert.Contains(t, err.Error(), "string")
+}
+
+func TestSpecificValidationScenarios(t *testing.T) {
+	generator := NewSchemaGenerator()
+
+	// Test empty required string field
+	emptyNameServiceJSON := `{
+		"name": "",
+		"enums": [],
+		"objects": [],
+		"resources": []
+	}`
+
+	// This should pass basic validation (empty string is still a string)
+	// but shows we're validating structure, not business rules
+	err := generator.ValidateService([]byte(emptyNameServiceJSON))
+	assert.NoError(t, err) // Empty string is valid JSON schema-wise
+
+	// Test invalid JSON structure that's not parseable as JSON
+	completelyInvalidJSON := `{this is not valid JSON at all`
+
+	err = generator.ValidateService([]byte(completelyInvalidJSON))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "neither valid JSON nor YAML")
+
+	// Test invalid YAML structure  
+	invalidYAML := `
+name: TestService
+enums:
+  - name: Status
+    description: Status enum
+    values:
+      - name: Active
+        description: # Missing value after colon
+`
+
+	err = generator.ValidateService([]byte(invalidYAML))
+	require.Error(t, err)
+	// Could be either a YAML parsing error or validation error
+	assert.True(t, 
+		strings.Contains(err.Error(), "neither valid JSON nor YAML") ||
+		strings.Contains(err.Error(), "validation errors"))
 }
