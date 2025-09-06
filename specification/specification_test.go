@@ -2,6 +2,7 @@ package specification
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/goccy/go-yaml"
@@ -132,7 +133,7 @@ func TestServiceYAMLMarshaling(t *testing.T) {
 						Description: "List all people",
 						Method:      "GET",
 						Path:        "/",
-						Request: EndpointRequest{},
+						Request:     EndpointRequest{},
 						Response: EndpointResponse{
 							StatusCode: 200,
 							BodyFields: []Field{
@@ -436,4 +437,253 @@ func TestResourceCompleteStructure(t *testing.T) {
 	assert.Equal(t, resource.Operations, unmarshaledResource.Operations)
 	assert.Equal(t, len(resource.Fields), len(unmarshaledResource.Fields))
 	assert.Equal(t, len(resource.Endpoints), len(unmarshaledResource.Endpoints))
+}
+
+func TestEmptyStructures(t *testing.T) {
+	// Test empty structures can be marshaled/unmarshaled
+	testCases := []struct {
+		name string
+		data interface{}
+	}{
+		{"EmptyService", Service{}},
+		{"EmptyEnum", Enum{}},
+		{"EmptyObject", Object{}},
+		{"EmptyResource", Resource{}},
+		{"EmptyField", Field{}},
+		{"EmptyResourceField", ResourceField{}},
+		{"EmptyEndpoint", Endpoint{}},
+		{"EmptyEndpointRequest", EndpointRequest{}},
+		{"EmptyEndpointResponse", EndpointResponse{}},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Test JSON marshaling
+			jsonData, err := json.Marshal(tc.data)
+			require.NoError(t, err)
+			assert.NotEmpty(t, jsonData)
+
+			// Test YAML marshaling
+			yamlData, err := yaml.Marshal(tc.data)
+			require.NoError(t, err)
+			assert.NotEmpty(t, yamlData)
+		})
+	}
+}
+
+func TestFieldModifiersEdgeCases(t *testing.T) {
+	// Test field with multiple modifiers
+	field := Field{
+		Name:        "complexField",
+		Description: "A complex field with multiple modifiers",
+		Type:        "String",
+		Default:     "",
+		Example:     "",
+		Modifiers:   []string{"nullable", "array", "optional"},
+	}
+
+	jsonData, err := json.Marshal(field)
+	require.NoError(t, err)
+	assert.Contains(t, string(jsonData), "nullable")
+	assert.Contains(t, string(jsonData), "array")
+	assert.Contains(t, string(jsonData), "optional")
+
+	var unmarshaledField Field
+	err = json.Unmarshal(jsonData, &unmarshaledField)
+	require.NoError(t, err)
+	assert.Equal(t, field.Modifiers, unmarshaledField.Modifiers)
+}
+
+func TestEndpointRequestWithAllFields(t *testing.T) {
+	request := EndpointRequest{
+		ContentType: "multipart/form-data",
+		Headers: []Field{
+			{Name: "X-API-Key", Type: "String", Description: "API key"},
+			{Name: "User-Agent", Type: "String", Description: "User agent"},
+		},
+		PathParams: []Field{
+			{Name: "userId", Type: "UUID", Description: "User ID"},
+			{Name: "resourceId", Type: "UUID", Description: "Resource ID"},
+		},
+		QueryParams: []Field{
+			{Name: "page", Type: "Int", Description: "Page number", Default: "1"},
+			{Name: "limit", Type: "Int", Description: "Items per page", Default: "10"},
+		},
+		BodyParams: []Field{
+			{Name: "data", Type: "Object", Description: "Request data"},
+			{Name: "metadata", Type: "Object", Description: "Additional metadata"},
+		},
+	}
+
+	jsonData, err := json.Marshal(request)
+	require.NoError(t, err)
+	assert.Contains(t, string(jsonData), "multipart/form-data")
+	assert.Contains(t, string(jsonData), "X-API-Key")
+	assert.Contains(t, string(jsonData), "userId")
+	assert.Contains(t, string(jsonData), "page")
+	assert.Contains(t, string(jsonData), "data")
+
+	var unmarshaledRequest EndpointRequest
+	err = json.Unmarshal(jsonData, &unmarshaledRequest)
+	require.NoError(t, err)
+	assert.Equal(t, request.ContentType, unmarshaledRequest.ContentType)
+	assert.Equal(t, len(request.Headers), len(unmarshaledRequest.Headers))
+	assert.Equal(t, len(request.PathParams), len(unmarshaledRequest.PathParams))
+	assert.Equal(t, len(request.QueryParams), len(unmarshaledRequest.QueryParams))
+	assert.Equal(t, len(request.BodyParams), len(unmarshaledRequest.BodyParams))
+}
+
+func TestEndpointResponseErrorCodes(t *testing.T) {
+	// Test various HTTP status codes
+	statusCodes := []int{200, 201, 400, 401, 403, 404, 500}
+
+	for _, code := range statusCodes {
+		t.Run(fmt.Sprintf("StatusCode%d", code), func(t *testing.T) {
+			response := EndpointResponse{
+				ContentType: "application/json",
+				StatusCode:  code,
+				Headers: []Field{
+					{Name: "X-Request-ID", Type: "String", Description: "Request ID"},
+				},
+				BodyFields: []Field{
+					{Name: "message", Type: "String", Description: "Response message"},
+				},
+			}
+
+			jsonData, err := json.Marshal(response)
+			require.NoError(t, err)
+			assert.Contains(t, string(jsonData), fmt.Sprintf("%d", code))
+
+			var unmarshaledResponse EndpointResponse
+			err = json.Unmarshal(jsonData, &unmarshaledResponse)
+			require.NoError(t, err)
+			assert.Equal(t, code, unmarshaledResponse.StatusCode)
+		})
+	}
+}
+
+func TestServiceWithComplexHierarchy(t *testing.T) {
+	// Create a complex service structure to test deep nesting
+	service := Service{
+		Name: "ComplexAPI",
+		Enums: []Enum{
+			{
+				Name:        "UserRole",
+				Description: "User roles in the system",
+				Values: []EnumValue{
+					{Name: "Admin", Description: "Administrator role"},
+					{Name: "User", Description: "Regular user role"},
+					{Name: "Guest", Description: "Guest user role"},
+				},
+			},
+			{
+				Name:        "Status",
+				Description: "Entity status",
+				Values: []EnumValue{
+					{Name: "Active", Description: "Entity is active"},
+					{Name: "Inactive", Description: "Entity is inactive"},
+					{Name: "Pending", Description: "Entity is pending"},
+				},
+			},
+		},
+		Objects: []Object{
+			{
+				Name:        "Address",
+				Description: "Address information",
+				Fields: []Field{
+					{Name: "street", Type: "String", Description: "Street address"},
+					{Name: "city", Type: "String", Description: "City"},
+					{Name: "zipCode", Type: "String", Description: "ZIP code"},
+					{Name: "country", Type: "String", Description: "Country"},
+				},
+			},
+			{
+				Name:        "ContactInfo",
+				Description: "Contact information",
+				Fields: []Field{
+					{Name: "email", Type: "String", Description: "Email address"},
+					{Name: "phone", Type: "String", Description: "Phone number"},
+					{Name: "address", Type: "Address", Description: "Physical address"},
+				},
+			},
+		},
+		Resources: []Resource{
+			{
+				Name:        "Users",
+				Description: "User management",
+				Operations:  []string{"Create", "Read", "Update", "Delete"},
+				Fields: []ResourceField{
+					{
+						Field: Field{
+							Name:        "id",
+							Type:        "UUID",
+							Description: "User ID",
+						},
+						Operations: []string{"Read"},
+					},
+					{
+						Field: Field{
+							Name:        "role",
+							Type:        "UserRole",
+							Description: "User role",
+							Default:     "User",
+						},
+						Operations: []string{"Create", "Read", "Update"},
+					},
+				},
+				Endpoints: []Endpoint{
+					{
+						Name:        "CreateUser",
+						Title:       "Create New User",
+						Description: "Create a new user account",
+						Method:      "POST",
+						Path:        "/",
+						Request: EndpointRequest{
+							ContentType: "application/json",
+							BodyParams: []Field{
+								{Name: "username", Type: "String", Description: "Username"},
+								{Name: "email", Type: "String", Description: "Email"},
+								{Name: "role", Type: "UserRole", Description: "User role"},
+							},
+						},
+						Response: EndpointResponse{
+							ContentType: "application/json",
+							StatusCode:  201,
+							BodyFields: []Field{
+								{Name: "id", Type: "UUID", Description: "Created user ID"},
+								{Name: "username", Type: "String", Description: "Username"},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Test JSON serialization of complex structure
+	jsonData, err := json.MarshalIndent(service, "", "  ")
+	require.NoError(t, err)
+	assert.NotEmpty(t, jsonData)
+
+	// Test YAML serialization of complex structure
+	yamlData, err := yaml.Marshal(service)
+	require.NoError(t, err)
+	assert.NotEmpty(t, yamlData)
+
+	// Test deserialization
+	var unmarshaledService Service
+	err = json.Unmarshal(jsonData, &unmarshaledService)
+	require.NoError(t, err)
+	
+	// Verify structure integrity
+	assert.Equal(t, service.Name, unmarshaledService.Name)
+	assert.Equal(t, len(service.Enums), len(unmarshaledService.Enums))
+	assert.Equal(t, len(service.Objects), len(unmarshaledService.Objects))
+	assert.Equal(t, len(service.Resources), len(unmarshaledService.Resources))
+	
+	// Test nested structures
+	assert.Equal(t, len(service.Enums[0].Values), len(unmarshaledService.Enums[0].Values))
+	assert.Equal(t, len(service.Objects[0].Fields), len(unmarshaledService.Objects[0].Fields))
+	assert.Equal(t, len(service.Resources[0].Fields), len(unmarshaledService.Resources[0].Fields))
+	assert.Equal(t, len(service.Resources[0].Endpoints), len(unmarshaledService.Resources[0].Endpoints))
 }
