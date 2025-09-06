@@ -47,6 +47,7 @@ import (
     "log"
 
     "github.com/meitner-se/publicapis-gen/specification"
+    "github.com/meitner-se/publicapis-gen/specification/schema"
 )
 
 func main() {
@@ -108,13 +109,13 @@ func main() {
     fmt.Println("Service JSON:", string(jsonData))
 
     // Generate JSON schema
-    generator := specification.NewSchemaGenerator()
-    schema, err := generator.GenerateServiceSchema()
+    generator := schema.NewSchemaGenerator()
+    jsonSchema, err := generator.GenerateServiceSchema()
     if err != nil {
         log.Fatal(err)
     }
     
-    schemaJSON, err := generator.SchemaToJSON(schema)
+    schemaJSON, err := generator.SchemaToJSON(jsonSchema)
     if err != nil {
         log.Fatal(err)
     }

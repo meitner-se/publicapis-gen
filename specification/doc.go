@@ -19,17 +19,19 @@
 //
 // # JSON Schema Generation
 //
-// The package includes schema generation capabilities through the SchemaGenerator
-// type, which can produce JSON schemas for all the specification types.
+// JSON schema generation capabilities are available through the schema sub-package,
+// which provides the SchemaGenerator type for producing JSON schemas for all specification types.
 //
 // Example usage:
 //
-//	generator := specification.NewSchemaGenerator()
-//	schema, err := generator.GenerateServiceSchema()
+//	import "github.com/meitner-se/publicapis-gen/specification/schema"
+//
+//	generator := schema.NewSchemaGenerator()
+//	jsonSchema, err := generator.GenerateServiceSchema()
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-//	jsonSchema, err := generator.SchemaToJSON(schema)
+//	schemaJSON, err := generator.SchemaToJSON(jsonSchema)
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
