@@ -35,6 +35,7 @@ The `specification` package provides Go structs for defining API specifications 
 * ✅ Comprehensive test coverage
 * ✅ Resource-oriented API design
 * ✅ Type-safe field definitions with modifiers (nullable, array)
+* ✅ Specification overlay functionality for auto-generating Objects from Resources
 
 ### Example Usage
 
@@ -122,6 +123,95 @@ func main() {
     fmt.Println("Schema JSON:", schemaJSON)
 }
 ```
+
+### Specification Overlay
+
+The `ApplyOverlay` function provides a powerful way to automatically generate `Object` definitions from your `Resource` definitions. This is particularly useful for creating consistent data models for read operations.
+
+#### How It Works
+
+When you call `specification.ApplyOverlay()` on a service specification:
+
+1. **Analyzes Resources**: Examines each resource in the specification
+2. **Checks for Read Operations**: Identifies resources that have the "Read" operation
+3. **Generates Objects**: For each resource with Read operations, creates a new Object with the same name
+4. **Includes Read Fields**: Only includes fields that support the "Read" operation in the generated Object
+5. **Preserves Existing**: Doesn't overwrite existing Objects with the same name
+
+#### Example
+
+```go
+package main
+
+import (
+    "encoding/json"
+    "fmt"
+    "log"
+
+    "github.com/meitner-se/publicapis-gen/specification"
+)
+
+func main() {
+    // Define a service with resources
+    input := &specification.Service{
+        Name: "UserAPI",
+        Resources: []specification.Resource{
+            {
+                Name:        "Users",
+                Description: "User management resource",
+                Operations:  []string{"Create", "Read", "Update", "Delete"},
+                Fields: []specification.ResourceField{
+                    {
+                        Field: specification.Field{
+                            Name:        "id",
+                            Type:        "UUID",
+                            Description: "User ID",
+                        },
+                        Operations: []string{"Read"},
+                    },
+                    {
+                        Field: specification.Field{
+                            Name:        "name",
+                            Type:        "String",
+                            Description: "User name",
+                        },
+                        Operations: []string{"Create", "Read", "Update"},
+                    },
+                    {
+                        Field: specification.Field{
+                            Name:        "password",
+                            Type:        "String",
+                            Description: "User password",
+                        },
+                        Operations: []string{"Create", "Update"}, // No Read - won't be included
+                    },
+                },
+            },
+        },
+    }
+
+    // Apply overlay to generate Objects from Resources
+    result := specification.ApplyOverlay(input)
+
+    // The result now contains a "Users" Object with only the fields that support Read:
+    // - id (UUID)
+    // - name (String)
+    // (password field is excluded since it doesn't have Read operation)
+
+    jsonData, err := json.MarshalIndent(result, "", "  ")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println("Generated specification:", string(jsonData))
+}
+```
+
+#### Use Cases
+
+* **API Response Models**: Automatically generate response object schemas from your resource definitions
+* **Consistent Data Models**: Ensure your Objects match your Resource field definitions
+* **Security**: Exclude sensitive fields (like passwords) that don't support Read operations
+* **DRY Principle**: Define your data structure once in Resources, generate Objects automatically
 
 ### Running Tests
 

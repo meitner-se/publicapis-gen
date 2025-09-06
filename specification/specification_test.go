@@ -687,3 +687,358 @@ func TestServiceWithComplexHierarchy(t *testing.T) {
 	assert.Equal(t, len(service.Resources[0].Fields), len(unmarshaledService.Resources[0].Fields))
 	assert.Equal(t, len(service.Resources[0].Endpoints), len(unmarshaledService.Resources[0].Endpoints))
 }
+
+func TestApplyOverlay(t *testing.T) {
+	t.Run("NilInput", func(t *testing.T) {
+		result := ApplyOverlay(nil)
+		assert.Nil(t, result)
+	})
+
+	t.Run("EmptyService", func(t *testing.T) {
+		input := &Service{
+			Name:      "EmptyService",
+			Enums:     []Enum{},
+			Objects:   []Object{},
+			Resources: []Resource{},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+		assert.Equal(t, input.Name, result.Name)
+		assert.Equal(t, 0, len(result.Objects))
+		assert.Equal(t, 0, len(result.Resources))
+	})
+
+	t.Run("ResourceWithReadOperation", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "Users",
+					Description: "User management resource",
+					Operations:  []string{"Create", "Read", "Update", "Delete"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "id",
+								Type:        "UUID",
+								Description: "User ID",
+							},
+							Operations: []string{"Read"},
+						},
+						{
+							Field: Field{
+								Name:        "name",
+								Type:        "String",
+								Description: "User name",
+								Example:     "John Doe",
+							},
+							Operations: []string{"Create", "Read", "Update"},
+						},
+						{
+							Field: Field{
+								Name:        "password",
+								Type:        "String",
+								Description: "User password",
+							},
+							Operations: []string{"Create", "Update"}, // No Read operation
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+		
+		// Should have generated one object
+		assert.Equal(t, 1, len(result.Objects))
+		
+		// Check the generated object
+		userObject := result.Objects[0]
+		assert.Equal(t, "Users", userObject.Name)
+		assert.Equal(t, "User management resource", userObject.Description)
+		assert.Equal(t, 2, len(userObject.Fields)) // Only id and name have Read operation
+		
+		// Check fields are correct
+		assert.Equal(t, "id", userObject.Fields[0].Name)
+		assert.Equal(t, "UUID", userObject.Fields[0].Type)
+		assert.Equal(t, "name", userObject.Fields[1].Name)
+		assert.Equal(t, "String", userObject.Fields[1].Type)
+		assert.Equal(t, "John Doe", userObject.Fields[1].Example)
+	})
+
+	t.Run("ResourceWithoutReadOperation", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "InternalLogs",
+					Description: "Internal logging resource",
+					Operations:  []string{"Create", "Delete"}, // No Read operation
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "id",
+								Type:        "UUID",
+								Description: "Log ID",
+							},
+							Operations: []string{"Create"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+		
+		// Should not have generated any objects
+		assert.Equal(t, 0, len(result.Objects))
+	})
+
+	t.Run("MultipleResourcesWithReadOperation", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "Users",
+					Description: "User resource",
+					Operations:  []string{"Create", "Read"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "id",
+								Type:        "UUID",
+								Description: "User ID",
+							},
+							Operations: []string{"Read"},
+						},
+					},
+				},
+				{
+					Name:        "Products",
+					Description: "Product resource",
+					Operations:  []string{"Read", "Update"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "id",
+								Type:        "UUID",
+								Description: "Product ID",
+							},
+							Operations: []string{"Read"},
+						},
+						{
+							Field: Field{
+								Name:        "name",
+								Type:        "String",
+								Description: "Product name",
+							},
+							Operations: []string{"Read", "Update"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+		
+		// Should have generated two objects
+		assert.Equal(t, 2, len(result.Objects))
+		
+		// Check first object (Users)
+		usersObject := result.Objects[0]
+		assert.Equal(t, "Users", usersObject.Name)
+		assert.Equal(t, 1, len(usersObject.Fields))
+		
+		// Check second object (Products)
+		productsObject := result.Objects[1]
+		assert.Equal(t, "Products", productsObject.Name)
+		assert.Equal(t, 2, len(productsObject.Fields)) // Both id and name have Read operation
+	})
+
+	t.Run("ExistingObjectWithSameName", func(t *testing.T) {
+		input := &Service{
+			Name:  "TestService",
+			Enums: []Enum{},
+			Objects: []Object{
+				{
+					Name:        "Users",
+					Description: "Existing user object",
+					Fields: []Field{
+						{
+							Name:        "existingField",
+							Type:        "String",
+							Description: "Existing field",
+						},
+					},
+				},
+			},
+			Resources: []Resource{
+				{
+					Name:        "Users",
+					Description: "User resource",
+					Operations:  []string{"Create", "Read"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "id",
+								Type:        "UUID",
+								Description: "User ID",
+							},
+							Operations: []string{"Read"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+		
+		// Should still have only one object (the existing one)
+		assert.Equal(t, 1, len(result.Objects))
+		
+		// Should be the original object, not the generated one
+		assert.Equal(t, "Users", result.Objects[0].Name)
+		assert.Equal(t, "Existing user object", result.Objects[0].Description)
+		assert.Equal(t, 1, len(result.Objects[0].Fields))
+		assert.Equal(t, "existingField", result.Objects[0].Fields[0].Name)
+	})
+
+	t.Run("FieldsWithModifiers", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "Users",
+					Description: "User resource",
+					Operations:  []string{"Create", "Read"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "tags",
+								Type:        "String",
+								Description: "User tags",
+								Default:     "[]",
+								Example:     `["admin", "user"]`,
+								Modifiers:   []string{"array", "nullable"},
+							},
+							Operations: []string{"Create", "Read", "Update"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+		
+		// Should have generated one object
+		assert.Equal(t, 1, len(result.Objects))
+		
+		// Check field modifiers are preserved
+		userObject := result.Objects[0]
+		assert.Equal(t, 1, len(userObject.Fields))
+		
+		field := userObject.Fields[0]
+		assert.Equal(t, "tags", field.Name)
+		assert.Equal(t, "String", field.Type)
+		assert.Equal(t, "[]", field.Default)
+		assert.Equal(t, `["admin", "user"]`, field.Example)
+		assert.Equal(t, []string{"array", "nullable"}, field.Modifiers)
+	})
+
+	t.Run("PreservesOriginalServiceStructure", func(t *testing.T) {
+		input := &Service{
+			Name: "TestService",
+			Enums: []Enum{
+				{
+					Name:        "Status",
+					Description: "Status enum",
+					Values: []EnumValue{
+						{Name: "Active", Description: "Active status"},
+					},
+				},
+			},
+			Objects: []Object{
+				{
+					Name:        "ExistingObject",
+					Description: "Pre-existing object",
+					Fields: []Field{
+						{Name: "field1", Type: "String", Description: "Field 1"},
+					},
+				},
+			},
+			Resources: []Resource{
+				{
+					Name:        "Users",
+					Description: "User resource",
+					Operations:  []string{"Read"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "id",
+								Type:        "UUID",
+								Description: "User ID",
+							},
+							Operations: []string{"Read"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+		
+		// Should preserve all original structure
+		assert.Equal(t, input.Name, result.Name)
+		assert.Equal(t, len(input.Enums), len(result.Enums))
+		assert.Equal(t, len(input.Resources), len(result.Resources))
+		
+		// Should have existing object plus generated object
+		assert.Equal(t, 2, len(result.Objects))
+		
+		// First object should be the existing one
+		assert.Equal(t, "ExistingObject", result.Objects[0].Name)
+		
+		// Second object should be the generated one
+		assert.Equal(t, "Users", result.Objects[1].Name)
+	})
+}
+
+func Test_containsOperation(t *testing.T) {
+	t.Run("EmptySlice", func(t *testing.T) {
+		result := containsOperation([]string{}, "Read")
+		assert.False(t, result)
+	})
+
+	t.Run("OperationExists", func(t *testing.T) {
+		operations := []string{"Create", "Read", "Update", "Delete"}
+		result := containsOperation(operations, "Read")
+		assert.True(t, result)
+	})
+
+	t.Run("OperationDoesNotExist", func(t *testing.T) {
+		operations := []string{"Create", "Update", "Delete"}
+		result := containsOperation(operations, "Read")
+		assert.False(t, result)
+	})
+
+	t.Run("CaseSensitive", func(t *testing.T) {
+		operations := []string{"read"}
+		result := containsOperation(operations, "Read")
+		assert.False(t, result) // Should be case-sensitive
+	})
+}
