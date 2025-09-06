@@ -752,16 +752,16 @@ func TestApplyOverlay(t *testing.T) {
 
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
-		
+
 		// Should have generated one object
 		assert.Equal(t, 1, len(result.Objects))
-		
+
 		// Check the generated object
 		userObject := result.Objects[0]
 		assert.Equal(t, "Users", userObject.Name)
 		assert.Equal(t, "User management resource", userObject.Description)
 		assert.Equal(t, 2, len(userObject.Fields)) // Only id and name have Read operation
-		
+
 		// Check fields are correct
 		assert.Equal(t, "id", userObject.Fields[0].Name)
 		assert.Equal(t, "UUID", userObject.Fields[0].Type)
@@ -796,7 +796,7 @@ func TestApplyOverlay(t *testing.T) {
 
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
-		
+
 		// Should not have generated any objects
 		assert.Equal(t, 0, len(result.Objects))
 	})
@@ -850,15 +850,15 @@ func TestApplyOverlay(t *testing.T) {
 
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
-		
+
 		// Should have generated two objects
 		assert.Equal(t, 2, len(result.Objects))
-		
+
 		// Check first object (Users)
 		usersObject := result.Objects[0]
 		assert.Equal(t, "Users", usersObject.Name)
 		assert.Equal(t, 1, len(usersObject.Fields))
-		
+
 		// Check second object (Products)
 		productsObject := result.Objects[1]
 		assert.Equal(t, "Products", productsObject.Name)
@@ -903,10 +903,10 @@ func TestApplyOverlay(t *testing.T) {
 
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
-		
+
 		// Should still have only one object (the existing one)
 		assert.Equal(t, 1, len(result.Objects))
-		
+
 		// Should be the original object, not the generated one
 		assert.Equal(t, "Users", result.Objects[0].Name)
 		assert.Equal(t, "Existing user object", result.Objects[0].Description)
@@ -943,14 +943,14 @@ func TestApplyOverlay(t *testing.T) {
 
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
-		
+
 		// Should have generated one object
 		assert.Equal(t, 1, len(result.Objects))
-		
+
 		// Check field modifiers are preserved
 		userObject := result.Objects[0]
 		assert.Equal(t, 1, len(userObject.Fields))
-		
+
 		field := userObject.Fields[0]
 		assert.Equal(t, "tags", field.Name)
 		assert.Equal(t, "String", field.Type)
@@ -1001,18 +1001,18 @@ func TestApplyOverlay(t *testing.T) {
 
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
-		
+
 		// Should preserve all original structure
 		assert.Equal(t, input.Name, result.Name)
 		assert.Equal(t, len(input.Enums), len(result.Enums))
 		assert.Equal(t, len(input.Resources), len(result.Resources))
-		
+
 		// Should have existing object plus generated object
 		assert.Equal(t, 2, len(result.Objects))
-		
+
 		// First object should be the existing one
 		assert.Equal(t, "ExistingObject", result.Objects[0].Name)
-		
+
 		// Second object should be the generated one
 		assert.Equal(t, "Users", result.Objects[1].Name)
 	})
