@@ -25,7 +25,7 @@
 // Example usage:
 //
 //	import "github.com/meitner-se/publicapis-gen/specification/schema"
-//	
+//
 //	generator := schema.NewSchemaGenerator()
 //	jsonSchema, err := generator.GenerateServiceSchema()
 //	if err != nil {

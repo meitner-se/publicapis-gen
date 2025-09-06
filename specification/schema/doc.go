@@ -11,7 +11,7 @@
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-//	
+//
 //	schemaJSON, err := generator.SchemaToJSON(jsonSchema)
 //	if err != nil {
 //	    log.Fatal(err)
