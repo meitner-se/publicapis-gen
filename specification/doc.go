@@ -1,0 +1,41 @@
+// Package specification provides Go structs for defining API specifications
+// with YAML/JSON tags and JSON schema generation capabilities.
+//
+// This package contains the core data structures needed to define resource-oriented
+// APIs in a structured way. It supports generating OpenAPI specifications from
+// these definitions and can produce JSON schemas for validation.
+//
+// # Core Types
+//
+// The main types provided by this package are:
+//
+//   - Service: Represents the overall API service with its enums, objects, and resources
+//   - Enum: Defines enumeration types with possible values
+//   - Object: Represents shared data structures used across resources
+//   - Resource: Defines API resources with their fields and endpoints
+//   - Field: Describes individual fields with type information and metadata
+//   - ResourceField: Extends Field with operation-specific configuration
+//   - Endpoint: Defines individual API endpoints with request/response structure
+//
+// # JSON Schema Generation
+//
+// The package includes schema generation capabilities through the SchemaGenerator
+// type, which can produce JSON schemas for all the specification types.
+//
+// Example usage:
+//
+//	generator := specification.NewSchemaGenerator()
+//	schema, err := generator.GenerateServiceSchema()
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	jsonSchema, err := generator.SchemaToJSON(schema)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//
+// # Serialization Support
+//
+// All types support both JSON and YAML serialization through appropriate struct tags.
+// This makes it easy to store and load API specifications from various file formats.
+package specification
