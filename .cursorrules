@@ -33,18 +33,6 @@
 - Aim for high test coverage (minimum 80%)
 - Test both happy paths and error conditions
 - Use test helpers to reduce duplication
-- Write integration tests for critical API workflows
-
-## API Development Standards
-
-- Follow RESTful API design principles for resource-oriented APIs
-- Implement proper HTTP status codes and error responses
-- Use consistent JSON response formats
-- Validate all input data thoroughly
-- Implement proper authentication and authorization
-- Follow OpenAPI 3.0 specification standards
-- Design APIs with backwards compatibility in mind
-- Use semantic versioning for API versions
 
 ## Documentation & Communication
 
@@ -52,7 +40,6 @@
 - Document public APIs with clear examples
 - Use Go doc comments for all exported functions, types, and packages
 - Include usage examples in documentation
-- Maintain CHANGELOG.md for version history
 - Document configuration options and environment variables
 - Provide clear error messages that help users understand issues
 
@@ -69,23 +56,12 @@
 - Keep commits atomic and focused
 - Write descriptive commit messages that explain the "why" not just the "what"
 
-## Security & Error Handling
-
-- Never log sensitive information (passwords, tokens, personal data)
-- Validate and sanitize all external inputs
-- Use proper error handling with meaningful error messages
-- Implement proper logging levels (debug, info, warn, error)
-- Follow principle of least privilege
-- Use secure defaults for all configurations
-- Implement proper rate limiting for API endpoints
-- Use HTTPS in production environments
-
 ## Project Structure
 
 - Organize code using standard Go project layout
 - Keep `main.go` minimal - move logic to packages
 - Use internal packages for code not meant to be imported
-- Separate concerns: handlers, services, repositories, models
+- Separate concerns
 - Create clear package boundaries with well-defined interfaces
 - Use dependency injection for better testability
 
@@ -94,7 +70,7 @@
 - Profile code to identify bottlenecks before optimizing
 - Use context.Context for cancellation and timeouts
 - Implement proper connection pooling for databases
-- Handle graceful shutdowns for long-running services
+- Handle graceful shutdowns
 - Use appropriate data structures for the task
 - Minimize memory allocations in hot paths
 - Implement proper logging without performance impact
@@ -103,7 +79,6 @@
 
 - Generate complete and valid OpenAPI 3.0 specifications
 - Include comprehensive examples for all endpoints
-- Document all request/response schemas
 - Use meaningful operation IDs and tags
 - Include proper error response schemas
 - Validate generated specs against OpenAPI standards
@@ -127,4 +102,3 @@
 - Perform security scanning on dependencies
 - Validate generated OpenAPI specifications
 - Check test coverage thresholds
-- Run integration tests against real environments when possible
