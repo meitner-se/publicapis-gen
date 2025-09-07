@@ -582,8 +582,8 @@ func ApplyFilterOverlay(input *Service) *Service {
 		for _, field := range obj.Fields {
 			if field.Type != FieldTypeTimestamp {
 				if isObjectType(field.Type, input.Objects) {
-					// For nested objects, use the filter version
-					containsFilter.Fields = append(containsFilter.Fields, generateNestedFilterField(field, filterContainsSuffix, false, true, input.Objects))
+					// For nested objects, use the filter version (nullable, not array - arrays are for fields inside the nested filter)
+					containsFilter.Fields = append(containsFilter.Fields, generateNestedFilterField(field, filterContainsSuffix, true, false, input.Objects))
 				} else {
 					// For primitive types, use the original field type
 					containsFilter.Fields = append(containsFilter.Fields, generateFilterField(field, false, true))

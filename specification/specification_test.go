@@ -1432,7 +1432,7 @@ func TestApplyFilterOverlay(t *testing.T) {
 			}
 		}
 		assert.Equal(t, "AddressFilterContains", addressContainsField.Type, "Address field should use AddressFilterContains type")
-		assert.Contains(t, addressContainsField.Modifiers, ModifierArray)
+		assert.Contains(t, addressContainsField.Modifiers, ModifierNullable)
 
 		// Check PersonFilterLike has nested Address filter
 		assert.Equal(t, 2, len(personLikeFilter.Fields)) // FirstName (string) + Address (nested)
