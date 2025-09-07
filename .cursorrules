@@ -3,10 +3,11 @@
 ## General Go Development Guidelines
 
 ### Code Quality & Constants
-- **NO hardcoded strings in code** - All string literals must be defined as constants in the `constants/constants.go` package
+- **NO hardcoded strings in code** - All string literals must be defined as package-local constants
 - Use meaningful constant names that clearly express intent
 - Group related constants together with clear documentation
-- Import constants package: `"github.com/meitner-se/publicapis-gen/constants"`
+- Define constants within the same package where they are used
+- Use camelCase for unexported constants (e.g., `errorNotImplemented`)
 
 ### Examples of Required Constants Usage
 ```go
@@ -15,20 +16,26 @@ return errors.New("not implemented")
 slog.ErrorContext(ctx, "failed to run", "error", err)
 if containsOperation(resource.Operations, "Read") {
 
-// ✅ GOOD - Use constants
-return errors.New(constants.ErrorNotImplemented)
-slog.ErrorContext(ctx, constants.ErrorFailedToRun, constants.LogKeyError, err)
-if containsOperation(resource.Operations, constants.OperationRead) {
+// ✅ GOOD - Use package-local constants
+const (
+    errorNotImplemented = "not implemented"
+    errorFailedToRun    = "failed to run"
+    logKeyError         = "error"
+)
+
+return errors.New(errorNotImplemented)
+slog.ErrorContext(ctx, errorFailedToRun, logKeyError, err)
+if containsOperation(resource.Operations, OperationRead) {
 ```
 
 ### String Categories Requiring Constants
-1. **Error Messages**: All error strings must use constants
-2. **Log Messages**: All log message keys and values must use constants
-3. **CRUD Operations**: "Create", "Read", "Update", "Delete" → use `constants.Operation*`
-4. **Field Types**: "UUID", "String", "Int", "Bool" → use `constants.Type*`
-5. **HTTP Methods**: "GET", "POST", etc. → use `constants.HTTPMethod*`
-6. **Content Types**: "application/json" → use `constants.ContentType*`
-7. **Field Modifiers**: "array", "nullable" → use `constants.Modifier*`
+1. **Error Messages**: All error strings must use package-local constants
+2. **Log Messages**: All log message keys and values must use package-local constants
+3. **CRUD Operations**: "Create", "Read", "Update", "Delete" → use local Operation* constants
+4. **Field Types**: "UUID", "String", "Int", "Bool" → define as needed per package
+5. **HTTP Methods**: "GET", "POST", etc. → define as needed per package
+6. **Content Types**: "application/json" → define as needed per package
+7. **Field Modifiers**: "array", "nullable" → define as needed per package
 
 ### Exception for Test Files
 Test files (files ending in `_test.go`) may contain hardcoded strings for test data, but should still use constants for:
@@ -38,16 +45,18 @@ Test files (files ending in `_test.go`) may contain hardcoded strings for test d
 
 ### Adding New Constants
 When adding new functionality:
-1. First, check if a similar constant already exists in `constants/constants.go`
-2. If not, add the new constant to the appropriate section
-3. Use clear, descriptive names following Go naming conventions
-4. Add documentation comments for non-obvious constants
+1. Define constants within the same package where they are used
+2. Use clear, descriptive names following Go naming conventions
+3. Group related constants together in const blocks
+4. Use camelCase for unexported constants
+5. Add documentation comments for const blocks when needed
 
 ### Code Review Checklist
 Before submitting code:
 - [ ] No hardcoded strings in production code (except test data)
-- [ ] All constants imported from `constants` package
-- [ ] New constants added to appropriate sections
+- [ ] All constants defined as package-local constants
+- [ ] Constants grouped logically in const blocks
 - [ ] Clear and descriptive constant names used
+- [ ] Proper camelCase naming for unexported constants
 
 This ensures maintainable, consistent code that's easy to update and internationalize if needed.

@@ -4,18 +4,23 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+)
 
-	"github.com/meitner-se/publicapis-gen/constants"
+// Error messages and log keys
+const (
+	errorNotImplemented = "not implemented"
+	errorFailedToRun    = "failed to run"
+	logKeyError         = "error"
 )
 
 func main() {
 	ctx := context.Background()
 
 	if err := run(ctx); err != nil {
-		slog.ErrorContext(ctx, constants.ErrorFailedToRun, constants.LogKeyError, err)
+		slog.ErrorContext(ctx, errorFailedToRun, logKeyError, err)
 	}
 }
 
 func run(_ context.Context) error {
-	return errors.New(constants.ErrorNotImplemented)
+	return errors.New(errorNotImplemented)
 }

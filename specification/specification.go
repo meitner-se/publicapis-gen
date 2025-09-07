@@ -1,6 +1,12 @@
 package specification
 
-import "github.com/meitner-se/publicapis-gen/constants"
+// CRUD Operations
+const (
+	OperationCreate = "Create"
+	OperationRead   = "Read"
+	OperationUpdate = "Update"
+	OperationDelete = "Delete"
+)
 
 // Service is the definition of an API service.
 type Service struct {
@@ -198,7 +204,7 @@ func ApplyOverlay(input *Service) *Service {
 	// Generate Objects from Resources that have Read operations
 	for _, resource := range input.Resources {
 		// Check if the resource has Read operation
-		if containsOperation(resource.Operations, constants.OperationRead) {
+		if containsOperation(resource.Operations, OperationRead) {
 			// Check if an object with this name already exists
 			objectExists := false
 			for _, existingObj := range result.Objects {
@@ -219,7 +225,7 @@ func ApplyOverlay(input *Service) *Service {
 
 				// Add all fields that support Read operation
 				for _, resourceField := range resource.Fields {
-					if containsOperation(resourceField.Operations, constants.OperationRead) {
+					if containsOperation(resourceField.Operations, OperationRead) {
 						// Convert ResourceField to Field by copying the embedded Field
 						field := Field{
 							Name:        resourceField.Field.Name,
