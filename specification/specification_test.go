@@ -705,9 +705,9 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 		assert.Equal(t, input.Name, result.Name)
-		
+
 		// Should have default ErrorCode enum and Error object
-		assert.Equal(t, 1, len(result.Enums)) // ErrorCode enum
+		assert.Equal(t, 1, len(result.Enums))   // ErrorCode enum
 		assert.Equal(t, 1, len(result.Objects)) // Error object
 		assert.Equal(t, 0, len(result.Resources))
 
@@ -782,19 +782,19 @@ func TestApplyOverlay(t *testing.T) {
 
 		// Should have ErrorCode enum plus existing enum
 		assert.Equal(t, 2, len(result.Enums))
-		
+
 		// First enum should be ErrorCode (added by overlay)
 		assert.Equal(t, errorCodeEnumName, result.Enums[0].Name)
-		
+
 		// Second enum should be the existing UserRole enum
 		assert.Equal(t, "UserRole", result.Enums[1].Name)
 
 		// Should have Error object plus existing object
 		assert.Equal(t, 2, len(result.Objects))
-		
+
 		// First object should be Error (added by overlay)
 		assert.Equal(t, errorObjectName, result.Objects[0].Name)
-		
+
 		// Second object should be the existing User object
 		assert.Equal(t, "User", result.Objects[1].Name)
 	})
