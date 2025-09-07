@@ -433,12 +433,12 @@ func (sg *SchemaGenerator) ParseEnumFromYAML(data []byte) (*specification.Enum, 
 // ParseObjectFromJSON parses and validates an Object from JSON data.
 func (sg *SchemaGenerator) ParseObjectFromJSON(data []byte) (*specification.Object, error) {
 	if err := sg.ValidateObject(data); err != nil {
-		return nil, fmt.Errorf("validation failed: %w", err)
+		return nil, fmt.Errorf("%s: %w", errorValidationFailed, err)
 	}
 
 	var object specification.Object
 	if err := json.Unmarshal(data, &object); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
+		return nil, fmt.Errorf("%s JSON: %w", errorFailedToUnmarshal, err)
 	}
 
 	return &object, nil
@@ -448,16 +448,16 @@ func (sg *SchemaGenerator) ParseObjectFromJSON(data []byte) (*specification.Obje
 func (sg *SchemaGenerator) ParseObjectFromYAML(data []byte) (*specification.Object, error) {
 	jsonData, err := sg.convertToJSON(data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert YAML to JSON: %w", err)
+		return nil, fmt.Errorf("%s: %w", errorConversionFailed, err)
 	}
 
 	if err := sg.ValidateObject(jsonData); err != nil {
-		return nil, fmt.Errorf("validation failed: %w", err)
+		return nil, fmt.Errorf("%s: %w", errorValidationFailed, err)
 	}
 
 	var object specification.Object
 	if err := yaml.Unmarshal(data, &object); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal YAML: %w", err)
+		return nil, fmt.Errorf("%s YAML: %w", errorFailedToUnmarshal, err)
 	}
 
 	return &object, nil
@@ -466,12 +466,12 @@ func (sg *SchemaGenerator) ParseObjectFromYAML(data []byte) (*specification.Obje
 // ParseResourceFromJSON parses and validates a Resource from JSON data.
 func (sg *SchemaGenerator) ParseResourceFromJSON(data []byte) (*specification.Resource, error) {
 	if err := sg.ValidateResource(data); err != nil {
-		return nil, fmt.Errorf("validation failed: %w", err)
+		return nil, fmt.Errorf("%s: %w", errorValidationFailed, err)
 	}
 
 	var resource specification.Resource
 	if err := json.Unmarshal(data, &resource); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
+		return nil, fmt.Errorf("%s JSON: %w", errorFailedToUnmarshal, err)
 	}
 
 	return &resource, nil
@@ -481,16 +481,16 @@ func (sg *SchemaGenerator) ParseResourceFromJSON(data []byte) (*specification.Re
 func (sg *SchemaGenerator) ParseResourceFromYAML(data []byte) (*specification.Resource, error) {
 	jsonData, err := sg.convertToJSON(data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert YAML to JSON: %w", err)
+		return nil, fmt.Errorf("%s: %w", errorConversionFailed, err)
 	}
 
 	if err := sg.ValidateResource(jsonData); err != nil {
-		return nil, fmt.Errorf("validation failed: %w", err)
+		return nil, fmt.Errorf("%s: %w", errorValidationFailed, err)
 	}
 
 	var resource specification.Resource
 	if err := yaml.Unmarshal(data, &resource); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal YAML: %w", err)
+		return nil, fmt.Errorf("%s YAML: %w", errorFailedToUnmarshal, err)
 	}
 
 	return &resource, nil
