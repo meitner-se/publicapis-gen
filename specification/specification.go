@@ -141,6 +141,16 @@ const (
 	errorFieldCodeEnumName            = "ErrorFieldCode"
 )
 
+// Pagination object constants
+const (
+	paginationObjectName        = "Pagination"
+	paginationObjectDescription = "Pagination parameters for controlling result sets in list operations"
+	offsetFieldName             = "Offset"
+	offsetFieldDescription      = "Number of items to skip from the beginning of the result set"
+	limitFieldName              = "Limit"
+	limitFieldDescription       = "Maximum number of items to return in the result set"
+)
+
 // HTTP Methods
 const (
 	httpMethodGet    = "GET"
@@ -362,7 +372,7 @@ func containsOperation(operations []string, operation string) bool {
 // It creates Update endpoints for Resources that have the "Update" operation, including all fields
 // that support the "Update" operation as body parameters in the request, with ID as a path parameter, and returning the Resource object.
 // It creates Delete endpoints for Resources that have the "Delete" operation, using ID as a path parameter, and returning nothing (status code 204).
-// It also adds default ErrorCode enum, Error object, ErrorFieldCode enum, and ErrorField object to every service.
+// It also adds default ErrorCode enum, Error object, ErrorFieldCode enum, ErrorField object, and Pagination object to every service.
 func ApplyOverlay(input *Service) *Service {
 	if input == nil {
 		return nil
@@ -372,15 +382,16 @@ func ApplyOverlay(input *Service) *Service {
 	result := &Service{
 		Name:      input.Name,
 		Enums:     make([]Enum, 0, len(input.Enums)+2),     // +2 for ErrorCode and ErrorFieldCode enums
-		Objects:   make([]Object, 0, len(input.Objects)+2), // +2 for Error and ErrorField objects
+		Objects:   make([]Object, 0, len(input.Objects)+3), // +3 for Error, ErrorField, and Pagination objects
 		Resources: make([]Resource, len(input.Resources)),
 	}
 
-	// Check if ErrorCode enum, Error object, ErrorFieldCode enum, and ErrorField object already exist
+	// Check if ErrorCode enum, Error object, ErrorFieldCode enum, ErrorField object, and Pagination object already exist
 	errorCodeEnumExists := false
 	errorObjectExists := false
 	errorFieldCodeEnumExists := false
 	errorFieldObjectExists := false
+	paginationObjectExists := false
 	for _, enum := range input.Enums {
 		if enum.Name == errorCodeEnumName {
 			errorCodeEnumExists = true
@@ -395,6 +406,9 @@ func ApplyOverlay(input *Service) *Service {
 		}
 		if object.Name == errorFieldObjectName {
 			errorFieldObjectExists = true
+		}
+		if object.Name == paginationObjectName {
+			paginationObjectExists = true
 		}
 	}
 
@@ -478,6 +492,27 @@ func ApplyOverlay(input *Service) *Service {
 			},
 		}
 		result.Objects = append(result.Objects, errorFieldObject)
+	}
+
+	// Add default Pagination object if it doesn't exist
+	if !paginationObjectExists {
+		paginationObject := Object{
+			Name:        paginationObjectName,
+			Description: paginationObjectDescription,
+			Fields: []Field{
+				{
+					Name:        offsetFieldName,
+					Description: offsetFieldDescription,
+					Type:        FieldTypeInt,
+				},
+				{
+					Name:        limitFieldName,
+					Description: limitFieldDescription,
+					Type:        FieldTypeInt,
+				},
+			},
+		}
+		result.Objects = append(result.Objects, paginationObject)
 	}
 
 	// Copy resources
