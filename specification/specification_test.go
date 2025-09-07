@@ -706,12 +706,12 @@ func TestApplyOverlay(t *testing.T) {
 		require.NotNil(t, result)
 		assert.Equal(t, input.Name, result.Name)
 
-		// Should have default ErrorCode enum and Error object
-		assert.Equal(t, 1, len(result.Enums))   // ErrorCode enum
-		assert.Equal(t, 1, len(result.Objects)) // Error object
+		// Should have default ErrorCode and ErrorFieldCode enums, Error and ErrorField objects
+		assert.Equal(t, 2, len(result.Enums))   // ErrorCode and ErrorFieldCode enums
+		assert.Equal(t, 2, len(result.Objects)) // Error and ErrorField objects
 		assert.Equal(t, 0, len(result.Resources))
 
-		// Check ErrorCode enum
+		// Check ErrorCode enum (should be first since no existing enums)
 		errorCodeEnum := result.Enums[0]
 		assert.Equal(t, errorCodeEnumName, errorCodeEnum.Name)
 		assert.Equal(t, descriptionErrorCodeEnum, errorCodeEnum.Description)
@@ -735,7 +735,27 @@ func TestApplyOverlay(t *testing.T) {
 			assert.Equal(t, expectedDescription, enumValue.Description)
 		}
 
-		// Check Error object
+		// Check ErrorFieldCode enum (should be second)
+		errorFieldCodeEnum := result.Enums[1]
+		assert.Equal(t, errorFieldCodeEnumName, errorFieldCodeEnum.Name)
+		assert.Equal(t, descriptionErrorFieldCodeEnum, errorFieldCodeEnum.Description)
+		assert.Equal(t, 4, len(errorFieldCodeEnum.Values))
+
+		// Check ErrorFieldCode enum values
+		expectedFieldValues := map[string]string{
+			errorFieldCodeAlreadyExists: descriptionErrorFieldCodeAlreadyExists,
+			errorFieldCodeRequired:      descriptionErrorFieldCodeRequired,
+			errorFieldCodeNotFound:      descriptionErrorFieldCodeNotFound,
+			errorFieldCodeInvalidValue:  descriptionErrorFieldCodeInvalidValue,
+		}
+
+		for _, enumValue := range errorFieldCodeEnum.Values {
+			expectedDescription, exists := expectedFieldValues[enumValue.Name]
+			assert.True(t, exists, "Unexpected enum value: %s", enumValue.Name)
+			assert.Equal(t, expectedDescription, enumValue.Description)
+		}
+
+		// Check Error object (should be first since no existing objects)
 		errorObject := result.Objects[0]
 		assert.Equal(t, errorObjectName, errorObject.Name)
 		assert.Equal(t, errorObjectDescription, errorObject.Description)
@@ -749,6 +769,21 @@ func TestApplyOverlay(t *testing.T) {
 		assert.Equal(t, errorMessageFieldName, errorObject.Fields[1].Name)
 		assert.Equal(t, errorMessageFieldDescription, errorObject.Fields[1].Description)
 		assert.Equal(t, FieldTypeString, errorObject.Fields[1].Type)
+
+		// Check ErrorField object (should be second)
+		errorFieldObject := result.Objects[1]
+		assert.Equal(t, errorFieldObjectName, errorFieldObject.Name)
+		assert.Equal(t, errorFieldObjectDescription, errorFieldObject.Description)
+		assert.Equal(t, 2, len(errorFieldObject.Fields))
+
+		// Check ErrorField object fields
+		assert.Equal(t, errorFieldCodeFieldName, errorFieldObject.Fields[0].Name)
+		assert.Equal(t, errorFieldCodeFieldDescription, errorFieldObject.Fields[0].Description)
+		assert.Equal(t, errorFieldCodeEnumName, errorFieldObject.Fields[0].Type)
+
+		assert.Equal(t, errorFieldMessageFieldName, errorFieldObject.Fields[1].Name)
+		assert.Equal(t, errorFieldMessageFieldDescription, errorFieldObject.Fields[1].Description)
+		assert.Equal(t, FieldTypeString, errorFieldObject.Fields[1].Type)
 	})
 
 	t.Run("DefaultErrorObjectsWithExistingContent", func(t *testing.T) {
@@ -780,23 +815,29 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should have ErrorCode enum plus existing enum
-		assert.Equal(t, 2, len(result.Enums))
+		// Should have ErrorCode and ErrorFieldCode enums plus existing enum
+		assert.Equal(t, 3, len(result.Enums))
 
-		// First enum should be ErrorCode (added by overlay)
-		assert.Equal(t, errorCodeEnumName, result.Enums[0].Name)
+		// First enum should be the existing UserRole enum (existing enums come first)
+		assert.Equal(t, "UserRole", result.Enums[0].Name)
 
-		// Second enum should be the existing UserRole enum
-		assert.Equal(t, "UserRole", result.Enums[1].Name)
+		// Second enum should be ErrorCode (added by overlay)
+		assert.Equal(t, errorCodeEnumName, result.Enums[1].Name)
 
-		// Should have Error object plus existing object
-		assert.Equal(t, 2, len(result.Objects))
+		// Third enum should be ErrorFieldCode (added by overlay)
+		assert.Equal(t, errorFieldCodeEnumName, result.Enums[2].Name)
 
-		// First object should be Error (added by overlay)
-		assert.Equal(t, errorObjectName, result.Objects[0].Name)
+		// Should have Error and ErrorField objects plus existing object
+		assert.Equal(t, 3, len(result.Objects))
 
-		// Second object should be the existing User object
-		assert.Equal(t, "User", result.Objects[1].Name)
+		// First object should be the existing User object (existing objects come first)
+		assert.Equal(t, "User", result.Objects[0].Name)
+
+		// Second object should be Error (added by overlay)
+		assert.Equal(t, errorObjectName, result.Objects[1].Name)
+
+		// Third object should be ErrorField (added by overlay)
+		assert.Equal(t, errorFieldObjectName, result.Objects[2].Name)
 	})
 
 	t.Run("PreventsDuplicateErrorDefinitions", func(t *testing.T) {
@@ -827,20 +868,148 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should still have only one enum and one object (existing ones are preserved)
-		assert.Equal(t, 1, len(result.Enums))
-		assert.Equal(t, 1, len(result.Objects))
+		// Should have existing ErrorCode enum + new ErrorFieldCode enum
+		assert.Equal(t, 2, len(result.Enums))
 
-		// Check that existing definitions are preserved, not replaced
+		// Should have existing Error object + new ErrorField object
+		assert.Equal(t, 2, len(result.Objects))
+
+		// Check that existing ErrorCode definition is preserved, not replaced (first position)
 		assert.Equal(t, errorCodeEnumName, result.Enums[0].Name)
 		assert.Equal(t, "Custom error code enum", result.Enums[0].Description)
 		assert.Equal(t, 1, len(result.Enums[0].Values))
 		assert.Equal(t, "CustomError", result.Enums[0].Values[0].Name)
 
+		// Check that ErrorFieldCode enum is added (second position)
+		assert.Equal(t, errorFieldCodeEnumName, result.Enums[1].Name)
+		assert.Equal(t, descriptionErrorFieldCodeEnum, result.Enums[1].Description)
+
+		// Check that existing Error object is preserved, not replaced (first position)
 		assert.Equal(t, errorObjectName, result.Objects[0].Name)
 		assert.Equal(t, "Custom error object", result.Objects[0].Description)
 		assert.Equal(t, 1, len(result.Objects[0].Fields))
 		assert.Equal(t, "customField", result.Objects[0].Fields[0].Name)
+
+		// Check that ErrorField object is added (second position)
+		assert.Equal(t, errorFieldObjectName, result.Objects[1].Name)
+		assert.Equal(t, errorFieldObjectDescription, result.Objects[1].Description)
+	})
+
+	t.Run("PreventsDuplicateErrorFieldDefinitions", func(t *testing.T) {
+		// Test that if ErrorFieldCode enum or ErrorField object already exist, they are not duplicated
+		input := &Service{
+			Name: "TestService",
+			Enums: []Enum{
+				{
+					Name:        errorFieldCodeEnumName,
+					Description: "Custom error field code enum",
+					Values: []EnumValue{
+						{Name: "CustomFieldError", Description: "Custom field error"},
+					},
+				},
+			},
+			Objects: []Object{
+				{
+					Name:        errorFieldObjectName,
+					Description: "Custom error field object",
+					Fields: []Field{
+						{Name: "customFieldField", Type: "String", Description: "Custom field field"},
+					},
+				},
+			},
+			Resources: []Resource{},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Should have default ErrorCode enum + existing ErrorFieldCode enum
+		assert.Equal(t, 2, len(result.Enums))
+
+		// Should have default Error object + existing ErrorField object
+		assert.Equal(t, 2, len(result.Objects))
+
+		// Check that existing ErrorFieldCode definition is preserved, not replaced (first position)
+		assert.Equal(t, errorFieldCodeEnumName, result.Enums[0].Name)
+		assert.Equal(t, "Custom error field code enum", result.Enums[0].Description)
+		assert.Equal(t, 1, len(result.Enums[0].Values))
+		assert.Equal(t, "CustomFieldError", result.Enums[0].Values[0].Name)
+
+		// Check that ErrorCode enum is added (second position)
+		assert.Equal(t, errorCodeEnumName, result.Enums[1].Name)
+		assert.Equal(t, descriptionErrorCodeEnum, result.Enums[1].Description)
+
+		// Check that existing ErrorField object is preserved, not replaced (first position)
+		assert.Equal(t, errorFieldObjectName, result.Objects[0].Name)
+		assert.Equal(t, "Custom error field object", result.Objects[0].Description)
+		assert.Equal(t, 1, len(result.Objects[0].Fields))
+		assert.Equal(t, "customFieldField", result.Objects[0].Fields[0].Name)
+
+		// Check that Error object is added (second position)
+		assert.Equal(t, errorObjectName, result.Objects[1].Name)
+		assert.Equal(t, errorObjectDescription, result.Objects[1].Description)
+	})
+
+	t.Run("PreventsDuplicateAllErrorDefinitions", func(t *testing.T) {
+		// Test that if both ErrorCode/Error and ErrorFieldCode/ErrorField already exist, none are duplicated
+		input := &Service{
+			Name: "TestService",
+			Enums: []Enum{
+				{
+					Name:        errorCodeEnumName,
+					Description: "Custom error code enum",
+					Values: []EnumValue{
+						{Name: "CustomError", Description: "Custom error"},
+					},
+				},
+				{
+					Name:        errorFieldCodeEnumName,
+					Description: "Custom error field code enum",
+					Values: []EnumValue{
+						{Name: "CustomFieldError", Description: "Custom field error"},
+					},
+				},
+			},
+			Objects: []Object{
+				{
+					Name:        errorObjectName,
+					Description: "Custom error object",
+					Fields: []Field{
+						{Name: "customField", Type: "String", Description: "Custom field"},
+					},
+				},
+				{
+					Name:        errorFieldObjectName,
+					Description: "Custom error field object",
+					Fields: []Field{
+						{Name: "customFieldField", Type: "String", Description: "Custom field field"},
+					},
+				},
+			},
+			Resources: []Resource{},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Should have both existing enums (no new ones added)
+		assert.Equal(t, 2, len(result.Enums))
+
+		// Should have both existing objects (no new ones added)
+		assert.Equal(t, 2, len(result.Objects))
+
+		// Check that existing definitions are preserved, not replaced
+		assert.Equal(t, errorCodeEnumName, result.Enums[0].Name)
+		assert.Equal(t, "Custom error code enum", result.Enums[0].Description)
+
+		assert.Equal(t, errorFieldCodeEnumName, result.Enums[1].Name)
+		assert.Equal(t, "Custom error field code enum", result.Enums[1].Description)
+
+		assert.Equal(t, errorObjectName, result.Objects[0].Name)
+		assert.Equal(t, "Custom error object", result.Objects[0].Description)
+
+		assert.Equal(t, errorFieldObjectName, result.Objects[1].Name)
+		assert.Equal(t, "Custom error field object", result.Objects[1].Description)
 	})
 
 	t.Run("ResourceWithReadOperation", func(t *testing.T) {
@@ -887,15 +1056,19 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should have Error object (from overlay) + generated Users object
-		assert.Equal(t, 2, len(result.Objects))
+		// Should have Error + ErrorField objects (from overlay) + generated Users object
+		assert.Equal(t, 3, len(result.Objects))
 
-		// First object should be Error (from overlay)
+		// First object should be Error (from overlay, no existing objects)
 		errorObject := result.Objects[0]
 		assert.Equal(t, "Error", errorObject.Name)
 
-		// Check the generated Users object (second object)
-		userObject := result.Objects[1]
+		// Second object should be ErrorField (from overlay)
+		errorFieldObject := result.Objects[1]
+		assert.Equal(t, "ErrorField", errorFieldObject.Name)
+
+		// Check the generated Users object (third object)
+		userObject := result.Objects[2]
 		assert.Equal(t, "Users", userObject.Name)
 		assert.Equal(t, "User management resource", userObject.Description)
 		assert.Equal(t, 2, len(userObject.Fields)) // Only id and name have Read operation
@@ -935,9 +1108,10 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should only have Error object (from overlay), no generated resource objects
-		assert.Equal(t, 1, len(result.Objects))
+		// Should only have Error and ErrorField objects (from overlay), no generated resource objects
+		assert.Equal(t, 2, len(result.Objects))
 		assert.Equal(t, "Error", result.Objects[0].Name)
+		assert.Equal(t, "ErrorField", result.Objects[1].Name)
 	})
 
 	t.Run("MultipleResourcesWithReadOperation", func(t *testing.T) {
@@ -990,19 +1164,22 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should have Error object + two generated objects
-		assert.Equal(t, 3, len(result.Objects))
+		// Should have Error + ErrorField objects + two generated objects
+		assert.Equal(t, 4, len(result.Objects))
 
-		// First object should be Error (from overlay)
+		// First object should be Error (from overlay, no existing objects)
 		assert.Equal(t, "Error", result.Objects[0].Name)
 
-		// Check second object (Users)
-		usersObject := result.Objects[1]
+		// Second object should be ErrorField (from overlay)
+		assert.Equal(t, "ErrorField", result.Objects[1].Name)
+
+		// Check third object (Users)
+		usersObject := result.Objects[2]
 		assert.Equal(t, "Users", usersObject.Name)
 		assert.Equal(t, 1, len(usersObject.Fields))
 
-		// Check third object (Products)
-		productsObject := result.Objects[2]
+		// Check fourth object (Products)
+		productsObject := result.Objects[3]
 		assert.Equal(t, "Products", productsObject.Name)
 		assert.Equal(t, 2, len(productsObject.Fields)) // Both id and name have Read operation
 	})
@@ -1046,17 +1223,20 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should have Error object + existing Users object (no generated Users object due to name collision)
-		assert.Equal(t, 2, len(result.Objects))
+		// Should have Error + ErrorField objects + existing Users object (no generated Users object due to name collision)
+		assert.Equal(t, 3, len(result.Objects))
 
-		// First object should be Error (from overlay)
-		assert.Equal(t, "Error", result.Objects[0].Name)
+		// First object should be the existing Users object (existing objects come first)
+		assert.Equal(t, "Users", result.Objects[0].Name)
+		assert.Equal(t, "Existing user object", result.Objects[0].Description)
+		assert.Equal(t, 1, len(result.Objects[0].Fields))
+		assert.Equal(t, "existingField", result.Objects[0].Fields[0].Name)
 
-		// Second should be the original Users object, not the generated one
-		assert.Equal(t, "Users", result.Objects[1].Name)
-		assert.Equal(t, "Existing user object", result.Objects[1].Description)
-		assert.Equal(t, 1, len(result.Objects[1].Fields))
-		assert.Equal(t, "existingField", result.Objects[1].Fields[0].Name)
+		// Second object should be Error (from overlay)
+		assert.Equal(t, "Error", result.Objects[1].Name)
+
+		// Third object should be ErrorField (from overlay)
+		assert.Equal(t, "ErrorField", result.Objects[2].Name)
 	})
 
 	t.Run("FieldsWithModifiers", func(t *testing.T) {
@@ -1089,14 +1269,17 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should have Error object + generated Users object
-		assert.Equal(t, 2, len(result.Objects))
+		// Should have Error + ErrorField objects + generated Users object
+		assert.Equal(t, 3, len(result.Objects))
 
-		// First object should be Error (from overlay)
+		// First object should be Error (from overlay, no existing objects)
 		assert.Equal(t, "Error", result.Objects[0].Name)
 
+		// Second object should be ErrorField (from overlay)
+		assert.Equal(t, "ErrorField", result.Objects[1].Name)
+
 		// Check field modifiers are preserved in generated Users object
-		userObject := result.Objects[1]
+		userObject := result.Objects[2]
 		assert.Equal(t, "Users", userObject.Name)
 		assert.Equal(t, 1, len(userObject.Fields))
 
@@ -1153,21 +1336,24 @@ func TestApplyOverlay(t *testing.T) {
 
 		// Should preserve all original structure
 		assert.Equal(t, input.Name, result.Name)
-		// Should have ErrorCode enum + existing enum
-		assert.Equal(t, 2, len(result.Enums))
+		// Should have ErrorCode + ErrorFieldCode enums + existing enum
+		assert.Equal(t, 3, len(result.Enums))
 		assert.Equal(t, len(input.Resources), len(result.Resources))
 
-		// Should have Error object + existing object + generated Users object
-		assert.Equal(t, 3, len(result.Objects))
+		// Should have Error + ErrorField objects + existing object + generated Users object
+		assert.Equal(t, 4, len(result.Objects))
 
-		// First object should be Error (from overlay)
-		assert.Equal(t, "Error", result.Objects[0].Name)
+		// First object should be the existing ExistingObject (existing objects come first)
+		assert.Equal(t, "ExistingObject", result.Objects[0].Name)
 
-		// Second object should be the existing one
-		assert.Equal(t, "ExistingObject", result.Objects[1].Name)
+		// Second object should be Error (from overlay)
+		assert.Equal(t, "Error", result.Objects[1].Name)
 
-		// Third object should be the generated Users object
-		assert.Equal(t, "Users", result.Objects[2].Name)
+		// Third object should be ErrorField (from overlay)
+		assert.Equal(t, "ErrorField", result.Objects[2].Name)
+
+		// Fourth object should be the generated Users object
+		assert.Equal(t, "Users", result.Objects[3].Name)
 	})
 }
 

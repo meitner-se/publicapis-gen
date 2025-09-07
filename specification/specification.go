@@ -113,6 +113,34 @@ const (
 	errorCodeEnumName            = "ErrorCode"
 )
 
+// ErrorFieldCode Values
+const (
+	errorFieldCodeAlreadyExists = "AlreadyExists"
+	errorFieldCodeRequired      = "Required"
+	errorFieldCodeNotFound      = "NotFound"
+	errorFieldCodeInvalidValue  = "InvalidValue"
+)
+
+// ErrorFieldCode Descriptions
+const (
+	descriptionErrorFieldCodeEnum          = "Error codes for field-level validation errors"
+	descriptionErrorFieldCodeAlreadyExists = "The field value already exists and violates a unique constraint (e.g., duplicate email address or username)"
+	descriptionErrorFieldCodeRequired      = "The field is required but is missing or empty in the request"
+	descriptionErrorFieldCodeNotFound      = "A referenced resource or relation does not exist (e.g., foreign key constraint violation)"
+	descriptionErrorFieldCodeInvalidValue  = "The field contains an invalid value (e.g., invalid enum value, malformed data, or value out of allowed range)"
+)
+
+// ErrorField object constants
+const (
+	errorFieldObjectName              = "ErrorField"
+	errorFieldObjectDescription       = "Field-specific error information containing error code and message for validation errors"
+	errorFieldCodeFieldName           = "Code"
+	errorFieldCodeFieldDescription    = "The specific error code indicating the type of field validation error"
+	errorFieldMessageFieldName        = "Message"
+	errorFieldMessageFieldDescription = "Human-readable error message providing details about the field validation error"
+	errorFieldCodeEnumName            = "ErrorFieldCode"
+)
+
 // Service is the definition of an API service.
 type Service struct {
 	// Name of the service
@@ -284,7 +312,7 @@ func containsOperation(operations []string, operation string) bool {
 // ApplyOverlay applies an overlay to a specification, generating Objects from Resources.
 // It creates Objects for Resources that have the "Read" operation, including all fields
 // that support the "Read" operation in the generated Object.
-// It also adds default ErrorCode enum and Error object to every service.
+// It also adds default ErrorCode enum, Error object, ErrorFieldCode enum, and ErrorField object to every service.
 func ApplyOverlay(input *Service) *Service {
 	if input == nil {
 		return nil
@@ -293,26 +321,35 @@ func ApplyOverlay(input *Service) *Service {
 	// Create a deep copy of the input service
 	result := &Service{
 		Name:      input.Name,
-		Enums:     make([]Enum, 0, len(input.Enums)+1),     // +1 for ErrorCode enum
-		Objects:   make([]Object, 0, len(input.Objects)+1), // +1 for Error object
+		Enums:     make([]Enum, 0, len(input.Enums)+2),     // +2 for ErrorCode and ErrorFieldCode enums
+		Objects:   make([]Object, 0, len(input.Objects)+2), // +2 for Error and ErrorField objects
 		Resources: make([]Resource, len(input.Resources)),
 	}
 
-	// Check if ErrorCode enum and Error object already exist
+	// Check if ErrorCode enum, Error object, ErrorFieldCode enum, and ErrorField object already exist
 	errorCodeEnumExists := false
 	errorObjectExists := false
+	errorFieldCodeEnumExists := false
+	errorFieldObjectExists := false
 	for _, enum := range input.Enums {
 		if enum.Name == errorCodeEnumName {
 			errorCodeEnumExists = true
-			break
+		}
+		if enum.Name == errorFieldCodeEnumName {
+			errorFieldCodeEnumExists = true
 		}
 	}
 	for _, object := range input.Objects {
 		if object.Name == errorObjectName {
 			errorObjectExists = true
-			break
+		}
+		if object.Name == errorFieldObjectName {
+			errorFieldObjectExists = true
 		}
 	}
+
+	// Copy existing enums first to preserve order
+	result.Enums = append(result.Enums, input.Enums...)
 
 	// Add default ErrorCode enum if it doesn't exist
 	if !errorCodeEnumExists {
@@ -333,8 +370,23 @@ func ApplyOverlay(input *Service) *Service {
 		result.Enums = append(result.Enums, errorCodeEnum)
 	}
 
-	// Copy existing enums
-	result.Enums = append(result.Enums, input.Enums...)
+	// Add default ErrorFieldCode enum if it doesn't exist
+	if !errorFieldCodeEnumExists {
+		errorFieldCodeEnum := Enum{
+			Name:        errorFieldCodeEnumName,
+			Description: descriptionErrorFieldCodeEnum,
+			Values: []EnumValue{
+				{Name: errorFieldCodeAlreadyExists, Description: descriptionErrorFieldCodeAlreadyExists},
+				{Name: errorFieldCodeRequired, Description: descriptionErrorFieldCodeRequired},
+				{Name: errorFieldCodeNotFound, Description: descriptionErrorFieldCodeNotFound},
+				{Name: errorFieldCodeInvalidValue, Description: descriptionErrorFieldCodeInvalidValue},
+			},
+		}
+		result.Enums = append(result.Enums, errorFieldCodeEnum)
+	}
+
+	// Copy existing objects first to preserve order
+	result.Objects = append(result.Objects, input.Objects...)
 
 	// Add default Error object if it doesn't exist
 	if !errorObjectExists {
@@ -357,8 +409,26 @@ func ApplyOverlay(input *Service) *Service {
 		result.Objects = append(result.Objects, errorObject)
 	}
 
-	// Copy existing objects
-	result.Objects = append(result.Objects, input.Objects...)
+	// Add default ErrorField object if it doesn't exist
+	if !errorFieldObjectExists {
+		errorFieldObject := Object{
+			Name:        errorFieldObjectName,
+			Description: errorFieldObjectDescription,
+			Fields: []Field{
+				{
+					Name:        errorFieldCodeFieldName,
+					Description: errorFieldCodeFieldDescription,
+					Type:        errorFieldCodeEnumName,
+				},
+				{
+					Name:        errorFieldMessageFieldName,
+					Description: errorFieldMessageFieldDescription,
+					Type:        FieldTypeString,
+				},
+			},
+		}
+		result.Objects = append(result.Objects, errorFieldObject)
+	}
 
 	// Copy resources
 	copy(result.Resources, input.Resources)
