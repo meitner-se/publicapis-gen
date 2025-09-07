@@ -334,9 +334,7 @@ func ApplyOverlay(input *Service) *Service {
 	}
 
 	// Copy existing enums
-	for _, enum := range input.Enums {
-		result.Enums = append(result.Enums, enum)
-	}
+	result.Enums = append(result.Enums, input.Enums...)
 
 	// Add default Error object if it doesn't exist
 	if !errorObjectExists {
@@ -360,9 +358,7 @@ func ApplyOverlay(input *Service) *Service {
 	}
 
 	// Copy existing objects
-	for _, object := range input.Objects {
-		result.Objects = append(result.Objects, object)
-	}
+	result.Objects = append(result.Objects, input.Objects...)
 
 	// Copy resources
 	copy(result.Resources, input.Resources)
