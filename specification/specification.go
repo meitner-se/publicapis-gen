@@ -308,15 +308,15 @@ func canBeNull(field Field) bool {
 // generateFilterField creates a filter field based on the original field and filter type.
 func generateFilterField(originalField Field, isNullable bool, isArray bool) Field {
 	modifiers := []string{}
-	
+
 	if isNullable {
 		modifiers = append(modifiers, ModifierNullable)
 	}
-	
+
 	if isArray {
 		modifiers = append(modifiers, ModifierArray)
 	}
-	
+
 	return Field{
 		Name:        originalField.Name,
 		Description: originalField.Description,
@@ -325,7 +325,7 @@ func generateFilterField(originalField Field, isNullable bool, isArray bool) Fie
 	}
 }
 
-// ApplyFilterOverlay applies filter overlay to a specification, generating Filter objects 
+// ApplyFilterOverlay applies filter overlay to a specification, generating Filter objects
 // from existing Objects. This should be called after ApplyOverlay to ensure all Objects
 // are available for filter generation.
 func ApplyFilterOverlay(input *Service) *Service {
@@ -343,10 +343,10 @@ func ApplyFilterOverlay(input *Service) *Service {
 
 	// Copy enums
 	copy(result.Enums, input.Enums)
-	
+
 	// Copy existing objects first
 	result.Objects = append(result.Objects, input.Objects...)
-	
+
 	// Copy resources
 	copy(result.Resources, input.Resources)
 
@@ -364,7 +364,7 @@ func ApplyFilterOverlay(input *Service) *Service {
 					Modifiers:   []string{ModifierNullable},
 				},
 				{
-					Name:        "NotEquals", 
+					Name:        "NotEquals",
 					Description: "Inequality filters for " + obj.Name,
 					Type:        obj.Name + filterEqualsSuffix,
 					Modifiers:   []string{ModifierNullable},

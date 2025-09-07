@@ -1208,7 +1208,7 @@ func TestApplyFilterOverlay(t *testing.T) {
 				},
 				{
 					Name:        "Product",
-					Description: "Product object", 
+					Description: "Product object",
 					Fields: []Field{
 						{
 							Name:        "ID",
