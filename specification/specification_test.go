@@ -1042,3 +1042,400 @@ func Test_containsOperation(t *testing.T) {
 		assert.False(t, result) // Should be case-sensitive
 	})
 }
+
+func TestApplyFilterOverlay(t *testing.T) {
+	t.Run("NilInput", func(t *testing.T) {
+		result := ApplyFilterOverlay(nil)
+		assert.Nil(t, result)
+	})
+
+	t.Run("EmptyService", func(t *testing.T) {
+		input := &Service{
+			Name:      "TestService",
+			Enums:     []Enum{},
+			Objects:   []Object{},
+			Resources: []Resource{},
+		}
+
+		result := ApplyFilterOverlay(input)
+		require.NotNil(t, result)
+
+		// Should preserve service structure with no additional objects
+		assert.Equal(t, input.Name, result.Name)
+		assert.Equal(t, 0, len(result.Objects))
+		assert.Equal(t, 0, len(result.Enums))
+		assert.Equal(t, 0, len(result.Resources))
+	})
+
+	t.Run("ServiceWithOneObject", func(t *testing.T) {
+		input := &Service{
+			Name:  "TestService",
+			Enums: []Enum{},
+			Objects: []Object{
+				{
+					Name:        "Person",
+					Description: "Person object",
+					Fields: []Field{
+						{
+							Name:        "FirstName",
+							Type:        FieldTypeString,
+							Description: "First name",
+							Modifiers:   []string{},
+						},
+						{
+							Name:        "LastName",
+							Type:        FieldTypeString,
+							Description: "Last name",
+							Modifiers:   []string{},
+						},
+						{
+							Name:        "Age",
+							Type:        FieldTypeInt,
+							Description: "Age in years",
+							Modifiers:   []string{},
+						},
+						{
+							Name:        "RelatedPersonIDs",
+							Type:        FieldTypeString,
+							Description: "Related person IDs",
+							Modifiers:   []string{ModifierArray},
+						},
+					},
+				},
+			},
+			Resources: []Resource{},
+		}
+
+		result := ApplyFilterOverlay(input)
+		require.NotNil(t, result)
+
+		// Should have original object plus 6 filter objects (main + 5 filter types)
+		assert.Equal(t, 7, len(result.Objects))
+
+		// Check main filter object
+		mainFilter := result.Objects[1] // First is original Person object
+		assert.Equal(t, "PersonFilter", mainFilter.Name)
+		assert.Equal(t, "Filter object for Person", mainFilter.Description)
+		assert.Equal(t, 14, len(mainFilter.Fields)) // 12 filter types + OrCondition + NestedFilters
+
+		// Check that all filter field types are present
+		fieldNames := make(map[string]bool)
+		for _, field := range mainFilter.Fields {
+			fieldNames[field.Name] = true
+		}
+		assert.True(t, fieldNames["Equals"])
+		assert.True(t, fieldNames["NotEquals"])
+		assert.True(t, fieldNames["GreaterThan"])
+		assert.True(t, fieldNames["SmallerThan"])
+		assert.True(t, fieldNames["GreaterOrEqual"])
+		assert.True(t, fieldNames["SmallerOrEqual"])
+		assert.True(t, fieldNames["Contains"])
+		assert.True(t, fieldNames["NotContains"])
+		assert.True(t, fieldNames["Like"])
+		assert.True(t, fieldNames["NotLike"])
+		assert.True(t, fieldNames["Null"])
+		assert.True(t, fieldNames["NotNull"])
+		assert.True(t, fieldNames["OrCondition"])
+		assert.True(t, fieldNames["NestedFilters"])
+
+		// Check FilterEquals object
+		equalsFilter := result.Objects[2]
+		assert.Equal(t, "PersonFilterEquals", equalsFilter.Name)
+		assert.Equal(t, "Equality/Inequality filter fields for Person", equalsFilter.Description)
+		assert.Equal(t, 4, len(equalsFilter.Fields)) // All original fields
+
+		// Check that fields have nullable modifier instead of pointer prefix
+		for _, field := range equalsFilter.Fields {
+			assert.Contains(t, field.Modifiers, ModifierNullable, "Field %s should have nullable modifier", field.Name)
+			assert.NotContains(t, field.Type, "*", "Field %s type should not have * prefix, got %s", field.Name, field.Type)
+		}
+
+		// Check FilterRange object
+		rangeFilter := result.Objects[3] // PersonFilterRange
+		assert.Equal(t, "PersonFilterRange", rangeFilter.Name)
+		assert.Equal(t, 1, len(rangeFilter.Fields)) // Only Age is comparable
+		assert.Equal(t, "Age", rangeFilter.Fields[0].Name)
+		assert.Equal(t, FieldTypeInt, rangeFilter.Fields[0].Type)
+		assert.Contains(t, rangeFilter.Fields[0].Modifiers, ModifierNullable)
+
+		// Check FilterContains object
+		containsFilter := result.Objects[4] // PersonFilterContains
+		assert.Equal(t, "PersonFilterContains", containsFilter.Name)
+		assert.Equal(t, 4, len(containsFilter.Fields)) // All fields except timestamp (none in this case)
+
+		// Check that Contains fields have array modifier instead of [] prefix
+		for _, field := range containsFilter.Fields {
+			assert.Contains(t, field.Modifiers, ModifierArray, "Field %s should have array modifier", field.Name)
+			assert.NotContains(t, field.Type, "[]", "Field %s type should not have [] prefix, got %s", field.Name, field.Type)
+		}
+
+		// Check FilterLike object
+		likeFilter := result.Objects[5] // PersonFilterLike
+		assert.Equal(t, "PersonFilterLike", likeFilter.Name)
+		assert.Equal(t, 3, len(likeFilter.Fields)) // Only string fields (FirstName, LastName, RelatedPersonIDs)
+
+		// Check FilterNull object
+		nullFilter := result.Objects[6] // PersonFilterNull
+		assert.Equal(t, "PersonFilterNull", nullFilter.Name)
+		assert.Equal(t, 1, len(nullFilter.Fields)) // Only RelatedPersonIDs has array modifier
+		assert.Equal(t, "RelatedPersonIDs", nullFilter.Fields[0].Name)
+		assert.Equal(t, FieldTypeBool, nullFilter.Fields[0].Type)
+		assert.Contains(t, nullFilter.Fields[0].Modifiers, ModifierNullable)
+	})
+
+	t.Run("ServiceWithMultipleObjects", func(t *testing.T) {
+		input := &Service{
+			Name:  "TestService",
+			Enums: []Enum{},
+			Objects: []Object{
+				{
+					Name:        "User",
+					Description: "User object",
+					Fields: []Field{
+						{
+							Name:        "ID",
+							Type:        FieldTypeUUID,
+							Description: "User ID",
+							Modifiers:   []string{},
+						},
+						{
+							Name:        "Email",
+							Type:        FieldTypeString,
+							Description: "User email",
+							Modifiers:   []string{ModifierNullable},
+						},
+					},
+				},
+				{
+					Name:        "Product",
+					Description: "Product object",
+					Fields: []Field{
+						{
+							Name:        "ID",
+							Type:        FieldTypeUUID,
+							Description: "Product ID",
+							Modifiers:   []string{},
+						},
+						{
+							Name:        "Price",
+							Type:        FieldTypeInt,
+							Description: "Product price",
+							Modifiers:   []string{},
+						},
+					},
+				},
+			},
+			Resources: []Resource{},
+		}
+
+		result := ApplyFilterOverlay(input)
+		require.NotNil(t, result)
+
+		// Should have 2 original objects + 2 * 6 filter objects = 14 total objects
+		assert.Equal(t, 14, len(result.Objects))
+
+		// Check that we have filters for both User and Product
+		objectNames := make(map[string]bool)
+		for _, obj := range result.Objects {
+			objectNames[obj.Name] = true
+		}
+
+		// Original objects
+		assert.True(t, objectNames["User"])
+		assert.True(t, objectNames["Product"])
+
+		// User filter objects
+		assert.True(t, objectNames["UserFilter"])
+		assert.True(t, objectNames["UserFilterEquals"])
+		assert.True(t, objectNames["UserFilterRange"])
+		assert.True(t, objectNames["UserFilterContains"])
+		assert.True(t, objectNames["UserFilterLike"])
+		assert.True(t, objectNames["UserFilterNull"])
+
+		// Product filter objects
+		assert.True(t, objectNames["ProductFilter"])
+		assert.True(t, objectNames["ProductFilterEquals"])
+		assert.True(t, objectNames["ProductFilterRange"])
+		assert.True(t, objectNames["ProductFilterContains"])
+		assert.True(t, objectNames["ProductFilterLike"])
+		assert.True(t, objectNames["ProductFilterNull"])
+	})
+
+	t.Run("PreservesOriginalStructure", func(t *testing.T) {
+		input := &Service{
+			Name: "TestService",
+			Enums: []Enum{
+				{
+					Name:        "Status",
+					Description: "Status enum",
+					Values: []EnumValue{
+						{Name: "Active", Description: "Active status"},
+					},
+				},
+			},
+			Objects: []Object{
+				{
+					Name:        "TestObject",
+					Description: "Test object",
+					Fields: []Field{
+						{Name: "field1", Type: FieldTypeString, Description: "Field 1"},
+					},
+				},
+			},
+			Resources: []Resource{
+				{
+					Name:        "TestResource",
+					Description: "Test resource",
+					Operations:  []string{OperationRead},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "id",
+								Type:        FieldTypeUUID,
+								Description: "Resource ID",
+							},
+							Operations: []string{OperationRead},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyFilterOverlay(input)
+		require.NotNil(t, result)
+
+		// Should preserve all original structure
+		assert.Equal(t, input.Name, result.Name)
+		assert.Equal(t, len(input.Enums), len(result.Enums))
+		assert.Equal(t, len(input.Resources), len(result.Resources))
+
+		// Should have original object plus 6 filter objects
+		assert.Equal(t, 7, len(result.Objects)) // 1 original + 6 filter objects
+
+		// First object should be the original one
+		assert.Equal(t, "TestObject", result.Objects[0].Name)
+
+		// Should have generated filter objects
+		assert.Equal(t, "TestObjectFilter", result.Objects[1].Name)
+	})
+}
+
+func Test_containsModifier(t *testing.T) {
+	t.Run("EmptySlice", func(t *testing.T) {
+		result := containsModifier([]string{}, ModifierNullable)
+		assert.False(t, result)
+	})
+
+	t.Run("ModifierExists", func(t *testing.T) {
+		modifiers := []string{ModifierNullable, ModifierArray}
+		result := containsModifier(modifiers, ModifierNullable)
+		assert.True(t, result)
+	})
+
+	t.Run("ModifierDoesNotExist", func(t *testing.T) {
+		modifiers := []string{ModifierArray}
+		result := containsModifier(modifiers, ModifierNullable)
+		assert.False(t, result)
+	})
+}
+
+func Test_isComparableType(t *testing.T) {
+	t.Run("IntType", func(t *testing.T) {
+		result := isComparableType(FieldTypeInt)
+		assert.True(t, result)
+	})
+
+	t.Run("DateType", func(t *testing.T) {
+		result := isComparableType(FieldTypeDate)
+		assert.True(t, result)
+	})
+
+	t.Run("TimestampType", func(t *testing.T) {
+		result := isComparableType(FieldTypeTimestamp)
+		assert.True(t, result)
+	})
+
+	t.Run("StringType", func(t *testing.T) {
+		result := isComparableType(FieldTypeString)
+		assert.False(t, result)
+	})
+
+	t.Run("BoolType", func(t *testing.T) {
+		result := isComparableType(FieldTypeBool)
+		assert.False(t, result)
+	})
+
+	t.Run("UUIDType", func(t *testing.T) {
+		result := isComparableType(FieldTypeUUID)
+		assert.False(t, result)
+	})
+}
+
+func Test_isStringType(t *testing.T) {
+	t.Run("StringType", func(t *testing.T) {
+		result := isStringType(FieldTypeString)
+		assert.True(t, result)
+	})
+
+	t.Run("IntType", func(t *testing.T) {
+		result := isStringType(FieldTypeInt)
+		assert.False(t, result)
+	})
+
+	t.Run("BoolType", func(t *testing.T) {
+		result := isStringType(FieldTypeBool)
+		assert.False(t, result)
+	})
+}
+
+func Test_canBeNull(t *testing.T) {
+	t.Run("NullableField", func(t *testing.T) {
+		field := Field{
+			Name:      "test",
+			Type:      FieldTypeString,
+			Modifiers: []string{ModifierNullable},
+		}
+		result := canBeNull(field)
+		assert.True(t, result)
+	})
+
+	t.Run("ArrayField", func(t *testing.T) {
+		field := Field{
+			Name:      "test",
+			Type:      FieldTypeString,
+			Modifiers: []string{ModifierArray},
+		}
+		result := canBeNull(field)
+		assert.True(t, result)
+	})
+
+	t.Run("BothModifiers", func(t *testing.T) {
+		field := Field{
+			Name:      "test",
+			Type:      FieldTypeString,
+			Modifiers: []string{ModifierNullable, ModifierArray},
+		}
+		result := canBeNull(field)
+		assert.True(t, result)
+	})
+
+	t.Run("NoModifiers", func(t *testing.T) {
+		field := Field{
+			Name:      "test",
+			Type:      FieldTypeString,
+			Modifiers: []string{},
+		}
+		result := canBeNull(field)
+		assert.False(t, result)
+	})
+
+	t.Run("OtherModifiers", func(t *testing.T) {
+		field := Field{
+			Name:      "test",
+			Type:      FieldTypeString,
+			Modifiers: []string{"other"},
+		}
+		result := canBeNull(field)
+		assert.False(t, result)
+	})
+}
