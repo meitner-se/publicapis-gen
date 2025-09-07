@@ -126,7 +126,7 @@ func main() {
 
 ### Specification Overlay
 
-The `ApplyOverlay` function provides a powerful way to automatically generate `Object` definitions from your `Resource` definitions. This is particularly useful for creating consistent data models for read operations.
+The `ApplyOverlay` function provides a powerful way to automatically generate `Object` definitions and `Create` endpoints from your `Resource` definitions. This is particularly useful for creating consistent data models for read operations and standardized create endpoints.
 
 #### How It Works
 
@@ -136,7 +136,11 @@ When you call `specification.ApplyOverlay()` on a service specification:
 2. **Checks for Read Operations**: Identifies resources that have the "Read" operation
 3. **Generates Objects**: For each resource with Read operations, creates a new Object with the same name
 4. **Includes Read Fields**: Only includes fields that support the "Read" operation in the generated Object
-5. **Preserves Existing**: Doesn't overwrite existing Objects with the same name
+5. **Checks for Create Operations**: Identifies resources that have the "Create" operation
+6. **Generates Create Endpoints**: For each resource with Create operations, creates a standardized Create endpoint
+7. **Includes Create Fields**: Uses all fields that support the "Create" operation as body parameters in the request
+8. **Returns Resource Object**: The Create endpoint returns the resource object (201 Created)
+9. **Preserves Existing**: Doesn't overwrite existing Objects or endpoints with the same name
 
 #### Example
 
@@ -206,12 +210,55 @@ func main() {
 }
 ```
 
+#### Create Endpoint Generation
+
+The overlay automatically generates Create endpoints with the following characteristics:
+
+* **HTTP Method**: POST
+* **Path**: Empty (to be combined with resource base path)
+* **Request**: JSON body with all fields that have Create operation
+* **Response**: 201 Created status code, returns the created resource object
+* **Content Type**: application/json for both request and response
+
+Example of generated Create endpoint for a Users resource:
+
+```json
+{
+  "name": "Create",
+  "title": "Create Users",
+  "description": "Create a new Users",
+  "method": "POST",
+  "path": "",
+  "request": {
+    "content_type": "application/json",
+    "body_params": [
+      {
+        "name": "name",
+        "type": "String",
+        "description": "User name"
+      },
+      {
+        "name": "email", 
+        "type": "String",
+        "description": "User email"
+      }
+    ]
+  },
+  "response": {
+    "content_type": "application/json",
+    "status_code": 201,
+    "body_object": "Users"
+  }
+}
+```
+
 #### Use Cases
 
 * **API Response Models**: Automatically generate response object schemas from your resource definitions
 * **Consistent Data Models**: Ensure your Objects match your Resource field definitions
-* **Security**: Exclude sensitive fields (like passwords) that don't support Read operations
-* **DRY Principle**: Define your data structure once in Resources, generate Objects automatically
+* **Standardized Create Endpoints**: Generate consistent Create endpoints across all resources
+* **Security**: Exclude sensitive fields (like passwords) that don't support Read operations from response objects
+* **DRY Principle**: Define your data structure once in Resources, generate Objects and endpoints automatically
 
 ## Constants Usage
 

@@ -141,6 +141,28 @@ const (
 	errorFieldCodeEnumName            = "ErrorFieldCode"
 )
 
+// HTTP Methods
+const (
+	httpMethodGet    = "GET"
+	httpMethodPost   = "POST"
+	httpMethodPut    = "PUT"
+	httpMethodDelete = "DELETE"
+)
+
+// Content Types
+const (
+	contentTypeJSON = "application/json"
+)
+
+// Create Endpoint Constants
+const (
+	createEndpointName        = "Create"
+	createEndpointPath        = ""
+	createEndpointTitlePrefix = "Create "
+	createEndpointDescPrefix  = "Create a new "
+	createResponseStatusCode  = 201
+)
+
 // Service is the definition of an API service.
 type Service struct {
 	// Name of the service
@@ -309,9 +331,11 @@ func containsOperation(operations []string, operation string) bool {
 	return false
 }
 
-// ApplyOverlay applies an overlay to a specification, generating Objects from Resources.
+// ApplyOverlay applies an overlay to a specification, generating Objects and Create endpoints from Resources.
 // It creates Objects for Resources that have the "Read" operation, including all fields
 // that support the "Read" operation in the generated Object.
+// It creates Create endpoints for Resources that have the "Create" operation, including all fields
+// that support the "Create" operation as body parameters in the request, and returning the Resource object.
 // It also adds default ErrorCode enum, Error object, ErrorFieldCode enum, and ErrorField object to every service.
 func ApplyOverlay(input *Service) *Service {
 	if input == nil {
@@ -474,6 +498,70 @@ func ApplyOverlay(input *Service) *Service {
 
 				// Add the new object to the result
 				result.Objects = append(result.Objects, newObject)
+			}
+		}
+
+		// Generate Create endpoints for resources that have Create operations
+		if containsOperation(resource.Operations, OperationCreate) {
+			// Check if a Create endpoint already exists
+			createEndpointExists := false
+			for _, endpoint := range resource.Endpoints {
+				if endpoint.Name == createEndpointName {
+					createEndpointExists = true
+					break
+				}
+			}
+
+			// Only create the endpoint if it doesn't already exist
+			if !createEndpointExists {
+				// Collect all fields that support Create operation for body parameters
+				var bodyParams []Field
+				for _, resourceField := range resource.Fields {
+					if containsOperation(resourceField.Operations, OperationCreate) {
+						// Convert ResourceField to Field by copying the embedded Field
+						field := Field{
+							Name:        resourceField.Field.Name,
+							Description: resourceField.Field.Description,
+							Type:        resourceField.Field.Type,
+							Default:     resourceField.Field.Default,
+							Example:     resourceField.Field.Example,
+							Modifiers:   make([]string, len(resourceField.Field.Modifiers)),
+						}
+						copy(field.Modifiers, resourceField.Field.Modifiers)
+						bodyParams = append(bodyParams, field)
+					}
+				}
+
+				// Create the Create endpoint
+				createEndpoint := Endpoint{
+					Name:        createEndpointName,
+					Title:       createEndpointTitlePrefix + resource.Name,
+					Description: createEndpointDescPrefix + resource.Name,
+					Method:      httpMethodPost,
+					Path:        createEndpointPath,
+					Request: EndpointRequest{
+						ContentType: contentTypeJSON,
+						Headers:     []Field{},
+						PathParams:  []Field{},
+						QueryParams: []Field{},
+						BodyParams:  bodyParams,
+					},
+					Response: EndpointResponse{
+						ContentType: contentTypeJSON,
+						StatusCode:  createResponseStatusCode,
+						Headers:     []Field{},
+						BodyFields:  []Field{},
+						BodyObject:  &resource.Name,
+					},
+				}
+
+				// Add the Create endpoint to the resource
+				for i := range result.Resources {
+					if result.Resources[i].Name == resource.Name {
+						result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, createEndpoint)
+						break
+					}
+				}
 			}
 		}
 	}
