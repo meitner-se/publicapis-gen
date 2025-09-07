@@ -213,6 +213,55 @@ func main() {
 * **Security**: Exclude sensitive fields (like passwords) that don't support Read operations
 * **DRY Principle**: Define your data structure once in Resources, generate Objects automatically
 
+## Constants Usage
+
+This project follows a **zero hardcoded strings** policy for maintainability and consistency. All string literals used in the codebase are defined as constants in the `constants` package.
+
+### Constants Package
+
+The `constants` package (`constants/constants.go`) centralizes all string constants used throughout the application, including:
+
+- **Error Messages**: All error strings and log messages
+- **CRUD Operations**: "Create", "Read", "Update", "Delete" operations
+- **Field Types**: Data types like "UUID", "String", "Int", "Bool", "Timestamp"
+- **HTTP Methods**: "GET", "POST", "PUT", "DELETE", etc.
+- **Content Types**: "application/json", "multipart/form-data", etc.
+- **Field Modifiers**: "array", "nullable", "optional"
+- **Schema Properties**: JSON schema field names
+
+### Usage Examples
+
+```go
+// Import the constants package
+import "github.com/meitner-se/publicapis-gen/constants"
+
+// ❌ BAD - Hardcoded strings
+return errors.New("not implemented")
+if containsOperation(operations, "Read") {
+slog.ErrorContext(ctx, "failed to run", "error", err)
+
+// ✅ GOOD - Use constants
+return errors.New(constants.ErrorNotImplemented)
+if containsOperation(operations, constants.OperationRead) {
+slog.ErrorContext(ctx, constants.ErrorFailedToRun, constants.LogKeyError, err)
+```
+
+### Adding New Constants
+
+When contributing new functionality:
+
+1. Check if a similar constant already exists
+2. Add new constants to the appropriate section in `constants/constants.go`
+3. Use clear, descriptive names following Go conventions
+4. Group related constants together with documentation
+
+### Benefits
+
+- **Consistency**: Uniform error messages and strings across the codebase
+- **Maintainability**: Single place to update string values
+- **Internationalization**: Easy to implement i18n in the future
+- **Refactoring**: IDE support for renaming and finding usage
+
 ### Running Tests
 
 ```bash
