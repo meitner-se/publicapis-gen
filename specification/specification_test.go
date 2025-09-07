@@ -706,9 +706,9 @@ func TestApplyOverlay(t *testing.T) {
 		require.NotNil(t, result)
 		assert.Equal(t, input.Name, result.Name)
 
-		// Should have default ErrorCode and ErrorFieldCode enums, Error and ErrorField objects
+		// Should have default ErrorCode and ErrorFieldCode enums, Error, ErrorField, and Pagination objects
 		assert.Equal(t, 2, len(result.Enums))   // ErrorCode and ErrorFieldCode enums
-		assert.Equal(t, 2, len(result.Objects)) // Error and ErrorField objects
+		assert.Equal(t, 3, len(result.Objects)) // Error, ErrorField, and Pagination objects
 		assert.Equal(t, 0, len(result.Resources))
 
 		// Check ErrorCode enum (should be first since no existing enums)
@@ -827,8 +827,8 @@ func TestApplyOverlay(t *testing.T) {
 		// Third enum should be ErrorFieldCode (added by overlay)
 		assert.Equal(t, errorFieldCodeEnumName, result.Enums[2].Name)
 
-		// Should have Error and ErrorField objects plus existing object
-		assert.Equal(t, 3, len(result.Objects))
+		// Should have Error, ErrorField, and Pagination objects plus existing object
+		assert.Equal(t, 4, len(result.Objects))
 
 		// First object should be the existing User object (existing objects come first)
 		assert.Equal(t, "User", result.Objects[0].Name)
@@ -871,8 +871,8 @@ func TestApplyOverlay(t *testing.T) {
 		// Should have existing ErrorCode enum + new ErrorFieldCode enum
 		assert.Equal(t, 2, len(result.Enums))
 
-		// Should have existing Error object + new ErrorField object
-		assert.Equal(t, 2, len(result.Objects))
+		// Should have existing Error object + new ErrorField and Pagination objects
+		assert.Equal(t, 3, len(result.Objects))
 
 		// Check that existing ErrorCode definition is preserved, not replaced (first position)
 		assert.Equal(t, errorCodeEnumName, result.Enums[0].Name)
@@ -926,8 +926,8 @@ func TestApplyOverlay(t *testing.T) {
 		// Should have default ErrorCode enum + existing ErrorFieldCode enum
 		assert.Equal(t, 2, len(result.Enums))
 
-		// Should have default Error object + existing ErrorField object
-		assert.Equal(t, 2, len(result.Objects))
+		// Should have default Error and Pagination objects + existing ErrorField object
+		assert.Equal(t, 3, len(result.Objects))
 
 		// Check that existing ErrorFieldCode definition is preserved, not replaced (first position)
 		assert.Equal(t, errorFieldCodeEnumName, result.Enums[0].Name)
@@ -995,8 +995,8 @@ func TestApplyOverlay(t *testing.T) {
 		// Should have both existing enums (no new ones added)
 		assert.Equal(t, 2, len(result.Enums))
 
-		// Should have both existing objects (no new ones added)
-		assert.Equal(t, 2, len(result.Objects))
+		// Should have both existing objects + new Pagination object
+		assert.Equal(t, 3, len(result.Objects))
 
 		// Check that existing definitions are preserved, not replaced
 		assert.Equal(t, errorCodeEnumName, result.Enums[0].Name)
@@ -1056,8 +1056,8 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should have Error + ErrorField objects (from overlay) + generated Users object
-		assert.Equal(t, 3, len(result.Objects))
+		// Should have Error + ErrorField + Pagination objects (from overlay) + generated Users object
+		assert.Equal(t, 4, len(result.Objects))
 
 		// First object should be Error (from overlay, no existing objects)
 		errorObject := result.Objects[0]
@@ -1067,8 +1067,12 @@ func TestApplyOverlay(t *testing.T) {
 		errorFieldObject := result.Objects[1]
 		assert.Equal(t, "ErrorField", errorFieldObject.Name)
 
-		// Check the generated Users object (third object)
-		userObject := result.Objects[2]
+		// Check Pagination object (third object)
+		paginationObject := result.Objects[2]
+		assert.Equal(t, "Pagination", paginationObject.Name)
+
+		// Check the generated Users object (fourth object)
+		userObject := result.Objects[3]
 		assert.Equal(t, "Users", userObject.Name)
 		assert.Equal(t, "User management resource", userObject.Description)
 		assert.Equal(t, 2, len(userObject.Fields)) // Only id and name have Read operation
@@ -1108,8 +1112,8 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should only have Error and ErrorField objects (from overlay), no generated resource objects
-		assert.Equal(t, 2, len(result.Objects))
+		// Should only have Error, ErrorField, and Pagination objects (from overlay), no generated resource objects
+		assert.Equal(t, 3, len(result.Objects))
 		assert.Equal(t, "Error", result.Objects[0].Name)
 		assert.Equal(t, "ErrorField", result.Objects[1].Name)
 	})
@@ -1164,8 +1168,8 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should have Error + ErrorField objects + two generated objects
-		assert.Equal(t, 4, len(result.Objects))
+		// Should have Error + ErrorField + Pagination objects + two generated objects
+		assert.Equal(t, 5, len(result.Objects))
 
 		// First object should be Error (from overlay, no existing objects)
 		assert.Equal(t, "Error", result.Objects[0].Name)
@@ -1173,15 +1177,90 @@ func TestApplyOverlay(t *testing.T) {
 		// Second object should be ErrorField (from overlay)
 		assert.Equal(t, "ErrorField", result.Objects[1].Name)
 
-		// Check third object (Users)
-		usersObject := result.Objects[2]
+		// Third object should be Pagination (from overlay)
+		assert.Equal(t, "Pagination", result.Objects[2].Name)
+
+		// Check fourth object (Users)
+		usersObject := result.Objects[3]
 		assert.Equal(t, "Users", usersObject.Name)
 		assert.Equal(t, 1, len(usersObject.Fields))
 
-		// Check fourth object (Products)
-		productsObject := result.Objects[3]
+		// Check fifth object (Products)
+		productsObject := result.Objects[4]
 		assert.Equal(t, "Products", productsObject.Name)
 		assert.Equal(t, 2, len(productsObject.Fields)) // Both id and name have Read operation
+	})
+
+	t.Run("DefaultPaginationObjectGeneration", func(t *testing.T) {
+		input := &Service{
+			Name:      "TestService",
+			Enums:     []Enum{},
+			Objects:   []Object{},
+			Resources: []Resource{},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Should have Error + ErrorField + Pagination objects
+		assert.Equal(t, 3, len(result.Objects))
+
+		// Check that Pagination object is created
+		var paginationObject *Object
+		for i := range result.Objects {
+			if result.Objects[i].Name == "Pagination" {
+				paginationObject = &result.Objects[i]
+				break
+			}
+		}
+		require.NotNil(t, paginationObject)
+
+		// Verify Pagination object structure
+		assert.Equal(t, "Pagination", paginationObject.Name)
+		assert.Equal(t, "Pagination parameters for controlling result sets in list operations", paginationObject.Description)
+		assert.Equal(t, 2, len(paginationObject.Fields))
+
+		// Check Offset field
+		offsetField := paginationObject.Fields[0]
+		assert.Equal(t, "Offset", offsetField.Name)
+		assert.Equal(t, "Number of items to skip from the beginning of the result set", offsetField.Description)
+		assert.Equal(t, "Int", offsetField.Type)
+
+		// Check Limit field
+		limitField := paginationObject.Fields[1]
+		assert.Equal(t, "Limit", limitField.Name)
+		assert.Equal(t, "Maximum number of items to return in the result set", limitField.Description)
+		assert.Equal(t, "Int", limitField.Type)
+	})
+
+	t.Run("ExistingPaginationObjectNotDuplicated", func(t *testing.T) {
+		input := &Service{
+			Name:  "TestService",
+			Enums: []Enum{},
+			Objects: []Object{
+				{
+					Name:        "Pagination",
+					Description: "Custom pagination object",
+					Fields: []Field{
+						{Name: "CustomOffset", Type: "Int", Description: "Custom offset"},
+					},
+				},
+			},
+			Resources: []Resource{},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Should have existing Pagination + Error + ErrorField objects (3 total)
+		assert.Equal(t, 3, len(result.Objects))
+
+		// Verify that the existing Pagination object is preserved
+		paginationObject := result.Objects[0]
+		assert.Equal(t, "Pagination", paginationObject.Name)
+		assert.Equal(t, "Custom pagination object", paginationObject.Description)
+		assert.Equal(t, 1, len(paginationObject.Fields))
+		assert.Equal(t, "CustomOffset", paginationObject.Fields[0].Name)
 	})
 
 	t.Run("ExistingObjectWithSameName", func(t *testing.T) {
@@ -1223,8 +1302,8 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should have Error + ErrorField objects + existing Users object (no generated Users object due to name collision)
-		assert.Equal(t, 3, len(result.Objects))
+		// Should have Error + ErrorField + Pagination objects + existing Users object (no generated Users object due to name collision)
+		assert.Equal(t, 4, len(result.Objects))
 
 		// First object should be the existing Users object (existing objects come first)
 		assert.Equal(t, "Users", result.Objects[0].Name)
@@ -1269,8 +1348,8 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should have Error + ErrorField objects + generated Users object
-		assert.Equal(t, 3, len(result.Objects))
+		// Should have Error + ErrorField + Pagination objects + generated Users object
+		assert.Equal(t, 4, len(result.Objects))
 
 		// First object should be Error (from overlay, no existing objects)
 		assert.Equal(t, "Error", result.Objects[0].Name)
@@ -1278,8 +1357,11 @@ func TestApplyOverlay(t *testing.T) {
 		// Second object should be ErrorField (from overlay)
 		assert.Equal(t, "ErrorField", result.Objects[1].Name)
 
+		// Third object should be Pagination (from overlay)
+		assert.Equal(t, "Pagination", result.Objects[2].Name)
+
 		// Check field modifiers are preserved in generated Users object
-		userObject := result.Objects[2]
+		userObject := result.Objects[3]
 		assert.Equal(t, "Users", userObject.Name)
 		assert.Equal(t, 1, len(userObject.Fields))
 
@@ -1340,8 +1422,8 @@ func TestApplyOverlay(t *testing.T) {
 		assert.Equal(t, 3, len(result.Enums))
 		assert.Equal(t, len(input.Resources), len(result.Resources))
 
-		// Should have Error + ErrorField objects + existing object + generated Users object
-		assert.Equal(t, 4, len(result.Objects))
+		// Should have Error + ErrorField + Pagination objects + existing object + generated Users object
+		assert.Equal(t, 5, len(result.Objects))
 
 		// First object should be the existing ExistingObject (existing objects come first)
 		assert.Equal(t, "ExistingObject", result.Objects[0].Name)
@@ -1352,8 +1434,11 @@ func TestApplyOverlay(t *testing.T) {
 		// Third object should be ErrorField (from overlay)
 		assert.Equal(t, "ErrorField", result.Objects[2].Name)
 
-		// Fourth object should be the generated Users object
-		assert.Equal(t, "Users", result.Objects[3].Name)
+		// Fourth object should be Pagination (from overlay)
+		assert.Equal(t, "Pagination", result.Objects[3].Name)
+
+		// Fifth object should be the generated Users object
+		assert.Equal(t, "Users", result.Objects[4].Name)
 	})
 
 	t.Run("ResourceWithCreateOperation", func(t *testing.T) {
