@@ -77,6 +77,42 @@ const (
 	descriptionNullFilterFields               = "Null filter fields for "
 )
 
+// Error Code Values
+const (
+	errorCodeBadRequest          = "BadRequest"
+	errorCodeUnauthorized        = "Unauthorized"
+	errorCodeForbidden           = "Forbidden"
+	errorCodeNotFound            = "NotFound"
+	errorCodeConflict            = "Conflict"
+	errorCodeUnprocessableEntity = "UnprocessableEntity"
+	errorCodeRateLimited         = "RateLimited"
+	errorCodeInternal            = "Internal"
+)
+
+// Error Code Descriptions
+const (
+	descriptionErrorCodeEnum                = "Standard error codes used in API responses"
+	descriptionErrorCodeBadRequest          = "The request was malformed or contained invalid parameters. 400 status code"
+	descriptionErrorCodeUnauthorized        = "The request is missing valid authentication credentials. 401 status code"
+	descriptionErrorCodeForbidden           = "Request is authenticated, but the user is not allowed to perform the operation. 403 status code"
+	descriptionErrorCodeNotFound            = "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code"
+	descriptionErrorCodeConflict            = "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code"
+	descriptionErrorCodeUnprocessableEntity = "The request was well-formed but failed validation (e.g. invalid field format or constraints), 422 status code"
+	descriptionErrorCodeRateLimited         = "When the rate limit has been exceeded, 429 status code"
+	descriptionErrorCodeInternal            = "Some serverside issue, 5xx status code"
+)
+
+// Error object constants
+const (
+	errorObjectName              = "Error"
+	errorObjectDescription       = "Standard error response object containing error code and message"
+	errorCodeFieldName           = "Code"
+	errorCodeFieldDescription    = "The specific error code indicating the type of error"
+	errorMessageFieldName        = "Message"
+	errorMessageFieldDescription = "Human-readable error message providing additional details"
+	errorCodeEnumName            = "ErrorCode"
+)
+
 // Service is the definition of an API service.
 type Service struct {
 	// Name of the service
@@ -248,6 +284,7 @@ func containsOperation(operations []string, operation string) bool {
 // ApplyOverlay applies an overlay to a specification, generating Objects from Resources.
 // It creates Objects for Resources that have the "Read" operation, including all fields
 // that support the "Read" operation in the generated Object.
+// It also adds default ErrorCode enum and Error object to every service.
 func ApplyOverlay(input *Service) *Service {
 	if input == nil {
 		return nil
@@ -256,16 +293,76 @@ func ApplyOverlay(input *Service) *Service {
 	// Create a deep copy of the input service
 	result := &Service{
 		Name:      input.Name,
-		Enums:     make([]Enum, len(input.Enums)),
-		Objects:   make([]Object, len(input.Objects)),
+		Enums:     make([]Enum, 0, len(input.Enums)+1),     // +1 for ErrorCode enum
+		Objects:   make([]Object, 0, len(input.Objects)+1), // +1 for Error object
 		Resources: make([]Resource, len(input.Resources)),
 	}
 
-	// Copy enums
-	copy(result.Enums, input.Enums)
+	// Check if ErrorCode enum and Error object already exist
+	errorCodeEnumExists := false
+	errorObjectExists := false
+	for _, enum := range input.Enums {
+		if enum.Name == errorCodeEnumName {
+			errorCodeEnumExists = true
+			break
+		}
+	}
+	for _, object := range input.Objects {
+		if object.Name == errorObjectName {
+			errorObjectExists = true
+			break
+		}
+	}
+
+	// Add default ErrorCode enum if it doesn't exist
+	if !errorCodeEnumExists {
+		errorCodeEnum := Enum{
+			Name:        errorCodeEnumName,
+			Description: descriptionErrorCodeEnum,
+			Values: []EnumValue{
+				{Name: errorCodeBadRequest, Description: descriptionErrorCodeBadRequest},
+				{Name: errorCodeUnauthorized, Description: descriptionErrorCodeUnauthorized},
+				{Name: errorCodeForbidden, Description: descriptionErrorCodeForbidden},
+				{Name: errorCodeNotFound, Description: descriptionErrorCodeNotFound},
+				{Name: errorCodeConflict, Description: descriptionErrorCodeConflict},
+				{Name: errorCodeUnprocessableEntity, Description: descriptionErrorCodeUnprocessableEntity},
+				{Name: errorCodeRateLimited, Description: descriptionErrorCodeRateLimited},
+				{Name: errorCodeInternal, Description: descriptionErrorCodeInternal},
+			},
+		}
+		result.Enums = append(result.Enums, errorCodeEnum)
+	}
+
+	// Copy existing enums
+	for _, enum := range input.Enums {
+		result.Enums = append(result.Enums, enum)
+	}
+
+	// Add default Error object if it doesn't exist
+	if !errorObjectExists {
+		errorObject := Object{
+			Name:        errorObjectName,
+			Description: errorObjectDescription,
+			Fields: []Field{
+				{
+					Name:        errorCodeFieldName,
+					Description: errorCodeFieldDescription,
+					Type:        errorCodeEnumName,
+				},
+				{
+					Name:        errorMessageFieldName,
+					Description: errorMessageFieldDescription,
+					Type:        FieldTypeString,
+				},
+			},
+		}
+		result.Objects = append(result.Objects, errorObject)
+	}
 
 	// Copy existing objects
-	copy(result.Objects, input.Objects)
+	for _, object := range input.Objects {
+		result.Objects = append(result.Objects, object)
+	}
 
 	// Copy resources
 	copy(result.Resources, input.Resources)
