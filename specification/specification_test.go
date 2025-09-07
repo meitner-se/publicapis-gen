@@ -1409,9 +1409,9 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Check that the resource has the Create endpoint generated
+		// Check that the resource has the Create and Update endpoints generated
 		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 1, len(result.Resources[0].Endpoints))
+		assert.Equal(t, 2, len(result.Resources[0].Endpoints)) // Both Create and Update endpoints
 
 		// Check the generated Create endpoint
 		createEndpoint := result.Resources[0].Endpoints[0]
@@ -1450,6 +1450,49 @@ func TestApplyOverlay(t *testing.T) {
 		assert.Equal(t, 0, len(createEndpoint.Response.BodyFields))
 		require.NotNil(t, createEndpoint.Response.BodyObject)
 		assert.Equal(t, "Users", *createEndpoint.Response.BodyObject)
+
+		// Check the generated Update endpoint
+		updateEndpoint := result.Resources[0].Endpoints[1]
+		assert.Equal(t, "Update", updateEndpoint.Name)
+		assert.Equal(t, "Update Users", updateEndpoint.Title)
+		assert.Equal(t, "Update a Users", updateEndpoint.Description)
+		assert.Equal(t, "PATCH", updateEndpoint.Method)
+		assert.Equal(t, "/{id}", updateEndpoint.Path)
+
+		// Check the request structure
+		assert.Equal(t, "application/json", updateEndpoint.Request.ContentType)
+		assert.Equal(t, 0, len(updateEndpoint.Request.Headers))
+		assert.Equal(t, 1, len(updateEndpoint.Request.PathParams)) // Should have id path param
+		assert.Equal(t, 0, len(updateEndpoint.Request.QueryParams))
+
+		// Check path parameter
+		assert.Equal(t, "id", updateEndpoint.Request.PathParams[0].Name)
+		assert.Equal(t, "UUID", updateEndpoint.Request.PathParams[0].Type)
+		assert.Equal(t, "The unique identifier of the resource to update", updateEndpoint.Request.PathParams[0].Description)
+
+		// Check body parameters - should include fields that support Update operation
+		assert.Equal(t, 3, len(updateEndpoint.Request.BodyParams))
+
+		updateBodyParamNames := make([]string, len(updateEndpoint.Request.BodyParams))
+		for i, param := range updateEndpoint.Request.BodyParams {
+			updateBodyParamNames[i] = param.Name
+		}
+
+		// Should have name, email, and password (all have Update operation)
+		assert.Contains(t, updateBodyParamNames, "name")
+		assert.Contains(t, updateBodyParamNames, "email")
+		assert.Contains(t, updateBodyParamNames, "password")
+
+		// Should NOT have id (only has Read operation)
+		assert.NotContains(t, updateBodyParamNames, "id")
+
+		// Check the response structure
+		assert.Equal(t, "application/json", updateEndpoint.Response.ContentType)
+		assert.Equal(t, 200, updateEndpoint.Response.StatusCode)
+		assert.Equal(t, 0, len(updateEndpoint.Response.Headers))
+		assert.Equal(t, 0, len(updateEndpoint.Response.BodyFields))
+		require.NotNil(t, updateEndpoint.Response.BodyObject)
+		assert.Equal(t, "Users", *updateEndpoint.Response.BodyObject)
 	})
 
 	t.Run("ResourceWithoutCreateOperation", func(t *testing.T) {
@@ -1603,10 +1646,10 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Both resources should have Create endpoints generated
+		// Resources should have endpoints generated based on their operations
 		assert.Equal(t, 2, len(result.Resources))
 
-		// Check Users Create endpoint
+		// Check Users - has Create and Read operations, so should have 1 endpoint (Create)
 		assert.Equal(t, 1, len(result.Resources[0].Endpoints))
 		usersCreateEndpoint := result.Resources[0].Endpoints[0]
 		assert.Equal(t, "Create", usersCreateEndpoint.Name)
@@ -1614,19 +1657,38 @@ func TestApplyOverlay(t *testing.T) {
 		assert.Equal(t, 1, len(usersCreateEndpoint.Request.BodyParams))
 		assert.Equal(t, "name", usersCreateEndpoint.Request.BodyParams[0].Name)
 
+		// Check Products - has Create and Update operations, so should have 2 endpoints (Create and Update)
+		assert.Equal(t, 2, len(result.Resources[1].Endpoints))
+
 		// Check Products Create endpoint
-		assert.Equal(t, 1, len(result.Resources[1].Endpoints))
 		productsCreateEndpoint := result.Resources[1].Endpoints[0]
 		assert.Equal(t, "Create", productsCreateEndpoint.Name)
 		assert.Equal(t, "Create Products", productsCreateEndpoint.Title)
 		assert.Equal(t, 2, len(productsCreateEndpoint.Request.BodyParams))
 
-		productBodyParamNames := make([]string, len(productsCreateEndpoint.Request.BodyParams))
+		productCreateBodyParamNames := make([]string, len(productsCreateEndpoint.Request.BodyParams))
 		for i, param := range productsCreateEndpoint.Request.BodyParams {
-			productBodyParamNames[i] = param.Name
+			productCreateBodyParamNames[i] = param.Name
 		}
-		assert.Contains(t, productBodyParamNames, "title")
-		assert.Contains(t, productBodyParamNames, "price")
+		assert.Contains(t, productCreateBodyParamNames, "title")
+		assert.Contains(t, productCreateBodyParamNames, "price")
+
+		// Check Products Update endpoint
+		productsUpdateEndpoint := result.Resources[1].Endpoints[1]
+		assert.Equal(t, "Update", productsUpdateEndpoint.Name)
+		assert.Equal(t, "Update Products", productsUpdateEndpoint.Title)
+		assert.Equal(t, "PATCH", productsUpdateEndpoint.Method)
+		assert.Equal(t, "/{id}", productsUpdateEndpoint.Path)
+		assert.Equal(t, 1, len(productsUpdateEndpoint.Request.PathParams))
+		assert.Equal(t, "id", productsUpdateEndpoint.Request.PathParams[0].Name)
+		assert.Equal(t, 2, len(productsUpdateEndpoint.Request.BodyParams))
+
+		productUpdateBodyParamNames := make([]string, len(productsUpdateEndpoint.Request.BodyParams))
+		for i, param := range productsUpdateEndpoint.Request.BodyParams {
+			productUpdateBodyParamNames[i] = param.Name
+		}
+		assert.Contains(t, productUpdateBodyParamNames, "title")
+		assert.Contains(t, productUpdateBodyParamNames, "price")
 	})
 }
 

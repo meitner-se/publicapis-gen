@@ -126,21 +126,20 @@ func main() {
 
 ### Specification Overlay
 
-The `ApplyOverlay` function provides a powerful way to automatically generate `Object` definitions and `Create` endpoints from your `Resource` definitions. This is particularly useful for creating consistent data models for read operations and standardized create endpoints.
+The `ApplyOverlay` function provides a powerful way to automatically generate `Object` definitions, `Create` endpoints, and `Update` endpoints from your `Resource` definitions. This is particularly useful for creating consistent data models for read operations and standardized CRUD endpoints.
 
 #### How It Works
 
 When you call `specification.ApplyOverlay()` on a service specification:
 
 1. **Analyzes Resources**: Examines each resource in the specification
-2. **Checks for Read Operations**: Identifies resources that have the "Read" operation
-3. **Generates Objects**: For each resource with Read operations, creates a new Object with the same name
-4. **Includes Read Fields**: Only includes fields that support the "Read" operation in the generated Object
-5. **Checks for Create Operations**: Identifies resources that have the "Create" operation
-6. **Generates Create Endpoints**: For each resource with Create operations, creates a standardized Create endpoint
-7. **Includes Create Fields**: Uses all fields that support the "Create" operation as body parameters in the request
-8. **Returns Resource Object**: The Create endpoint returns the resource object (201 Created)
-9. **Preserves Existing**: Doesn't overwrite existing Objects or endpoints with the same name
+2. **Generates Objects**: For each resource with "Read" operations, creates a new Object with the same name
+3. **Includes Read Fields**: Only includes fields that support the "Read" operation in the generated Object
+4. **Generates Create Endpoints**: For each resource with "Create" operations, creates a standardized Create endpoint
+5. **Generates Update Endpoints**: For each resource with "Update" operations, creates a standardized Update endpoint
+6. **Includes Operation Fields**: Uses all fields that support the respective operation as body parameters
+7. **Returns Resource Object**: Both Create and Update endpoints return the resource object (201 Created / 200 OK)
+8. **Preserves Existing**: Doesn't overwrite existing Objects or endpoints with the same name
 
 #### Example
 
@@ -252,11 +251,61 @@ Example of generated Create endpoint for a Users resource:
 }
 ```
 
+#### Update Endpoint Generation
+
+The overlay also automatically generates Update endpoints with the following characteristics:
+
+* **HTTP Method**: PATCH
+* **Path**: /{id} (includes ID as path parameter)
+* **Request**: JSON body with all fields that have Update operation, plus ID as path parameter
+* **Response**: 200 OK status code, returns the updated resource object
+* **Content Type**: application/json for both request and response
+
+Example of generated Update endpoint for a Users resource:
+
+```json
+{
+  "name": "Update",
+  "title": "Update Users",
+  "description": "Update a Users",
+  "method": "PATCH",
+  "path": "/{id}",
+  "request": {
+    "content_type": "application/json",
+    "path_params": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "description": "The unique identifier of the resource to update"
+      }
+    ],
+    "body_params": [
+      {
+        "name": "name",
+        "type": "String",
+        "description": "User name"
+      },
+      {
+        "name": "email",
+        "type": "String",
+        "description": "User email"
+      }
+    ]
+  },
+  "response": {
+    "content_type": "application/json",
+    "status_code": 200,
+    "body_object": "Users"
+  }
+}
+```
+
 #### Use Cases
 
 * **API Response Models**: Automatically generate response object schemas from your resource definitions
 * **Consistent Data Models**: Ensure your Objects match your Resource field definitions
-* **Standardized Create Endpoints**: Generate consistent Create endpoints across all resources
+* **Standardized CRUD Endpoints**: Generate consistent Create and Update endpoints across all resources
+* **RESTful API Design**: Generate proper REST endpoints with correct HTTP methods and status codes
 * **Security**: Exclude sensitive fields (like passwords) that don't support Read operations from response objects
 * **DRY Principle**: Define your data structure once in Resources, generate Objects and endpoints automatically
 
