@@ -1355,6 +1355,279 @@ func TestApplyOverlay(t *testing.T) {
 		// Fourth object should be the generated Users object
 		assert.Equal(t, "Users", result.Objects[3].Name)
 	})
+
+	t.Run("ResourceWithCreateOperation", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "Users",
+					Description: "User management resource",
+					Operations:  []string{"Create", "Read", "Update", "Delete"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "id",
+								Type:        "UUID",
+								Description: "User ID",
+							},
+							Operations: []string{"Read"},
+						},
+						{
+							Field: Field{
+								Name:        "name",
+								Type:        "String",
+								Description: "User name",
+								Example:     "John Doe",
+							},
+							Operations: []string{"Create", "Read", "Update"},
+						},
+						{
+							Field: Field{
+								Name:        "email",
+								Type:        "String",
+								Description: "User email",
+								Example:     "john@example.com",
+							},
+							Operations: []string{"Create", "Read", "Update"},
+						},
+						{
+							Field: Field{
+								Name:        "password",
+								Type:        "String",
+								Description: "User password",
+							},
+							Operations: []string{"Create", "Update"}, // No Read operation
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Check that the resource has the Create endpoint generated
+		assert.Equal(t, 1, len(result.Resources))
+		assert.Equal(t, 1, len(result.Resources[0].Endpoints))
+
+		// Check the generated Create endpoint
+		createEndpoint := result.Resources[0].Endpoints[0]
+		assert.Equal(t, "Create", createEndpoint.Name)
+		assert.Equal(t, "Create Users", createEndpoint.Title)
+		assert.Equal(t, "Create a new Users", createEndpoint.Description)
+		assert.Equal(t, "POST", createEndpoint.Method)
+		assert.Equal(t, "", createEndpoint.Path)
+
+		// Check the request structure
+		assert.Equal(t, "application/json", createEndpoint.Request.ContentType)
+		assert.Equal(t, 0, len(createEndpoint.Request.Headers))
+		assert.Equal(t, 0, len(createEndpoint.Request.PathParams))
+		assert.Equal(t, 0, len(createEndpoint.Request.QueryParams))
+
+		// Check body parameters - should include fields that support Create operation
+		assert.Equal(t, 3, len(createEndpoint.Request.BodyParams))
+
+		bodyParamNames := make([]string, len(createEndpoint.Request.BodyParams))
+		for i, param := range createEndpoint.Request.BodyParams {
+			bodyParamNames[i] = param.Name
+		}
+
+		// Should have name, email, and password (all have Create operation)
+		assert.Contains(t, bodyParamNames, "name")
+		assert.Contains(t, bodyParamNames, "email")
+		assert.Contains(t, bodyParamNames, "password")
+
+		// Should NOT have id (only has Read operation)
+		assert.NotContains(t, bodyParamNames, "id")
+
+		// Check the response structure
+		assert.Equal(t, "application/json", createEndpoint.Response.ContentType)
+		assert.Equal(t, 201, createEndpoint.Response.StatusCode)
+		assert.Equal(t, 0, len(createEndpoint.Response.Headers))
+		assert.Equal(t, 0, len(createEndpoint.Response.BodyFields))
+		require.NotNil(t, createEndpoint.Response.BodyObject)
+		assert.Equal(t, "Users", *createEndpoint.Response.BodyObject)
+	})
+
+	t.Run("ResourceWithoutCreateOperation", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "ReadOnlyLogs",
+					Description: "Read-only logging resource",
+					Operations:  []string{"Read"}, // No Create operation
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "id",
+								Type:        "UUID",
+								Description: "Log ID",
+							},
+							Operations: []string{"Read"},
+						},
+						{
+							Field: Field{
+								Name:        "message",
+								Type:        "String",
+								Description: "Log message",
+							},
+							Operations: []string{"Read"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Should not generate any Create endpoints
+		assert.Equal(t, 1, len(result.Resources))
+		assert.Equal(t, 0, len(result.Resources[0].Endpoints))
+	})
+
+	t.Run("ResourceWithExistingCreateEndpoint", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "Users",
+					Description: "User management resource",
+					Operations:  []string{"Create", "Read"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "name",
+								Type:        "String",
+								Description: "User name",
+							},
+							Operations: []string{"Create", "Read"},
+						},
+					},
+					Endpoints: []Endpoint{
+						{
+							Name:        "Create",
+							Description: "Custom create endpoint",
+							Method:      "POST",
+							Path:        "/custom",
+							Request: EndpointRequest{
+								ContentType: "application/json",
+								BodyParams: []Field{
+									{
+										Name:        "customField",
+										Type:        "String",
+										Description: "Custom field",
+									},
+								},
+							},
+							Response: EndpointResponse{
+								ContentType: "application/json",
+								StatusCode:  200,
+							},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Should preserve the existing Create endpoint, not add a new one
+		assert.Equal(t, 1, len(result.Resources))
+		assert.Equal(t, 1, len(result.Resources[0].Endpoints))
+
+		existingEndpoint := result.Resources[0].Endpoints[0]
+		assert.Equal(t, "Create", existingEndpoint.Name)
+		assert.Equal(t, "Custom create endpoint", existingEndpoint.Description)
+		assert.Equal(t, "/custom", existingEndpoint.Path)
+		assert.Equal(t, 200, existingEndpoint.Response.StatusCode) // Should preserve custom status code
+	})
+
+	t.Run("MultipleResourcesWithCreateOperations", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "Users",
+					Description: "User resource",
+					Operations:  []string{"Create", "Read"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "name",
+								Type:        "String",
+								Description: "User name",
+							},
+							Operations: []string{"Create", "Read"},
+						},
+					},
+				},
+				{
+					Name:        "Products",
+					Description: "Product resource",
+					Operations:  []string{"Create", "Update"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "title",
+								Type:        "String",
+								Description: "Product title",
+							},
+							Operations: []string{"Create", "Update"},
+						},
+						{
+							Field: Field{
+								Name:        "price",
+								Type:        "Int",
+								Description: "Product price",
+								Example:     "100",
+							},
+							Operations: []string{"Create", "Update"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Both resources should have Create endpoints generated
+		assert.Equal(t, 2, len(result.Resources))
+
+		// Check Users Create endpoint
+		assert.Equal(t, 1, len(result.Resources[0].Endpoints))
+		usersCreateEndpoint := result.Resources[0].Endpoints[0]
+		assert.Equal(t, "Create", usersCreateEndpoint.Name)
+		assert.Equal(t, "Create Users", usersCreateEndpoint.Title)
+		assert.Equal(t, 1, len(usersCreateEndpoint.Request.BodyParams))
+		assert.Equal(t, "name", usersCreateEndpoint.Request.BodyParams[0].Name)
+
+		// Check Products Create endpoint
+		assert.Equal(t, 1, len(result.Resources[1].Endpoints))
+		productsCreateEndpoint := result.Resources[1].Endpoints[0]
+		assert.Equal(t, "Create", productsCreateEndpoint.Name)
+		assert.Equal(t, "Create Products", productsCreateEndpoint.Title)
+		assert.Equal(t, 2, len(productsCreateEndpoint.Request.BodyParams))
+
+		productBodyParamNames := make([]string, len(productsCreateEndpoint.Request.BodyParams))
+		for i, param := range productsCreateEndpoint.Request.BodyParams {
+			productBodyParamNames[i] = param.Name
+		}
+		assert.Contains(t, productBodyParamNames, "title")
+		assert.Contains(t, productBodyParamNames, "price")
+	})
 }
 
 func Test_containsOperation(t *testing.T) {
