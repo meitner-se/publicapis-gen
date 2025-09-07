@@ -54,8 +54,8 @@ const (
 
 // Filter description templates
 const (
-	descriptionFilterObject                    = "Filter object for "
-	descriptionEqualityFilters                 = "Equality filters for "
+	descriptionFilterObject                   = "Filter object for "
+	descriptionEqualityFilters                = "Equality filters for "
 	descriptionInequalityFilters              = "Inequality filters for "
 	descriptionGreaterThanFilters             = "Greater than filters for "
 	descriptionSmallerThanFilters             = "Smaller than filters for "
@@ -364,7 +364,7 @@ func isObjectType(fieldType string, objects []Object) bool {
 	if isPrimitiveType(fieldType) {
 		return false
 	}
-	
+
 	for _, obj := range objects {
 		if obj.Name == fieldType {
 			return true
