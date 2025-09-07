@@ -705,8 +705,142 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 		assert.Equal(t, input.Name, result.Name)
-		assert.Equal(t, 0, len(result.Objects))
+
+		// Should have default ErrorCode enum and Error object
+		assert.Equal(t, 1, len(result.Enums))   // ErrorCode enum
+		assert.Equal(t, 1, len(result.Objects)) // Error object
 		assert.Equal(t, 0, len(result.Resources))
+
+		// Check ErrorCode enum
+		errorCodeEnum := result.Enums[0]
+		assert.Equal(t, errorCodeEnumName, errorCodeEnum.Name)
+		assert.Equal(t, descriptionErrorCodeEnum, errorCodeEnum.Description)
+		assert.Equal(t, 8, len(errorCodeEnum.Values))
+
+		// Check ErrorCode enum values
+		expectedValues := map[string]string{
+			errorCodeBadRequest:          descriptionErrorCodeBadRequest,
+			errorCodeUnauthorized:        descriptionErrorCodeUnauthorized,
+			errorCodeForbidden:           descriptionErrorCodeForbidden,
+			errorCodeNotFound:            descriptionErrorCodeNotFound,
+			errorCodeConflict:            descriptionErrorCodeConflict,
+			errorCodeUnprocessableEntity: descriptionErrorCodeUnprocessableEntity,
+			errorCodeRateLimited:         descriptionErrorCodeRateLimited,
+			errorCodeInternal:            descriptionErrorCodeInternal,
+		}
+
+		for _, enumValue := range errorCodeEnum.Values {
+			expectedDescription, exists := expectedValues[enumValue.Name]
+			assert.True(t, exists, "Unexpected enum value: %s", enumValue.Name)
+			assert.Equal(t, expectedDescription, enumValue.Description)
+		}
+
+		// Check Error object
+		errorObject := result.Objects[0]
+		assert.Equal(t, errorObjectName, errorObject.Name)
+		assert.Equal(t, errorObjectDescription, errorObject.Description)
+		assert.Equal(t, 2, len(errorObject.Fields))
+
+		// Check Error object fields
+		assert.Equal(t, errorCodeFieldName, errorObject.Fields[0].Name)
+		assert.Equal(t, errorCodeFieldDescription, errorObject.Fields[0].Description)
+		assert.Equal(t, errorCodeEnumName, errorObject.Fields[0].Type)
+
+		assert.Equal(t, errorMessageFieldName, errorObject.Fields[1].Name)
+		assert.Equal(t, errorMessageFieldDescription, errorObject.Fields[1].Description)
+		assert.Equal(t, FieldTypeString, errorObject.Fields[1].Type)
+	})
+
+	t.Run("DefaultErrorObjectsWithExistingContent", func(t *testing.T) {
+		input := &Service{
+			Name: "TestService",
+			Enums: []Enum{
+				{
+					Name:        "UserRole",
+					Description: "User role enumeration",
+					Values: []EnumValue{
+						{Name: "Admin", Description: "Administrator"},
+						{Name: "User", Description: "Regular user"},
+					},
+				},
+			},
+			Objects: []Object{
+				{
+					Name:        "User",
+					Description: "User object",
+					Fields: []Field{
+						{Name: "id", Type: "UUID", Description: "User ID"},
+						{Name: "name", Type: "String", Description: "User name"},
+					},
+				},
+			},
+			Resources: []Resource{},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Should have ErrorCode enum plus existing enum
+		assert.Equal(t, 2, len(result.Enums))
+
+		// First enum should be ErrorCode (added by overlay)
+		assert.Equal(t, errorCodeEnumName, result.Enums[0].Name)
+
+		// Second enum should be the existing UserRole enum
+		assert.Equal(t, "UserRole", result.Enums[1].Name)
+
+		// Should have Error object plus existing object
+		assert.Equal(t, 2, len(result.Objects))
+
+		// First object should be Error (added by overlay)
+		assert.Equal(t, errorObjectName, result.Objects[0].Name)
+
+		// Second object should be the existing User object
+		assert.Equal(t, "User", result.Objects[1].Name)
+	})
+
+	t.Run("PreventsDuplicateErrorDefinitions", func(t *testing.T) {
+		// Test that if ErrorCode enum or Error object already exist, they are not duplicated
+		input := &Service{
+			Name: "TestService",
+			Enums: []Enum{
+				{
+					Name:        errorCodeEnumName,
+					Description: "Custom error code enum",
+					Values: []EnumValue{
+						{Name: "CustomError", Description: "Custom error"},
+					},
+				},
+			},
+			Objects: []Object{
+				{
+					Name:        errorObjectName,
+					Description: "Custom error object",
+					Fields: []Field{
+						{Name: "customField", Type: "String", Description: "Custom field"},
+					},
+				},
+			},
+			Resources: []Resource{},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Should still have only one enum and one object (existing ones are preserved)
+		assert.Equal(t, 1, len(result.Enums))
+		assert.Equal(t, 1, len(result.Objects))
+
+		// Check that existing definitions are preserved, not replaced
+		assert.Equal(t, errorCodeEnumName, result.Enums[0].Name)
+		assert.Equal(t, "Custom error code enum", result.Enums[0].Description)
+		assert.Equal(t, 1, len(result.Enums[0].Values))
+		assert.Equal(t, "CustomError", result.Enums[0].Values[0].Name)
+
+		assert.Equal(t, errorObjectName, result.Objects[0].Name)
+		assert.Equal(t, "Custom error object", result.Objects[0].Description)
+		assert.Equal(t, 1, len(result.Objects[0].Fields))
+		assert.Equal(t, "customField", result.Objects[0].Fields[0].Name)
 	})
 
 	t.Run("ResourceWithReadOperation", func(t *testing.T) {
@@ -753,11 +887,15 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should have generated one object
-		assert.Equal(t, 1, len(result.Objects))
+		// Should have Error object (from overlay) + generated Users object
+		assert.Equal(t, 2, len(result.Objects))
 
-		// Check the generated object
-		userObject := result.Objects[0]
+		// First object should be Error (from overlay)
+		errorObject := result.Objects[0]
+		assert.Equal(t, "Error", errorObject.Name)
+
+		// Check the generated Users object (second object)
+		userObject := result.Objects[1]
 		assert.Equal(t, "Users", userObject.Name)
 		assert.Equal(t, "User management resource", userObject.Description)
 		assert.Equal(t, 2, len(userObject.Fields)) // Only id and name have Read operation
@@ -797,8 +935,9 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should not have generated any objects
-		assert.Equal(t, 0, len(result.Objects))
+		// Should only have Error object (from overlay), no generated resource objects
+		assert.Equal(t, 1, len(result.Objects))
+		assert.Equal(t, "Error", result.Objects[0].Name)
 	})
 
 	t.Run("MultipleResourcesWithReadOperation", func(t *testing.T) {
@@ -851,16 +990,19 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should have generated two objects
-		assert.Equal(t, 2, len(result.Objects))
+		// Should have Error object + two generated objects
+		assert.Equal(t, 3, len(result.Objects))
 
-		// Check first object (Users)
-		usersObject := result.Objects[0]
+		// First object should be Error (from overlay)
+		assert.Equal(t, "Error", result.Objects[0].Name)
+
+		// Check second object (Users)
+		usersObject := result.Objects[1]
 		assert.Equal(t, "Users", usersObject.Name)
 		assert.Equal(t, 1, len(usersObject.Fields))
 
-		// Check second object (Products)
-		productsObject := result.Objects[1]
+		// Check third object (Products)
+		productsObject := result.Objects[2]
 		assert.Equal(t, "Products", productsObject.Name)
 		assert.Equal(t, 2, len(productsObject.Fields)) // Both id and name have Read operation
 	})
@@ -904,14 +1046,17 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should still have only one object (the existing one)
-		assert.Equal(t, 1, len(result.Objects))
+		// Should have Error object + existing Users object (no generated Users object due to name collision)
+		assert.Equal(t, 2, len(result.Objects))
 
-		// Should be the original object, not the generated one
-		assert.Equal(t, "Users", result.Objects[0].Name)
-		assert.Equal(t, "Existing user object", result.Objects[0].Description)
-		assert.Equal(t, 1, len(result.Objects[0].Fields))
-		assert.Equal(t, "existingField", result.Objects[0].Fields[0].Name)
+		// First object should be Error (from overlay)
+		assert.Equal(t, "Error", result.Objects[0].Name)
+
+		// Second should be the original Users object, not the generated one
+		assert.Equal(t, "Users", result.Objects[1].Name)
+		assert.Equal(t, "Existing user object", result.Objects[1].Description)
+		assert.Equal(t, 1, len(result.Objects[1].Fields))
+		assert.Equal(t, "existingField", result.Objects[1].Fields[0].Name)
 	})
 
 	t.Run("FieldsWithModifiers", func(t *testing.T) {
@@ -944,11 +1089,15 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should have generated one object
-		assert.Equal(t, 1, len(result.Objects))
+		// Should have Error object + generated Users object
+		assert.Equal(t, 2, len(result.Objects))
 
-		// Check field modifiers are preserved
-		userObject := result.Objects[0]
+		// First object should be Error (from overlay)
+		assert.Equal(t, "Error", result.Objects[0].Name)
+
+		// Check field modifiers are preserved in generated Users object
+		userObject := result.Objects[1]
+		assert.Equal(t, "Users", userObject.Name)
 		assert.Equal(t, 1, len(userObject.Fields))
 
 		field := userObject.Fields[0]
@@ -1004,17 +1153,21 @@ func TestApplyOverlay(t *testing.T) {
 
 		// Should preserve all original structure
 		assert.Equal(t, input.Name, result.Name)
-		assert.Equal(t, len(input.Enums), len(result.Enums))
+		// Should have ErrorCode enum + existing enum
+		assert.Equal(t, 2, len(result.Enums))
 		assert.Equal(t, len(input.Resources), len(result.Resources))
 
-		// Should have existing object plus generated object
-		assert.Equal(t, 2, len(result.Objects))
+		// Should have Error object + existing object + generated Users object
+		assert.Equal(t, 3, len(result.Objects))
 
-		// First object should be the existing one
-		assert.Equal(t, "ExistingObject", result.Objects[0].Name)
+		// First object should be Error (from overlay)
+		assert.Equal(t, "Error", result.Objects[0].Name)
 
-		// Second object should be the generated one
-		assert.Equal(t, "Users", result.Objects[1].Name)
+		// Second object should be the existing one
+		assert.Equal(t, "ExistingObject", result.Objects[1].Name)
+
+		// Third object should be the generated Users object
+		assert.Equal(t, "Users", result.Objects[2].Name)
 	})
 }
 

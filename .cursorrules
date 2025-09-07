@@ -90,6 +90,36 @@ When editing Go code:
 4. Keep import statements properly organized
 5. Ensure all functions and types have proper documentation comments
 
+## Performance and Idiomatic Go Code
+
+### Efficient Slice Operations
+- **ALWAYS use slice unpacking instead of loops when appending entire slices**
+- Replace loops that append individual elements with `append(slice, otherSlice...)`
+- This improves performance and follows Go best practices
+
+### Examples of Efficient Slice Operations
+```go
+// ❌ BAD - Inefficient loop that staticcheck will flag (S1011)
+for _, item := range sourceSlice {
+    targetSlice = append(targetSlice, item)
+}
+
+// ✅ GOOD - Use slice unpacking
+targetSlice = append(targetSlice, sourceSlice...)
+```
+
+### Staticcheck Rules to Follow
+- **S1011**: Replace loops with slice unpacking when possible
+- Always run `staticcheck` before committing to catch performance issues
+- Use `go vet` to identify common Go mistakes
+
+### Performance Checklist
+Before submitting code:
+- [ ] No loops that can be replaced with slice unpacking (`...`)
+- [ ] Run `staticcheck ./...` and fix all issues
+- [ ] Run `go vet ./...` and address warnings
+- [ ] Use efficient Go idioms for common operations
+
 ## Build Artifacts and Binary Files
 
 ### Binary File Management
