@@ -145,6 +145,7 @@ const (
 const (
 	httpMethodGet    = "GET"
 	httpMethodPost   = "POST"
+	httpMethodPatch  = "PATCH"
 	httpMethodPut    = "PUT"
 	httpMethodDelete = "DELETE"
 )
@@ -161,6 +162,17 @@ const (
 	createEndpointTitlePrefix = "Create "
 	createEndpointDescPrefix  = "Create a new "
 	createResponseStatusCode  = 201
+)
+
+// Update Endpoint Constants
+const (
+	updateEndpointName        = "Update"
+	updateEndpointPath        = "/{id}"
+	updateEndpointTitlePrefix = "Update "
+	updateEndpointDescPrefix  = "Update a "
+	updateResponseStatusCode  = 200
+	updateIDParamName         = "id"
+	updateIDParamDescription  = "The unique identifier of the resource to update"
 )
 
 // Service is the definition of an API service.
@@ -331,11 +343,13 @@ func containsOperation(operations []string, operation string) bool {
 	return false
 }
 
-// ApplyOverlay applies an overlay to a specification, generating Objects and Create endpoints from Resources.
+// ApplyOverlay applies an overlay to a specification, generating Objects, Create endpoints, and Update endpoints from Resources.
 // It creates Objects for Resources that have the "Read" operation, including all fields
 // that support the "Read" operation in the generated Object.
 // It creates Create endpoints for Resources that have the "Create" operation, including all fields
 // that support the "Create" operation as body parameters in the request, and returning the Resource object.
+// It creates Update endpoints for Resources that have the "Update" operation, including all fields
+// that support the "Update" operation as body parameters in the request, with ID as a path parameter, and returning the Resource object.
 // It also adds default ErrorCode enum, Error object, ErrorFieldCode enum, and ErrorField object to every service.
 func ApplyOverlay(input *Service) *Service {
 	if input == nil {
@@ -559,6 +573,77 @@ func ApplyOverlay(input *Service) *Service {
 				for i := range result.Resources {
 					if result.Resources[i].Name == resource.Name {
 						result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, createEndpoint)
+						break
+					}
+				}
+			}
+		}
+
+		// Generate Update endpoints for resources that have Update operations
+		if containsOperation(resource.Operations, OperationUpdate) {
+			// Check if an Update endpoint already exists
+			updateEndpointExists := false
+			for _, endpoint := range resource.Endpoints {
+				if endpoint.Name == updateEndpointName {
+					updateEndpointExists = true
+					break
+				}
+			}
+
+			// Only create the endpoint if it doesn't already exist
+			if !updateEndpointExists {
+				// Collect all fields that support Update operation for body parameters
+				var bodyParams []Field
+				for _, resourceField := range resource.Fields {
+					if containsOperation(resourceField.Operations, OperationUpdate) {
+						// Convert ResourceField to Field by copying the embedded Field
+						field := Field{
+							Name:        resourceField.Field.Name,
+							Description: resourceField.Field.Description,
+							Type:        resourceField.Field.Type,
+							Default:     resourceField.Field.Default,
+							Example:     resourceField.Field.Example,
+							Modifiers:   make([]string, len(resourceField.Field.Modifiers)),
+						}
+						copy(field.Modifiers, resourceField.Field.Modifiers)
+						bodyParams = append(bodyParams, field)
+					}
+				}
+
+				// Create the ID path parameter
+				idParam := Field{
+					Name:        updateIDParamName,
+					Description: updateIDParamDescription,
+					Type:        FieldTypeUUID,
+				}
+
+				// Create the Update endpoint
+				updateEndpoint := Endpoint{
+					Name:        updateEndpointName,
+					Title:       updateEndpointTitlePrefix + resource.Name,
+					Description: updateEndpointDescPrefix + resource.Name,
+					Method:      httpMethodPatch,
+					Path:        updateEndpointPath,
+					Request: EndpointRequest{
+						ContentType: contentTypeJSON,
+						Headers:     []Field{},
+						PathParams:  []Field{idParam},
+						QueryParams: []Field{},
+						BodyParams:  bodyParams,
+					},
+					Response: EndpointResponse{
+						ContentType: contentTypeJSON,
+						StatusCode:  updateResponseStatusCode,
+						Headers:     []Field{},
+						BodyFields:  []Field{},
+						BodyObject:  &resource.Name,
+					},
+				}
+
+				// Add the Update endpoint to the resource
+				for i := range result.Resources {
+					if result.Resources[i].Name == resource.Name {
+						result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, updateEndpoint)
 						break
 					}
 				}
