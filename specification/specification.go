@@ -34,6 +34,49 @@ const (
 	filterNullSuffix     = "FilterNull"
 )
 
+// Filter field names
+const (
+	filterFieldEquals         = "Equals"
+	filterFieldNotEquals      = "NotEquals"
+	filterFieldGreaterThan    = "GreaterThan"
+	filterFieldSmallerThan    = "SmallerThan"
+	filterFieldGreaterOrEqual = "GreaterOrEqual"
+	filterFieldSmallerOrEqual = "SmallerOrEqual"
+	filterFieldContains       = "Contains"
+	filterFieldNotContains    = "NotContains"
+	filterFieldLike           = "Like"
+	filterFieldNotLike        = "NotLike"
+	filterFieldNull           = "Null"
+	filterFieldNotNull        = "NotNull"
+	filterFieldOrCondition    = "OrCondition"
+	filterFieldNestedFilters  = "NestedFilters"
+)
+
+// Filter description templates
+const (
+	descriptionFilterObject                    = "Filter object for "
+	descriptionEqualityFilters                 = "Equality filters for "
+	descriptionInequalityFilters              = "Inequality filters for "
+	descriptionGreaterThanFilters             = "Greater than filters for "
+	descriptionSmallerThanFilters             = "Smaller than filters for "
+	descriptionGreaterOrEqualFilters          = "Greater than or equal filters for "
+	descriptionSmallerOrEqualFilters          = "Smaller than or equal filters for "
+	descriptionContainsFilters                = "Contains filters for "
+	descriptionNotContainsFilters             = "Not contains filters for "
+	descriptionLikeFilters                    = "LIKE filters for "
+	descriptionNotLikeFilters                 = "NOT LIKE filters for "
+	descriptionNullFilters                    = "Null filters for "
+	descriptionNotNullFilters                 = "Not null filters for "
+	descriptionOrCondition                    = "OrCondition decides if this filter is within an OR-condition or AND-condition"
+	descriptionNestedFiltersTemplate          = "NestedFilters of the "
+	descriptionNestedFiltersSuffix            = ", useful for more complex filters"
+	descriptionEqualityInequalityFilterFields = "Equality/Inequality filter fields for "
+	descriptionRangeFilterFields              = "Range filter fields for "
+	descriptionContainsFilterFields           = "Contains filter fields for "
+	descriptionLikeFilterFields               = "LIKE filter fields for "
+	descriptionNullFilterFields               = "Null filter fields for "
+)
+
 // Service is the definition of an API service.
 type Service struct {
 	// Name of the service
@@ -305,6 +348,31 @@ func canBeNull(field Field) bool {
 	return containsModifier(field.Modifiers, ModifierNullable) || containsModifier(field.Modifiers, ModifierArray)
 }
 
+// isPrimitiveType returns true if the field type is a primitive type.
+func isPrimitiveType(fieldType string) bool {
+	switch fieldType {
+	case FieldTypeUUID, FieldTypeDate, FieldTypeTimestamp, FieldTypeString, FieldTypeInt, FieldTypeBool:
+		return true
+	default:
+		return false
+	}
+}
+
+// isObjectType returns true if the field type is a custom object type.
+// This assumes all object types exist in the provided objects slice.
+func isObjectType(fieldType string, objects []Object) bool {
+	if isPrimitiveType(fieldType) {
+		return false
+	}
+	
+	for _, obj := range objects {
+		if obj.Name == fieldType {
+			return true
+		}
+	}
+	return false
+}
+
 // generateFilterField creates a filter field based on the original field and filter type.
 func generateFilterField(originalField Field, isNullable bool, isArray bool) Field {
 	modifiers := []string{}
@@ -321,6 +389,32 @@ func generateFilterField(originalField Field, isNullable bool, isArray bool) Fie
 		Name:        originalField.Name,
 		Description: originalField.Description,
 		Type:        originalField.Type,
+		Modifiers:   modifiers,
+	}
+}
+
+// generateNestedFilterField creates a filter field for nested objects, using the appropriate filter type.
+func generateNestedFilterField(originalField Field, filterSuffix string, isNullable bool, isArray bool, objects []Object) Field {
+	modifiers := []string{}
+
+	if isNullable {
+		modifiers = append(modifiers, ModifierNullable)
+	}
+
+	if isArray {
+		modifiers = append(modifiers, ModifierArray)
+	}
+
+	// For nested object fields, use the filter version of the object type
+	filterType := originalField.Type
+	if isObjectType(originalField.Type, objects) {
+		filterType = originalField.Type + filterSuffix
+	}
+
+	return Field{
+		Name:        originalField.Name,
+		Description: originalField.Description,
+		Type:        filterType,
 		Modifiers:   modifiers,
 	}
 }
@@ -355,89 +449,89 @@ func ApplyFilterOverlay(input *Service) *Service {
 		// Generate main filter object
 		mainFilter := Object{
 			Name:        obj.Name + filterSuffix,
-			Description: "Filter object for " + obj.Name,
+			Description: descriptionFilterObject + obj.Name,
 			Fields: []Field{
 				{
-					Name:        "Equals",
-					Description: "Equality filters for " + obj.Name,
+					Name:        filterFieldEquals,
+					Description: descriptionEqualityFilters + obj.Name,
 					Type:        obj.Name + filterEqualsSuffix,
 					Modifiers:   []string{ModifierNullable},
 				},
 				{
-					Name:        "NotEquals",
-					Description: "Inequality filters for " + obj.Name,
+					Name:        filterFieldNotEquals,
+					Description: descriptionInequalityFilters + obj.Name,
 					Type:        obj.Name + filterEqualsSuffix,
 					Modifiers:   []string{ModifierNullable},
 				},
 				{
-					Name:        "GreaterThan",
-					Description: "Greater than filters for " + obj.Name,
+					Name:        filterFieldGreaterThan,
+					Description: descriptionGreaterThanFilters + obj.Name,
 					Type:        obj.Name + filterRangeSuffix,
 					Modifiers:   []string{ModifierNullable},
 				},
 				{
-					Name:        "SmallerThan",
-					Description: "Smaller than filters for " + obj.Name,
+					Name:        filterFieldSmallerThan,
+					Description: descriptionSmallerThanFilters + obj.Name,
 					Type:        obj.Name + filterRangeSuffix,
 					Modifiers:   []string{ModifierNullable},
 				},
 				{
-					Name:        "GreaterOrEqual",
-					Description: "Greater than or equal filters for " + obj.Name,
+					Name:        filterFieldGreaterOrEqual,
+					Description: descriptionGreaterOrEqualFilters + obj.Name,
 					Type:        obj.Name + filterRangeSuffix,
 					Modifiers:   []string{ModifierNullable},
 				},
 				{
-					Name:        "SmallerOrEqual",
-					Description: "Smaller than or equal filters for " + obj.Name,
+					Name:        filterFieldSmallerOrEqual,
+					Description: descriptionSmallerOrEqualFilters + obj.Name,
 					Type:        obj.Name + filterRangeSuffix,
 					Modifiers:   []string{ModifierNullable},
 				},
 				{
-					Name:        "Contains",
-					Description: "Contains filters for " + obj.Name,
+					Name:        filterFieldContains,
+					Description: descriptionContainsFilters + obj.Name,
 					Type:        obj.Name + filterContainsSuffix,
 					Modifiers:   []string{ModifierNullable},
 				},
 				{
-					Name:        "NotContains",
-					Description: "Not contains filters for " + obj.Name,
+					Name:        filterFieldNotContains,
+					Description: descriptionNotContainsFilters + obj.Name,
 					Type:        obj.Name + filterContainsSuffix,
 					Modifiers:   []string{ModifierNullable},
 				},
 				{
-					Name:        "Like",
-					Description: "LIKE filters for " + obj.Name,
+					Name:        filterFieldLike,
+					Description: descriptionLikeFilters + obj.Name,
 					Type:        obj.Name + filterLikeSuffix,
 					Modifiers:   []string{ModifierNullable},
 				},
 				{
-					Name:        "NotLike",
-					Description: "NOT LIKE filters for " + obj.Name,
+					Name:        filterFieldNotLike,
+					Description: descriptionNotLikeFilters + obj.Name,
 					Type:        obj.Name + filterLikeSuffix,
 					Modifiers:   []string{ModifierNullable},
 				},
 				{
-					Name:        "Null",
-					Description: "Null filters for " + obj.Name,
+					Name:        filterFieldNull,
+					Description: descriptionNullFilters + obj.Name,
 					Type:        obj.Name + filterNullSuffix,
 					Modifiers:   []string{ModifierNullable},
 				},
 				{
-					Name:        "NotNull",
-					Description: "Not null filters for " + obj.Name,
+					Name:        filterFieldNotNull,
+					Description: descriptionNotNullFilters + obj.Name,
 					Type:        obj.Name + filterNullSuffix,
 					Modifiers:   []string{ModifierNullable},
 				},
 				{
-					Name:        "OrCondition",
-					Description: "OrCondition decides if this filter is within an OR-condition or AND-condition",
+					Name:        filterFieldOrCondition,
+					Description: descriptionOrCondition,
 					Type:        FieldTypeBool,
 					Modifiers:   []string{},
 				},
 				{
-					Name:        "NestedFilters",
-					Description: "NestedFilters of the " + obj.Name + ", useful for more complex filters",
+					Name:        filterFieldNestedFilters,
+					Description: descriptionNestedFiltersTemplate + obj.Name + descriptionNestedFiltersSuffix,
 					Type:        obj.Name + filterSuffix,
 					Modifiers:   []string{ModifierArray},
 				},
@@ -448,23 +542,33 @@ func ApplyFilterOverlay(input *Service) *Service {
 		// Generate FilterEquals object - contains all fields as nullable (used for both Equals and NotEquals)
 		equalsFilter := Object{
 			Name:        obj.Name + filterEqualsSuffix,
-			Description: "Equality/Inequality filter fields for " + obj.Name,
+			Description: descriptionEqualityInequalityFilterFields + obj.Name,
 			Fields:      make([]Field, 0, len(obj.Fields)),
 		}
 		for _, field := range obj.Fields {
-			equalsFilter.Fields = append(equalsFilter.Fields, generateFilterField(field, true, false))
+			if isObjectType(field.Type, input.Objects) {
+				// For nested objects, use the filter version
+				equalsFilter.Fields = append(equalsFilter.Fields, generateNestedFilterField(field, filterEqualsSuffix, true, false, input.Objects))
+			} else {
+				// For primitive types, use the original field type
+				equalsFilter.Fields = append(equalsFilter.Fields, generateFilterField(field, true, false))
+			}
 		}
 		result.Objects = append(result.Objects, equalsFilter)
 
-		// Generate FilterRange object - only comparable fields
+		// Generate FilterRange object - only comparable fields and nested objects
 		rangeFilter := Object{
 			Name:        obj.Name + filterRangeSuffix,
-			Description: "Range filter fields for " + obj.Name,
+			Description: descriptionRangeFilterFields + obj.Name,
 			Fields:      make([]Field, 0),
 		}
 		for _, field := range obj.Fields {
 			if isComparableType(field.Type) {
+				// For comparable primitive types
 				rangeFilter.Fields = append(rangeFilter.Fields, generateFilterField(field, true, false))
+			} else if isObjectType(field.Type, input.Objects) {
+				// For nested objects, include the filter version
+				rangeFilter.Fields = append(rangeFilter.Fields, generateNestedFilterField(field, filterRangeSuffix, true, false, input.Objects))
 			}
 		}
 		result.Objects = append(result.Objects, rangeFilter)
@@ -472,25 +576,35 @@ func ApplyFilterOverlay(input *Service) *Service {
 		// Generate FilterContains object - all fields except timestamps as arrays
 		containsFilter := Object{
 			Name:        obj.Name + filterContainsSuffix,
-			Description: "Contains filter fields for " + obj.Name,
+			Description: descriptionContainsFilterFields + obj.Name,
 			Fields:      make([]Field, 0),
 		}
 		for _, field := range obj.Fields {
 			if field.Type != FieldTypeTimestamp {
-				containsFilter.Fields = append(containsFilter.Fields, generateFilterField(field, false, true))
+				if isObjectType(field.Type, input.Objects) {
+					// For nested objects, use the filter version
+					containsFilter.Fields = append(containsFilter.Fields, generateNestedFilterField(field, filterContainsSuffix, false, true, input.Objects))
+				} else {
+					// For primitive types, use the original field type
+					containsFilter.Fields = append(containsFilter.Fields, generateFilterField(field, false, true))
+				}
 			}
 		}
 		result.Objects = append(result.Objects, containsFilter)
 
-		// Generate FilterLike object - only string fields
+		// Generate FilterLike object - only string fields and nested objects
 		likeFilter := Object{
 			Name:        obj.Name + filterLikeSuffix,
-			Description: "LIKE filter fields for " + obj.Name,
+			Description: descriptionLikeFilterFields + obj.Name,
 			Fields:      make([]Field, 0),
 		}
 		for _, field := range obj.Fields {
 			if isStringType(field.Type) {
+				// For string primitive types
 				likeFilter.Fields = append(likeFilter.Fields, generateFilterField(field, true, false))
+			} else if isObjectType(field.Type, input.Objects) {
+				// For nested objects, include the filter version
+				likeFilter.Fields = append(likeFilter.Fields, generateNestedFilterField(field, filterLikeSuffix, true, false, input.Objects))
 			}
 		}
 		result.Objects = append(result.Objects, likeFilter)
@@ -498,17 +612,26 @@ func ApplyFilterOverlay(input *Service) *Service {
 		// Generate FilterNull object - only nullable fields or arrays
 		nullFilter := Object{
 			Name:        obj.Name + filterNullSuffix,
-			Description: "Null filter fields for " + obj.Name,
+			Description: descriptionNullFilterFields + obj.Name,
 			Fields:      make([]Field, 0),
 		}
 		for _, field := range obj.Fields {
 			if canBeNull(field) {
-				nullField := generateFilterField(Field{
-					Name:        field.Name,
-					Description: field.Description,
-					Type:        FieldTypeBool,
-				}, true, false)
-				nullFilter.Fields = append(nullFilter.Fields, nullField)
+				if isObjectType(field.Type, input.Objects) {
+					// For nested objects, use the filter version
+					nestedNullField := generateNestedFilterField(field, filterNullSuffix, true, false, input.Objects)
+					// But for null filters, we change the type to Bool to indicate null/not null
+					nestedNullField.Type = FieldTypeBool
+					nullFilter.Fields = append(nullFilter.Fields, nestedNullField)
+				} else {
+					// For primitive types, create a boolean field to indicate null/not null
+					nullField := generateFilterField(Field{
+						Name:        field.Name,
+						Description: field.Description,
+						Type:        FieldTypeBool,
+					}, true, false)
+					nullFilter.Fields = append(nullFilter.Fields, nullField)
+				}
 			}
 		}
 		result.Objects = append(result.Objects, nullFilter)
