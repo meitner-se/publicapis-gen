@@ -1,104 +1,62 @@
-# Go Best Practices & Project Guidelines
+# Directory API v1 - Cursor Rules
 
-## Code Quality & Style
+## General Go Development Guidelines
 
-- Follow Go conventions and idioms consistently
-- Use `gofmt` and `goimports` to format code automatically
-- Write code that is easy to read, understand, and maintain
-- Use meaningful variable and function names that clearly express intent
-- Keep functions small and focused on a single responsibility
-- Prefer composition over inheritance
-- Use interfaces to define contracts and enable testability
+### Code Quality & Constants
+- **NO hardcoded strings in code** - All string literals must be defined as package-local constants
+- Use meaningful constant names that clearly express intent
+- Group related constants together with clear documentation
+- Define constants within the same package where they are used
+- Use camelCase for unexported constants (e.g., `errorNotImplemented`)
 
-## Package Management & Dependencies
+### Examples of Required Constants Usage
+```go
+// ❌ BAD - Hardcoded strings
+return errors.New("not implemented")
+slog.ErrorContext(ctx, "failed to run", "error", err)
+if containsOperation(resource.Operations, "Read") {
 
-- Be extremely careful when adding 3rd party packages
-- Evaluate dependencies for security, maintenance status, and necessity
-- Prefer standard library solutions when possible
-- Keep dependencies minimal and well-justified
-- Use Go modules (`go.mod`) for dependency management
-- Pin dependency versions to ensure reproducible builds
-- Regularly audit and update dependencies for security vulnerabilities
+// ✅ GOOD - Use package-local constants
+const (
+    errorNotImplemented = "not implemented"
+    errorFailedToRun    = "failed to run"
+    logKeyError         = "error"
+)
 
-## Testing Requirements
+return errors.New(errorNotImplemented)
+slog.ErrorContext(ctx, errorFailedToRun, logKeyError, err)
+if containsOperation(resource.Operations, OperationRead) {
+```
 
-- **ALWAYS write tests for all new functionality** - no exceptions
-- Keep tests updated when updating functionality
-- Use `github.com/stretchr/testify/assert` for assertions
-- Use `github.com/stretchr/testify/require` for critical checks that should stop test execution
-- Follow naming conventions:
-  - Unexported functions: `Test_functionName(t *testing.T)` (e.g., `Test_run`)
-  - Exported functions: `TestFunctionName(t *testing.T)` (e.g., `TestRun`)
-- Write table-driven tests when testing multiple scenarios
-- Aim for high test coverage (minimum 75%)
-- Test both happy paths and error conditions
-- Use test helpers to reduce duplication
+### String Categories Requiring Constants
+1. **Error Messages**: All error strings must use package-local constants
+2. **Log Messages**: All log message keys and values must use package-local constants
+3. **CRUD Operations**: "Create", "Read", "Update", "Delete" → use local Operation* constants
+4. **Field Types**: "UUID", "String", "Int", "Bool" → define as needed per package
+5. **HTTP Methods**: "GET", "POST", etc. → define as needed per package
+6. **Content Types**: "application/json" → define as needed per package
+7. **Field Modifiers**: "array", "nullable" → define as needed per package
 
-## Documentation & Communication
+### Exception for Test Files
+Test files (files ending in `_test.go`) may contain hardcoded strings for test data, but should still use constants for:
+- Repeated test values
+- Error messages being tested
+- Configuration values
 
-- **ALWAYS keep README.md updated** with any changes
-- Document public APIs with clear examples
-- Use Go doc comments for all exported functions, types, and packages
-- Include usage examples in documentation
-- Document configuration options and environment variables
-- Provide clear error messages that help users understand issues
+### Adding New Constants
+When adding new functionality:
+1. Define constants within the same package where they are used
+2. Use clear, descriptive names following Go naming conventions
+3. Group related constants together in const blocks
+4. Use camelCase for unexported constants
+5. Add documentation comments for const blocks when needed
 
-## Git & Commit Standards
+### Code Review Checklist
+Before submitting code:
+- [ ] No hardcoded strings in production code (except test data)
+- [ ] All constants defined as package-local constants
+- [ ] Constants grouped logically in const blocks
+- [ ] Clear and descriptive constant names used
+- [ ] Proper camelCase naming for unexported constants
 
-- **Use conventional commit messages** - PR titles must follow conventional commit format since they become commit messages when merged
-- Format: `type(scope): description`
-- Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
-- Examples:
-  - `feat(api): add user management endpoints`
-  - `fix(auth): resolve token validation issue`
-  - `docs(readme): update installation instructions`
-  - `test(users): add comprehensive user creation tests`
-- Keep commits atomic and focused
-- Write descriptive commit messages that explain the "why" not just the "what"
-
-## Project Structure
-
-- Organize code using standard Go project layout
-- Keep `main.go` minimal - move logic to packages
-- Use internal packages for code not meant to be imported
-- Separate concerns
-- Create clear package boundaries with well-defined interfaces
-- Use dependency injection for better testability
-
-## Performance & Reliability
-
-- Profile code to identify bottlenecks before optimizing
-- Use context.Context for cancellation and timeouts
-- Implement proper connection pooling for databases
-- Handle graceful shutdowns
-- Use appropriate data structures for the task
-- Minimize memory allocations in hot paths
-- Implement proper logging without performance impact
-
-## OpenAPI Specification Standards
-
-- Generate complete and valid OpenAPI 3.0 specifications
-- Include comprehensive examples for all endpoints
-- Use meaningful operation IDs and tags
-- Include proper error response schemas
-- Validate generated specs against OpenAPI standards
-- Ensure specifications are human-readable and well-organized
-
-## Code Review Guidelines
-
-- All code must be reviewed before merging
-- Reviewers should verify tests are included and comprehensive
-- Check for security vulnerabilities and best practices
-- Ensure documentation is updated
-- Verify conventional commit message format
-- Test the changes in a development environment
-- Ensure backwards compatibility for public APIs
-
-## Continuous Integration
-
-- Run all tests on every pull request
-- Ensure code builds successfully across supported Go versions
-- Run linting and formatting checks
-- Perform security scanning on dependencies
-- Validate generated OpenAPI specifications
-- Check test coverage thresholds
+This ensures maintainable, consistent code that's easy to update and internationalize if needed.

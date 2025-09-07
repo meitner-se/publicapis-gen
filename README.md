@@ -213,6 +213,61 @@ func main() {
 * **Security**: Exclude sensitive fields (like passwords) that don't support Read operations
 * **DRY Principle**: Define your data structure once in Resources, generate Objects automatically
 
+## Constants Usage
+
+This project follows a **zero hardcoded strings** policy for maintainability and consistency. All string literals used in the codebase are defined as package-local constants within the same package where they are used.
+
+### Package-Local Constants Approach
+
+Constants are defined within each package where they are used, including:
+
+- **Error Messages**: All error strings and log messages
+- **CRUD Operations**: "Create", "Read", "Update", "Delete" operations  
+- **Field Types**: Data types like "UUID", "String", "Int", "Bool", "Timestamp"
+- **HTTP Methods**: "GET", "POST", "PUT", "DELETE", etc.
+- **Content Types**: "application/json", "multipart/form-data", etc.
+- **Field Modifiers**: "array", "nullable", "optional"
+- **Schema Properties**: JSON schema field names
+
+### Usage Examples
+
+```go
+// ❌ BAD - Hardcoded strings
+return errors.New("not implemented")
+if containsOperation(operations, "Read") {
+slog.ErrorContext(ctx, "failed to run", "error", err)
+
+// ✅ GOOD - Use package-local constants
+const (
+    errorNotImplemented = "not implemented"
+    errorFailedToRun    = "failed to run"  
+    logKeyError         = "error"
+    OperationRead       = "Read"  // Exported for cross-package usage
+)
+
+return errors.New(errorNotImplemented)
+if containsOperation(operations, OperationRead) {
+slog.ErrorContext(ctx, errorFailedToRun, logKeyError, err)
+```
+
+### Adding New Constants
+
+When contributing new functionality:
+
+1. Define constants within the same package where they are used
+2. Use clear, descriptive names following Go conventions  
+3. Group related constants together in const blocks
+4. Use camelCase for unexported constants
+5. Export constants only when needed by other packages
+
+### Benefits
+
+- **Consistency**: Uniform error messages and strings across the codebase
+- **Maintainability**: Package-local constants reduce dependencies and improve modularity  
+- **Encapsulation**: Constants are scoped to where they're actually used
+- **Internationalization**: Easy to implement i18n in the future
+- **Refactoring**: IDE support for renaming and finding usage
+
 ### Running Tests
 
 ```bash
