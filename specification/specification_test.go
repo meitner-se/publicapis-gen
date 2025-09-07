@@ -3,7 +3,6 @@ package specification
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/goccy/go-yaml"
@@ -1110,8 +1109,8 @@ func TestApplyFilterOverlay(t *testing.T) {
 		result := ApplyFilterOverlay(input)
 		require.NotNil(t, result)
 
-		// Should have original object plus 7 filter objects (main + 6 filter types)
-		assert.Equal(t, 8, len(result.Objects))
+		// Should have original object plus 6 filter objects (main + 5 filter types)
+		assert.Equal(t, 7, len(result.Objects))
 
 		// Check main filter object
 		mainFilter := result.Objects[1] // First is original Person object
@@ -1142,42 +1141,46 @@ func TestApplyFilterOverlay(t *testing.T) {
 		// Check FilterEquals object
 		equalsFilter := result.Objects[2]
 		assert.Equal(t, "PersonFilterEquals", equalsFilter.Name)
-		assert.Equal(t, "Equality filter fields for Person", equalsFilter.Description)
+		assert.Equal(t, "Equality/Inequality filter fields for Person", equalsFilter.Description)
 		assert.Equal(t, 4, len(equalsFilter.Fields)) // All original fields
 
-		// Check that fields are pointer types
+		// Check that fields have nullable modifier instead of pointer prefix
 		for _, field := range equalsFilter.Fields {
-			assert.True(t, strings.HasPrefix(field.Type, "*"), "Field %s should be pointer type, got %s", field.Name, field.Type)
+			assert.Contains(t, field.Modifiers, ModifierNullable, "Field %s should have nullable modifier", field.Name)
+			assert.NotContains(t, field.Type, "*", "Field %s type should not have * prefix, got %s", field.Name, field.Type)
 		}
 
 		// Check FilterRange object
-		rangeFilter := result.Objects[4] // PersonFilterRange
+		rangeFilter := result.Objects[3] // PersonFilterRange
 		assert.Equal(t, "PersonFilterRange", rangeFilter.Name)
 		assert.Equal(t, 1, len(rangeFilter.Fields)) // Only Age is comparable
 		assert.Equal(t, "Age", rangeFilter.Fields[0].Name)
-		assert.Equal(t, "*Int", rangeFilter.Fields[0].Type)
+		assert.Equal(t, FieldTypeInt, rangeFilter.Fields[0].Type)
+		assert.Contains(t, rangeFilter.Fields[0].Modifiers, ModifierNullable)
 
 		// Check FilterContains object
-		containsFilter := result.Objects[5] // PersonFilterContains
+		containsFilter := result.Objects[4] // PersonFilterContains
 		assert.Equal(t, "PersonFilterContains", containsFilter.Name)
 		assert.Equal(t, 4, len(containsFilter.Fields)) // All fields except timestamp (none in this case)
 
-		// Check that Contains fields are array types
+		// Check that Contains fields have array modifier instead of [] prefix
 		for _, field := range containsFilter.Fields {
-			assert.True(t, strings.HasPrefix(field.Type, "[]"), "Field %s should be array type, got %s", field.Name, field.Type)
+			assert.Contains(t, field.Modifiers, ModifierArray, "Field %s should have array modifier", field.Name)
+			assert.NotContains(t, field.Type, "[]", "Field %s type should not have [] prefix, got %s", field.Name, field.Type)
 		}
 
 		// Check FilterLike object
-		likeFilter := result.Objects[6] // PersonFilterLike
+		likeFilter := result.Objects[5] // PersonFilterLike
 		assert.Equal(t, "PersonFilterLike", likeFilter.Name)
 		assert.Equal(t, 3, len(likeFilter.Fields)) // Only string fields (FirstName, LastName, RelatedPersonIDs)
 
 		// Check FilterNull object
-		nullFilter := result.Objects[7] // PersonFilterNull
+		nullFilter := result.Objects[6] // PersonFilterNull
 		assert.Equal(t, "PersonFilterNull", nullFilter.Name)
 		assert.Equal(t, 1, len(nullFilter.Fields)) // Only RelatedPersonIDs has array modifier
 		assert.Equal(t, "RelatedPersonIDs", nullFilter.Fields[0].Name)
-		assert.Equal(t, "*Bool", nullFilter.Fields[0].Type)
+		assert.Equal(t, FieldTypeBool, nullFilter.Fields[0].Type)
+		assert.Contains(t, nullFilter.Fields[0].Modifiers, ModifierNullable)
 	})
 
 	t.Run("ServiceWithMultipleObjects", func(t *testing.T) {
@@ -1228,8 +1231,8 @@ func TestApplyFilterOverlay(t *testing.T) {
 		result := ApplyFilterOverlay(input)
 		require.NotNil(t, result)
 
-		// Should have 2 original objects + 2 * 7 filter objects = 16 total objects
-		assert.Equal(t, 16, len(result.Objects))
+		// Should have 2 original objects + 2 * 6 filter objects = 14 total objects
+		assert.Equal(t, 14, len(result.Objects))
 
 		// Check that we have filters for both User and Product
 		objectNames := make(map[string]bool)
@@ -1244,7 +1247,6 @@ func TestApplyFilterOverlay(t *testing.T) {
 		// User filter objects
 		assert.True(t, objectNames["UserFilter"])
 		assert.True(t, objectNames["UserFilterEquals"])
-		assert.True(t, objectNames["UserFilterNotEquals"])
 		assert.True(t, objectNames["UserFilterRange"])
 		assert.True(t, objectNames["UserFilterContains"])
 		assert.True(t, objectNames["UserFilterLike"])
@@ -1253,7 +1255,6 @@ func TestApplyFilterOverlay(t *testing.T) {
 		// Product filter objects
 		assert.True(t, objectNames["ProductFilter"])
 		assert.True(t, objectNames["ProductFilterEquals"])
-		assert.True(t, objectNames["ProductFilterNotEquals"])
 		assert.True(t, objectNames["ProductFilterRange"])
 		assert.True(t, objectNames["ProductFilterContains"])
 		assert.True(t, objectNames["ProductFilterLike"])
@@ -1308,8 +1309,8 @@ func TestApplyFilterOverlay(t *testing.T) {
 		assert.Equal(t, len(input.Enums), len(result.Enums))
 		assert.Equal(t, len(input.Resources), len(result.Resources))
 
-		// Should have original object plus 7 filter objects
-		assert.Equal(t, 8, len(result.Objects)) // 1 original + 7 filter objects
+		// Should have original object plus 6 filter objects
+		assert.Equal(t, 7, len(result.Objects)) // 1 original + 6 filter objects
 
 		// First object should be the original one
 		assert.Equal(t, "TestObject", result.Objects[0].Name)

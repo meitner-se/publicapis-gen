@@ -26,13 +26,12 @@ const (
 
 // Filter suffixes
 const (
-	filterSuffix           = "Filter"
-	filterEqualsSuffix     = "FilterEquals"
-	filterNotEqualsSuffix  = "FilterNotEquals"
-	filterRangeSuffix      = "FilterRange"
-	filterContainsSuffix   = "FilterContains"
-	filterLikeSuffix       = "FilterLike"
-	filterNullSuffix       = "FilterNull"
+	filterSuffix         = "Filter"
+	filterEqualsSuffix   = "FilterEquals"
+	filterRangeSuffix    = "FilterRange"
+	filterContainsSuffix = "FilterContains"
+	filterLikeSuffix     = "FilterLike"
+	filterNullSuffix     = "FilterNull"
 )
 
 // Service is the definition of an API service.
@@ -307,25 +306,22 @@ func canBeNull(field Field) bool {
 }
 
 // generateFilterField creates a filter field based on the original field and filter type.
-func generateFilterField(originalField Field, isPointer bool) Field {
-	fieldType := originalField.Type
-	if isPointer {
-		// For pointer fields in filter structs, we use the pointer form
-		fieldType = "*" + fieldType
+func generateFilterField(originalField Field, isNullable bool, isArray bool) Field {
+	modifiers := []string{}
+	
+	if isNullable {
+		modifiers = append(modifiers, ModifierNullable)
 	}
 	
-	// For array fields in Contains filters, we use slice form
-	if originalField.Type == FieldTypeString && !isPointer {
-		fieldType = "[]" + originalField.Type
-	} else if originalField.Type == FieldTypeInt && !isPointer {
-		fieldType = "[]" + originalField.Type
+	if isArray {
+		modifiers = append(modifiers, ModifierArray)
 	}
 	
 	return Field{
 		Name:        originalField.Name,
 		Description: originalField.Description,
-		Type:        fieldType,
-		Modifiers:   []string{}, // Filter fields don't inherit modifiers
+		Type:        originalField.Type,
+		Modifiers:   modifiers,
 	}
 }
 
@@ -364,74 +360,74 @@ func ApplyFilterOverlay(input *Service) *Service {
 				{
 					Name:        "Equals",
 					Description: "Equality filters for " + obj.Name,
-					Type:        "*" + obj.Name + filterEqualsSuffix,
-					Modifiers:   []string{},
+					Type:        obj.Name + filterEqualsSuffix,
+					Modifiers:   []string{ModifierNullable},
 				},
 				{
 					Name:        "NotEquals", 
 					Description: "Inequality filters for " + obj.Name,
-					Type:        "*" + obj.Name + filterNotEqualsSuffix,
-					Modifiers:   []string{},
+					Type:        obj.Name + filterEqualsSuffix,
+					Modifiers:   []string{ModifierNullable},
 				},
 				{
 					Name:        "GreaterThan",
 					Description: "Greater than filters for " + obj.Name,
-					Type:        "*" + obj.Name + filterRangeSuffix,
-					Modifiers:   []string{},
+					Type:        obj.Name + filterRangeSuffix,
+					Modifiers:   []string{ModifierNullable},
 				},
 				{
 					Name:        "SmallerThan",
 					Description: "Smaller than filters for " + obj.Name,
-					Type:        "*" + obj.Name + filterRangeSuffix,
-					Modifiers:   []string{},
+					Type:        obj.Name + filterRangeSuffix,
+					Modifiers:   []string{ModifierNullable},
 				},
 				{
 					Name:        "GreaterOrEqual",
 					Description: "Greater than or equal filters for " + obj.Name,
-					Type:        "*" + obj.Name + filterRangeSuffix,
-					Modifiers:   []string{},
+					Type:        obj.Name + filterRangeSuffix,
+					Modifiers:   []string{ModifierNullable},
 				},
 				{
 					Name:        "SmallerOrEqual",
 					Description: "Smaller than or equal filters for " + obj.Name,
-					Type:        "*" + obj.Name + filterRangeSuffix,
-					Modifiers:   []string{},
+					Type:        obj.Name + filterRangeSuffix,
+					Modifiers:   []string{ModifierNullable},
 				},
 				{
 					Name:        "Contains",
 					Description: "Contains filters for " + obj.Name,
-					Type:        "*" + obj.Name + filterContainsSuffix,
-					Modifiers:   []string{},
+					Type:        obj.Name + filterContainsSuffix,
+					Modifiers:   []string{ModifierNullable},
 				},
 				{
 					Name:        "NotContains",
 					Description: "Not contains filters for " + obj.Name,
-					Type:        "*" + obj.Name + filterContainsSuffix,
-					Modifiers:   []string{},
+					Type:        obj.Name + filterContainsSuffix,
+					Modifiers:   []string{ModifierNullable},
 				},
 				{
 					Name:        "Like",
 					Description: "LIKE filters for " + obj.Name,
-					Type:        "*" + obj.Name + filterLikeSuffix,
-					Modifiers:   []string{},
+					Type:        obj.Name + filterLikeSuffix,
+					Modifiers:   []string{ModifierNullable},
 				},
 				{
 					Name:        "NotLike",
 					Description: "NOT LIKE filters for " + obj.Name,
-					Type:        "*" + obj.Name + filterLikeSuffix,
-					Modifiers:   []string{},
+					Type:        obj.Name + filterLikeSuffix,
+					Modifiers:   []string{ModifierNullable},
 				},
 				{
 					Name:        "Null",
 					Description: "Null filters for " + obj.Name,
-					Type:        "*" + obj.Name + filterNullSuffix,
-					Modifiers:   []string{},
+					Type:        obj.Name + filterNullSuffix,
+					Modifiers:   []string{ModifierNullable},
 				},
 				{
 					Name:        "NotNull",
 					Description: "Not null filters for " + obj.Name,
-					Type:        "*" + obj.Name + filterNullSuffix,
-					Modifiers:   []string{},
+					Type:        obj.Name + filterNullSuffix,
+					Modifiers:   []string{ModifierNullable},
 				},
 				{
 					Name:        "OrCondition",
@@ -442,34 +438,23 @@ func ApplyFilterOverlay(input *Service) *Service {
 				{
 					Name:        "NestedFilters",
 					Description: "NestedFilters of the " + obj.Name + ", useful for more complex filters",
-					Type:        "[]" + obj.Name + filterSuffix,
-					Modifiers:   []string{},
+					Type:        obj.Name + filterSuffix,
+					Modifiers:   []string{ModifierArray},
 				},
 			},
 		}
 		result.Objects = append(result.Objects, mainFilter)
 
-		// Generate FilterEquals object - contains all fields as pointers
+		// Generate FilterEquals object - contains all fields as nullable (used for both Equals and NotEquals)
 		equalsFilter := Object{
 			Name:        obj.Name + filterEqualsSuffix,
-			Description: "Equality filter fields for " + obj.Name,
+			Description: "Equality/Inequality filter fields for " + obj.Name,
 			Fields:      make([]Field, 0, len(obj.Fields)),
 		}
 		for _, field := range obj.Fields {
-			equalsFilter.Fields = append(equalsFilter.Fields, generateFilterField(field, true))
+			equalsFilter.Fields = append(equalsFilter.Fields, generateFilterField(field, true, false))
 		}
 		result.Objects = append(result.Objects, equalsFilter)
-
-		// Generate FilterNotEquals object - same as FilterEquals
-		notEqualsFilter := Object{
-			Name:        obj.Name + filterNotEqualsSuffix,
-			Description: "Inequality filter fields for " + obj.Name,
-			Fields:      make([]Field, 0, len(obj.Fields)),
-		}
-		for _, field := range obj.Fields {
-			notEqualsFilter.Fields = append(notEqualsFilter.Fields, generateFilterField(field, true))
-		}
-		result.Objects = append(result.Objects, notEqualsFilter)
 
 		// Generate FilterRange object - only comparable fields
 		rangeFilter := Object{
@@ -479,7 +464,7 @@ func ApplyFilterOverlay(input *Service) *Service {
 		}
 		for _, field := range obj.Fields {
 			if isComparableType(field.Type) {
-				rangeFilter.Fields = append(rangeFilter.Fields, generateFilterField(field, true))
+				rangeFilter.Fields = append(rangeFilter.Fields, generateFilterField(field, true, false))
 			}
 		}
 		result.Objects = append(result.Objects, rangeFilter)
@@ -492,13 +477,7 @@ func ApplyFilterOverlay(input *Service) *Service {
 		}
 		for _, field := range obj.Fields {
 			if field.Type != FieldTypeTimestamp {
-				containsField := Field{
-					Name:        field.Name,
-					Description: field.Description,
-					Type:        "[]" + field.Type,
-					Modifiers:   []string{},
-				}
-				containsFilter.Fields = append(containsFilter.Fields, containsField)
+				containsFilter.Fields = append(containsFilter.Fields, generateFilterField(field, false, true))
 			}
 		}
 		result.Objects = append(result.Objects, containsFilter)
@@ -511,7 +490,7 @@ func ApplyFilterOverlay(input *Service) *Service {
 		}
 		for _, field := range obj.Fields {
 			if isStringType(field.Type) {
-				likeFilter.Fields = append(likeFilter.Fields, generateFilterField(field, true))
+				likeFilter.Fields = append(likeFilter.Fields, generateFilterField(field, true, false))
 			}
 		}
 		result.Objects = append(result.Objects, likeFilter)
@@ -524,12 +503,11 @@ func ApplyFilterOverlay(input *Service) *Service {
 		}
 		for _, field := range obj.Fields {
 			if canBeNull(field) {
-				nullField := Field{
+				nullField := generateFilterField(Field{
 					Name:        field.Name,
 					Description: field.Description,
-					Type:        "*" + FieldTypeBool,
-					Modifiers:   []string{},
-				}
+					Type:        FieldTypeBool,
+				}, true, false)
 				nullFilter.Fields = append(nullFilter.Fields, nullField)
 			}
 		}
