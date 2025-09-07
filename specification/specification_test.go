@@ -1318,6 +1318,151 @@ func TestApplyFilterOverlay(t *testing.T) {
 		// Should have generated filter objects
 		assert.Equal(t, "TestObjectFilter", result.Objects[1].Name)
 	})
+
+	t.Run("ServiceWithNestedObjects", func(t *testing.T) {
+		input := &Service{
+			Name:  "TestService",
+			Enums: []Enum{},
+			Objects: []Object{
+				{
+					Name:        "Address",
+					Description: "Address object",
+					Fields: []Field{
+						{
+							Name:        "PostalAddress",
+							Type:        FieldTypeString,
+							Description: "Postal address",
+							Modifiers:   []string{},
+						},
+						{
+							Name:        "PostalCode",
+							Type:        FieldTypeString,
+							Description: "Postal code",
+							Modifiers:   []string{},
+						},
+						{
+							Name:        "PostalCity",
+							Type:        FieldTypeString,
+							Description: "Postal city",
+							Modifiers:   []string{ModifierNullable},
+						},
+					},
+				},
+				{
+					Name:        "Person",
+					Description: "Person object",
+					Fields: []Field{
+						{
+							Name:        "FirstName",
+							Type:        FieldTypeString,
+							Description: "First name",
+							Modifiers:   []string{},
+						},
+						{
+							Name:        "Age",
+							Type:        FieldTypeInt,
+							Description: "Age in years",
+							Modifiers:   []string{},
+						},
+						{
+							Name:        "Address",
+							Type:        "Address",
+							Description: "Person address",
+							Modifiers:   []string{ModifierNullable},
+						},
+					},
+				},
+			},
+			Resources: []Resource{},
+		}
+
+		result := ApplyFilterOverlay(input)
+		require.NotNil(t, result)
+
+		// Should have 2 original objects + 2 * 6 filter objects = 14 total objects
+		assert.Equal(t, 14, len(result.Objects))
+
+		// Find Person filter objects
+		var personEqualsFilter, personRangeFilter, personContainsFilter, personLikeFilter, personNullFilter Object
+		for _, obj := range result.Objects {
+			switch obj.Name {
+			case "PersonFilterEquals":
+				personEqualsFilter = obj
+			case "PersonFilterRange":
+				personRangeFilter = obj
+			case "PersonFilterContains":
+				personContainsFilter = obj
+			case "PersonFilterLike":
+				personLikeFilter = obj
+			case "PersonFilterNull":
+				personNullFilter = obj
+			}
+		}
+
+		// Check PersonFilterEquals has nested Address filter
+		assert.Equal(t, 3, len(personEqualsFilter.Fields))
+		var addressFilterField Field
+		for _, field := range personEqualsFilter.Fields {
+			if field.Name == "Address" {
+				addressFilterField = field
+				break
+			}
+		}
+		assert.Equal(t, "AddressFilterEquals", addressFilterField.Type, "Address field should use AddressFilterEquals type")
+		assert.Contains(t, addressFilterField.Modifiers, ModifierNullable)
+
+		// Check PersonFilterRange has nested Address filter
+		assert.Equal(t, 2, len(personRangeFilter.Fields)) // Age (int) + Address (nested)
+		var addressRangeField Field
+		for _, field := range personRangeFilter.Fields {
+			if field.Name == "Address" {
+				addressRangeField = field
+				break
+			}
+		}
+		assert.Equal(t, "AddressFilterRange", addressRangeField.Type, "Address field should use AddressFilterRange type")
+
+		// Check PersonFilterContains has nested Address filter
+		assert.Equal(t, 3, len(personContainsFilter.Fields)) // All fields
+		var addressContainsField Field
+		for _, field := range personContainsFilter.Fields {
+			if field.Name == "Address" {
+				addressContainsField = field
+				break
+			}
+		}
+		assert.Equal(t, "AddressFilterContains", addressContainsField.Type, "Address field should use AddressFilterContains type")
+		assert.Contains(t, addressContainsField.Modifiers, ModifierNullable)
+
+		// Check PersonFilterLike has nested Address filter
+		assert.Equal(t, 2, len(personLikeFilter.Fields)) // FirstName (string) + Address (nested)
+		var addressLikeField Field
+		for _, field := range personLikeFilter.Fields {
+			if field.Name == "Address" {
+				addressLikeField = field
+				break
+			}
+		}
+		assert.Equal(t, "AddressFilterLike", addressLikeField.Type, "Address field should use AddressFilterLike type")
+
+		// Check PersonFilterNull has nested Address filter
+		assert.Equal(t, 1, len(personNullFilter.Fields)) // Only Address is nullable
+		addressNullField := personNullFilter.Fields[0]
+		assert.Equal(t, "Address", addressNullField.Name)
+		assert.Equal(t, FieldTypeBool, addressNullField.Type, "Null filter fields should be Bool type")
+		assert.Contains(t, addressNullField.Modifiers, ModifierNullable)
+
+		// Verify that AddressFilter objects were also generated correctly
+		var addressEqualsFilter Object
+		for _, obj := range result.Objects {
+			if obj.Name == "AddressFilterEquals" {
+				addressEqualsFilter = obj
+				break
+			}
+		}
+		assert.Equal(t, "AddressFilterEquals", addressEqualsFilter.Name)
+		assert.Equal(t, 3, len(addressEqualsFilter.Fields)) // PostalAddress, PostalCode, PostalCity
+	})
 }
 
 func Test_containsModifier(t *testing.T) {
