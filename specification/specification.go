@@ -175,6 +175,17 @@ const (
 	updateIDParamDescription  = "The unique identifier of the resource to update"
 )
 
+// Delete Endpoint Constants
+const (
+	deleteEndpointName        = "Delete"
+	deleteEndpointPath        = "/{id}"
+	deleteEndpointTitlePrefix = "Delete "
+	deleteEndpointDescPrefix  = "Delete a "
+	deleteResponseStatusCode  = 204
+	deleteIDParamName         = "id"
+	deleteIDParamDescription  = "The unique identifier of the resource to delete"
+)
+
 // Service is the definition of an API service.
 type Service struct {
 	// Name of the service
@@ -343,13 +354,14 @@ func containsOperation(operations []string, operation string) bool {
 	return false
 }
 
-// ApplyOverlay applies an overlay to a specification, generating Objects, Create endpoints, and Update endpoints from Resources.
+// ApplyOverlay applies an overlay to a specification, generating Objects, Create endpoints, Update endpoints, and Delete endpoints from Resources.
 // It creates Objects for Resources that have the "Read" operation, including all fields
 // that support the "Read" operation in the generated Object.
 // It creates Create endpoints for Resources that have the "Create" operation, including all fields
 // that support the "Create" operation as body parameters in the request, and returning the Resource object.
 // It creates Update endpoints for Resources that have the "Update" operation, including all fields
 // that support the "Update" operation as body parameters in the request, with ID as a path parameter, and returning the Resource object.
+// It creates Delete endpoints for Resources that have the "Delete" operation, using ID as a path parameter, and returning nothing (status code 204).
 // It also adds default ErrorCode enum, Error object, ErrorFieldCode enum, and ErrorField object to every service.
 func ApplyOverlay(input *Service) *Service {
 	if input == nil {
@@ -644,6 +656,59 @@ func ApplyOverlay(input *Service) *Service {
 				for i := range result.Resources {
 					if result.Resources[i].Name == resource.Name {
 						result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, updateEndpoint)
+						break
+					}
+				}
+			}
+		}
+
+		// Generate Delete endpoints for resources that have Delete operations
+		if containsOperation(resource.Operations, OperationDelete) {
+			// Check if a Delete endpoint already exists
+			deleteEndpointExists := false
+			for _, endpoint := range resource.Endpoints {
+				if endpoint.Name == deleteEndpointName {
+					deleteEndpointExists = true
+					break
+				}
+			}
+
+			// Only create the endpoint if it doesn't already exist
+			if !deleteEndpointExists {
+				// Create the ID path parameter
+				idParam := Field{
+					Name:        deleteIDParamName,
+					Description: deleteIDParamDescription,
+					Type:        FieldTypeUUID,
+				}
+
+				// Create the Delete endpoint
+				deleteEndpoint := Endpoint{
+					Name:        deleteEndpointName,
+					Title:       deleteEndpointTitlePrefix + resource.Name,
+					Description: deleteEndpointDescPrefix + resource.Name,
+					Method:      httpMethodDelete,
+					Path:        deleteEndpointPath,
+					Request: EndpointRequest{
+						ContentType: contentTypeJSON,
+						Headers:     []Field{},
+						PathParams:  []Field{idParam},
+						QueryParams: []Field{},
+						BodyParams:  []Field{},
+					},
+					Response: EndpointResponse{
+						ContentType: contentTypeJSON,
+						StatusCode:  deleteResponseStatusCode,
+						Headers:     []Field{},
+						BodyFields:  []Field{},
+						BodyObject:  nil, // No body object for delete (returns nothing)
+					},
+				}
+
+				// Add the Delete endpoint to the resource
+				for i := range result.Resources {
+					if result.Resources[i].Name == resource.Name {
+						result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, deleteEndpoint)
 						break
 					}
 				}

@@ -1409,9 +1409,9 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Check that the resource has the Create and Update endpoints generated
+		// Check that the resource has the Create, Update, and Delete endpoints generated
 		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 2, len(result.Resources[0].Endpoints)) // Both Create and Update endpoints
+		assert.Equal(t, 3, len(result.Resources[0].Endpoints)) // Create, Update, and Delete endpoints
 
 		// Check the generated Create endpoint
 		createEndpoint := result.Resources[0].Endpoints[0]
@@ -1493,6 +1493,31 @@ func TestApplyOverlay(t *testing.T) {
 		assert.Equal(t, 0, len(updateEndpoint.Response.BodyFields))
 		require.NotNil(t, updateEndpoint.Response.BodyObject)
 		assert.Equal(t, "Users", *updateEndpoint.Response.BodyObject)
+
+		// Check the generated Delete endpoint
+		deleteEndpoint := result.Resources[0].Endpoints[2]
+		assert.Equal(t, "Delete", deleteEndpoint.Name)
+		assert.Equal(t, "Delete Users", deleteEndpoint.Title)
+		assert.Equal(t, "Delete a Users", deleteEndpoint.Description)
+		assert.Equal(t, "DELETE", deleteEndpoint.Method)
+		assert.Equal(t, "/{id}", deleteEndpoint.Path)
+
+		// Check the Delete request structure
+		assert.Equal(t, "application/json", deleteEndpoint.Request.ContentType)
+		assert.Equal(t, 0, len(deleteEndpoint.Request.Headers))
+		assert.Equal(t, 1, len(deleteEndpoint.Request.PathParams))
+		assert.Equal(t, "id", deleteEndpoint.Request.PathParams[0].Name)
+		assert.Equal(t, "The unique identifier of the resource to delete", deleteEndpoint.Request.PathParams[0].Description)
+		assert.Equal(t, "UUID", deleteEndpoint.Request.PathParams[0].Type)
+		assert.Equal(t, 0, len(deleteEndpoint.Request.QueryParams))
+		assert.Equal(t, 0, len(deleteEndpoint.Request.BodyParams)) // No body for delete
+
+		// Check the Delete response structure
+		assert.Equal(t, "application/json", deleteEndpoint.Response.ContentType)
+		assert.Equal(t, 204, deleteEndpoint.Response.StatusCode)
+		assert.Equal(t, 0, len(deleteEndpoint.Response.Headers))
+		assert.Equal(t, 0, len(deleteEndpoint.Response.BodyFields))
+		assert.Nil(t, deleteEndpoint.Response.BodyObject) // No body object for delete (returns nothing)
 	})
 
 	t.Run("ResourceWithoutCreateOperation", func(t *testing.T) {
@@ -1689,6 +1714,251 @@ func TestApplyOverlay(t *testing.T) {
 		}
 		assert.Contains(t, productUpdateBodyParamNames, "title")
 		assert.Contains(t, productUpdateBodyParamNames, "price")
+	})
+
+	t.Run("ResourceWithDeleteOperation", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "Orders",
+					Description: "Order management resource",
+					Operations:  []string{"Delete"}, // Only Delete operation
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "id",
+								Type:        "UUID",
+								Description: "Order ID",
+							},
+							Operations: []string{"Read"},
+						},
+						{
+							Field: Field{
+								Name:        "total",
+								Type:        "Int",
+								Description: "Order total",
+							},
+							Operations: []string{"Read"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Check that the resource has only the Delete endpoint generated
+		assert.Equal(t, 1, len(result.Resources))
+		assert.Equal(t, 1, len(result.Resources[0].Endpoints))
+
+		// Check the generated Delete endpoint
+		deleteEndpoint := result.Resources[0].Endpoints[0]
+		assert.Equal(t, "Delete", deleteEndpoint.Name)
+		assert.Equal(t, "Delete Orders", deleteEndpoint.Title)
+		assert.Equal(t, "Delete a Orders", deleteEndpoint.Description)
+		assert.Equal(t, "DELETE", deleteEndpoint.Method)
+		assert.Equal(t, "/{id}", deleteEndpoint.Path)
+
+		// Check the request structure
+		assert.Equal(t, "application/json", deleteEndpoint.Request.ContentType)
+		assert.Equal(t, 0, len(deleteEndpoint.Request.Headers))
+		assert.Equal(t, 1, len(deleteEndpoint.Request.PathParams))
+		assert.Equal(t, "id", deleteEndpoint.Request.PathParams[0].Name)
+		assert.Equal(t, "The unique identifier of the resource to delete", deleteEndpoint.Request.PathParams[0].Description)
+		assert.Equal(t, "UUID", deleteEndpoint.Request.PathParams[0].Type)
+		assert.Equal(t, 0, len(deleteEndpoint.Request.QueryParams))
+		assert.Equal(t, 0, len(deleteEndpoint.Request.BodyParams))
+
+		// Check the response structure
+		assert.Equal(t, "application/json", deleteEndpoint.Response.ContentType)
+		assert.Equal(t, 204, deleteEndpoint.Response.StatusCode)
+		assert.Equal(t, 0, len(deleteEndpoint.Response.Headers))
+		assert.Equal(t, 0, len(deleteEndpoint.Response.BodyFields))
+		assert.Nil(t, deleteEndpoint.Response.BodyObject)
+	})
+
+	t.Run("ResourceWithoutDeleteOperation", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "ReadOnlyData",
+					Description: "Read-only data resource",
+					Operations:  []string{"Read", "Create", "Update"}, // No Delete operation
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "id",
+								Type:        "UUID",
+								Description: "Data ID",
+							},
+							Operations: []string{"Read"},
+						},
+						{
+							Field: Field{
+								Name:        "value",
+								Type:        "String",
+								Description: "Data value",
+							},
+							Operations: []string{"Create", "Read", "Update"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Should generate Create and Update endpoints but not Delete
+		assert.Equal(t, 1, len(result.Resources))
+		assert.Equal(t, 2, len(result.Resources[0].Endpoints)) // Create and Update only
+
+		// Verify no Delete endpoint was created
+		for _, endpoint := range result.Resources[0].Endpoints {
+			assert.NotEqual(t, "Delete", endpoint.Name)
+		}
+	})
+
+	t.Run("ResourceWithExistingDeleteEndpoint", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "CustomResource",
+					Description: "Resource with custom delete endpoint",
+					Operations:  []string{"Delete"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "id",
+								Type:        "UUID",
+								Description: "Resource ID",
+							},
+							Operations: []string{"Read"},
+						},
+					},
+					Endpoints: []Endpoint{
+						{
+							Name:        "Delete",
+							Title:       "Custom Delete",
+							Description: "Custom delete endpoint with special logic",
+							Method:      "DELETE",
+							Path:        "/remove/{id}",
+							Request: EndpointRequest{
+								ContentType: "application/json",
+								PathParams: []Field{
+									{
+										Name:        "id",
+										Type:        "UUID",
+										Description: "Custom ID parameter",
+									},
+								},
+							},
+							Response: EndpointResponse{
+								ContentType: "application/json",
+								StatusCode:  200, // Custom status code
+							},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Should preserve the existing Delete endpoint, not add a new one
+		assert.Equal(t, 1, len(result.Resources))
+		assert.Equal(t, 1, len(result.Resources[0].Endpoints))
+
+		existingEndpoint := result.Resources[0].Endpoints[0]
+		assert.Equal(t, "Delete", existingEndpoint.Name)
+		assert.Equal(t, "Custom Delete", existingEndpoint.Title)
+		assert.Equal(t, "Custom delete endpoint with special logic", existingEndpoint.Description)
+		assert.Equal(t, "/remove/{id}", existingEndpoint.Path)
+		assert.Equal(t, 200, existingEndpoint.Response.StatusCode) // Should preserve custom status code
+	})
+
+	t.Run("MultipleResourcesWithDeleteOperations", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "Users",
+					Description: "User resource",
+					Operations:  []string{"Create", "Read", "Delete"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "name",
+								Type:        "String",
+								Description: "User name",
+							},
+							Operations: []string{"Create", "Read"},
+						},
+					},
+				},
+				{
+					Name:        "Files",
+					Description: "File resource",
+					Operations:  []string{"Delete"}, // Only Delete operation
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "filename",
+								Type:        "String",
+								Description: "File name",
+							},
+							Operations: []string{"Read"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Resources should have endpoints generated based on their operations
+		assert.Equal(t, 2, len(result.Resources))
+
+		// Check Users - has Create, Read, and Delete operations, so should have 2 endpoints (Create and Delete)
+		assert.Equal(t, 2, len(result.Resources[0].Endpoints))
+
+		// Find and check Users Delete endpoint
+		var usersDeleteEndpoint *Endpoint
+		for i, endpoint := range result.Resources[0].Endpoints {
+			if endpoint.Name == "Delete" {
+				usersDeleteEndpoint = &result.Resources[0].Endpoints[i]
+				break
+			}
+		}
+		require.NotNil(t, usersDeleteEndpoint, "Users should have a Delete endpoint")
+		assert.Equal(t, "Delete Users", usersDeleteEndpoint.Title)
+		assert.Equal(t, "DELETE", usersDeleteEndpoint.Method)
+		assert.Equal(t, "/{id}", usersDeleteEndpoint.Path)
+		assert.Equal(t, 204, usersDeleteEndpoint.Response.StatusCode)
+
+		// Check Files - has Delete operation only, so should have 1 endpoint (Delete)
+		assert.Equal(t, 1, len(result.Resources[1].Endpoints))
+		filesDeleteEndpoint := result.Resources[1].Endpoints[0]
+		assert.Equal(t, "Delete", filesDeleteEndpoint.Name)
+		assert.Equal(t, "Delete Files", filesDeleteEndpoint.Title)
+		assert.Equal(t, "DELETE", filesDeleteEndpoint.Method)
+		assert.Equal(t, "/{id}", filesDeleteEndpoint.Path)
+		assert.Equal(t, 204, filesDeleteEndpoint.Response.StatusCode)
+		assert.Nil(t, filesDeleteEndpoint.Response.BodyObject)
 	})
 }
 
