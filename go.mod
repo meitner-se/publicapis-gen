@@ -5,6 +5,7 @@ go 1.21.0
 toolchain go1.24.2
 
 require (
+	github.com/aarondl/strmangle v0.0.9
 	github.com/goccy/go-yaml v1.18.0
 	github.com/invopop/jsonschema v0.13.0
 	github.com/stretchr/testify v1.11.1
@@ -13,7 +14,6 @@ require (
 
 require (
 	github.com/aarondl/inflect v0.0.2 // indirect
-	github.com/aarondl/strmangle v0.0.9 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
