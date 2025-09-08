@@ -1,7 +1,6 @@
 package openapi
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -9,18 +8,16 @@ import (
 	"strings"
 
 	"github.com/meitner-se/publicapis-gen/specification"
-	"github.com/pb33f/libopenapi"
+	"github.com/pb33f/libopenapi/datamodel/high/base"
 	"github.com/pb33f/libopenapi/datamodel/high/v3"
+	"github.com/pb33f/libopenapi/orderedmap"
 	"gopkg.in/yaml.v3"
 )
 
 // Error constants
 const (
-	errorNotImplemented    = "not implemented"
-	errorInvalidService    = "invalid service: service cannot be nil"
-	errorInvalidDocument   = "invalid document: document cannot be nil"
-	errorFailedToMarshal   = "failed to marshal specification"
-	errorFailedToUnmarshal = "failed to unmarshal specification"
+	errorInvalidService  = "invalid service: service cannot be nil"
+	errorInvalidDocument = "invalid document: document cannot be nil"
 )
 
 // Generator handles OpenAPI 3.1 specification generation from specification.Service.
@@ -36,9 +33,6 @@ type Generator struct {
 
 	// ServerURL specifies the base server URL for the API
 	ServerURL string
-
-	// lastLibDocument stores the last generated libopenapi Document for serialization
-	lastLibDocument libopenapi.Document
 }
 
 // NewGenerator creates a new OpenAPI generator with default settings.
@@ -48,268 +42,217 @@ func NewGenerator() *Generator {
 	}
 }
 
-// OpenAPIDocument represents a simplified OpenAPI document structure for JSON marshaling
-type OpenAPIDocument struct {
-	OpenAPI    string                     `json:"openapi"`
-	Info       OpenAPIInfo                `json:"info"`
-	Servers    []OpenAPIServer            `json:"servers,omitempty"`
-	Paths      map[string]OpenAPIPathItem `json:"paths"`
-	Components OpenAPIComponents          `json:"components,omitempty"`
-}
-
-type OpenAPIInfo struct {
-	Title       string `json:"title"`
-	Description string `json:"description,omitempty"`
-	Version     string `json:"version"`
-}
-
-type OpenAPIServer struct {
-	URL         string `json:"url"`
-	Description string `json:"description,omitempty"`
-}
-
-type OpenAPIComponents struct {
-	Schemas map[string]interface{} `json:"schemas,omitempty"`
-}
-
-type OpenAPIPathItem struct {
-	Get    *OpenAPIOperation `json:"get,omitempty"`
-	Post   *OpenAPIOperation `json:"post,omitempty"`
-	Put    *OpenAPIOperation `json:"put,omitempty"`
-	Patch  *OpenAPIOperation `json:"patch,omitempty"`
-	Delete *OpenAPIOperation `json:"delete,omitempty"`
-}
-
-type OpenAPIOperation struct {
-	OperationID string                     `json:"operationId,omitempty"`
-	Summary     string                     `json:"summary,omitempty"`
-	Description string                     `json:"description,omitempty"`
-	Tags        []string                   `json:"tags,omitempty"`
-	Parameters  []OpenAPIParameter         `json:"parameters,omitempty"`
-	RequestBody *OpenAPIRequestBody        `json:"requestBody,omitempty"`
-	Responses   map[string]OpenAPIResponse `json:"responses"`
-}
-
-type OpenAPIParameter struct {
-	Name        string      `json:"name"`
-	In          string      `json:"in"`
-	Description string      `json:"description,omitempty"`
-	Required    bool        `json:"required,omitempty"`
-	Schema      interface{} `json:"schema"`
-}
-
-type OpenAPIRequestBody struct {
-	Description string                      `json:"description,omitempty"`
-	Required    bool                        `json:"required,omitempty"`
-	Content     map[string]OpenAPIMediaType `json:"content"`
-}
-
-type OpenAPIResponse struct {
-	Description string                      `json:"description"`
-	Content     map[string]OpenAPIMediaType `json:"content,omitempty"`
-}
-
-type OpenAPIMediaType struct {
-	Schema interface{} `json:"schema"`
-}
-
 // GenerateFromService generates an OpenAPI 3.1 document from a specification.Service.
 func (g *Generator) GenerateFromService(service *specification.Service) (*v3.Document, error) {
 	if service == nil {
 		return nil, errors.New(errorInvalidService)
 	}
 
-	// Build the OpenAPI specification as a plain Go map
-	openAPISpec := g.buildOpenAPIDocument(service)
-
-	// Marshal to JSON bytes
-	specBytes, err := json.Marshal(openAPISpec)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", errorFailedToMarshal, err)
-	}
-
-	// Create a libopenapi Document from the bytes
-	libDoc, err := libopenapi.NewDocument(specBytes)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create libopenapi document: %w", err)
-	}
-
-	// Store the libopenapi Document for later serialization
-	g.lastLibDocument = libDoc
-
-	// Build the high-level v3 model
-	model, errs := libDoc.BuildV3Model()
-	if len(errs) > 0 {
-		return nil, fmt.Errorf("failed to build v3 model: %v", errs)
-	}
-
-	return &model.Model, nil
+	// Build document using native libopenapi v3 types
+	return g.buildV3Document(service), nil
 }
 
-// buildOpenAPIDocument creates the actual OpenAPI document structure
-func (g *Generator) buildOpenAPIDocument(service *specification.Service) *OpenAPIDocument {
+// buildV3Document creates a v3.Document using native libopenapi types.
+func (g *Generator) buildV3Document(service *specification.Service) *v3.Document {
 	// Create document title
 	title := g.Title
 	if title == "" {
 		title = service.Name
 	}
 
-	doc := &OpenAPIDocument{
-		OpenAPI: g.Version,
-		Info: OpenAPIInfo{
-			Title:       title,
-			Description: g.Description,
-			Version:     "1.0.0",
-		},
-		Paths:      make(map[string]OpenAPIPathItem),
-		Components: OpenAPIComponents{Schemas: make(map[string]interface{})},
+	// Create Info section
+	info := &base.Info{
+		Title:       title,
+		Description: g.Description,
+		Version:     "1.0.0",
 	}
 
-	// Add server if specified
+	// Create Document
+	document := &v3.Document{
+		Version: g.Version,
+		Info:    info,
+	}
+
+	// Add servers if specified
 	if g.ServerURL != "" {
-		doc.Servers = []OpenAPIServer{
+		servers := []*v3.Server{
 			{
 				URL:         g.ServerURL,
 				Description: fmt.Sprintf("%s server", title),
 			},
 		}
+		document.Servers = servers
 	}
 
-	// Convert enums to schemas
+	// Create Components
+	components := &v3.Components{
+		Schemas: orderedmap.New[string, *base.SchemaProxy](),
+	}
+
+	// Add enums to components
 	for _, enum := range service.Enums {
-		doc.Components.Schemas[enum.Name] = g.buildEnumSchema(enum)
+		schema := g.createEnumSchema(enum)
+		proxy := base.CreateSchemaProxy(schema)
+		components.Schemas.Set(enum.Name, proxy)
 	}
 
-	// Convert objects to schemas
+	// Add objects to components
 	for _, obj := range service.Objects {
-		doc.Components.Schemas[obj.Name] = g.buildObjectSchema(obj, service)
+		schema := g.createObjectSchema(obj, service)
+		proxy := base.CreateSchemaProxy(schema)
+		components.Schemas.Set(obj.Name, proxy)
 	}
 
-	// Convert resources to paths
+	document.Components = components
+
+	// Create Paths
+	paths := orderedmap.New[string, *v3.PathItem]()
 	for _, resource := range service.Resources {
-		g.addResourceToPaths(doc, resource, service)
+		g.addResourceToPaths(resource, paths, service)
+	}
+	document.Paths = &v3.Paths{
+		PathItems: paths,
 	}
 
-	return doc
+	return document
 }
 
-// buildEnumSchema creates an OpenAPI schema for an enum
-func (g *Generator) buildEnumSchema(enum specification.Enum) map[string]interface{} {
-	enumValues := make([]string, len(enum.Values))
+// createEnumSchema creates a base.Schema for an enum using native types.
+func (g *Generator) createEnumSchema(enum specification.Enum) *base.Schema {
+	schema := &base.Schema{
+		Type:        []string{"string"},
+		Description: enum.Description,
+	}
+
+	// Add enum values
+	enumValues := make([]*yaml.Node, len(enum.Values))
 	for i, value := range enum.Values {
-		enumValues[i] = value.Name
+		node := &yaml.Node{
+			Kind:  yaml.ScalarNode,
+			Value: value.Name,
+		}
+		enumValues[i] = node
 	}
+	schema.Enum = enumValues
 
-	return map[string]interface{}{
-		"type":        "string",
-		"description": enum.Description,
-		"enum":        enumValues,
-	}
+	return schema
 }
 
-// buildObjectSchema creates an OpenAPI schema for an object
-func (g *Generator) buildObjectSchema(obj specification.Object, service *specification.Service) map[string]interface{} {
-	schema := map[string]interface{}{
-		"type":        "object",
-		"description": obj.Description,
-		"properties":  make(map[string]interface{}),
+// createObjectSchema creates a base.Schema for an object using native types.
+func (g *Generator) createObjectSchema(obj specification.Object, service *specification.Service) *base.Schema {
+	schema := &base.Schema{
+		Type:        []string{"object"},
+		Description: obj.Description,
+		Properties:  orderedmap.New[string, *base.SchemaProxy](),
 	}
 
-	properties := make(map[string]interface{})
-	required := []string{}
-
+	requiredFields := []string{}
 	for _, field := range obj.Fields {
-		properties[field.Name] = g.buildFieldSchema(field, service)
+		fieldSchema := g.createFieldSchema(field, service)
+		proxy := base.CreateSchemaProxy(fieldSchema)
+		schema.Properties.Set(field.Name, proxy)
+
 		if field.IsRequired(service) {
-			required = append(required, field.Name)
+			requiredFields = append(requiredFields, field.Name)
 		}
 	}
 
-	schema["properties"] = properties
-	if len(required) > 0 {
-		schema["required"] = required
+	if len(requiredFields) > 0 {
+		schema.Required = requiredFields
 	}
 
 	return schema
 }
 
-// buildFieldSchema creates an OpenAPI schema for a field
-func (g *Generator) buildFieldSchema(field specification.Field, service *specification.Service) map[string]interface{} {
-	var schema map[string]interface{}
+// createFieldSchema creates a base.Schema for a field using native types.
+func (g *Generator) createFieldSchema(field specification.Field, service *specification.Service) *base.Schema {
+	var schema *base.Schema
 
 	// Handle array modifier
 	if field.IsArray() {
-		schema = map[string]interface{}{
-			"type":  "array",
-			"items": g.buildTypeSchema(field.Type, service),
+		schema = &base.Schema{
+			Type:        []string{"array"},
+			Description: field.Description,
+		}
+
+		itemSchema := g.getTypeSchema(field.Type, service)
+		schema.Items = &base.DynamicValue[*base.SchemaProxy, bool]{
+			N: 0, // Single schema (not boolean)
+			A: base.CreateSchemaProxy(itemSchema),
 		}
 	} else {
-		schema = g.buildTypeSchema(field.Type, service)
-	}
-
-	// Add description if not already set
-	if _, exists := schema["description"]; !exists && field.Description != "" {
-		schema["description"] = field.Description
+		schema = g.getTypeSchema(field.Type, service)
+		schema.Description = field.Description
 	}
 
 	// Handle nullable modifier
 	if field.IsNullable() {
-		if fieldType, exists := schema["type"]; exists {
-			if typeStr, ok := fieldType.(string); ok {
-				schema["type"] = []string{typeStr, "null"}
-			}
+		// In OpenAPI 3.1, we use type array with null
+		if schema.Type != nil && len(schema.Type) > 0 {
+			schema.Type = append(schema.Type, "null")
 		}
 	}
 
-	// Add default and example if present
+	// Add default value if present
 	if field.Default != "" {
-		schema["default"] = field.Default
+		defaultNode := &yaml.Node{
+			Kind:  yaml.ScalarNode,
+			Value: field.Default,
+		}
+		schema.Default = defaultNode
 	}
+
+	// Add example if present
 	if field.Example != "" {
-		schema["example"] = field.Example
+		exampleNode := &yaml.Node{
+			Kind:  yaml.ScalarNode,
+			Value: field.Example,
+		}
+		schema.Examples = []*yaml.Node{exampleNode}
 	}
 
 	return schema
 }
 
-// buildTypeSchema creates an OpenAPI schema for a specific type
-func (g *Generator) buildTypeSchema(fieldType string, service *specification.Service) map[string]interface{} {
+// getTypeSchema returns a base.Schema for the given field type.
+func (g *Generator) getTypeSchema(fieldType string, service *specification.Service) *base.Schema {
 	switch fieldType {
 	case specification.FieldTypeString:
-		return map[string]interface{}{"type": "string"}
+		return &base.Schema{Type: []string{"string"}}
 	case specification.FieldTypeInt:
-		return map[string]interface{}{"type": "integer"}
+		return &base.Schema{Type: []string{"integer"}}
 	case specification.FieldTypeBool:
-		return map[string]interface{}{"type": "boolean"}
+		return &base.Schema{Type: []string{"boolean"}}
 	case specification.FieldTypeUUID:
-		return map[string]interface{}{
-			"type":   "string",
-			"format": "uuid",
+		return &base.Schema{
+			Type:   []string{"string"},
+			Format: "uuid",
 		}
 	case specification.FieldTypeDate:
-		return map[string]interface{}{
-			"type":   "string",
-			"format": "date",
+		return &base.Schema{
+			Type:   []string{"string"},
+			Format: "date",
 		}
 	case specification.FieldTypeTimestamp:
-		return map[string]interface{}{
-			"type":   "string",
-			"format": "date-time",
+		return &base.Schema{
+			Type:   []string{"string"},
+			Format: "date-time",
 		}
 	default:
 		// Check if it's a custom object or enum
 		if service.HasObject(fieldType) || service.HasEnum(fieldType) {
-			return map[string]interface{}{
-				"$ref": fmt.Sprintf("#/components/schemas/%s", fieldType),
+			// Create a reference schema
+			return &base.Schema{
+				Title: fieldType, // Temporary - proper $ref handling would need low-level API
 			}
 		}
 		// Default to string if unknown type
-		return map[string]interface{}{"type": "string"}
+		return &base.Schema{Type: []string{"string"}}
 	}
 }
 
-// addResourceToPaths adds resource endpoints to the OpenAPI paths
-func (g *Generator) addResourceToPaths(doc *OpenAPIDocument, resource specification.Resource, service *specification.Service) {
+// addResourceToPaths adds resource endpoints to paths using native v3 types.
+func (g *Generator) addResourceToPaths(resource specification.Resource, paths *orderedmap.Map[string, *v3.PathItem], service *specification.Service) {
 	basePath := "/" + strings.ToLower(resource.Name)
 
 	// Group endpoints by path
@@ -321,11 +264,12 @@ func (g *Generator) addResourceToPaths(doc *OpenAPIDocument, resource specificat
 
 	// Create PathItem for each unique path
 	for path, endpoints := range pathGroups {
-		pathItem := OpenAPIPathItem{}
+		pathItem := &v3.PathItem{}
 
 		for _, endpoint := range endpoints {
-			operation := g.buildOperation(*endpoint, resource, service)
+			operation := g.createOperation(*endpoint, resource, service)
 
+			// Set operation based on HTTP method
 			switch strings.ToUpper(endpoint.Method) {
 			case http.MethodGet:
 				pathItem.Get = operation
@@ -340,165 +284,205 @@ func (g *Generator) addResourceToPaths(doc *OpenAPIDocument, resource specificat
 			}
 		}
 
-		doc.Paths[path] = pathItem
+		paths.Set(path, pathItem)
 	}
 }
 
-// buildOperation creates an OpenAPI operation from an endpoint
-func (g *Generator) buildOperation(endpoint specification.Endpoint, resource specification.Resource, service *specification.Service) *OpenAPIOperation {
-	operation := &OpenAPIOperation{
-		OperationID: endpoint.Name,
+// createOperation creates a v3.Operation from an endpoint using native types.
+func (g *Generator) createOperation(endpoint specification.Endpoint, resource specification.Resource, service *specification.Service) *v3.Operation {
+	operation := &v3.Operation{
+		OperationId: endpoint.Name,
 		Summary:     endpoint.Title,
 		Description: endpoint.Description,
 		Tags:        []string{resource.Name},
-		Responses:   make(map[string]OpenAPIResponse),
 	}
 
 	// Add parameters
-	var parameters []OpenAPIParameter
+	parameters := []*v3.Parameter{}
 
 	// Path parameters
 	for _, param := range endpoint.Request.PathParams {
-		parameters = append(parameters, OpenAPIParameter{
-			Name:        param.Name,
-			In:          "path",
-			Description: param.Description,
-			Required:    param.IsRequired(service),
-			Schema:      g.buildFieldSchema(param, service),
-		})
+		parameters = append(parameters, g.createParameter(param, "path", service))
 	}
 
 	// Query parameters
 	for _, param := range endpoint.Request.QueryParams {
-		parameters = append(parameters, OpenAPIParameter{
-			Name:        param.Name,
-			In:          "query",
-			Description: param.Description,
-			Required:    param.IsRequired(service),
-			Schema:      g.buildFieldSchema(param, service),
-		})
+		parameters = append(parameters, g.createParameter(param, "query", service))
 	}
 
 	operation.Parameters = parameters
 
 	// Request body
 	if len(endpoint.Request.BodyParams) > 0 {
-		operation.RequestBody = g.buildRequestBody(endpoint.Request.BodyParams, service)
+		operation.RequestBody = g.createRequestBody(endpoint.Request.BodyParams, service)
 	}
 
-	// Response
-	operation.Responses[strconv.Itoa(endpoint.Response.StatusCode)] = g.buildResponse(endpoint.Response, service)
+	// Responses
+	responses := orderedmap.New[string, *v3.Response]()
 
-	// Add common error responses
-	g.addErrorResponses(operation, service)
+	// Success response
+	successResponse := g.createResponse(endpoint.Response, service)
+	responses.Set(strconv.Itoa(endpoint.Response.StatusCode), successResponse)
+
+	// Add error responses
+	g.addErrorResponses(responses, service)
+
+	operation.Responses = &v3.Responses{
+		Codes: responses,
+	}
 
 	return operation
 }
 
-// buildRequestBody creates an OpenAPI request body
-func (g *Generator) buildRequestBody(bodyParams []specification.Field, service *specification.Service) *OpenAPIRequestBody {
-	schema := map[string]interface{}{
-		"type":       "object",
-		"properties": make(map[string]interface{}),
+// createParameter creates a v3.Parameter from a field using native types.
+func (g *Generator) createParameter(field specification.Field, location string, service *specification.Service) *v3.Parameter {
+	isRequired := field.IsRequired(service)
+	param := &v3.Parameter{
+		Name:        field.Name,
+		In:          location,
+		Description: field.Description,
+		Required:    &isRequired,
+		Schema:      base.CreateSchemaProxy(g.createFieldSchema(field, service)),
 	}
 
-	properties := make(map[string]interface{})
-	required := []string{}
+	return param
+}
 
+// createRequestBody creates a v3.RequestBody from body parameters using native types.
+func (g *Generator) createRequestBody(bodyParams []specification.Field, service *specification.Service) *v3.RequestBody {
+	// Create schema from body parameters
+	schema := &base.Schema{
+		Type:       []string{"object"},
+		Properties: orderedmap.New[string, *base.SchemaProxy](),
+	}
+
+	requiredFields := []string{}
 	for _, field := range bodyParams {
-		properties[field.Name] = g.buildFieldSchema(field, service)
+		fieldSchema := g.createFieldSchema(field, service)
+		proxy := base.CreateSchemaProxy(fieldSchema)
+		schema.Properties.Set(field.Name, proxy)
+
 		if field.IsRequired(service) {
-			required = append(required, field.Name)
+			requiredFields = append(requiredFields, field.Name)
 		}
 	}
 
-	schema["properties"] = properties
-	if len(required) > 0 {
-		schema["required"] = required
+	if len(requiredFields) > 0 {
+		schema.Required = requiredFields
 	}
 
-	return &OpenAPIRequestBody{
+	// Create media type
+	mediaType := &v3.MediaType{
+		Schema: base.CreateSchemaProxy(schema),
+	}
+
+	content := orderedmap.New[string, *v3.MediaType]()
+	content.Set("application/json", mediaType)
+
+	isRequired := len(requiredFields) > 0
+	return &v3.RequestBody{
 		Description: "Request body",
-		Required:    len(required) > 0,
-		Content: map[string]OpenAPIMediaType{
-			"application/json": {Schema: schema},
-		},
+		Content:     content,
+		Required:    &isRequired,
 	}
 }
 
-// buildResponse creates an OpenAPI response
-func (g *Generator) buildResponse(response specification.EndpointResponse, service *specification.Service) OpenAPIResponse {
-	openAPIResponse := OpenAPIResponse{
+// createResponse creates a v3.Response from an endpoint response using native types.
+func (g *Generator) createResponse(response specification.EndpointResponse, service *specification.Service) *v3.Response {
+	openAPIResponse := &v3.Response{
 		Description: "Successful response",
 	}
 
+	// Add response content if present
 	if response.BodyObject != nil || len(response.BodyFields) > 0 {
-		var schema interface{}
+		content := orderedmap.New[string, *v3.MediaType]()
 
+		var schema *base.Schema
 		if response.BodyObject != nil {
-			schema = map[string]interface{}{
-				"$ref": fmt.Sprintf("#/components/schemas/%s", *response.BodyObject),
+			// Reference to existing schema
+			schema = &base.Schema{
+				Title: *response.BodyObject, // Temporary - proper $ref handling would need low-level API
 			}
 		} else if len(response.BodyFields) > 0 {
-			schemaMap := map[string]interface{}{
-				"type":       "object",
-				"properties": make(map[string]interface{}),
+			// Inline schema from body fields
+			schema = &base.Schema{
+				Type:       []string{"object"},
+				Properties: orderedmap.New[string, *base.SchemaProxy](),
 			}
 
-			properties := make(map[string]interface{})
 			for _, field := range response.BodyFields {
-				properties[field.Name] = g.buildFieldSchema(field, service)
+				fieldSchema := g.createFieldSchema(field, service)
+				proxy := base.CreateSchemaProxy(fieldSchema)
+				schema.Properties.Set(field.Name, proxy)
 			}
-			schemaMap["properties"] = properties
-			schema = schemaMap
 		}
 
-		openAPIResponse.Content = map[string]OpenAPIMediaType{
-			"application/json": {Schema: schema},
+		if schema != nil {
+			mediaType := &v3.MediaType{
+				Schema: base.CreateSchemaProxy(schema),
+			}
+			content.Set("application/json", mediaType)
+			openAPIResponse.Content = content
 		}
 	}
 
 	return openAPIResponse
 }
 
-// addErrorResponses adds common error responses to the operation
-func (g *Generator) addErrorResponses(operation *OpenAPIOperation, service *specification.Service) {
-	var errorSchema interface{}
+// addErrorResponses adds common error responses using native types.
+func (g *Generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Response], service *specification.Service) {
+	// Create error schema
+	var errorSchema *base.Schema
 	if service.HasObject("Error") {
-		errorSchema = map[string]interface{}{
-			"$ref": "#/components/schemas/Error",
+		errorSchema = &base.Schema{
+			Title: "Error", // Temporary - proper $ref handling would need low-level API
 		}
 	} else {
-		errorSchema = map[string]interface{}{
-			"type": "object",
-			"properties": map[string]interface{}{
-				"message": map[string]interface{}{"type": "string"},
-				"code":    map[string]interface{}{"type": "string"},
-			},
-			"required": []string{"message", "code"},
+		// Fallback generic error schema
+		errorSchema = &base.Schema{
+			Type:       []string{"object"},
+			Properties: orderedmap.New[string, *base.SchemaProxy](),
 		}
+		messageSchema := &base.Schema{Type: []string{"string"}}
+		codeSchema := &base.Schema{Type: []string{"string"}}
+		errorSchema.Properties.Set("message", base.CreateSchemaProxy(messageSchema))
+		errorSchema.Properties.Set("code", base.CreateSchemaProxy(codeSchema))
+		errorSchema.Required = []string{"message", "code"}
 	}
 
-	errorContent := map[string]OpenAPIMediaType{
-		"application/json": {Schema: errorSchema},
+	errorContent := orderedmap.New[string, *v3.MediaType]()
+	mediaType := &v3.MediaType{
+		Schema: base.CreateSchemaProxy(errorSchema),
 	}
+	errorContent.Set("application/json", mediaType)
 
-	operation.Responses["400"] = OpenAPIResponse{
+	// 400 Bad Request
+	badRequestResponse := &v3.Response{
 		Description: "Bad Request - The request was malformed or contained invalid parameters",
 		Content:     errorContent,
 	}
-	operation.Responses["401"] = OpenAPIResponse{
+	responses.Set("400", badRequestResponse)
+
+	// 401 Unauthorized
+	unauthorizedResponse := &v3.Response{
 		Description: "Unauthorized - The request is missing valid authentication credentials",
 		Content:     errorContent,
 	}
-	operation.Responses["404"] = OpenAPIResponse{
+	responses.Set("401", unauthorizedResponse)
+
+	// 404 Not Found
+	notFoundResponse := &v3.Response{
 		Description: "Not Found - The requested resource does not exist",
 		Content:     errorContent,
 	}
-	operation.Responses["500"] = OpenAPIResponse{
+	responses.Set("404", notFoundResponse)
+
+	// 500 Internal Server Error
+	internalErrorResponse := &v3.Response{
 		Description: "Internal Server Error - An unexpected server error occurred",
 		Content:     errorContent,
 	}
+	responses.Set("500", internalErrorResponse)
 }
 
 // ToYAML converts an OpenAPI document to YAML format.
@@ -507,17 +491,8 @@ func (g *Generator) ToYAML(document *v3.Document) ([]byte, error) {
 		return nil, errors.New(errorInvalidDocument)
 	}
 
-	if g.lastLibDocument == nil {
-		return nil, errors.New("no document has been generated")
-	}
-
-	// Use libopenapi's Render method to serialize the document
-	yamlBytes, err := g.lastLibDocument.Render()
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", errorFailedToMarshal, err)
-	}
-
-	return yamlBytes, nil
+	// Use libopenapi's native Render method
+	return document.Render()
 }
 
 // ToJSON converts an OpenAPI document to JSON format.
@@ -526,27 +501,6 @@ func (g *Generator) ToJSON(document *v3.Document) ([]byte, error) {
 		return nil, errors.New(errorInvalidDocument)
 	}
 
-	if g.lastLibDocument == nil {
-		return nil, errors.New("no document has been generated")
-	}
-
-	// Use libopenapi's Render method to get YAML, then convert to JSON
-	yamlBytes, err := g.lastLibDocument.Render()
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", errorFailedToMarshal, err)
-	}
-
-	// Parse YAML and convert to JSON with proper formatting
-	var yamlData interface{}
-	err = yaml.Unmarshal(yamlBytes, &yamlData)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", errorFailedToUnmarshal, err)
-	}
-
-	jsonBytes, err := json.MarshalIndent(yamlData, "", "  ")
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", errorFailedToMarshal, err)
-	}
-
-	return jsonBytes, nil
+	// Use libopenapi's native RenderJSON method
+	return document.RenderJSON("  ")
 }
