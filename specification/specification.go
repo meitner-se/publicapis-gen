@@ -1,5 +1,9 @@
 package specification
 
+import (
+	"fmt"
+)
+
 // CRUD Operations
 const (
 	OperationCreate = "Create"
@@ -200,11 +204,10 @@ const (
 const (
 	getEndpointName        = "Get"
 	getEndpointPath        = "/{id}"
-	getEndpointTitlePrefix = "Get "
-	getEndpointDescPrefix  = "Get a "
+	getEndpointTitlePrefix = "Retrieve an existing "
 	getResponseStatusCode  = 200
 	getIDParamName         = "id"
-	getIDParamDescription  = "The unique identifier of the resource to retrieve"
+	getIDParamDescTemplate = "The unique identifier of the %s to retrieve"
 )
 
 // Service is the definition of an API service.
@@ -777,7 +780,7 @@ func ApplyOverlay(input *Service) *Service {
 				// Create the ID path parameter
 				idParam := Field{
 					Name:        getIDParamName,
-					Description: getIDParamDescription,
+					Description: fmt.Sprintf(getIDParamDescTemplate, resource.Name),
 					Type:        FieldTypeUUID,
 				}
 
@@ -785,7 +788,7 @@ func ApplyOverlay(input *Service) *Service {
 				getEndpoint := Endpoint{
 					Name:        getEndpointName,
 					Title:       getEndpointTitlePrefix + resource.Name,
-					Description: getEndpointDescPrefix + resource.Name,
+					Description: fmt.Sprintf("Retrieves the `%s` with the given ID.", resource.Name),
 					Method:      httpMethodGet,
 					Path:        getEndpointPath,
 					Request: EndpointRequest{
