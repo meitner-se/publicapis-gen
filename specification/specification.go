@@ -2,6 +2,7 @@ package specification
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/aarondl/strmangle"
@@ -243,6 +244,14 @@ const (
 const (
 	requestErrorSuffix            = "RequestError"
 	requestErrorDescriptionPrefix = "Request error object for "
+)
+
+// Comment formatting constants
+const (
+	commentPrefix     = "// "
+	nameDescSeparator = ": "
+	newlineChar       = "\n"
+	pathSeparator     = "/"
 )
 
 // Service is the definition of an API service.
@@ -573,40 +582,14 @@ func ApplyOverlay(input *Service) *Service {
 	// Generate Objects from Resources that have Read operations
 	for _, resource := range input.Resources {
 		// Check if the resource has Read operation
-		if containsOperation(resource.Operations, OperationRead) {
+		if resource.HasReadOperation() {
 			// Check if an object with this name already exists
-			objectExists := false
-			for _, existingObj := range result.Objects {
-				if existingObj.Name == resource.Name {
-					objectExists = true
-					break
-				}
-			}
-
-			// Only create the object if it doesn't already exist
-			if !objectExists {
+			if !result.HasObject(resource.Name) {
 				// Create a new Object based on the Resource
 				newObject := Object{
 					Name:        resource.Name,
 					Description: resource.Description,
-					Fields:      make([]Field, 0),
-				}
-
-				// Add all fields that support Read operation
-				for _, resourceField := range resource.Fields {
-					if containsOperation(resourceField.Operations, OperationRead) {
-						// Convert ResourceField to Field by copying the embedded Field
-						field := Field{
-							Name:        resourceField.Field.Name,
-							Description: resourceField.Field.Description,
-							Type:        resourceField.Field.Type,
-							Default:     resourceField.Field.Default,
-							Example:     resourceField.Field.Example,
-							Modifiers:   make([]string, len(resourceField.Field.Modifiers)),
-						}
-						copy(field.Modifiers, resourceField.Field.Modifiers)
-						newObject.Fields = append(newObject.Fields, field)
-					}
+					Fields:      resource.GetReadableFields(),
 				}
 
 				// Add the new object to the result
@@ -615,354 +598,223 @@ func ApplyOverlay(input *Service) *Service {
 		}
 
 		// Generate Create endpoints for resources that have Create operations
-		if containsOperation(resource.Operations, OperationCreate) {
-			// Check if a Create endpoint already exists
-			createEndpointExists := false
-			for _, endpoint := range resource.Endpoints {
-				if endpoint.Name == createEndpointName {
-					createEndpointExists = true
-					break
-				}
+		if resource.HasCreateOperation() && !resource.HasEndpoint(createEndpointName) {
+			// Collect all fields that support Create operation for body parameters
+			bodyParams := resource.GetCreateBodyParams()
+
+			// Create the Create endpoint
+			resourceName := resource.Name
+			createEndpoint := Endpoint{
+				Name:        createEndpointName,
+				Title:       createEndpointTitlePrefix + resource.Name,
+				Description: createEndpointDescPrefix + resource.Name,
+				Method:      httpMethodPost,
+				Path:        createEndpointPath,
+				Request: EndpointRequest{
+					ContentType: contentTypeJSON,
+					Headers:     []Field{},
+					PathParams:  []Field{},
+					QueryParams: []Field{},
+					BodyParams:  bodyParams,
+				},
+				Response: EndpointResponse{
+					ContentType: contentTypeJSON,
+					StatusCode:  createResponseStatusCode,
+					Headers:     []Field{},
+					BodyFields:  []Field{},
+					BodyObject:  &resourceName,
+				},
 			}
 
-			// Only create the endpoint if it doesn't already exist
-			if !createEndpointExists {
-				// Collect all fields that support Create operation for body parameters
-				var bodyParams []Field
-				for _, resourceField := range resource.Fields {
-					if containsOperation(resourceField.Operations, OperationCreate) {
-						// Convert ResourceField to Field by copying the embedded Field
-						field := Field{
-							Name:        resourceField.Field.Name,
-							Description: resourceField.Field.Description,
-							Type:        resourceField.Field.Type,
-							Default:     resourceField.Field.Default,
-							Example:     resourceField.Field.Example,
-							Modifiers:   make([]string, len(resourceField.Field.Modifiers)),
-						}
-						copy(field.Modifiers, resourceField.Field.Modifiers)
-						bodyParams = append(bodyParams, field)
-					}
-				}
-
-				// Create the Create endpoint
-				resourceName := resource.Name
-				createEndpoint := Endpoint{
-					Name:        createEndpointName,
-					Title:       createEndpointTitlePrefix + resource.Name,
-					Description: createEndpointDescPrefix + resource.Name,
-					Method:      httpMethodPost,
-					Path:        createEndpointPath,
-					Request: EndpointRequest{
-						ContentType: contentTypeJSON,
-						Headers:     []Field{},
-						PathParams:  []Field{},
-						QueryParams: []Field{},
-						BodyParams:  bodyParams,
-					},
-					Response: EndpointResponse{
-						ContentType: contentTypeJSON,
-						StatusCode:  createResponseStatusCode,
-						Headers:     []Field{},
-						BodyFields:  []Field{},
-						BodyObject:  &resourceName,
-					},
-				}
-
-				// Add the Create endpoint to the resource
-				for i := range result.Resources {
-					if result.Resources[i].Name == resource.Name {
-						result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, createEndpoint)
-						break
-					}
+			// Add the Create endpoint to the resource
+			for i := range result.Resources {
+				if result.Resources[i].Name == resource.Name {
+					result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, createEndpoint)
+					break
 				}
 			}
 		}
 
 		// Generate Update endpoints for resources that have Update operations
-		if containsOperation(resource.Operations, OperationUpdate) {
-			// Check if an Update endpoint already exists
-			updateEndpointExists := false
-			for _, endpoint := range resource.Endpoints {
-				if endpoint.Name == updateEndpointName {
-					updateEndpointExists = true
-					break
-				}
+		if resource.HasUpdateOperation() && !resource.HasEndpoint(updateEndpointName) {
+			// Collect all fields that support Update operation for body parameters
+			bodyParams := resource.GetUpdateBodyParams()
+
+			// Create the ID path parameter
+			idParam := Field{
+				Name:        updateIDParamName,
+				Description: updateIDParamDescription,
+				Type:        FieldTypeUUID,
 			}
 
-			// Only create the endpoint if it doesn't already exist
-			if !updateEndpointExists {
-				// Collect all fields that support Update operation for body parameters
-				var bodyParams []Field
-				for _, resourceField := range resource.Fields {
-					if containsOperation(resourceField.Operations, OperationUpdate) {
-						// Convert ResourceField to Field by copying the embedded Field
-						field := Field{
-							Name:        resourceField.Field.Name,
-							Description: resourceField.Field.Description,
-							Type:        resourceField.Field.Type,
-							Default:     resourceField.Field.Default,
-							Example:     resourceField.Field.Example,
-							Modifiers:   make([]string, len(resourceField.Field.Modifiers)),
-						}
-						copy(field.Modifiers, resourceField.Field.Modifiers)
-						bodyParams = append(bodyParams, field)
-					}
-				}
+			// Create the Update endpoint
+			resourceName := resource.Name
+			updateEndpoint := Endpoint{
+				Name:        updateEndpointName,
+				Title:       updateEndpointTitlePrefix + resource.Name,
+				Description: updateEndpointDescPrefix + resource.Name,
+				Method:      httpMethodPatch,
+				Path:        updateEndpointPath,
+				Request: EndpointRequest{
+					ContentType: contentTypeJSON,
+					Headers:     []Field{},
+					PathParams:  []Field{idParam},
+					QueryParams: []Field{},
+					BodyParams:  bodyParams,
+				},
+				Response: EndpointResponse{
+					ContentType: contentTypeJSON,
+					StatusCode:  updateResponseStatusCode,
+					Headers:     []Field{},
+					BodyFields:  []Field{},
+					BodyObject:  &resourceName,
+				},
+			}
 
-				// Create the ID path parameter
-				idParam := Field{
-					Name:        updateIDParamName,
-					Description: updateIDParamDescription,
-					Type:        FieldTypeUUID,
-				}
-
-				// Create the Update endpoint
-				resourceName := resource.Name
-				updateEndpoint := Endpoint{
-					Name:        updateEndpointName,
-					Title:       updateEndpointTitlePrefix + resource.Name,
-					Description: updateEndpointDescPrefix + resource.Name,
-					Method:      httpMethodPatch,
-					Path:        updateEndpointPath,
-					Request: EndpointRequest{
-						ContentType: contentTypeJSON,
-						Headers:     []Field{},
-						PathParams:  []Field{idParam},
-						QueryParams: []Field{},
-						BodyParams:  bodyParams,
-					},
-					Response: EndpointResponse{
-						ContentType: contentTypeJSON,
-						StatusCode:  updateResponseStatusCode,
-						Headers:     []Field{},
-						BodyFields:  []Field{},
-						BodyObject:  &resourceName,
-					},
-				}
-
-				// Add the Update endpoint to the resource
-				for i := range result.Resources {
-					if result.Resources[i].Name == resource.Name {
-						result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, updateEndpoint)
-						break
-					}
+			// Add the Update endpoint to the resource
+			for i := range result.Resources {
+				if result.Resources[i].Name == resource.Name {
+					result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, updateEndpoint)
+					break
 				}
 			}
 		}
 
 		// Generate Delete endpoints for resources that have Delete operations
-		if containsOperation(resource.Operations, OperationDelete) {
-			// Check if a Delete endpoint already exists
-			deleteEndpointExists := false
-			for _, endpoint := range resource.Endpoints {
-				if endpoint.Name == deleteEndpointName {
-					deleteEndpointExists = true
-					break
-				}
+		if resource.HasDeleteOperation() && !resource.HasEndpoint(deleteEndpointName) {
+			// Create the ID path parameter
+			idParam := Field{
+				Name:        deleteIDParamName,
+				Description: deleteIDParamDescription,
+				Type:        FieldTypeUUID,
 			}
 
-			// Only create the endpoint if it doesn't already exist
-			if !deleteEndpointExists {
-				// Create the ID path parameter
-				idParam := Field{
-					Name:        deleteIDParamName,
-					Description: deleteIDParamDescription,
-					Type:        FieldTypeUUID,
-				}
+			// Create the Delete endpoint
+			deleteEndpoint := Endpoint{
+				Name:        deleteEndpointName,
+				Title:       deleteEndpointTitlePrefix + resource.Name,
+				Description: deleteEndpointDescPrefix + resource.Name,
+				Method:      httpMethodDelete,
+				Path:        deleteEndpointPath,
+				Request: EndpointRequest{
+					ContentType: contentTypeJSON,
+					Headers:     []Field{},
+					PathParams:  []Field{idParam},
+					QueryParams: []Field{},
+					BodyParams:  []Field{},
+				},
+				Response: EndpointResponse{
+					ContentType: contentTypeJSON,
+					StatusCode:  deleteResponseStatusCode,
+					Headers:     []Field{},
+					BodyFields:  []Field{},
+					BodyObject:  nil, // No body object for delete (returns nothing)
+				},
+			}
 
-				// Create the Delete endpoint
-				deleteEndpoint := Endpoint{
-					Name:        deleteEndpointName,
-					Title:       deleteEndpointTitlePrefix + resource.Name,
-					Description: deleteEndpointDescPrefix + resource.Name,
-					Method:      httpMethodDelete,
-					Path:        deleteEndpointPath,
-					Request: EndpointRequest{
-						ContentType: contentTypeJSON,
-						Headers:     []Field{},
-						PathParams:  []Field{idParam},
-						QueryParams: []Field{},
-						BodyParams:  []Field{},
-					},
-					Response: EndpointResponse{
-						ContentType: contentTypeJSON,
-						StatusCode:  deleteResponseStatusCode,
-						Headers:     []Field{},
-						BodyFields:  []Field{},
-						BodyObject:  nil, // No body object for delete (returns nothing)
-					},
-				}
-
-				// Add the Delete endpoint to the resource
-				for i := range result.Resources {
-					if result.Resources[i].Name == resource.Name {
-						result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, deleteEndpoint)
-						break
-					}
+			// Add the Delete endpoint to the resource
+			for i := range result.Resources {
+				if result.Resources[i].Name == resource.Name {
+					result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, deleteEndpoint)
+					break
 				}
 			}
 		}
 
 		// Generate Get endpoints for resources that have Read operations
-		if containsOperation(resource.Operations, OperationRead) {
-			// Check if a Get endpoint already exists
-			getEndpointExists := false
-			for _, endpoint := range resource.Endpoints {
-				if endpoint.Name == getEndpointName {
-					getEndpointExists = true
-					break
-				}
+		if resource.HasReadOperation() && !resource.HasEndpoint(getEndpointName) {
+			// Create the ID path parameter
+			idParam := Field{
+				Name:        getIDParamName,
+				Description: fmt.Sprintf(getIDParamDescTemplate, resource.Name),
+				Type:        FieldTypeUUID,
 			}
 
-			// Only create the endpoint if it doesn't already exist
-			if !getEndpointExists {
-				// Create the ID path parameter
-				idParam := Field{
-					Name:        getIDParamName,
-					Description: fmt.Sprintf(getIDParamDescTemplate, resource.Name),
-					Type:        FieldTypeUUID,
-				}
+			// Create the Get endpoint
+			resourceName := resource.Name
+			getEndpoint := Endpoint{
+				Name:        getEndpointName,
+				Title:       getEndpointTitlePrefix + resource.Name,
+				Description: fmt.Sprintf("Retrieves the `%s` with the given ID.", resource.Name),
+				Method:      httpMethodGet,
+				Path:        getEndpointPath,
+				Request: EndpointRequest{
+					ContentType: contentTypeJSON,
+					Headers:     []Field{},
+					PathParams:  []Field{idParam},
+					QueryParams: []Field{},
+					BodyParams:  []Field{},
+				},
+				Response: EndpointResponse{
+					ContentType: contentTypeJSON,
+					StatusCode:  getResponseStatusCode,
+					Headers:     []Field{},
+					BodyFields:  []Field{},
+					BodyObject:  &resourceName,
+				},
+			}
 
-				// Create the Get endpoint
-				resourceName := resource.Name
-				getEndpoint := Endpoint{
-					Name:        getEndpointName,
-					Title:       getEndpointTitlePrefix + resource.Name,
-					Description: fmt.Sprintf("Retrieves the `%s` with the given ID.", resource.Name),
-					Method:      httpMethodGet,
-					Path:        getEndpointPath,
-					Request: EndpointRequest{
-						ContentType: contentTypeJSON,
-						Headers:     []Field{},
-						PathParams:  []Field{idParam},
-						QueryParams: []Field{},
-						BodyParams:  []Field{},
-					},
-					Response: EndpointResponse{
-						ContentType: contentTypeJSON,
-						StatusCode:  getResponseStatusCode,
-						Headers:     []Field{},
-						BodyFields:  []Field{},
-						BodyObject:  &resourceName,
-					},
-				}
-
-				// Add the Get endpoint to the resource
-				for i := range result.Resources {
-					if result.Resources[i].Name == resource.Name {
-						result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, getEndpoint)
-						break
-					}
+			// Add the Get endpoint to the resource
+			for i := range result.Resources {
+				if result.Resources[i].Name == resource.Name {
+					result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, getEndpoint)
+					break
 				}
 			}
 		}
 
 		// Generate List endpoints for resources that have Read operations
-		if containsOperation(resource.Operations, OperationRead) {
-			// Check if a List endpoint already exists
-			listEndpointExists := false
-			for _, endpoint := range resource.Endpoints {
-				if endpoint.Name == listEndpointName {
-					listEndpointExists = true
-					break
-				}
+		if resource.HasReadOperation() && !resource.HasEndpoint(listEndpointName) {
+			// Create query parameters for pagination
+			limitParam := CreateLimitParam()
+			offsetParam := CreateOffsetParam()
+
+			// Create pagination and data fields for the response
+			paginationField := CreatePaginationField()
+			dataField := CreateDataField(resource.Name)
+
+			// Get the pluralized resource name
+			pluralResourceName := resource.GetPluralName()
+
+			// Create the List endpoint
+			listEndpoint := Endpoint{
+				Name:        listEndpointName,
+				Title:       listEndpointTitlePrefix + pluralResourceName,
+				Description: fmt.Sprintf(listEndpointDescTemplate, pluralResourceName),
+				Method:      httpMethodGet,
+				Path:        listEndpointPath,
+				Request: EndpointRequest{
+					ContentType: contentTypeJSON,
+					Headers:     []Field{},
+					PathParams:  []Field{},
+					QueryParams: []Field{limitParam, offsetParam},
+					BodyParams:  []Field{},
+				},
+				Response: EndpointResponse{
+					ContentType: contentTypeJSON,
+					StatusCode:  listResponseStatusCode,
+					Headers:     []Field{},
+					BodyFields:  []Field{dataField, paginationField},
+					BodyObject:  nil,
+				},
 			}
 
-			// Only create the endpoint if it doesn't already exist
-			if !listEndpointExists {
-				// Create query parameters for pagination
-				limitParam := Field{
-					Name:        listLimitParamName,
-					Description: listLimitParamDesc,
-					Type:        FieldTypeInt,
-					Default:     listLimitDefaultValue,
-				}
-
-				offsetParam := Field{
-					Name:        listOffsetParamName,
-					Description: listOffsetParamDesc,
-					Type:        FieldTypeInt,
-					Default:     listOffsetDefaultValue,
-				}
-
-				// Create pagination and data fields for the response
-				paginationField := Field{
-					Name:        paginationObjectName,
-					Description: "Pagination information",
-					Type:        paginationObjectName,
-				}
-
-				dataField := Field{
-					Name:        "data",
-					Description: fmt.Sprintf("Array of %s objects", resource.Name),
-					Type:        resource.Name,
-					Modifiers:   []string{ModifierArray},
-				}
-
-				// Pluralize the resource name
-				pluralResourceName := strmangle.Plural(resource.Name)
-
-				// Create the List endpoint
-				listEndpoint := Endpoint{
-					Name:        listEndpointName,
-					Title:       listEndpointTitlePrefix + pluralResourceName,
-					Description: fmt.Sprintf(listEndpointDescTemplate, pluralResourceName),
-					Method:      httpMethodGet,
-					Path:        listEndpointPath,
-					Request: EndpointRequest{
-						ContentType: contentTypeJSON,
-						Headers:     []Field{},
-						PathParams:  []Field{},
-						QueryParams: []Field{limitParam, offsetParam},
-						BodyParams:  []Field{},
-					},
-					Response: EndpointResponse{
-						ContentType: contentTypeJSON,
-						StatusCode:  listResponseStatusCode,
-						Headers:     []Field{},
-						BodyFields:  []Field{dataField, paginationField},
-						BodyObject:  nil,
-					},
-				}
-
-				// Add the List endpoint to the resource
-				for i := range result.Resources {
-					if result.Resources[i].Name == resource.Name {
-						result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, listEndpoint)
-						break
-					}
+			// Add the List endpoint to the resource
+			for i := range result.Resources {
+				if result.Resources[i].Name == resource.Name {
+					result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, listEndpoint)
+					break
 				}
 			}
 		}
 
 		// Generate Search endpoints for resources that have Read operations
-		if containsOperation(resource.Operations, OperationRead) {
-			// Check if a Search endpoint already exists
-			searchEndpointExists := false
-			for _, endpoint := range resource.Endpoints {
-				if endpoint.Name == searchEndpointName {
-					searchEndpointExists = true
-					break
-				}
-			}
-
+		if resource.HasReadOperation() {
 			// Only create the endpoint if it doesn't already exist
-			if !searchEndpointExists {
+			if !resource.HasEndpoint(searchEndpointName) {
 				// Create query parameters for pagination (same as List endpoint)
-				limitParam := Field{
-					Name:        listLimitParamName,
-					Description: listLimitParamDesc,
-					Type:        FieldTypeInt,
-					Default:     listLimitDefaultValue,
-				}
-
-				offsetParam := Field{
-					Name:        listOffsetParamName,
-					Description: listOffsetParamDesc,
-					Type:        FieldTypeInt,
-					Default:     listOffsetDefaultValue,
-				}
+				limitParam := CreateLimitParam()
+				offsetParam := CreateOffsetParam()
 
 				// Create filter body parameter
 				filterParam := Field{
@@ -972,21 +824,11 @@ func ApplyOverlay(input *Service) *Service {
 				}
 
 				// Create pagination and data fields for the response (same as List endpoint)
-				paginationField := Field{
-					Name:        paginationObjectName,
-					Description: "Pagination information",
-					Type:        paginationObjectName,
-				}
+				paginationField := CreatePaginationField()
+				dataField := CreateDataField(resource.Name)
 
-				dataField := Field{
-					Name:        "data",
-					Description: fmt.Sprintf("Array of %s objects", resource.Name),
-					Type:        resource.Name,
-					Modifiers:   []string{ModifierArray},
-				}
-
-				// Pluralize the resource name
-				pluralResourceName := strmangle.Plural(resource.Name)
+				// Get the pluralized resource name
+				pluralResourceName := resource.GetPluralName()
 
 				// Create the Search endpoint
 				searchEndpoint := Endpoint{
@@ -1130,7 +972,7 @@ func isStringType(fieldType string) bool {
 
 // canBeNull returns true if the field can be null (has nullable modifier or is an array).
 func canBeNull(field Field) bool {
-	return containsModifier(field.Modifiers, ModifierNullable) || containsModifier(field.Modifiers, ModifierArray)
+	return field.IsNullable() || field.IsArray()
 }
 
 // isPrimitiveType returns true if the field type is a primitive type.
@@ -1459,5 +1301,339 @@ func ApplyFilterOverlay(input *Service) *Service {
 		result.Objects = append(result.Objects, nullFilter)
 	}
 
+	return result
+}
+
+// ResourceField methods
+
+// HasCreateOperation checks if the ResourceField supports Create operations.
+func (f ResourceField) HasCreateOperation() bool {
+	return slices.Contains(f.Operations, OperationCreate)
+}
+
+// HasDeleteOperation checks if the ResourceField supports Delete operations.
+func (f ResourceField) HasDeleteOperation() bool {
+	return slices.Contains(f.Operations, OperationDelete)
+}
+
+// HasReadOperation checks if the ResourceField supports Read operations.
+func (f ResourceField) HasReadOperation() bool {
+	return slices.Contains(f.Operations, OperationRead)
+}
+
+// HasUpdateOperation checks if the ResourceField supports Update operations.
+func (f ResourceField) HasUpdateOperation() bool {
+	return slices.Contains(f.Operations, OperationUpdate)
+}
+
+// Field methods
+
+// IsArray checks if the Field has the array modifier.
+func (t Field) IsArray() bool {
+	return slices.Contains(t.Modifiers, ModifierArray)
+}
+
+// IsNullable checks if the Field has the nullable modifier.
+func (t Field) IsNullable() bool {
+	return slices.Contains(t.Modifiers, ModifierNullable)
+}
+
+// TagJSON returns the JSON tag name for the field in camelCase.
+func (t Field) TagJSON() string {
+	return camelCase(t.Name)
+}
+
+// GetComment returns a formatted comment for the field.
+func (t Field) GetComment(tabs string) string {
+	return getComment(tabs, t.Description, t.Name)
+}
+
+// IsRequired determines if the field is required based on its properties and service context.
+func (f Field) IsRequired(service *Service) bool {
+	if f.IsNullable() {
+		return false
+	}
+
+	if f.IsArray() {
+		return false
+	}
+
+	if f.Default != "" {
+		return false
+	}
+
+	if service.IsObject(f.Type) {
+		return false
+	}
+
+	return true
+}
+
+// EndpointRequest methods
+
+// GetRequiredBodyParams returns the names of required body parameters.
+func (e EndpointRequest) GetRequiredBodyParams(service *Service) []string {
+	requiredFields := make([]string, 0, len(e.BodyParams))
+
+	for _, field := range e.BodyParams {
+		if !field.IsRequired(service) {
+			continue
+		}
+
+		requiredFields = append(requiredFields, field.Name)
+	}
+
+	return requiredFields
+}
+
+// Endpoint methods
+
+// GetFullPath returns the full path for the endpoint including the resource name.
+func (e Endpoint) GetFullPath(resourceName string) string {
+	return pathSeparator + toKebabCase(resourceName) + e.Path
+}
+
+// Resource methods
+
+// HasCreateOperation checks if the Resource supports Create operations.
+func (r Resource) HasCreateOperation() bool {
+	return slices.Contains(r.Operations, OperationCreate)
+}
+
+// HasDeleteOperation checks if the Resource supports Delete operations.
+func (r Resource) HasDeleteOperation() bool {
+	return slices.Contains(r.Operations, OperationDelete)
+}
+
+// HasReadOperation checks if the Resource supports Read operations.
+func (r Resource) HasReadOperation() bool {
+	return slices.Contains(r.Operations, OperationRead)
+}
+
+// HasUpdateOperation checks if the Resource supports Update operations.
+func (r Resource) HasUpdateOperation() bool {
+	return slices.Contains(r.Operations, OperationUpdate)
+}
+
+// GetPluralName returns the pluralized name of the resource.
+func (r Resource) GetPluralName() string {
+	return strmangle.Plural(r.Name)
+}
+
+// GetCreateBodyParams returns all fields that support Create operations.
+func (r Resource) GetCreateBodyParams() []Field {
+	bodyParams := make([]Field, 0)
+	for _, resourceField := range r.Fields {
+		if resourceField.HasCreateOperation() {
+			// Convert ResourceField to Field by copying the embedded Field
+			field := Field{
+				Name:        resourceField.Field.Name,
+				Description: resourceField.Field.Description,
+				Type:        resourceField.Field.Type,
+				Default:     resourceField.Field.Default,
+				Example:     resourceField.Field.Example,
+				Modifiers:   make([]string, len(resourceField.Field.Modifiers)),
+			}
+			copy(field.Modifiers, resourceField.Field.Modifiers)
+			bodyParams = append(bodyParams, field)
+		}
+	}
+	return bodyParams
+}
+
+// GetUpdateBodyParams returns all fields that support Update operations.
+func (r Resource) GetUpdateBodyParams() []Field {
+	bodyParams := make([]Field, 0)
+	for _, resourceField := range r.Fields {
+		if resourceField.HasUpdateOperation() {
+			// Convert ResourceField to Field by copying the embedded Field
+			field := Field{
+				Name:        resourceField.Field.Name,
+				Description: resourceField.Field.Description,
+				Type:        resourceField.Field.Type,
+				Default:     resourceField.Field.Default,
+				Example:     resourceField.Field.Example,
+				Modifiers:   make([]string, len(resourceField.Field.Modifiers)),
+			}
+			copy(field.Modifiers, resourceField.Field.Modifiers)
+			bodyParams = append(bodyParams, field)
+		}
+	}
+	return bodyParams
+}
+
+// GetReadableFields returns all fields that support Read operations.
+func (r Resource) GetReadableFields() []Field {
+	readableFields := make([]Field, 0)
+	for _, resourceField := range r.Fields {
+		if resourceField.HasReadOperation() {
+			// Convert ResourceField to Field by copying the embedded Field
+			field := Field{
+				Name:        resourceField.Field.Name,
+				Description: resourceField.Field.Description,
+				Type:        resourceField.Field.Type,
+				Default:     resourceField.Field.Default,
+				Example:     resourceField.Field.Example,
+				Modifiers:   make([]string, len(resourceField.Field.Modifiers)),
+			}
+			copy(field.Modifiers, resourceField.Field.Modifiers)
+			readableFields = append(readableFields, field)
+		}
+	}
+	return readableFields
+}
+
+// HasEndpoint checks if the resource has an endpoint with the given name.
+func (r Resource) HasEndpoint(name string) bool {
+	for _, endpoint := range r.Endpoints {
+		if endpoint.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+// Service methods
+
+// IsObject checks if the given field type represents a custom object.
+func (s *Service) IsObject(fieldType string) bool {
+	return isObjectType(fieldType, s.Objects)
+}
+
+// HasObject checks if the service contains an object with the given name.
+func (s *Service) HasObject(name string) bool {
+	for _, obj := range s.Objects {
+		if obj.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+// HasEnum checks if the service contains an enum with the given name.
+func (s *Service) HasEnum(name string) bool {
+	for _, enum := range s.Enums {
+		if enum.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+// GetObject returns the object with the given name, or nil if not found.
+func (s *Service) GetObject(name string) *Object {
+	for _, obj := range s.Objects {
+		if obj.Name == name {
+			return &obj
+		}
+	}
+	return nil
+}
+
+// Object methods
+
+// HasField checks if the object contains a field with the given name.
+func (o Object) HasField(name string) bool {
+	for _, field := range o.Fields {
+		if field.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+// GetField returns the field with the given name, or nil if not found.
+func (o Object) GetField(name string) *Field {
+	for _, field := range o.Fields {
+		if field.Name == name {
+			return &field
+		}
+	}
+	return nil
+}
+
+// Utility factory methods
+
+// CreateLimitParam creates a standard limit parameter for pagination.
+func CreateLimitParam() Field {
+	return Field{
+		Name:        listLimitParamName,
+		Description: listLimitParamDesc,
+		Type:        FieldTypeInt,
+		Default:     listLimitDefaultValue,
+	}
+}
+
+// CreateOffsetParam creates a standard offset parameter for pagination.
+func CreateOffsetParam() Field {
+	return Field{
+		Name:        listOffsetParamName,
+		Description: listOffsetParamDesc,
+		Type:        FieldTypeInt,
+		Default:     listOffsetDefaultValue,
+	}
+}
+
+// CreatePaginationField creates a standard pagination field for responses.
+func CreatePaginationField() Field {
+	return Field{
+		Name:        paginationObjectName,
+		Description: "Pagination information",
+		Type:        paginationObjectName,
+	}
+}
+
+// CreateDataField creates a standard data field for array responses.
+func CreateDataField(resourceName string) Field {
+	return Field{
+		Name:        "data",
+		Description: fmt.Sprintf("Array of %s objects", resourceName),
+		Type:        resourceName,
+		Modifiers:   []string{ModifierArray},
+	}
+}
+
+// CreateIDParam creates a standard ID parameter for path parameters.
+func CreateIDParam(description string) Field {
+	return Field{
+		Name:        "id",
+		Description: description,
+		Type:        FieldTypeUUID,
+	}
+}
+
+// Helper functions
+
+// getComment formats a comment string with proper indentation and prefixes.
+func getComment(tabs string, description string, name string) string {
+	comment := description
+
+	if !strings.HasPrefix(description, name) {
+		comment = name + nameDescSeparator + description
+	}
+
+	// Every new line should be prefixed with a //
+	lines := strings.Split(comment, newlineChar)
+	for i, line := range lines {
+		lines[i] = tabs + commentPrefix + line
+	}
+
+	comment = strings.Join(lines, newlineChar)
+	comment = strings.TrimSuffix(comment, tabs+newlineChar+commentPrefix)
+
+	return comment
+}
+
+// camelCase converts a string to camelCase format.
+func camelCase(s string) string {
+	return strmangle.CamelCase(s)
+}
+
+// toKebabCase converts a string to kebab-case format.
+func toKebabCase(s string) string {
+	// Convert to lowercase and replace spaces/underscores with hyphens
+	result := strings.ToLower(s)
+	result = strings.ReplaceAll(result, "_", "-")
+	result = strings.ReplaceAll(result, " ", "-")
 	return result
 }
