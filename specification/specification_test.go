@@ -2564,31 +2564,6 @@ func TestApplyOverlay_GetEndpoints(t *testing.T) {
 	})
 }
 
-func Test_containsOperation(t *testing.T) {
-	t.Run("EmptySlice", func(t *testing.T) {
-		result := containsOperation([]string{}, "Read")
-		assert.False(t, result)
-	})
-
-	t.Run("OperationExists", func(t *testing.T) {
-		operations := []string{"Create", "Read", "Update", "Delete"}
-		result := containsOperation(operations, "Read")
-		assert.True(t, result)
-	})
-
-	t.Run("OperationDoesNotExist", func(t *testing.T) {
-		operations := []string{"Create", "Update", "Delete"}
-		result := containsOperation(operations, "Read")
-		assert.False(t, result)
-	})
-
-	t.Run("CaseSensitive", func(t *testing.T) {
-		operations := []string{"read"}
-		result := containsOperation(operations, "Read")
-		assert.False(t, result) // Should be case-sensitive
-	})
-}
-
 func TestRequestErrorObjectGeneration(t *testing.T) {
 	t.Run("GenerateRequestErrorObjectsForAllEndpoints", func(t *testing.T) {
 		input := &Service{
@@ -3297,25 +3272,6 @@ func TestApplyFilterOverlay(t *testing.T) {
 		}
 		assert.Equal(t, "AddressFilterEquals", addressEqualsFilter.Name)
 		assert.Equal(t, 3, len(addressEqualsFilter.Fields)) // PostalAddress, PostalCode, PostalCity
-	})
-}
-
-func Test_containsModifier(t *testing.T) {
-	t.Run("EmptySlice", func(t *testing.T) {
-		result := containsModifier([]string{}, ModifierNullable)
-		assert.False(t, result)
-	})
-
-	t.Run("ModifierExists", func(t *testing.T) {
-		modifiers := []string{ModifierNullable, ModifierArray}
-		result := containsModifier(modifiers, ModifierNullable)
-		assert.True(t, result)
-	})
-
-	t.Run("ModifierDoesNotExist", func(t *testing.T) {
-		modifiers := []string{ModifierArray}
-		result := containsModifier(modifiers, ModifierNullable)
-		assert.False(t, result)
 	})
 }
 
