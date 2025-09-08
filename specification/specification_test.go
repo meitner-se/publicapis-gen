@@ -3,6 +3,7 @@ package specification
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/goccy/go-yaml"
@@ -1056,8 +1057,8 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should have Error + ErrorField + Pagination objects (from overlay) + generated Users object
-		assert.Equal(t, 4, len(result.Objects))
+		// Should have Error + ErrorField + Pagination objects (from overlay) + generated Users object + 3 RequestError objects
+		assert.Equal(t, 7, len(result.Objects))
 
 		// First object should be Error (from overlay, no existing objects)
 		errorObject := result.Objects[0]
@@ -1112,8 +1113,8 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should only have Error, ErrorField, and Pagination objects (from overlay), no generated resource objects
-		assert.Equal(t, 3, len(result.Objects))
+		// Should only have Error, ErrorField, and Pagination objects (from overlay) + 1 RequestError object for Create endpoint
+		assert.Equal(t, 4, len(result.Objects))
 		assert.Equal(t, "Error", result.Objects[0].Name)
 		assert.Equal(t, "ErrorField", result.Objects[1].Name)
 	})
@@ -1168,8 +1169,8 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should have Error + ErrorField + Pagination objects + two generated objects
-		assert.Equal(t, 5, len(result.Objects))
+		// Should have Error + ErrorField + Pagination objects + two generated objects + 3 RequestError objects
+		assert.Equal(t, 8, len(result.Objects))
 
 		// First object should be Error (from overlay, no existing objects)
 		assert.Equal(t, "Error", result.Objects[0].Name)
@@ -1302,8 +1303,8 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should have Error + ErrorField + Pagination objects + existing Users object (no generated Users object due to name collision)
-		assert.Equal(t, 4, len(result.Objects))
+		// Should have Error + ErrorField + Pagination objects + existing Users object + 1 RequestError object
+		assert.Equal(t, 5, len(result.Objects))
 
 		// First object should be the existing Users object (existing objects come first)
 		assert.Equal(t, "Users", result.Objects[0].Name)
@@ -1348,8 +1349,8 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should have Error + ErrorField + Pagination objects + generated Users object
-		assert.Equal(t, 4, len(result.Objects))
+		// Should have Error + ErrorField + Pagination objects + generated Users object + 2 RequestError objects
+		assert.Equal(t, 6, len(result.Objects))
 
 		// First object should be Error (from overlay, no existing objects)
 		assert.Equal(t, "Error", result.Objects[0].Name)
@@ -1422,8 +1423,8 @@ func TestApplyOverlay(t *testing.T) {
 		assert.Equal(t, 3, len(result.Enums))
 		assert.Equal(t, len(input.Resources), len(result.Resources))
 
-		// Should have Error + ErrorField + Pagination objects + existing object + generated Users object
-		assert.Equal(t, 5, len(result.Objects))
+		// Should have Error + ErrorField + Pagination objects + existing object + generated Users object + 1 RequestError object
+		assert.Equal(t, 6, len(result.Objects))
 
 		// First object should be the existing ExistingObject (existing objects come first)
 		assert.Equal(t, "ExistingObject", result.Objects[0].Name)
@@ -2585,6 +2586,295 @@ func Test_containsOperation(t *testing.T) {
 		operations := []string{"read"}
 		result := containsOperation(operations, "Read")
 		assert.False(t, result) // Should be case-sensitive
+	})
+}
+
+func TestRequestErrorObjectGeneration(t *testing.T) {
+	t.Run("GenerateRequestErrorObjectsForAllEndpoints", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "Users",
+					Description: "User management resource",
+					Operations:  []string{"Create", "Read", "Update", "Delete"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "id",
+								Type:        "UUID",
+								Description: "User ID",
+							},
+							Operations: []string{"Read"},
+						},
+						{
+							Field: Field{
+								Name:        "name",
+								Type:        "String",
+								Description: "User name",
+								Example:     "John Doe",
+							},
+							Operations: []string{"Create", "Read", "Update"},
+						},
+						{
+							Field: Field{
+								Name:        "email",
+								Type:        "String",
+								Description: "User email",
+							},
+							Operations: []string{"Create", "Read", "Update"},
+						},
+						{
+							Field: Field{
+								Name:        "password",
+								Type:        "String",
+								Description: "User password",
+							},
+							Operations: []string{"Create", "Update"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Find the RequestError objects
+		var usersCreateRequestError *Object
+		var usersUpdateRequestError *Object
+		var usersSearchRequestError *Object
+
+		for i := range result.Objects {
+			obj := &result.Objects[i]
+			switch obj.Name {
+			case "UsersCreateRequestError":
+				usersCreateRequestError = obj
+			case "UsersUpdateRequestError":
+				usersUpdateRequestError = obj
+			case "UsersSearchRequestError":
+				usersSearchRequestError = obj
+			}
+		}
+
+		// Verify Create RequestError object
+		require.NotNil(t, usersCreateRequestError, "UsersCreateRequestError should be generated")
+		assert.Equal(t, "UsersCreateRequestError", usersCreateRequestError.Name)
+		assert.Equal(t, "Request error object for Users Create endpoint", usersCreateRequestError.Description)
+		assert.Equal(t, 3, len(usersCreateRequestError.Fields)) // name, email, password
+
+		// Verify all fields are ErrorField type and nullable
+		for _, field := range usersCreateRequestError.Fields {
+			assert.Equal(t, "ErrorField", field.Type)
+			assert.Contains(t, field.Modifiers, "nullable")
+		}
+
+		// Check specific field names
+		fieldNames := make([]string, len(usersCreateRequestError.Fields))
+		for i, field := range usersCreateRequestError.Fields {
+			fieldNames[i] = field.Name
+		}
+		assert.Contains(t, fieldNames, "name")
+		assert.Contains(t, fieldNames, "email")
+		assert.Contains(t, fieldNames, "password")
+
+		// Verify Update RequestError object
+		require.NotNil(t, usersUpdateRequestError, "UsersUpdateRequestError should be generated")
+		assert.Equal(t, "UsersUpdateRequestError", usersUpdateRequestError.Name)
+		assert.Equal(t, "Request error object for Users Update endpoint", usersUpdateRequestError.Description)
+		assert.Equal(t, 3, len(usersUpdateRequestError.Fields)) // name, email, password
+
+		// Verify Search RequestError object
+		require.NotNil(t, usersSearchRequestError, "UsersSearchRequestError should be generated")
+		assert.Equal(t, "UsersSearchRequestError", usersSearchRequestError.Name)
+		assert.Equal(t, "Request error object for Users Search endpoint", usersSearchRequestError.Description)
+		assert.Equal(t, 1, len(usersSearchRequestError.Fields)) // Filter field
+
+		// Verify the Filter field points to the correct RequestError type
+		filterField := usersSearchRequestError.Fields[0]
+		assert.Equal(t, "Filter", filterField.Name)
+		assert.Equal(t, "UsersFilterRequestError", filterField.Type)
+		assert.Contains(t, filterField.Modifiers, "nullable")
+	})
+
+	t.Run("GenerateRequestErrorObjectsWithNestedObjects", func(t *testing.T) {
+		input := &Service{
+			Name:  "TestService",
+			Enums: []Enum{},
+			Objects: []Object{
+				{
+					Name:        "Address",
+					Description: "Address information",
+					Fields: []Field{
+						{
+							Name:        "street",
+							Type:        "String",
+							Description: "Street address",
+						},
+						{
+							Name:        "city",
+							Type:        "String",
+							Description: "City name",
+						},
+					},
+				},
+			},
+			Resources: []Resource{
+				{
+					Name:        "Users",
+					Description: "User management resource",
+					Operations:  []string{"Create", "Read"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "name",
+								Type:        "String",
+								Description: "User name",
+							},
+							Operations: []string{"Create", "Read"},
+						},
+						{
+							Field: Field{
+								Name:        "address",
+								Type:        "Address",
+								Description: "User address",
+							},
+							Operations: []string{"Create", "Read"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Find the RequestError objects
+		var usersCreateRequestError *Object
+		var addressRequestError *Object
+
+		for i := range result.Objects {
+			obj := &result.Objects[i]
+			switch obj.Name {
+			case "UsersCreateRequestError":
+				usersCreateRequestError = obj
+			case "AddressRequestError":
+				addressRequestError = obj
+			}
+		}
+
+		// Verify Create RequestError object with nested object
+		require.NotNil(t, usersCreateRequestError, "UsersCreateRequestError should be generated")
+		assert.Equal(t, 2, len(usersCreateRequestError.Fields)) // name, address
+
+		// Find the address field
+		var addressField *Field
+		for i := range usersCreateRequestError.Fields {
+			if usersCreateRequestError.Fields[i].Name == "address" {
+				addressField = &usersCreateRequestError.Fields[i]
+				break
+			}
+		}
+
+		require.NotNil(t, addressField, "address field should exist")
+		assert.Equal(t, "AddressRequestError", addressField.Type)
+		assert.Contains(t, addressField.Modifiers, "nullable")
+
+		// Verify that AddressRequestError object exists (should be generated for the existing Address object)
+		require.NotNil(t, addressRequestError, "AddressRequestError should be generated")
+		assert.Equal(t, 2, len(addressRequestError.Fields)) // street, city
+	})
+
+	t.Run("OnlyGeneratesRequestErrorObjectsForUsedTypes", func(t *testing.T) {
+		input := &Service{
+			Name:  "TestService",
+			Enums: []Enum{},
+			Objects: []Object{
+				{
+					Name:        "UsedObject",
+					Description: "Object used in body parameters",
+					Fields: []Field{
+						{Name: "field1", Type: "String", Description: "Field 1"},
+					},
+				},
+				{
+					Name:        "UnusedObject",
+					Description: "Object NOT used in body parameters",
+					Fields: []Field{
+						{Name: "field2", Type: "String", Description: "Field 2"},
+					},
+				},
+			},
+			Resources: []Resource{
+				{
+					Name:        "TestResource",
+					Description: "Test resource",
+					Operations:  []string{"Create", "Read"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "usedField",
+								Type:        "UsedObject",
+								Description: "Field using UsedObject",
+							},
+							Operations: []string{"Create", "Read"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Check which RequestError objects were generated
+		var foundRequestErrorObjects []string
+		for _, obj := range result.Objects {
+			if strings.HasSuffix(obj.Name, "RequestError") {
+				foundRequestErrorObjects = append(foundRequestErrorObjects, obj.Name)
+			}
+		}
+
+		// Should have RequestError objects for:
+		// 1. UsedObject (because it's used in Create endpoint body params)
+		// 2. TestResourceCreateRequestError (for the Create endpoint)
+		// Should NOT have:
+		// - UnusedObjectRequestError (because UnusedObject is not used in any body params)
+
+		expectedRequestErrors := []string{
+			"UsedObjectRequestError",
+			"TestResourceCreateRequestError",
+		}
+
+		notExpectedRequestErrors := []string{
+			"UnusedObjectRequestError",
+		}
+
+		for _, expected := range expectedRequestErrors {
+			assert.Contains(t, foundRequestErrorObjects, expected,
+				"Should generate RequestError for used object: %s", expected)
+		}
+
+		for _, notExpected := range notExpectedRequestErrors {
+			assert.NotContains(t, foundRequestErrorObjects, notExpected,
+				"Should NOT generate RequestError for unused object: %s", notExpected)
+		}
+
+		// Verify the UsedObjectRequestError has the correct structure
+		var usedObjectRequestError *Object
+		for i := range result.Objects {
+			if result.Objects[i].Name == "UsedObjectRequestError" {
+				usedObjectRequestError = &result.Objects[i]
+				break
+			}
+		}
+
+		require.NotNil(t, usedObjectRequestError, "UsedObjectRequestError should exist")
+		assert.Equal(t, 1, len(usedObjectRequestError.Fields))
+		assert.Equal(t, "field1", usedObjectRequestError.Fields[0].Name)
+		assert.Equal(t, "ErrorField", usedObjectRequestError.Fields[0].Type)
 	})
 }
 

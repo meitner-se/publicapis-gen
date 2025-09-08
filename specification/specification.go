@@ -2,6 +2,7 @@ package specification
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/aarondl/strmangle"
 )
@@ -236,6 +237,12 @@ const (
 	searchResponseStatusCode   = 200
 	searchFilterParamName      = "Filter"
 	searchFilterParamDesc      = "Filter criteria to search for specific records"
+)
+
+// Request Error Constants
+const (
+	requestErrorSuffix            = "RequestError"
+	requestErrorDescriptionPrefix = "Request error object for "
 )
 
 // Service is the definition of an API service.
@@ -1015,7 +1022,85 @@ func ApplyOverlay(input *Service) *Service {
 		}
 	}
 
+	// Generate RequestError objects for types used in body parameters
+	// This happens at the end to ensure all objects and endpoints are generated first
+	generateRequestErrorObjectsForBodyParams(result)
+
 	return result
+}
+
+// collectTypesUsedInBodyParams collects all types (including nested) used in request body parameters.
+func collectTypesUsedInBodyParams(service *Service) map[string]bool {
+	usedTypes := make(map[string]bool)
+
+	// Collect types from all endpoint body parameters
+	for _, resource := range service.Resources {
+		for _, endpoint := range resource.Endpoints {
+			for _, bodyParam := range endpoint.Request.BodyParams {
+				collectTypeRecursively(bodyParam.Type, usedTypes, service.Objects)
+			}
+		}
+	}
+
+	return usedTypes
+}
+
+// collectTypeRecursively collects a type and all its nested object types recursively.
+func collectTypeRecursively(fieldType string, usedTypes map[string]bool, objects []Object) {
+	// Skip if already processed
+	if usedTypes[fieldType] {
+		return
+	}
+
+	// Mark this type as used
+	usedTypes[fieldType] = true
+
+	// If it's an object type, recursively collect its field types
+	for _, obj := range objects {
+		if obj.Name == fieldType {
+			for _, field := range obj.Fields {
+				collectTypeRecursively(field.Type, usedTypes, objects)
+			}
+			break
+		}
+	}
+}
+
+// generateRequestErrorObjectsForBodyParams generates RequestError objects only for types used in body parameters.
+func generateRequestErrorObjectsForBodyParams(service *Service) {
+	// Collect all types used in body parameters
+	usedTypes := collectTypesUsedInBodyParams(service)
+
+	// Generate RequestError objects for each used type
+	for typeName := range usedTypes {
+		// Skip primitive types - they don't need their own RequestError objects
+		if isPrimitiveType(typeName) {
+			continue
+		}
+
+		// Find the object definition
+		for _, obj := range service.Objects {
+			if obj.Name == typeName {
+				requestErrorName := obj.Name + requestErrorSuffix
+				requestErrorDescription := requestErrorDescriptionPrefix + obj.Name
+				requestError := generateRequestErrorObject(requestErrorName, requestErrorDescription, obj.Fields, service.Objects)
+				service.Objects = append(service.Objects, requestError)
+				break
+			}
+		}
+	}
+
+	// Generate RequestError objects for specific endpoints that have body parameters
+	for _, resource := range service.Resources {
+		for _, endpoint := range resource.Endpoints {
+			if len(endpoint.Request.BodyParams) > 0 {
+				requestErrorName := resource.Name + endpoint.Name + requestErrorSuffix
+				requestErrorDescription := requestErrorDescriptionPrefix + resource.Name + " " + endpoint.Name + " endpoint"
+				requestError := generateRequestErrorObject(requestErrorName, requestErrorDescription, endpoint.Request.BodyParams, service.Objects)
+				service.Objects = append(service.Objects, requestError)
+			}
+		}
+	}
 }
 
 // containsModifier checks if a slice of modifiers contains a specific modifier.
@@ -1071,6 +1156,43 @@ func isObjectType(fieldType string, objects []Object) bool {
 		}
 	}
 	return false
+}
+
+// convertFieldToErrorField converts a field to its error counterpart.
+// Primitive types become *ErrorField, object types become their RequestError equivalent.
+func convertFieldToErrorField(field Field, objects []Object) Field {
+	errorField := Field{
+		Name:        field.Name,
+		Description: field.Description,
+		Type:        errorFieldObjectName,       // Default to ErrorField type
+		Modifiers:   []string{ModifierNullable}, // All error fields are nullable
+	}
+
+	if isObjectType(field.Type, objects) {
+		errorField.Type = field.Type + requestErrorSuffix
+	} else if strings.HasSuffix(field.Type, filterSuffix) {
+		// Handle filter types (e.g., UsersFilter -> UsersFilterRequestError)
+		errorField.Type = field.Type + requestErrorSuffix
+	}
+	// For primitive types and other types (enums, etc.), use the default ErrorField type
+
+	return errorField
+}
+
+// generateRequestErrorObject generates a RequestError object from a list of fields.
+func generateRequestErrorObject(objectName string, description string, fields []Field, objects []Object) Object {
+	errorFields := make([]Field, 0, len(fields))
+
+	for _, field := range fields {
+		errorField := convertFieldToErrorField(field, objects)
+		errorFields = append(errorFields, errorField)
+	}
+
+	return Object{
+		Name:        objectName,
+		Description: description,
+		Fields:      errorFields,
+	}
 }
 
 // generateFilterField creates a filter field based on the original field and filter type.
