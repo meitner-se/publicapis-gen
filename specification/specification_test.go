@@ -1603,6 +1603,34 @@ func TestApplyOverlay(t *testing.T) {
 		assert.Equal(t, 0, len(deleteEndpoint.Response.Headers))
 		assert.Equal(t, 0, len(deleteEndpoint.Response.BodyFields))
 		assert.Nil(t, deleteEndpoint.Response.BodyObject) // No body object for delete (returns nothing)
+
+		// Check the generated Get endpoint
+		getEndpoint := result.Resources[0].Endpoints[3]
+		assert.Equal(t, "Get", getEndpoint.Name)
+		assert.Equal(t, "Retrieve an existing Users", getEndpoint.Title)
+		assert.Equal(t, "Retrieves the `Users` with the given ID.", getEndpoint.Description)
+		assert.Equal(t, "GET", getEndpoint.Method)
+		assert.Equal(t, "/{id}", getEndpoint.Path)
+
+		// Check the Get request structure
+		assert.Equal(t, "application/json", getEndpoint.Request.ContentType)
+		assert.Equal(t, 0, len(getEndpoint.Request.Headers))
+		assert.Equal(t, 1, len(getEndpoint.Request.PathParams)) // Should have id path param
+		assert.Equal(t, 0, len(getEndpoint.Request.QueryParams))
+		assert.Equal(t, 0, len(getEndpoint.Request.BodyParams)) // No body for get
+
+		// Check path parameter
+		assert.Equal(t, "id", getEndpoint.Request.PathParams[0].Name)
+		assert.Equal(t, "UUID", getEndpoint.Request.PathParams[0].Type)
+		assert.Equal(t, "The unique identifier of the Users to retrieve", getEndpoint.Request.PathParams[0].Description)
+
+		// Check the Get response structure
+		assert.Equal(t, "application/json", getEndpoint.Response.ContentType)
+		assert.Equal(t, 200, getEndpoint.Response.StatusCode)
+		assert.Equal(t, 0, len(getEndpoint.Response.Headers))
+		assert.Equal(t, 0, len(getEndpoint.Response.BodyFields))
+		assert.NotNil(t, getEndpoint.Response.BodyObject)
+		assert.Equal(t, "Users", *getEndpoint.Response.BodyObject)
 	})
 
 	t.Run("ResourceWithoutCreateOperation", func(t *testing.T) {
@@ -1643,6 +1671,34 @@ func TestApplyOverlay(t *testing.T) {
 		// Should not generate any Create endpoints, but should generate Get endpoint
 		assert.Equal(t, 1, len(result.Resources))
 		assert.Equal(t, 1, len(result.Resources[0].Endpoints))
+
+		// Check the generated Get endpoint
+		getEndpoint := result.Resources[0].Endpoints[0]
+		assert.Equal(t, "Get", getEndpoint.Name)
+		assert.Equal(t, "Retrieve an existing ReadOnlyLogs", getEndpoint.Title)
+		assert.Equal(t, "Retrieves the `ReadOnlyLogs` with the given ID.", getEndpoint.Description)
+		assert.Equal(t, "GET", getEndpoint.Method)
+		assert.Equal(t, "/{id}", getEndpoint.Path)
+
+		// Check the Get request structure
+		assert.Equal(t, "application/json", getEndpoint.Request.ContentType)
+		assert.Equal(t, 0, len(getEndpoint.Request.Headers))
+		assert.Equal(t, 1, len(getEndpoint.Request.PathParams)) // Should have id path param
+		assert.Equal(t, 0, len(getEndpoint.Request.QueryParams))
+		assert.Equal(t, 0, len(getEndpoint.Request.BodyParams)) // No body for get
+
+		// Check path parameter
+		assert.Equal(t, "id", getEndpoint.Request.PathParams[0].Name)
+		assert.Equal(t, "UUID", getEndpoint.Request.PathParams[0].Type)
+		assert.Equal(t, "The unique identifier of the ReadOnlyLogs to retrieve", getEndpoint.Request.PathParams[0].Description)
+
+		// Check the Get response structure
+		assert.Equal(t, "application/json", getEndpoint.Response.ContentType)
+		assert.Equal(t, 200, getEndpoint.Response.StatusCode)
+		assert.Equal(t, 0, len(getEndpoint.Response.Headers))
+		assert.Equal(t, 0, len(getEndpoint.Response.BodyFields))
+		assert.NotNil(t, getEndpoint.Response.BodyObject)
+		assert.Equal(t, "ReadOnlyLogs", *getEndpoint.Response.BodyObject)
 	})
 
 	t.Run("ResourceWithExistingCreateEndpoint", func(t *testing.T) {
@@ -1703,6 +1759,34 @@ func TestApplyOverlay(t *testing.T) {
 		assert.Equal(t, "Custom create endpoint", existingEndpoint.Description)
 		assert.Equal(t, "/custom", existingEndpoint.Path)
 		assert.Equal(t, 200, existingEndpoint.Response.StatusCode) // Should preserve custom status code
+
+		// Check the generated Get endpoint
+		getEndpoint := result.Resources[0].Endpoints[1]
+		assert.Equal(t, "Get", getEndpoint.Name)
+		assert.Equal(t, "Retrieve an existing Users", getEndpoint.Title)
+		assert.Equal(t, "Retrieves the `Users` with the given ID.", getEndpoint.Description)
+		assert.Equal(t, "GET", getEndpoint.Method)
+		assert.Equal(t, "/{id}", getEndpoint.Path)
+
+		// Check the Get request structure
+		assert.Equal(t, "application/json", getEndpoint.Request.ContentType)
+		assert.Equal(t, 0, len(getEndpoint.Request.Headers))
+		assert.Equal(t, 1, len(getEndpoint.Request.PathParams)) // Should have id path param
+		assert.Equal(t, 0, len(getEndpoint.Request.QueryParams))
+		assert.Equal(t, 0, len(getEndpoint.Request.BodyParams)) // No body for get
+
+		// Check path parameter
+		assert.Equal(t, "id", getEndpoint.Request.PathParams[0].Name)
+		assert.Equal(t, "UUID", getEndpoint.Request.PathParams[0].Type)
+		assert.Equal(t, "The unique identifier of the Users to retrieve", getEndpoint.Request.PathParams[0].Description)
+
+		// Check the Get response structure
+		assert.Equal(t, "application/json", getEndpoint.Response.ContentType)
+		assert.Equal(t, 200, getEndpoint.Response.StatusCode)
+		assert.Equal(t, 0, len(getEndpoint.Response.Headers))
+		assert.Equal(t, 0, len(getEndpoint.Response.BodyFields))
+		assert.NotNil(t, getEndpoint.Response.BodyObject)
+		assert.Equal(t, "Users", *getEndpoint.Response.BodyObject)
 	})
 
 	t.Run("MultipleResourcesWithCreateOperations", func(t *testing.T) {
@@ -1799,6 +1883,48 @@ func TestApplyOverlay(t *testing.T) {
 		}
 		assert.Contains(t, productUpdateBodyParamNames, "title")
 		assert.Contains(t, productUpdateBodyParamNames, "price")
+
+		// Find and check Users Get endpoint (should exist because Users has Read operation)
+		var usersGetEndpoint *Endpoint
+		var foundUsers bool
+		for _, resource := range result.Resources {
+			if resource.Name == "Users" {
+				foundUsers = true
+				for i, endpoint := range resource.Endpoints {
+					if endpoint.Name == "Get" {
+						usersGetEndpoint = &resource.Endpoints[i]
+						break
+					}
+				}
+				break
+			}
+		}
+		require.True(t, foundUsers, "Users resource should exist")
+		require.NotNil(t, usersGetEndpoint, "Users should have a Get endpoint")
+		assert.Equal(t, "Get", usersGetEndpoint.Name)
+		assert.Equal(t, "Retrieve an existing Users", usersGetEndpoint.Title)
+		assert.Equal(t, "Retrieves the `Users` with the given ID.", usersGetEndpoint.Description)
+		assert.Equal(t, "GET", usersGetEndpoint.Method)
+		assert.Equal(t, "/{id}", usersGetEndpoint.Path)
+		assert.Equal(t, 1, len(usersGetEndpoint.Request.PathParams))
+		assert.Equal(t, "id", usersGetEndpoint.Request.PathParams[0].Name)
+		assert.Equal(t, "The unique identifier of the Users to retrieve", usersGetEndpoint.Request.PathParams[0].Description)
+		assert.Equal(t, 200, usersGetEndpoint.Response.StatusCode)
+		assert.NotNil(t, usersGetEndpoint.Response.BodyObject)
+		assert.Equal(t, "Users", *usersGetEndpoint.Response.BodyObject)
+
+		// Check Products does NOT have Get endpoint (no Read operation)
+		var foundProducts bool
+		for _, resource := range result.Resources {
+			if resource.Name == "Products" {
+				foundProducts = true
+				for _, endpoint := range resource.Endpoints {
+					assert.NotEqual(t, "Get", endpoint.Name, "Products should not have a Get endpoint")
+				}
+				break
+			}
+		}
+		require.True(t, foundProducts, "Products resource should exist")
 	})
 
 	t.Run("ResourceWithDeleteOperation", func(t *testing.T) {
@@ -1909,6 +2035,41 @@ func TestApplyOverlay(t *testing.T) {
 		for _, endpoint := range result.Resources[0].Endpoints {
 			assert.NotEqual(t, "Delete", endpoint.Name)
 		}
+
+		// Find and check the Get endpoint (should exist because resource has Read operation)
+		var getEndpoint *Endpoint
+		for i, endpoint := range result.Resources[0].Endpoints {
+			if endpoint.Name == "Get" {
+				getEndpoint = &result.Resources[0].Endpoints[i]
+				break
+			}
+		}
+		require.NotNil(t, getEndpoint, "ReadOnlyData should have a Get endpoint")
+		assert.Equal(t, "Get", getEndpoint.Name)
+		assert.Equal(t, "Retrieve an existing ReadOnlyData", getEndpoint.Title)
+		assert.Equal(t, "Retrieves the `ReadOnlyData` with the given ID.", getEndpoint.Description)
+		assert.Equal(t, "GET", getEndpoint.Method)
+		assert.Equal(t, "/{id}", getEndpoint.Path)
+
+		// Check the Get request structure
+		assert.Equal(t, "application/json", getEndpoint.Request.ContentType)
+		assert.Equal(t, 0, len(getEndpoint.Request.Headers))
+		assert.Equal(t, 1, len(getEndpoint.Request.PathParams))
+		assert.Equal(t, 0, len(getEndpoint.Request.QueryParams))
+		assert.Equal(t, 0, len(getEndpoint.Request.BodyParams))
+
+		// Check path parameter
+		assert.Equal(t, "id", getEndpoint.Request.PathParams[0].Name)
+		assert.Equal(t, "UUID", getEndpoint.Request.PathParams[0].Type)
+		assert.Equal(t, "The unique identifier of the ReadOnlyData to retrieve", getEndpoint.Request.PathParams[0].Description)
+
+		// Check the Get response structure
+		assert.Equal(t, "application/json", getEndpoint.Response.ContentType)
+		assert.Equal(t, 200, getEndpoint.Response.StatusCode)
+		assert.Equal(t, 0, len(getEndpoint.Response.Headers))
+		assert.Equal(t, 0, len(getEndpoint.Response.BodyFields))
+		assert.NotNil(t, getEndpoint.Response.BodyObject)
+		assert.Equal(t, "ReadOnlyData", *getEndpoint.Response.BodyObject)
 	})
 
 	t.Run("ResourceWithExistingDeleteEndpoint", func(t *testing.T) {
@@ -2035,15 +2196,338 @@ func TestApplyOverlay(t *testing.T) {
 		assert.Equal(t, "/{id}", usersDeleteEndpoint.Path)
 		assert.Equal(t, 204, usersDeleteEndpoint.Response.StatusCode)
 
+		// Find and check Users Get endpoint (should exist because Users has Read operation)
+		var usersGetEndpoint *Endpoint
+		var foundUsers bool
+		for _, resource := range result.Resources {
+			if resource.Name == "Users" {
+				foundUsers = true
+				for i, endpoint := range resource.Endpoints {
+					if endpoint.Name == "Get" {
+						usersGetEndpoint = &resource.Endpoints[i]
+						break
+					}
+				}
+				break
+			}
+		}
+		require.True(t, foundUsers, "Users resource should exist")
+		require.NotNil(t, usersGetEndpoint, "Users should have a Get endpoint")
+		assert.Equal(t, "Get", usersGetEndpoint.Name)
+		assert.Equal(t, "Retrieve an existing Users", usersGetEndpoint.Title)
+		assert.Equal(t, "Retrieves the `Users` with the given ID.", usersGetEndpoint.Description)
+		assert.Equal(t, "GET", usersGetEndpoint.Method)
+		assert.Equal(t, "/{id}", usersGetEndpoint.Path)
+		assert.Equal(t, 1, len(usersGetEndpoint.Request.PathParams))
+		assert.Equal(t, "id", usersGetEndpoint.Request.PathParams[0].Name)
+		assert.Equal(t, "The unique identifier of the Users to retrieve", usersGetEndpoint.Request.PathParams[0].Description)
+		assert.Equal(t, 200, usersGetEndpoint.Response.StatusCode)
+		assert.NotNil(t, usersGetEndpoint.Response.BodyObject)
+		assert.Equal(t, "Users", *usersGetEndpoint.Response.BodyObject)
+
 		// Check Files - has Delete operation only, so should have 1 endpoint (Delete)
+		var foundFiles bool
+		for _, resource := range result.Resources {
+			if resource.Name == "Files" {
+				foundFiles = true
+				assert.Equal(t, 1, len(resource.Endpoints))
+				filesDeleteEndpoint := resource.Endpoints[0]
+				assert.Equal(t, "Delete", filesDeleteEndpoint.Name)
+				assert.Equal(t, "Delete Files", filesDeleteEndpoint.Title)
+				assert.Equal(t, "DELETE", filesDeleteEndpoint.Method)
+				assert.Equal(t, "/{id}", filesDeleteEndpoint.Path)
+				assert.Equal(t, 204, filesDeleteEndpoint.Response.StatusCode)
+				assert.Nil(t, filesDeleteEndpoint.Response.BodyObject)
+
+				// Verify Files does NOT have Get endpoint (no Read operation)
+				for _, endpoint := range resource.Endpoints {
+					assert.NotEqual(t, "Get", endpoint.Name, "Files should not have a Get endpoint")
+				}
+				break
+			}
+		}
+		require.True(t, foundFiles, "Files resource should exist")
+	})
+}
+
+func TestApplyOverlay_GetEndpoints(t *testing.T) {
+	t.Run("GetEndpointGeneration", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "Books",
+					Description: "Book management resource",
+					Operations:  []string{"Read"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "id",
+								Type:        "UUID",
+								Description: "Book ID",
+								Example:     "123e4567-e89b-12d3-a456-426614174000",
+							},
+							Operations: []string{"Read"},
+						},
+						{
+							Field: Field{
+								Name:        "title",
+								Type:        "String",
+								Description: "Book title",
+								Example:     "The Great Gatsby",
+							},
+							Operations: []string{"Read"},
+						},
+						{
+							Field: Field{
+								Name:        "author",
+								Type:        "String",
+								Description: "Book author",
+								Example:     "F. Scott Fitzgerald",
+							},
+							Operations: []string{"Read"},
+						},
+						{
+							Field: Field{
+								Name:        "isbn",
+								Type:        "String",
+								Description: "Book ISBN",
+								Example:     "978-0-7432-7356-5",
+								Modifiers:   []string{"nullable"},
+							},
+							Operations: []string{"Read"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Should generate exactly one Get endpoint
+		assert.Equal(t, 1, len(result.Resources))
+		assert.Equal(t, 1, len(result.Resources[0].Endpoints))
+
+		getEndpoint := result.Resources[0].Endpoints[0]
+
+		// Validate basic endpoint properties
+		assert.Equal(t, "Get", getEndpoint.Name)
+		assert.Equal(t, "Retrieve an existing Books", getEndpoint.Title)
+		assert.Equal(t, "Retrieves the `Books` with the given ID.", getEndpoint.Description)
+		assert.Equal(t, "GET", getEndpoint.Method)
+		assert.Equal(t, "/{id}", getEndpoint.Path)
+
+		// Validate request structure
+		assert.Equal(t, "application/json", getEndpoint.Request.ContentType)
+		assert.Equal(t, 0, len(getEndpoint.Request.Headers))
+		assert.Equal(t, 1, len(getEndpoint.Request.PathParams))
+		assert.Equal(t, 0, len(getEndpoint.Request.QueryParams))
+		assert.Equal(t, 0, len(getEndpoint.Request.BodyParams))
+
+		// Validate path parameter details
+		pathParam := getEndpoint.Request.PathParams[0]
+		assert.Equal(t, "id", pathParam.Name)
+		assert.Equal(t, "UUID", pathParam.Type)
+		assert.Equal(t, "The unique identifier of the Books to retrieve", pathParam.Description)
+		assert.Empty(t, pathParam.Example)
+		assert.Empty(t, pathParam.Default)
+		assert.Empty(t, pathParam.Modifiers)
+
+		// Validate response structure
+		assert.Equal(t, "application/json", getEndpoint.Response.ContentType)
+		assert.Equal(t, 200, getEndpoint.Response.StatusCode)
+		assert.Equal(t, 0, len(getEndpoint.Response.Headers))
+		assert.Equal(t, 0, len(getEndpoint.Response.BodyFields))
+		assert.NotNil(t, getEndpoint.Response.BodyObject)
+		assert.Equal(t, "Books", *getEndpoint.Response.BodyObject)
+	})
+
+	t.Run("GetEndpointNotGeneratedWithoutReadOperation", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "WriteOnlyLogs",
+					Description: "Write-only log resource",
+					Operations:  []string{"Create", "Update", "Delete"}, // No Read operation
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "message",
+								Type:        "String",
+								Description: "Log message",
+							},
+							Operations: []string{"Create", "Update"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Should generate Create, Update, and Delete endpoints but NOT Get
+		assert.Equal(t, 1, len(result.Resources))
+		assert.Equal(t, 3, len(result.Resources[0].Endpoints)) // Create, Update, Delete
+
+		// Verify no Get endpoint was created
+		for _, endpoint := range result.Resources[0].Endpoints {
+			assert.NotEqual(t, "Get", endpoint.Name, "Get endpoint should not exist without Read operation")
+		}
+	})
+
+	t.Run("GetEndpointWithExistingGetEndpoint", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "CustomBooks",
+					Description: "Book resource with custom Get endpoint",
+					Operations:  []string{"Read"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "title",
+								Type:        "String",
+								Description: "Book title",
+							},
+							Operations: []string{"Read"},
+						},
+					},
+					Endpoints: []Endpoint{
+						{
+							Name:        "Get",
+							Title:       "Custom Get Books",
+							Description: "Custom endpoint to retrieve books",
+							Method:      "GET",
+							Path:        "/custom/{bookId}",
+							Request: EndpointRequest{
+								ContentType: "application/json",
+								PathParams: []Field{
+									{
+										Name:        "bookId",
+										Type:        "String",
+										Description: "Custom book identifier",
+									},
+								},
+							},
+							Response: EndpointResponse{
+								ContentType: "application/json",
+								StatusCode:  200,
+							},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Should preserve existing Get endpoint, not add a new one
+		assert.Equal(t, 1, len(result.Resources))
+		assert.Equal(t, 1, len(result.Resources[0].Endpoints))
+
+		existingEndpoint := result.Resources[0].Endpoints[0]
+		assert.Equal(t, "Get", existingEndpoint.Name)
+		assert.Equal(t, "Custom Get Books", existingEndpoint.Title)
+		assert.Equal(t, "Custom endpoint to retrieve books", existingEndpoint.Description)
+		assert.Equal(t, "/custom/{bookId}", existingEndpoint.Path)
+		assert.Equal(t, "bookId", existingEndpoint.Request.PathParams[0].Name)
+	})
+
+	t.Run("GetEndpointWithDifferentResourceNames", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "UserProfiles",
+					Description: "User profile resource",
+					Operations:  []string{"Read"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "profileId",
+								Type:        "UUID",
+								Description: "Profile identifier",
+							},
+							Operations: []string{"Read"},
+						},
+					},
+				},
+				{
+					Name:        "ProductCategories",
+					Description: "Product category resource",
+					Operations:  []string{"Read"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "categoryName",
+								Type:        "String",
+								Description: "Category name",
+							},
+							Operations: []string{"Read"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Both resources should have Get endpoints
+		assert.Equal(t, 2, len(result.Resources))
+		assert.Equal(t, 1, len(result.Resources[0].Endpoints))
 		assert.Equal(t, 1, len(result.Resources[1].Endpoints))
-		filesDeleteEndpoint := result.Resources[1].Endpoints[0]
-		assert.Equal(t, "Delete", filesDeleteEndpoint.Name)
-		assert.Equal(t, "Delete Files", filesDeleteEndpoint.Title)
-		assert.Equal(t, "DELETE", filesDeleteEndpoint.Method)
-		assert.Equal(t, "/{id}", filesDeleteEndpoint.Path)
-		assert.Equal(t, 204, filesDeleteEndpoint.Response.StatusCode)
-		assert.Nil(t, filesDeleteEndpoint.Response.BodyObject)
+
+		// Find UserProfiles resource and check Get endpoint
+		var userGetEndpoint *Endpoint
+		var foundUserProfiles bool
+		for _, resource := range result.Resources {
+			if resource.Name == "UserProfiles" {
+				foundUserProfiles = true
+				assert.Equal(t, 1, len(resource.Endpoints))
+				userGetEndpoint = &resource.Endpoints[0]
+				break
+			}
+		}
+		require.True(t, foundUserProfiles, "UserProfiles resource should exist")
+		require.NotNil(t, userGetEndpoint, "UserProfiles should have a Get endpoint")
+		assert.Equal(t, "Get", userGetEndpoint.Name)
+		assert.Equal(t, "Retrieve an existing UserProfiles", userGetEndpoint.Title)
+		assert.Equal(t, "Retrieves the `UserProfiles` with the given ID.", userGetEndpoint.Description)
+		assert.Equal(t, "The unique identifier of the UserProfiles to retrieve", userGetEndpoint.Request.PathParams[0].Description)
+		assert.Equal(t, "UserProfiles", *userGetEndpoint.Response.BodyObject)
+
+		// Find ProductCategories resource and check Get endpoint
+		var categoryGetEndpoint *Endpoint
+		var foundProductCategories bool
+		for _, resource := range result.Resources {
+			if resource.Name == "ProductCategories" {
+				foundProductCategories = true
+				assert.Equal(t, 1, len(resource.Endpoints))
+				categoryGetEndpoint = &resource.Endpoints[0]
+				break
+			}
+		}
+		require.True(t, foundProductCategories, "ProductCategories resource should exist")
+		require.NotNil(t, categoryGetEndpoint, "ProductCategories should have a Get endpoint")
+		assert.Equal(t, "Get", categoryGetEndpoint.Name)
+		assert.Equal(t, "Retrieve an existing ProductCategories", categoryGetEndpoint.Title)
+		assert.Equal(t, "Retrieves the `ProductCategories` with the given ID.", categoryGetEndpoint.Description)
+		assert.Equal(t, "The unique identifier of the ProductCategories to retrieve", categoryGetEndpoint.Request.PathParams[0].Description)
+		assert.Equal(t, "ProductCategories", *categoryGetEndpoint.Response.BodyObject)
 	})
 }
 
