@@ -1057,8 +1057,8 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should have Error + ErrorField + Pagination objects (from overlay) + generated Users object
-		assert.Equal(t, 4, len(result.Objects))
+		// Should have Error + ErrorField + Pagination objects (from overlay) + generated Users object + 3 RequestError objects
+		assert.Equal(t, 7, len(result.Objects))
 
 		// First object should be Error (from overlay, no existing objects)
 		errorObject := result.Objects[0]
@@ -1113,8 +1113,8 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should only have Error, ErrorField, and Pagination objects (from overlay), no generated resource objects
-		assert.Equal(t, 3, len(result.Objects))
+		// Should only have Error, ErrorField, and Pagination objects (from overlay) + 1 RequestError object for Create endpoint
+		assert.Equal(t, 4, len(result.Objects))
 		assert.Equal(t, "Error", result.Objects[0].Name)
 		assert.Equal(t, "ErrorField", result.Objects[1].Name)
 	})
@@ -1169,8 +1169,8 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should have Error + ErrorField + Pagination objects + two generated objects
-		assert.Equal(t, 5, len(result.Objects))
+		// Should have Error + ErrorField + Pagination objects + two generated objects + 3 RequestError objects
+		assert.Equal(t, 8, len(result.Objects))
 
 		// First object should be Error (from overlay, no existing objects)
 		assert.Equal(t, "Error", result.Objects[0].Name)
@@ -1303,8 +1303,8 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should have Error + ErrorField + Pagination objects + existing Users object (no generated Users object due to name collision)
-		assert.Equal(t, 4, len(result.Objects))
+		// Should have Error + ErrorField + Pagination objects + existing Users object + 1 RequestError object
+		assert.Equal(t, 5, len(result.Objects))
 
 		// First object should be the existing Users object (existing objects come first)
 		assert.Equal(t, "Users", result.Objects[0].Name)
@@ -1349,8 +1349,8 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should have Error + ErrorField + Pagination objects + generated Users object
-		assert.Equal(t, 4, len(result.Objects))
+		// Should have Error + ErrorField + Pagination objects + generated Users object + 2 RequestError objects
+		assert.Equal(t, 6, len(result.Objects))
 
 		// First object should be Error (from overlay, no existing objects)
 		assert.Equal(t, "Error", result.Objects[0].Name)
@@ -1423,8 +1423,8 @@ func TestApplyOverlay(t *testing.T) {
 		assert.Equal(t, 3, len(result.Enums))
 		assert.Equal(t, len(input.Resources), len(result.Resources))
 
-		// Should have Error + ErrorField + Pagination objects + existing object + generated Users object
-		assert.Equal(t, 5, len(result.Objects))
+		// Should have Error + ErrorField + Pagination objects + existing object + generated Users object + 1 RequestError object
+		assert.Equal(t, 6, len(result.Objects))
 
 		// First object should be the existing ExistingObject (existing objects come first)
 		assert.Equal(t, "ExistingObject", result.Objects[0].Name)

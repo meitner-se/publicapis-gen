@@ -1164,20 +1164,17 @@ func convertFieldToErrorField(field Field, objects []Object) Field {
 	errorField := Field{
 		Name:        field.Name,
 		Description: field.Description,
+		Type:        errorFieldObjectName,       // Default to ErrorField type
 		Modifiers:   []string{ModifierNullable}, // All error fields are nullable
 	}
 
-	if isPrimitiveType(field.Type) {
-		errorField.Type = errorFieldObjectName
-	} else if isObjectType(field.Type, objects) {
+	if isObjectType(field.Type, objects) {
 		errorField.Type = field.Type + requestErrorSuffix
 	} else if strings.HasSuffix(field.Type, filterSuffix) {
 		// Handle filter types (e.g., UsersFilter -> UsersFilterRequestError)
 		errorField.Type = field.Type + requestErrorSuffix
-	} else {
-		// For other types (enums, etc.), also use ErrorField
-		errorField.Type = errorFieldObjectName
 	}
+	// For primitive types and other types (enums, etc.), use the default ErrorField type
 
 	return errorField
 }
