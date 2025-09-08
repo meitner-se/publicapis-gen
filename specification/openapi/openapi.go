@@ -10,9 +10,7 @@ import (
 
 	"github.com/meitner-se/publicapis-gen/specification"
 	"github.com/pb33f/libopenapi"
-	"github.com/pb33f/libopenapi/datamodel/high/base"
 	"github.com/pb33f/libopenapi/datamodel/high/v3"
-	orderedmap "github.com/pb33f/libopenapi/orderedmap"
 	"gopkg.in/yaml.v3"
 )
 
@@ -23,14 +21,6 @@ const (
 	errorInvalidDocument   = "invalid document: document cannot be nil"
 	errorFailedToMarshal   = "failed to marshal specification"
 	errorFailedToUnmarshal = "failed to unmarshal specification"
-)
-
-// Import guards to prevent unused import errors until implementation is added.
-// These will be used in the full implementation.
-var (
-	_ = libopenapi.NewDocument
-	_ = (*base.Info)(nil)
-	_ = (*v3.Document)(nil)
 )
 
 // Generator handles OpenAPI 3.1 specification generation from specification.Service.
@@ -47,8 +37,8 @@ type Generator struct {
 	// ServerURL specifies the base server URL for the API
 	ServerURL string
 
-	// lastGeneratedDoc stores the last generated document for serialization
-	lastGeneratedDoc *OpenAPIDocument
+	// lastLibDocument stores the last generated libopenapi Document for serialization
+	lastLibDocument libopenapi.Document
 }
 
 // NewGenerator creates a new OpenAPI generator with default settings.
@@ -129,34 +119,31 @@ func (g *Generator) GenerateFromService(service *specification.Service) (*v3.Doc
 		return nil, errors.New(errorInvalidService)
 	}
 
-	// Create the simplified OpenAPI document
-	doc := g.buildOpenAPIDocument(service)
+	// Build the OpenAPI specification as a plain Go map
+	openAPISpec := g.buildOpenAPIDocument(service)
 
-	// Create a placeholder v3.Document for compatibility
-	title := g.Title
-	if title == "" {
-		title = service.Name
+	// Marshal to JSON bytes
+	specBytes, err := json.Marshal(openAPISpec)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", errorFailedToMarshal, err)
 	}
 
-	info := &base.Info{
-		Title:   title,
-		Version: "1.0.0",
+	// Create a libopenapi Document from the bytes
+	libDoc, err := libopenapi.NewDocument(specBytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create libopenapi document: %w", err)
 	}
 
-	result := &v3.Document{
-		Version: g.Version,
-		Info:    info,
+	// Store the libopenapi Document for later serialization
+	g.lastLibDocument = libDoc
+
+	// Build the high-level v3 model
+	model, errs := libDoc.BuildV3Model()
+	if len(errs) > 0 {
+		return nil, fmt.Errorf("failed to build v3 model: %v", errs)
 	}
 
-	// Store the actual document data for later serialization
-	result.Extensions = orderedmap.New[string, *yaml.Node]()
-	docData := &yaml.Node{Kind: yaml.ScalarNode, Value: "internal_doc"}
-	result.Extensions.Set("x-internal-doc", docData)
-
-	// Store reference to our document in the generator for serialization
-	g.lastGeneratedDoc = doc
-
-	return result, nil
+	return &model.Model, nil
 }
 
 // buildOpenAPIDocument creates the actual OpenAPI document structure
@@ -520,19 +507,17 @@ func (g *Generator) ToYAML(document *v3.Document) ([]byte, error) {
 		return nil, errors.New(errorInvalidDocument)
 	}
 
-	if g.lastGeneratedDoc == nil {
+	if g.lastLibDocument == nil {
 		return nil, errors.New("no document has been generated")
 	}
 
-	// Use our simplified document structure for serialization
-	jsonBytes, err := json.MarshalIndent(g.lastGeneratedDoc, "", "  ")
+	// Use libopenapi's Render method to serialize the document
+	yamlBytes, err := g.lastLibDocument.Render()
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", errorFailedToMarshal, err)
 	}
 
-	// For now, return JSON as YAML conversion is more complex
-	// In a full implementation, you would convert JSON to YAML here
-	return jsonBytes, nil
+	return yamlBytes, nil
 }
 
 // ToJSON converts an OpenAPI document to JSON format.
@@ -541,11 +526,24 @@ func (g *Generator) ToJSON(document *v3.Document) ([]byte, error) {
 		return nil, errors.New(errorInvalidDocument)
 	}
 
-	if g.lastGeneratedDoc == nil {
+	if g.lastLibDocument == nil {
 		return nil, errors.New("no document has been generated")
 	}
 
-	jsonBytes, err := json.MarshalIndent(g.lastGeneratedDoc, "", "  ")
+	// Use libopenapi's Render method to get YAML, then convert to JSON
+	yamlBytes, err := g.lastLibDocument.Render()
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", errorFailedToMarshal, err)
+	}
+
+	// Parse YAML and convert to JSON with proper formatting
+	var yamlData interface{}
+	err = yaml.Unmarshal(yamlBytes, &yamlData)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", errorFailedToUnmarshal, err)
+	}
+
+	jsonBytes, err := json.MarshalIndent(yamlData, "", "  ")
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", errorFailedToMarshal, err)
 	}
