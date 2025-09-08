@@ -412,28 +412,12 @@ type EndpointResponse struct {
 	BodyObject *string `json:"body_object,omitempty"`
 }
 
-// containsOperation checks if a slice of operations contains a specific operation.
-func containsOperation(operations []string, operation string) bool {
-	for _, op := range operations {
-		if op == operation {
-			return true
-		}
-	}
-	return false
-}
-
-// ApplyOverlay applies an overlay to a specification, generating Objects, Create endpoints, Update endpoints, Delete endpoints, Get endpoints, List endpoints, and Search endpoints from Resources.
+// ApplyOverlay applies an overlay to a specification, generating Objects and endpoints from Resources.
 // It creates Objects for Resources that have the "Read" operation, including all fields
 // that support the "Read" operation in the generated Object.
-// It creates Create endpoints for Resources that have the "Create" operation, including all fields
-// that support the "Create" operation as body parameters in the request, and returning the Resource object.
-// It creates Update endpoints for Resources that have the "Update" operation, including all fields
-// that support the "Update" operation as body parameters in the request, with ID as a path parameter, and returning the Resource object.
-// It creates Delete endpoints for Resources that have the "Delete" operation, using ID as a path parameter, and returning nothing (status code 204).
-// It creates Get endpoints for Resources that have the "Read" operation, using ID as a path parameter, and returning the Resource object.
-// It creates List endpoints for Resources that have the "Read" operation, with limit and offset query parameters for pagination, and returning paginated data with the Resource objects.
-// It creates Search endpoints for Resources that have the "Read" operation, using POST method with /_search path, Filter body parameter of type <Resource>Filter, limit and offset query parameters for pagination, and returning paginated data with the Resource objects (same response as List endpoint).
-// It also adds default ErrorCode enum, Error object, ErrorFieldCode enum, ErrorField object, and Pagination object to every service.
+// It generates standard CRUD endpoints (Create, Read, Update, Delete) and additional endpoints (List, Search)
+// based on the operations supported by each Resource.
+// It also adds default error handling objects and pagination support to every service.
 func ApplyOverlay(input *Service) *Service {
 	if input == nil {
 		return nil
@@ -447,6 +431,25 @@ func ApplyOverlay(input *Service) *Service {
 		Resources: make([]Resource, len(input.Resources)),
 	}
 
+	// Add default enums and objects if they don't already exist
+	addDefaultEnumsAndObjects(result, input)
+
+	// Copy resources
+	copy(result.Resources, input.Resources)
+
+	// Generate Objects and endpoints from Resources
+	generateObjectsFromResources(result, input.Resources)
+	generateEndpointsFromResources(result, input.Resources)
+
+	// Generate RequestError objects for types used in body parameters
+	// This happens at the end to ensure all objects and endpoints are generated first
+	generateRequestErrorObjectsForBodyParams(result)
+
+	return result
+}
+
+// addDefaultEnumsAndObjects adds the default error and pagination objects to the service if they don't already exist.
+func addDefaultEnumsAndObjects(result *Service, input *Service) {
 	// Check if ErrorCode enum, Error object, ErrorFieldCode enum, ErrorField object, and Pagination object already exist
 	errorCodeEnumExists := false
 	errorObjectExists := false
@@ -575,12 +578,11 @@ func ApplyOverlay(input *Service) *Service {
 		}
 		result.Objects = append(result.Objects, paginationObject)
 	}
+}
 
-	// Copy resources
-	copy(result.Resources, input.Resources)
-
-	// Generate Objects from Resources that have Read operations
-	for _, resource := range input.Resources {
+// generateObjectsFromResources generates Objects from Resources that have Read operations.
+func generateObjectsFromResources(result *Service, resources []Resource) {
+	for _, resource := range resources {
 		// Check if the resource has Read operation
 		if resource.HasReadOperation() {
 			// Check if an object with this name already exists
@@ -596,279 +598,201 @@ func ApplyOverlay(input *Service) *Service {
 				result.Objects = append(result.Objects, newObject)
 			}
 		}
+	}
+}
 
-		// Generate Create endpoints for resources that have Create operations
-		if resource.HasCreateOperation() && !resource.HasEndpoint(createEndpointName) {
-			// Collect all fields that support Create operation for body parameters
-			bodyParams := resource.GetCreateBodyParams()
+// generateEndpointsFromResources generates standard CRUD and additional endpoints for all resources.
+func generateEndpointsFromResources(result *Service, resources []Resource) {
+	for _, resource := range resources {
+		generateCreateEndpoint(result, resource)
+		generateUpdateEndpoint(result, resource)
+		generateDeleteEndpoint(result, resource)
+		generateGetEndpoint(result, resource)
+		generateListEndpoint(result, resource)
+		generateSearchEndpoint(result, resource)
+	}
+}
 
-			// Create the Create endpoint
-			resourceName := resource.Name
-			createEndpoint := Endpoint{
-				Name:        createEndpointName,
-				Title:       createEndpointTitlePrefix + resource.Name,
-				Description: createEndpointDescPrefix + resource.Name,
-				Method:      httpMethodPost,
-				Path:        createEndpointPath,
-				Request: EndpointRequest{
-					ContentType: contentTypeJSON,
-					Headers:     []Field{},
-					PathParams:  []Field{},
-					QueryParams: []Field{},
-					BodyParams:  bodyParams,
-				},
-				Response: EndpointResponse{
-					ContentType: contentTypeJSON,
-					StatusCode:  createResponseStatusCode,
-					Headers:     []Field{},
-					BodyFields:  []Field{},
-					BodyObject:  &resourceName,
-				},
-			}
-
-			// Add the Create endpoint to the resource
-			for i := range result.Resources {
-				if result.Resources[i].Name == resource.Name {
-					result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, createEndpoint)
-					break
-				}
-			}
+// generateCreateEndpoint generates a Create endpoint for resources that have Create operations.
+func generateCreateEndpoint(result *Service, resource Resource) {
+	if resource.HasCreateOperation() && !resource.HasEndpoint(createEndpointName) {
+		bodyParams := resource.GetCreateBodyParams()
+		resourceName := resource.Name
+		createEndpoint := Endpoint{
+			Name:        createEndpointName,
+			Title:       createEndpointTitlePrefix + resource.Name,
+			Description: createEndpointDescPrefix + resource.Name,
+			Method:      httpMethodPost,
+			Path:        createEndpointPath,
+			Request:     createStandardRequest([]Field{}, []Field{}, bodyParams),
+			Response:    createStandardResponse(createResponseStatusCode, &resourceName),
 		}
 
-		// Generate Update endpoints for resources that have Update operations
-		if resource.HasUpdateOperation() && !resource.HasEndpoint(updateEndpointName) {
-			// Collect all fields that support Update operation for body parameters
-			bodyParams := resource.GetUpdateBodyParams()
+		addEndpointToResource(result, resource.Name, createEndpoint)
+	}
+}
 
-			// Create the ID path parameter
-			idParam := Field{
-				Name:        updateIDParamName,
-				Description: updateIDParamDescription,
-				Type:        FieldTypeUUID,
-			}
-
-			// Create the Update endpoint
-			resourceName := resource.Name
-			updateEndpoint := Endpoint{
-				Name:        updateEndpointName,
-				Title:       updateEndpointTitlePrefix + resource.Name,
-				Description: updateEndpointDescPrefix + resource.Name,
-				Method:      httpMethodPatch,
-				Path:        updateEndpointPath,
-				Request: EndpointRequest{
-					ContentType: contentTypeJSON,
-					Headers:     []Field{},
-					PathParams:  []Field{idParam},
-					QueryParams: []Field{},
-					BodyParams:  bodyParams,
-				},
-				Response: EndpointResponse{
-					ContentType: contentTypeJSON,
-					StatusCode:  updateResponseStatusCode,
-					Headers:     []Field{},
-					BodyFields:  []Field{},
-					BodyObject:  &resourceName,
-				},
-			}
-
-			// Add the Update endpoint to the resource
-			for i := range result.Resources {
-				if result.Resources[i].Name == resource.Name {
-					result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, updateEndpoint)
-					break
-				}
-			}
+// generateUpdateEndpoint generates an Update endpoint for resources that have Update operations.
+func generateUpdateEndpoint(result *Service, resource Resource) {
+	if resource.HasUpdateOperation() && !resource.HasEndpoint(updateEndpointName) {
+		bodyParams := resource.GetUpdateBodyParams()
+		idParam := Field{
+			Name:        updateIDParamName,
+			Description: updateIDParamDescription,
+			Type:        FieldTypeUUID,
+		}
+		resourceName := resource.Name
+		updateEndpoint := Endpoint{
+			Name:        updateEndpointName,
+			Title:       updateEndpointTitlePrefix + resource.Name,
+			Description: updateEndpointDescPrefix + resource.Name,
+			Method:      httpMethodPatch,
+			Path:        updateEndpointPath,
+			Request:     createStandardRequest([]Field{idParam}, []Field{}, bodyParams),
+			Response:    createStandardResponse(updateResponseStatusCode, &resourceName),
 		}
 
-		// Generate Delete endpoints for resources that have Delete operations
-		if resource.HasDeleteOperation() && !resource.HasEndpoint(deleteEndpointName) {
-			// Create the ID path parameter
-			idParam := Field{
-				Name:        deleteIDParamName,
-				Description: deleteIDParamDescription,
-				Type:        FieldTypeUUID,
-			}
+		addEndpointToResource(result, resource.Name, updateEndpoint)
+	}
+}
 
-			// Create the Delete endpoint
-			deleteEndpoint := Endpoint{
-				Name:        deleteEndpointName,
-				Title:       deleteEndpointTitlePrefix + resource.Name,
-				Description: deleteEndpointDescPrefix + resource.Name,
-				Method:      httpMethodDelete,
-				Path:        deleteEndpointPath,
-				Request: EndpointRequest{
-					ContentType: contentTypeJSON,
-					Headers:     []Field{},
-					PathParams:  []Field{idParam},
-					QueryParams: []Field{},
-					BodyParams:  []Field{},
-				},
-				Response: EndpointResponse{
-					ContentType: contentTypeJSON,
-					StatusCode:  deleteResponseStatusCode,
-					Headers:     []Field{},
-					BodyFields:  []Field{},
-					BodyObject:  nil, // No body object for delete (returns nothing)
-				},
-			}
-
-			// Add the Delete endpoint to the resource
-			for i := range result.Resources {
-				if result.Resources[i].Name == resource.Name {
-					result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, deleteEndpoint)
-					break
-				}
-			}
+// generateDeleteEndpoint generates a Delete endpoint for resources that have Delete operations.
+func generateDeleteEndpoint(result *Service, resource Resource) {
+	if resource.HasDeleteOperation() && !resource.HasEndpoint(deleteEndpointName) {
+		idParam := Field{
+			Name:        deleteIDParamName,
+			Description: deleteIDParamDescription,
+			Type:        FieldTypeUUID,
+		}
+		deleteEndpoint := Endpoint{
+			Name:        deleteEndpointName,
+			Title:       deleteEndpointTitlePrefix + resource.Name,
+			Description: deleteEndpointDescPrefix + resource.Name,
+			Method:      httpMethodDelete,
+			Path:        deleteEndpointPath,
+			Request:     createStandardRequest([]Field{idParam}, []Field{}, []Field{}),
+			Response:    createStandardResponse(deleteResponseStatusCode, nil), // No body object for delete
 		}
 
-		// Generate Get endpoints for resources that have Read operations
-		if resource.HasReadOperation() && !resource.HasEndpoint(getEndpointName) {
-			// Create the ID path parameter
-			idParam := Field{
-				Name:        getIDParamName,
-				Description: fmt.Sprintf(getIDParamDescTemplate, resource.Name),
-				Type:        FieldTypeUUID,
-			}
+		addEndpointToResource(result, resource.Name, deleteEndpoint)
+	}
+}
 
-			// Create the Get endpoint
-			resourceName := resource.Name
-			getEndpoint := Endpoint{
-				Name:        getEndpointName,
-				Title:       getEndpointTitlePrefix + resource.Name,
-				Description: fmt.Sprintf("Retrieves the `%s` with the given ID.", resource.Name),
-				Method:      httpMethodGet,
-				Path:        getEndpointPath,
-				Request: EndpointRequest{
-					ContentType: contentTypeJSON,
-					Headers:     []Field{},
-					PathParams:  []Field{idParam},
-					QueryParams: []Field{},
-					BodyParams:  []Field{},
-				},
-				Response: EndpointResponse{
-					ContentType: contentTypeJSON,
-					StatusCode:  getResponseStatusCode,
-					Headers:     []Field{},
-					BodyFields:  []Field{},
-					BodyObject:  &resourceName,
-				},
-			}
-
-			// Add the Get endpoint to the resource
-			for i := range result.Resources {
-				if result.Resources[i].Name == resource.Name {
-					result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, getEndpoint)
-					break
-				}
-			}
+// generateGetEndpoint generates a Get endpoint for resources that have Read operations.
+func generateGetEndpoint(result *Service, resource Resource) {
+	if resource.HasReadOperation() && !resource.HasEndpoint(getEndpointName) {
+		idParam := Field{
+			Name:        getIDParamName,
+			Description: fmt.Sprintf(getIDParamDescTemplate, resource.Name),
+			Type:        FieldTypeUUID,
+		}
+		resourceName := resource.Name
+		getEndpoint := Endpoint{
+			Name:        getEndpointName,
+			Title:       getEndpointTitlePrefix + resource.Name,
+			Description: fmt.Sprintf("Retrieves the `%s` with the given ID.", resource.Name),
+			Method:      httpMethodGet,
+			Path:        getEndpointPath,
+			Request:     createStandardRequest([]Field{idParam}, []Field{}, []Field{}),
+			Response:    createStandardResponse(getResponseStatusCode, &resourceName),
 		}
 
-		// Generate List endpoints for resources that have Read operations
-		if resource.HasReadOperation() && !resource.HasEndpoint(listEndpointName) {
-			// Create query parameters for pagination
-			limitParam := CreateLimitParam()
-			offsetParam := CreateOffsetParam()
+		addEndpointToResource(result, resource.Name, getEndpoint)
+	}
+}
 
-			// Create pagination and data fields for the response
-			paginationField := CreatePaginationField()
-			dataField := CreateDataField(resource.Name)
+// generateListEndpoint generates a List endpoint for resources that have Read operations.
+func generateListEndpoint(result *Service, resource Resource) {
+	if resource.HasReadOperation() && !resource.HasEndpoint(listEndpointName) {
+		limitParam := CreateLimitParam()
+		offsetParam := CreateOffsetParam()
+		paginationField := CreatePaginationField()
+		dataField := CreateDataField(resource.Name)
+		pluralResourceName := resource.GetPluralName()
 
-			// Get the pluralized resource name
-			pluralResourceName := resource.GetPluralName()
-
-			// Create the List endpoint
-			listEndpoint := Endpoint{
-				Name:        listEndpointName,
-				Title:       listEndpointTitlePrefix + pluralResourceName,
-				Description: fmt.Sprintf(listEndpointDescTemplate, pluralResourceName),
-				Method:      httpMethodGet,
-				Path:        listEndpointPath,
-				Request: EndpointRequest{
-					ContentType: contentTypeJSON,
-					Headers:     []Field{},
-					PathParams:  []Field{},
-					QueryParams: []Field{limitParam, offsetParam},
-					BodyParams:  []Field{},
-				},
-				Response: EndpointResponse{
-					ContentType: contentTypeJSON,
-					StatusCode:  listResponseStatusCode,
-					Headers:     []Field{},
-					BodyFields:  []Field{dataField, paginationField},
-					BodyObject:  nil,
-				},
-			}
-
-			// Add the List endpoint to the resource
-			for i := range result.Resources {
-				if result.Resources[i].Name == resource.Name {
-					result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, listEndpoint)
-					break
-				}
-			}
+		listEndpoint := Endpoint{
+			Name:        listEndpointName,
+			Title:       listEndpointTitlePrefix + pluralResourceName,
+			Description: fmt.Sprintf(listEndpointDescTemplate, pluralResourceName),
+			Method:      httpMethodGet,
+			Path:        listEndpointPath,
+			Request:     createStandardRequest([]Field{}, []Field{limitParam, offsetParam}, []Field{}),
+			Response:    createListResponse(listResponseStatusCode, dataField, paginationField),
 		}
 
-		// Generate Search endpoints for resources that have Read operations
-		if resource.HasReadOperation() {
-			// Only create the endpoint if it doesn't already exist
-			if !resource.HasEndpoint(searchEndpointName) {
-				// Create query parameters for pagination (same as List endpoint)
-				limitParam := CreateLimitParam()
-				offsetParam := CreateOffsetParam()
+		addEndpointToResource(result, resource.Name, listEndpoint)
+	}
+}
 
-				// Create filter body parameter
-				filterParam := Field{
-					Name:        searchFilterParamName,
-					Description: searchFilterParamDesc,
-					Type:        resource.Name + filterSuffix,
-				}
+// generateSearchEndpoint generates a Search endpoint for resources that have Read operations.
+func generateSearchEndpoint(result *Service, resource Resource) {
+	if resource.HasReadOperation() && !resource.HasEndpoint(searchEndpointName) {
+		limitParam := CreateLimitParam()
+		offsetParam := CreateOffsetParam()
+		filterParam := Field{
+			Name:        searchFilterParamName,
+			Description: searchFilterParamDesc,
+			Type:        resource.Name + filterSuffix,
+		}
+		paginationField := CreatePaginationField()
+		dataField := CreateDataField(resource.Name)
+		pluralResourceName := resource.GetPluralName()
 
-				// Create pagination and data fields for the response (same as List endpoint)
-				paginationField := CreatePaginationField()
-				dataField := CreateDataField(resource.Name)
+		searchEndpoint := Endpoint{
+			Name:        searchEndpointName,
+			Title:       searchEndpointTitlePrefix + pluralResourceName,
+			Description: fmt.Sprintf(searchEndpointDescTemplate, pluralResourceName),
+			Method:      httpMethodPost,
+			Path:        searchEndpointPath,
+			Request:     createStandardRequest([]Field{}, []Field{limitParam, offsetParam}, []Field{filterParam}),
+			Response:    createListResponse(searchResponseStatusCode, dataField, paginationField),
+		}
 
-				// Get the pluralized resource name
-				pluralResourceName := resource.GetPluralName()
+		addEndpointToResource(result, resource.Name, searchEndpoint)
+	}
+}
 
-				// Create the Search endpoint
-				searchEndpoint := Endpoint{
-					Name:        searchEndpointName,
-					Title:       searchEndpointTitlePrefix + pluralResourceName,
-					Description: fmt.Sprintf(searchEndpointDescTemplate, pluralResourceName),
-					Method:      httpMethodPost,
-					Path:        searchEndpointPath,
-					Request: EndpointRequest{
-						ContentType: contentTypeJSON,
-						Headers:     []Field{},
-						PathParams:  []Field{},
-						QueryParams: []Field{limitParam, offsetParam},
-						BodyParams:  []Field{filterParam},
-					},
-					Response: EndpointResponse{
-						ContentType: contentTypeJSON,
-						StatusCode:  searchResponseStatusCode,
-						Headers:     []Field{},
-						BodyFields:  []Field{dataField, paginationField},
-						BodyObject:  nil,
-					},
-				}
-
-				// Add the Search endpoint to the resource
-				for i := range result.Resources {
-					if result.Resources[i].Name == resource.Name {
-						result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, searchEndpoint)
-						break
-					}
-				}
-			}
+// addEndpointToResource adds an endpoint to a resource by name.
+func addEndpointToResource(result *Service, resourceName string, endpoint Endpoint) {
+	for i := range result.Resources {
+		if result.Resources[i].Name == resourceName {
+			result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, endpoint)
+			break
 		}
 	}
+}
 
-	// Generate RequestError objects for types used in body parameters
-	// This happens at the end to ensure all objects and endpoints are generated first
-	generateRequestErrorObjectsForBodyParams(result)
+// createStandardRequest creates a standard endpoint request with the given path and body parameters.
+func createStandardRequest(pathParams []Field, queryParams []Field, bodyParams []Field) EndpointRequest {
+	return EndpointRequest{
+		ContentType: contentTypeJSON,
+		Headers:     []Field{},
+		PathParams:  pathParams,
+		QueryParams: queryParams,
+		BodyParams:  bodyParams,
+	}
+}
 
-	return result
+// createStandardResponse creates a standard endpoint response with the given status code and optional body object.
+func createStandardResponse(statusCode int, bodyObject *string) EndpointResponse {
+	return EndpointResponse{
+		ContentType: contentTypeJSON,
+		StatusCode:  statusCode,
+		Headers:     []Field{},
+		BodyFields:  []Field{},
+		BodyObject:  bodyObject,
+	}
+}
+
+// createListResponse creates a standard list endpoint response with pagination and data fields.
+func createListResponse(statusCode int, dataField Field, paginationField Field) EndpointResponse {
+	return EndpointResponse{
+		ContentType: contentTypeJSON,
+		StatusCode:  statusCode,
+		Headers:     []Field{},
+		BodyFields:  []Field{dataField, paginationField},
+		BodyObject:  nil,
+	}
 }
 
 // collectTypesUsedInBodyParams collects all types (including nested) used in request body parameters.
@@ -943,16 +867,6 @@ func generateRequestErrorObjectsForBodyParams(service *Service) {
 			}
 		}
 	}
-}
-
-// containsModifier checks if a slice of modifiers contains a specific modifier.
-func containsModifier(modifiers []string, modifier string) bool {
-	for _, mod := range modifiers {
-		if mod == modifier {
-			return true
-		}
-	}
-	return false
 }
 
 // isComparableType returns true if the field type supports range operations.
