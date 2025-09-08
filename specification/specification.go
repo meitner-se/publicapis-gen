@@ -2,6 +2,7 @@ package specification
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/aarondl/strmangle"
@@ -243,6 +244,14 @@ const (
 const (
 	requestErrorSuffix            = "RequestError"
 	requestErrorDescriptionPrefix = "Request error object for "
+)
+
+// Comment formatting constants
+const (
+	commentPrefix     = "// "
+	nameDescSeparator = ": "
+	newlineChar       = "\n"
+	pathSeparator     = "/"
 )
 
 // Service is the definition of an API service.
@@ -1459,5 +1468,137 @@ func ApplyFilterOverlay(input *Service) *Service {
 		result.Objects = append(result.Objects, nullFilter)
 	}
 
+	return result
+}
+
+// ResourceField methods
+
+// HasCreateOperation checks if the ResourceField supports Create operations.
+func (f ResourceField) HasCreateOperation() bool {
+	return slices.Contains(f.Operations, OperationCreate)
+}
+
+// HasDeleteOperation checks if the ResourceField supports Delete operations.
+func (f ResourceField) HasDeleteOperation() bool {
+	return slices.Contains(f.Operations, OperationDelete)
+}
+
+// HasReadOperation checks if the ResourceField supports Read operations.
+func (f ResourceField) HasReadOperation() bool {
+	return slices.Contains(f.Operations, OperationRead)
+}
+
+// HasUpdateOperation checks if the ResourceField supports Update operations.
+func (f ResourceField) HasUpdateOperation() bool {
+	return slices.Contains(f.Operations, OperationUpdate)
+}
+
+// Field methods
+
+// IsArray checks if the Field has the array modifier.
+func (t Field) IsArray() bool {
+	return slices.Contains(t.Modifiers, ModifierArray)
+}
+
+// IsNullable checks if the Field has the nullable modifier.
+func (t Field) IsNullable() bool {
+	return slices.Contains(t.Modifiers, ModifierNullable)
+}
+
+// TagJSON returns the JSON tag name for the field in camelCase.
+func (t Field) TagJSON() string {
+	return camelCase(t.Name)
+}
+
+// GetComment returns a formatted comment for the field.
+func (t Field) GetComment(tabs string) string {
+	return getComment(tabs, t.Description, t.Name)
+}
+
+// IsRequired determines if the field is required based on its properties and service context.
+func (f Field) IsRequired(service *Service) bool {
+	if f.IsNullable() {
+		return false
+	}
+
+	if f.IsArray() {
+		return false
+	}
+
+	if f.Default != "" {
+		return false
+	}
+
+	if service.IsObject(f.Type) {
+		return false
+	}
+
+	return true
+}
+
+// EndpointRequest methods
+
+// GetRequiredBodyParams returns the names of required body parameters.
+func (e EndpointRequest) GetRequiredBodyParams(service *Service) []string {
+	requiredFields := make([]string, 0, len(e.BodyParams))
+
+	for _, field := range e.BodyParams {
+		if !field.IsRequired(service) {
+			continue
+		}
+
+		requiredFields = append(requiredFields, field.Name)
+	}
+
+	return requiredFields
+}
+
+// Endpoint methods
+
+// GetFullPath returns the full path for the endpoint including the resource name.
+func (e Endpoint) GetFullPath(resourceName string) string {
+	return pathSeparator + toKebabCase(resourceName) + e.Path
+}
+
+// Service methods
+
+// IsObject checks if the given field type represents a custom object.
+func (s *Service) IsObject(fieldType string) bool {
+	return isObjectType(fieldType, s.Objects)
+}
+
+// Helper functions
+
+// getComment formats a comment string with proper indentation and prefixes.
+func getComment(tabs string, description string, name string) string {
+	comment := description
+
+	if !strings.HasPrefix(description, name) {
+		comment = name + nameDescSeparator + description
+	}
+
+	// Every new line should be prefixed with a //
+	lines := strings.Split(comment, newlineChar)
+	for i, line := range lines {
+		lines[i] = tabs + commentPrefix + line
+	}
+
+	comment = strings.Join(lines, newlineChar)
+	comment = strings.TrimSuffix(comment, tabs+newlineChar+commentPrefix)
+
+	return comment
+}
+
+// camelCase converts a string to camelCase format.
+func camelCase(s string) string {
+	return strmangle.CamelCase(s)
+}
+
+// toKebabCase converts a string to kebab-case format.
+func toKebabCase(s string) string {
+	// Convert to lowercase and replace spaces/underscores with hyphens
+	result := strings.ToLower(s)
+	result = strings.ReplaceAll(result, "_", "-")
+	result = strings.ReplaceAll(result, " ", "-")
 	return result
 }
