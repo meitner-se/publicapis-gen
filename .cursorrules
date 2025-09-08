@@ -120,6 +120,200 @@ Before submitting code:
 - [ ] Run `go vet ./...` and address warnings
 - [ ] Use efficient Go idioms for common operations
 
+## Testing Best Practices
+
+### Test Readability and Assertions
+- **ALWAYS assert specific values rather than just checking existence**
+- Tests should be self-documenting and easy to understand at a glance
+- Use explicit assertions that show expected vs actual values
+- Avoid generic assertions like `assert.NotNil()` when you can assert the specific expected value
+
+### Examples of Clear Value Assertions
+```go
+// ❌ BAD - Vague assertions that don't show expected values
+assert.NotNil(t, user)
+assert.NotEmpty(t, user.Name)
+assert.True(t, len(users) > 0)
+assert.NoError(t, err)
+
+// ✅ GOOD - Explicit value assertions
+assert.Equal(t, "john.doe@example.com", user.Email)
+assert.Equal(t, "John Doe", user.Name)
+assert.Equal(t, 3, len(users))
+assert.Nil(t, err, "Expected no error when creating valid user")
+```
+
+### Test Structure Guidelines
+- **Arrange-Act-Assert pattern**: Clearly separate test setup, execution, and verification
+- Use descriptive variable names that explain what they represent
+- Set up test data with explicit, meaningful values
+- Group related assertions together with clear comments
+
+### Test Data Best Practices
+```go
+// ✅ GOOD - Explicit test data setup
+func TestCreateUser(t *testing.T) {
+    // Arrange
+    expectedEmail := "test.user@example.com"
+    expectedName := "Test User"
+    expectedRole := "admin"
+    
+    userRequest := CreateUserRequest{
+        Email: expectedEmail,
+        Name:  expectedName,
+        Role:  expectedRole,
+    }
+    
+    // Act
+    user, err := userService.CreateUser(userRequest)
+    
+    // Assert
+    assert.Nil(t, err, "Expected no error when creating user with valid data")
+    assert.Equal(t, expectedEmail, user.Email, "User email should match request")
+    assert.Equal(t, expectedName, user.Name, "User name should match request")
+    assert.Equal(t, expectedRole, user.Role, "User role should match request")
+    assert.NotEmpty(t, user.ID, "User should have generated ID")
+    assert.False(t, user.CreatedAt.IsZero(), "User should have creation timestamp")
+}
+```
+
+### Test Naming Conventions
+- Main test function should be named after the method being tested: `TestMethodName`
+- Use sub-tests with `t.Run()` for different scenarios and edge cases
+- Sub-test names should be descriptive and explain the scenario and expected outcome
+- Group related test cases under the same main test function
+
+### Examples of Good Test Structure
+```go
+func TestCreateUser(t *testing.T) {
+    // Test the happy path first
+    expectedEmail := "test.user@example.com"
+    expectedName := "Test User"
+    expectedRole := "admin"
+    
+    userRequest := CreateUserRequest{
+        Email: expectedEmail,
+        Name:  expectedName,
+        Role:  expectedRole,
+    }
+    
+    user, err := userService.CreateUser(userRequest)
+    
+    assert.Nil(t, err, "Expected no error when creating user with valid data")
+    assert.Equal(t, expectedEmail, user.Email, "User email should match request")
+    assert.Equal(t, expectedName, user.Name, "User name should match request")
+    assert.Equal(t, expectedRole, user.Role, "User role should match request")
+    assert.NotEmpty(t, user.ID, "User should have generated ID")
+    assert.False(t, user.CreatedAt.IsZero(), "User should have creation timestamp")
+    
+    // Sub-tests for edge cases and error conditions
+    t.Run("email must be unique", func(t *testing.T) {
+        duplicateRequest := CreateUserRequest{
+            Email: expectedEmail, // Same email as above
+            Name:  "Another User",
+            Role:  "user",
+        }
+        
+        _, err := userService.CreateUser(duplicateRequest)
+        assert.EqualError(t, err, "user with email 'test.user@example.com' already exists")
+    })
+    
+    t.Run("invalid email format returns validation error", func(t *testing.T) {
+        invalidRequest := CreateUserRequest{
+            Email: "invalid-email",
+            Name:  "Test User",
+            Role:  "user",
+        }
+        
+        _, err := userService.CreateUser(invalidRequest)
+        assert.Contains(t, err.Error(), "invalid email format")
+    })
+    
+    t.Run("empty name returns validation error", func(t *testing.T) {
+        emptyNameRequest := CreateUserRequest{
+            Email: "another@example.com",
+            Name:  "",
+            Role:  "user",
+        }
+        
+        _, err := userService.CreateUser(emptyNameRequest)
+        assert.Contains(t, err.Error(), "name is required")
+    })
+}
+```
+
+### Assertion Message Guidelines
+- Include context in assertion messages to help debugging
+- Explain what the test is verifying
+- Use clear, descriptive language
+
+### Table-Driven Tests
+When using table-driven tests, make test cases self-explanatory:
+```go
+func TestValidateEmail(t *testing.T) {
+    testCases := []struct {
+        name          string
+        email         string
+        expectedValid bool
+        expectedError string
+    }{
+        {
+            name:          "valid email with standard format",
+            email:         "user@example.com",
+            expectedValid: true,
+            expectedError: "",
+        },
+        {
+            name:          "invalid email missing at symbol",
+            email:         "userexample.com",
+            expectedValid: false,
+            expectedError: "invalid email format",
+        },
+    }
+    
+    for _, tc := range testCases {
+        t.Run(tc.name, func(t *testing.T) {
+            valid, err := ValidateEmail(tc.email)
+            
+            assert.Equal(t, tc.expectedValid, valid, 
+                "Email validation result should match expected for: %s", tc.email)
+                
+            if tc.expectedError != "" {
+                assert.Contains(t, err.Error(), tc.expectedError,
+                    "Error message should contain expected text for: %s", tc.email)
+            } else {
+                assert.Nil(t, err, "Expected no error for valid email: %s", tc.email)
+            }
+        })
+    }
+}
+```
+
+### Testing Checklist
+Before submitting test code:
+- [ ] All assertions check specific expected values
+- [ ] Main test function named after the method being tested
+- [ ] Sub-tests with descriptive names for different scenarios
+- [ ] Test data uses meaningful, explicit values
+- [ ] Assertion messages provide helpful context for debugging
+- [ ] Tests follow Arrange-Act-Assert pattern
+- [ ] Edge cases and error conditions are tested with specific assertions
+- [ ] No generic assertions like `assert.True()` where specific values can be checked
+- [ ] Happy path tested first, then edge cases in sub-tests
+
+### Error Testing Best Practices
+When testing error conditions:
+```go
+// ❌ BAD - Generic error checking
+assert.Error(t, err)
+
+// ✅ GOOD - Specific error validation
+assert.EqualError(t, err, "user with email 'test@example.com' already exists")
+// OR
+assert.Contains(t, err.Error(), "already exists")
+assert.IsType(t, &ValidationError{}, err)
+```
+
 ## Build Artifacts and Binary Files
 
 ### Binary File Management
