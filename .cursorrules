@@ -61,6 +61,93 @@ Before submitting code:
 
 This ensures maintainable, consistent code that's easy to update and internationalize if needed.
 
+## Object-Oriented Design Patterns
+
+### Methods on Structs
+- **ALWAYS use methods on structs instead of standalone functions when working with struct data**
+- Methods should be attached to the struct they operate on to provide behavior and capabilities
+- Use receiver methods to encapsulate logic that belongs to a specific type
+- Group related functionality as methods on the appropriate struct
+
+### Method Organization Patterns
+The codebase follows these method organization patterns:
+
+#### Validation Methods
+- Use boolean methods for validation checks (e.g., `HasCreateOperation()`, `IsNullable()`, `IsArray()`)
+- Name validation methods with clear prefixes: `Has*()`, `Is*()`, `Can*()`
+- Return simple boolean values for validation checks
+
+#### Utility Methods
+- Use methods for derived data and transformations (e.g., `GetPluralName()`, `TagJSON()`)
+- Name utility methods with descriptive verbs: `Get*()`, `Create*()`, `Convert*()`
+- Methods that generate or transform data should be named with action verbs
+
+#### Factory Methods
+- Use standalone factory functions for creating standard instances
+- Name factory functions with `Create*()` prefix (e.g., `CreateLimitParam()`, `CreateOffsetParam()`)
+- Factory methods should return configured instances of structs
+
+### Examples of Method Usage Patterns
+```go
+// ✅ GOOD - Methods on structs for validation
+func (r Resource) HasCreateOperation() bool {
+    return slices.Contains(r.Operations, OperationCreate)
+}
+
+func (f Field) IsNullable() bool {
+    return slices.Contains(f.Modifiers, ModifierNullable)
+}
+
+// ✅ GOOD - Methods for data transformation
+func (r Resource) GetCreateBodyParams() []Field {
+    // Transform resource fields to body parameters
+}
+
+func (f Field) TagJSON() string {
+    return camelCase(f.Name)
+}
+
+// ✅ GOOD - Factory functions for standard instances
+func CreateLimitParam() Field {
+    return Field{
+        Name:        listLimitParamName,
+        Description: listLimitParamDesc,
+        Type:        FieldTypeInt,
+        Default:     listLimitDefaultValue,
+    }
+}
+
+// ❌ BAD - Using standalone functions instead of methods
+func hasCreateOperation(resource Resource) bool {
+    return slices.Contains(resource.Operations, OperationCreate)
+}
+```
+
+### Method Design Guidelines
+1. **Attach methods to the struct they primarily operate on**
+2. **Use clear, descriptive method names that indicate their purpose**
+3. **Validation methods should return boolean values**
+4. **Utility methods should return the transformed data**
+5. **Factory functions should create and return configured instances**
+6. **Keep method signatures simple and focused**
+7. **Use consistent naming patterns across similar methods**
+
+### Method Categories
+- **Validation Methods**: Check properties or capabilities (`Has*()`, `Is*()`, `Can*()`)
+- **Accessor Methods**: Get or compute derived values (`Get*()`, `Tag*()`)
+- **Factory Methods**: Create standard instances (`Create*()`)
+- **Transformation Methods**: Convert or generate data from struct fields
+- **Helper Methods**: Provide utility functionality specific to the struct
+
+### Code Organization Checklist
+Before adding new functionality:
+- [ ] Consider if logic belongs as a method on an existing struct
+- [ ] Use appropriate naming patterns for the method type
+- [ ] Group related methods together in the source file
+- [ ] Add factory functions for commonly created instances
+- [ ] Prefer methods over standalone functions when working with struct data
+- [ ] Use consistent patterns with existing similar methods
+
 ## Go Code Formatting Rules
 
 ### Automatic Formatting
