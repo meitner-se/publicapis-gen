@@ -3,6 +3,7 @@ package specification
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/goccy/go-yaml"
@@ -2784,6 +2785,96 @@ func TestRequestErrorObjectGeneration(t *testing.T) {
 		// Verify that AddressRequestError object exists (should be generated for the existing Address object)
 		require.NotNil(t, addressRequestError, "AddressRequestError should be generated")
 		assert.Equal(t, 2, len(addressRequestError.Fields)) // street, city
+	})
+
+	t.Run("OnlyGeneratesRequestErrorObjectsForUsedTypes", func(t *testing.T) {
+		input := &Service{
+			Name:  "TestService",
+			Enums: []Enum{},
+			Objects: []Object{
+				{
+					Name:        "UsedObject",
+					Description: "Object used in body parameters",
+					Fields: []Field{
+						{Name: "field1", Type: "String", Description: "Field 1"},
+					},
+				},
+				{
+					Name:        "UnusedObject",
+					Description: "Object NOT used in body parameters",
+					Fields: []Field{
+						{Name: "field2", Type: "String", Description: "Field 2"},
+					},
+				},
+			},
+			Resources: []Resource{
+				{
+					Name:        "TestResource",
+					Description: "Test resource",
+					Operations:  []string{"Create", "Read"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "usedField",
+								Type:        "UsedObject",
+								Description: "Field using UsedObject",
+							},
+							Operations: []string{"Create", "Read"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Check which RequestError objects were generated
+		var foundRequestErrorObjects []string
+		for _, obj := range result.Objects {
+			if strings.HasSuffix(obj.Name, "RequestError") {
+				foundRequestErrorObjects = append(foundRequestErrorObjects, obj.Name)
+			}
+		}
+
+		// Should have RequestError objects for:
+		// 1. UsedObject (because it's used in Create endpoint body params)
+		// 2. TestResourceCreateRequestError (for the Create endpoint)
+		// Should NOT have:
+		// - UnusedObjectRequestError (because UnusedObject is not used in any body params)
+
+		expectedRequestErrors := []string{
+			"UsedObjectRequestError",
+			"TestResourceCreateRequestError",
+		}
+
+		notExpectedRequestErrors := []string{
+			"UnusedObjectRequestError",
+		}
+
+		for _, expected := range expectedRequestErrors {
+			assert.Contains(t, foundRequestErrorObjects, expected,
+				"Should generate RequestError for used object: %s", expected)
+		}
+
+		for _, notExpected := range notExpectedRequestErrors {
+			assert.NotContains(t, foundRequestErrorObjects, notExpected,
+				"Should NOT generate RequestError for unused object: %s", notExpected)
+		}
+
+		// Verify the UsedObjectRequestError has the correct structure
+		var usedObjectRequestError *Object
+		for i := range result.Objects {
+			if result.Objects[i].Name == "UsedObjectRequestError" {
+				usedObjectRequestError = &result.Objects[i]
+				break
+			}
+		}
+
+		require.NotNil(t, usedObjectRequestError, "UsedObjectRequestError should exist")
+		assert.Equal(t, 1, len(usedObjectRequestError.Fields))
+		assert.Equal(t, "field1", usedObjectRequestError.Fields[0].Name)
+		assert.Equal(t, "ErrorField", usedObjectRequestError.Fields[0].Type)
 	})
 }
 

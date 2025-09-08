@@ -570,15 +570,6 @@ func ApplyOverlay(input *Service) *Service {
 	// Copy resources
 	copy(result.Resources, input.Resources)
 
-	// Generate RequestError objects for all existing Objects
-	// This includes Objects that might be used in nested structures
-	for _, obj := range input.Objects {
-		requestErrorName := obj.Name + requestErrorSuffix
-		requestErrorDescription := requestErrorDescriptionPrefix + obj.Name
-		requestError := generateRequestErrorObject(requestErrorName, requestErrorDescription, obj.Fields, result.Objects)
-		result.Objects = append(result.Objects, requestError)
-	}
-
 	// Generate Objects from Resources that have Read operations
 	for _, resource := range input.Resources {
 		// Check if the resource has Read operation
@@ -620,12 +611,6 @@ func ApplyOverlay(input *Service) *Service {
 
 				// Add the new object to the result
 				result.Objects = append(result.Objects, newObject)
-
-				// Generate RequestError object for the new Resource-based object
-				requestErrorName := newObject.Name + requestErrorSuffix
-				requestErrorDescription := requestErrorDescriptionPrefix + newObject.Name
-				requestError := generateRequestErrorObject(requestErrorName, requestErrorDescription, newObject.Fields, result.Objects)
-				result.Objects = append(result.Objects, requestError)
 			}
 		}
 
@@ -690,14 +675,6 @@ func ApplyOverlay(input *Service) *Service {
 						result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, createEndpoint)
 						break
 					}
-				}
-
-				// Generate RequestError object for Create endpoint
-				if len(bodyParams) > 0 {
-					requestErrorName := resource.Name + createEndpointName + requestErrorSuffix
-					requestErrorDescription := requestErrorDescriptionPrefix + resource.Name + " " + createEndpointName + " endpoint"
-					createRequestError := generateRequestErrorObject(requestErrorName, requestErrorDescription, bodyParams, result.Objects)
-					result.Objects = append(result.Objects, createRequestError)
 				}
 			}
 		}
@@ -770,14 +747,6 @@ func ApplyOverlay(input *Service) *Service {
 						result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, updateEndpoint)
 						break
 					}
-				}
-
-				// Generate RequestError object for Update endpoint
-				if len(bodyParams) > 0 {
-					requestErrorName := resource.Name + updateEndpointName + requestErrorSuffix
-					requestErrorDescription := requestErrorDescriptionPrefix + resource.Name + " " + updateEndpointName + " endpoint"
-					updateRequestError := generateRequestErrorObject(requestErrorName, requestErrorDescription, bodyParams, result.Objects)
-					result.Objects = append(result.Objects, updateRequestError)
 				}
 			}
 		}
@@ -1049,19 +1018,89 @@ func ApplyOverlay(input *Service) *Service {
 						break
 					}
 				}
-
-				// Generate RequestError object for Search endpoint
-				// Search endpoints have a Filter body parameter
-				searchBodyParams := []Field{filterParam}
-				requestErrorName := resource.Name + searchEndpointName + requestErrorSuffix
-				requestErrorDescription := requestErrorDescriptionPrefix + resource.Name + " " + searchEndpointName + " endpoint"
-				searchRequestError := generateRequestErrorObject(requestErrorName, requestErrorDescription, searchBodyParams, result.Objects)
-				result.Objects = append(result.Objects, searchRequestError)
 			}
 		}
 	}
 
+	// Generate RequestError objects for types used in body parameters
+	// This happens at the end to ensure all objects and endpoints are generated first
+	generateRequestErrorObjectsForBodyParams(result)
+
 	return result
+}
+
+// collectTypesUsedInBodyParams collects all types (including nested) used in request body parameters.
+func collectTypesUsedInBodyParams(service *Service) map[string]bool {
+	usedTypes := make(map[string]bool)
+
+	// Collect types from all endpoint body parameters
+	for _, resource := range service.Resources {
+		for _, endpoint := range resource.Endpoints {
+			for _, bodyParam := range endpoint.Request.BodyParams {
+				collectTypeRecursively(bodyParam.Type, usedTypes, service.Objects)
+			}
+		}
+	}
+
+	return usedTypes
+}
+
+// collectTypeRecursively collects a type and all its nested object types recursively.
+func collectTypeRecursively(fieldType string, usedTypes map[string]bool, objects []Object) {
+	// Skip if already processed
+	if usedTypes[fieldType] {
+		return
+	}
+
+	// Mark this type as used
+	usedTypes[fieldType] = true
+
+	// If it's an object type, recursively collect its field types
+	for _, obj := range objects {
+		if obj.Name == fieldType {
+			for _, field := range obj.Fields {
+				collectTypeRecursively(field.Type, usedTypes, objects)
+			}
+			break
+		}
+	}
+}
+
+// generateRequestErrorObjectsForBodyParams generates RequestError objects only for types used in body parameters.
+func generateRequestErrorObjectsForBodyParams(service *Service) {
+	// Collect all types used in body parameters
+	usedTypes := collectTypesUsedInBodyParams(service)
+
+	// Generate RequestError objects for each used type
+	for typeName := range usedTypes {
+		// Skip primitive types - they don't need their own RequestError objects
+		if isPrimitiveType(typeName) {
+			continue
+		}
+
+		// Find the object definition
+		for _, obj := range service.Objects {
+			if obj.Name == typeName {
+				requestErrorName := obj.Name + requestErrorSuffix
+				requestErrorDescription := requestErrorDescriptionPrefix + obj.Name
+				requestError := generateRequestErrorObject(requestErrorName, requestErrorDescription, obj.Fields, service.Objects)
+				service.Objects = append(service.Objects, requestError)
+				break
+			}
+		}
+	}
+
+	// Generate RequestError objects for specific endpoints that have body parameters
+	for _, resource := range service.Resources {
+		for _, endpoint := range resource.Endpoints {
+			if len(endpoint.Request.BodyParams) > 0 {
+				requestErrorName := resource.Name + endpoint.Name + requestErrorSuffix
+				requestErrorDescription := requestErrorDescriptionPrefix + resource.Name + " " + endpoint.Name + " endpoint"
+				requestError := generateRequestErrorObject(requestErrorName, requestErrorDescription, endpoint.Request.BodyParams, service.Objects)
+				service.Objects = append(service.Objects, requestError)
+			}
+		}
+	}
 }
 
 // containsModifier checks if a slice of modifiers contains a specific modifier.
@@ -1421,63 +1460,6 @@ func ApplyFilterOverlay(input *Service) *Service {
 			}
 		}
 		result.Objects = append(result.Objects, nullFilter)
-
-		// Generate RequestError objects for all filter objects
-		// This covers the filter objects used in search endpoints
-
-		// Main filter RequestError
-		mainFilterRequestError := generateRequestErrorObject(
-			mainFilter.Name+requestErrorSuffix,
-			requestErrorDescriptionPrefix+mainFilter.Name,
-			mainFilter.Fields,
-			result.Objects,
-		)
-		result.Objects = append(result.Objects, mainFilterRequestError)
-
-		// FilterEquals RequestError
-		equalsFilterRequestError := generateRequestErrorObject(
-			equalsFilter.Name+requestErrorSuffix,
-			requestErrorDescriptionPrefix+equalsFilter.Name,
-			equalsFilter.Fields,
-			result.Objects,
-		)
-		result.Objects = append(result.Objects, equalsFilterRequestError)
-
-		// FilterRange RequestError
-		rangeFilterRequestError := generateRequestErrorObject(
-			rangeFilter.Name+requestErrorSuffix,
-			requestErrorDescriptionPrefix+rangeFilter.Name,
-			rangeFilter.Fields,
-			result.Objects,
-		)
-		result.Objects = append(result.Objects, rangeFilterRequestError)
-
-		// FilterContains RequestError
-		containsFilterRequestError := generateRequestErrorObject(
-			containsFilter.Name+requestErrorSuffix,
-			requestErrorDescriptionPrefix+containsFilter.Name,
-			containsFilter.Fields,
-			result.Objects,
-		)
-		result.Objects = append(result.Objects, containsFilterRequestError)
-
-		// FilterLike RequestError
-		likeFilterRequestError := generateRequestErrorObject(
-			likeFilter.Name+requestErrorSuffix,
-			requestErrorDescriptionPrefix+likeFilter.Name,
-			likeFilter.Fields,
-			result.Objects,
-		)
-		result.Objects = append(result.Objects, likeFilterRequestError)
-
-		// FilterNull RequestError
-		nullFilterRequestError := generateRequestErrorObject(
-			nullFilter.Name+requestErrorSuffix,
-			requestErrorDescriptionPrefix+nullFilter.Name,
-			nullFilter.Fields,
-			result.Objects,
-		)
-		result.Objects = append(result.Objects, nullFilterRequestError)
 	}
 
 	return result
