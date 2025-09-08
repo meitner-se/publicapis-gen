@@ -1494,9 +1494,9 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Check that the resource has the Create, Update, Delete, Get, and List endpoints generated
+		// Check that the resource has the Create, Update, Delete, Get, List, and Search endpoints generated
 		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 5, len(result.Resources[0].Endpoints)) // Create, Update, Delete, Get, and List endpoints
+		assert.Equal(t, 6, len(result.Resources[0].Endpoints)) // Create, Update, Delete, Get, List, and Search endpoints
 
 		// Check the generated Create endpoint
 		createEndpoint := result.Resources[0].Endpoints[0]
@@ -1668,9 +1668,9 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should not generate any Create endpoints, but should generate Get and List endpoints
+		// Should not generate any Create endpoints, but should generate Get, List, and Search endpoints
 		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 2, len(result.Resources[0].Endpoints))
+		assert.Equal(t, 3, len(result.Resources[0].Endpoints))
 
 		// Check the generated Get endpoint
 		getEndpoint := result.Resources[0].Endpoints[0]
@@ -1750,9 +1750,9 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should preserve the existing Create endpoint and add Get and List endpoints
+		// Should preserve the existing Create endpoint and add Get, List, and Search endpoints
 		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 3, len(result.Resources[0].Endpoints))
+		assert.Equal(t, 4, len(result.Resources[0].Endpoints))
 
 		existingEndpoint := result.Resources[0].Endpoints[0]
 		assert.Equal(t, "Create", existingEndpoint.Name)
@@ -1856,7 +1856,7 @@ func TestApplyOverlay(t *testing.T) {
 		require.NotNil(t, usersResource, "Users resource should exist")
 		require.NotNil(t, productsResource, "Products resource should exist")
 
-		assert.Equal(t, 3, len(usersResource.Endpoints))
+		assert.Equal(t, 4, len(usersResource.Endpoints))
 		usersCreateEndpoint := usersResource.Endpoints[0]
 		assert.Equal(t, "Create", usersCreateEndpoint.Name)
 		assert.Equal(t, "Create Users", usersCreateEndpoint.Title)
@@ -2039,9 +2039,9 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should generate Create, Update, Get, and List endpoints but not Delete
+		// Should generate Create, Update, Get, List, and Search endpoints but not Delete
 		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 4, len(result.Resources[0].Endpoints)) // Create, Update, Get, and List endpoints
+		assert.Equal(t, 5, len(result.Resources[0].Endpoints)) // Create, Update, Get, List, and Search endpoints
 
 		// Verify no Delete endpoint was created
 		for _, endpoint := range result.Resources[0].Endpoints {
@@ -2200,7 +2200,7 @@ func TestApplyOverlay(t *testing.T) {
 			}
 		}
 		require.NotNil(t, usersResource, "Users resource should exist")
-		assert.Equal(t, 4, len(usersResource.Endpoints))
+		assert.Equal(t, 5, len(usersResource.Endpoints))
 
 		// Find and check Users Delete endpoint
 		var usersDeleteEndpoint *Endpoint
@@ -2327,9 +2327,9 @@ func TestApplyOverlay_GetEndpoints(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should generate Get and List endpoints
+		// Should generate Get, List, and Search endpoints
 		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 2, len(result.Resources[0].Endpoints))
+		assert.Equal(t, 3, len(result.Resources[0].Endpoints))
 
 		getEndpoint := result.Resources[0].Endpoints[0]
 
@@ -2452,9 +2452,9 @@ func TestApplyOverlay_GetEndpoints(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should preserve existing Get endpoint and add List endpoint
+		// Should preserve existing Get endpoint and add List and Search endpoints
 		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 2, len(result.Resources[0].Endpoints))
+		assert.Equal(t, 3, len(result.Resources[0].Endpoints))
 
 		existingEndpoint := result.Resources[0].Endpoints[0]
 		assert.Equal(t, "Get", existingEndpoint.Name)
@@ -2506,10 +2506,10 @@ func TestApplyOverlay_GetEndpoints(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Both resources should have Get and List endpoints
+		// Both resources should have Get, List, and Search endpoints
 		assert.Equal(t, 2, len(result.Resources))
-		assert.Equal(t, 2, len(result.Resources[0].Endpoints))
-		assert.Equal(t, 2, len(result.Resources[1].Endpoints))
+		assert.Equal(t, 3, len(result.Resources[0].Endpoints))
+		assert.Equal(t, 3, len(result.Resources[1].Endpoints))
 
 		// Find UserProfiles resource and check Get endpoint
 		var userGetEndpoint *Endpoint
@@ -2517,7 +2517,7 @@ func TestApplyOverlay_GetEndpoints(t *testing.T) {
 		for _, resource := range result.Resources {
 			if resource.Name == "UserProfiles" {
 				foundUserProfiles = true
-				assert.Equal(t, 2, len(resource.Endpoints)) // Get and List endpoints
+				assert.Equal(t, 3, len(resource.Endpoints)) // Get, List, and Search endpoints
 				// Find the Get endpoint
 				for _, endpoint := range resource.Endpoints {
 					if endpoint.Name == "Get" {
@@ -2542,7 +2542,7 @@ func TestApplyOverlay_GetEndpoints(t *testing.T) {
 		for _, resource := range result.Resources {
 			if resource.Name == "ProductCategories" {
 				foundProductCategories = true
-				assert.Equal(t, 2, len(resource.Endpoints)) // Get and List endpoints
+				assert.Equal(t, 3, len(resource.Endpoints)) // Get, List, and Search endpoints
 				// Find the Get endpoint
 				for _, endpoint := range resource.Endpoints {
 					if endpoint.Name == "Get" {
@@ -3168,9 +3168,9 @@ func TestApplyOverlay_ListEndpoints(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should generate both Get and List endpoints
+		// Should generate Get, List, and Search endpoints
 		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 2, len(result.Resources[0].Endpoints))
+		assert.Equal(t, 3, len(result.Resources[0].Endpoints))
 
 		// Find the List endpoint (should be the second one after Get)
 		var listEndpoint Endpoint
@@ -3363,5 +3363,171 @@ func TestApplyOverlay_ListEndpoints(t *testing.T) {
 		// Should use pluralized resource name in title and description
 		assert.Equal(t, "List all Users", listEndpoint.Title)
 		assert.Equal(t, "Returns a paginated list of all `Users` in your organization.", listEndpoint.Description)
+	})
+}
+
+func TestApplyOverlay_SearchEndpoints(t *testing.T) {
+	t.Run("SearchEndpointGeneration", func(t *testing.T) {
+		input := &Service{
+			Name: "TestService",
+			Resources: []Resource{
+				{
+					Name:        "Users",
+					Description: "User management resource",
+					Operations:  []string{"Create", "Read", "Update", "Delete"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "id",
+								Type:        "UUID",
+								Description: "User ID",
+							},
+							Operations: []string{"Read"},
+						},
+						{
+							Field: Field{
+								Name:        "name",
+								Type:        "String",
+								Description: "User name",
+								Example:     "John Doe",
+							},
+							Operations: []string{"Create", "Read", "Update"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Should generate a Search endpoint for the Users resource
+		assert.Equal(t, 1, len(result.Resources))
+
+		var searchEndpointFound bool
+		for _, endpoint := range result.Resources[0].Endpoints {
+			if endpoint.Name == "Search" {
+				searchEndpointFound = true
+
+				// Verify Search endpoint properties
+				assert.Equal(t, "Search Users", endpoint.Title)
+				assert.Equal(t, "Search for `Users` with filtering capabilities.", endpoint.Description)
+				assert.Equal(t, "POST", endpoint.Method)
+				assert.Equal(t, "/_search", endpoint.Path)
+				assert.Equal(t, 200, endpoint.Response.StatusCode)
+				assert.Equal(t, "application/json", endpoint.Request.ContentType)
+				assert.Equal(t, "application/json", endpoint.Response.ContentType)
+
+				// Verify query parameters (offset and limit)
+				assert.Equal(t, 2, len(endpoint.Request.QueryParams))
+				assert.Equal(t, "limit", endpoint.Request.QueryParams[0].Name)
+				assert.Equal(t, "50", endpoint.Request.QueryParams[0].Default)
+				assert.Equal(t, "offset", endpoint.Request.QueryParams[1].Name)
+				assert.Equal(t, "0", endpoint.Request.QueryParams[1].Default)
+
+				// Verify body parameter (Filter)
+				assert.Equal(t, 1, len(endpoint.Request.BodyParams))
+				assert.Equal(t, "Filter", endpoint.Request.BodyParams[0].Name)
+				assert.Equal(t, "UsersFilter", endpoint.Request.BodyParams[0].Type)
+				assert.Equal(t, "Filter criteria to search for specific records", endpoint.Request.BodyParams[0].Description)
+
+				// Verify response structure (same as List endpoint)
+				assert.Equal(t, 2, len(endpoint.Response.BodyFields))
+				assert.Equal(t, "data", endpoint.Response.BodyFields[0].Name)
+				assert.Equal(t, "Users", endpoint.Response.BodyFields[0].Type)
+				assert.Contains(t, endpoint.Response.BodyFields[0].Modifiers, "array")
+				assert.Equal(t, "Pagination", endpoint.Response.BodyFields[1].Name)
+				assert.Equal(t, "Pagination", endpoint.Response.BodyFields[1].Type)
+
+				break
+			}
+		}
+		assert.True(t, searchEndpointFound, "Search endpoint should be generated for Users resource with Read operation")
+	})
+
+	t.Run("SearchEndpointNotGeneratedForNonReadResources", func(t *testing.T) {
+		input := &Service{
+			Name: "TestService",
+			Resources: []Resource{
+				{
+					Name:        "WriteOnlyFiles",
+					Description: "Write-only file resource",
+					Operations:  []string{"Create"}, // No Read operation
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "name",
+								Type:        "String",
+								Description: "File name",
+							},
+							Operations: []string{"Create"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Should not generate a Search endpoint for WriteOnlyFiles resource
+		assert.Equal(t, 1, len(result.Resources))
+
+		var searchEndpointFound bool
+		for _, endpoint := range result.Resources[0].Endpoints {
+			if endpoint.Name == "Search" {
+				searchEndpointFound = true
+				break
+			}
+		}
+		assert.False(t, searchEndpointFound, "Search endpoint should NOT be generated for resources without Read operation")
+	})
+
+	t.Run("SearchEndpointNotDuplicatedWhenExists", func(t *testing.T) {
+		input := &Service{
+			Name: "TestService",
+			Resources: []Resource{
+				{
+					Name:        "Users",
+					Description: "User management resource",
+					Operations:  []string{"Read"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "id",
+								Type:        "UUID",
+								Description: "User ID",
+							},
+							Operations: []string{"Read"},
+						},
+					},
+					Endpoints: []Endpoint{
+						{
+							Name:        "Search",
+							Title:       "Custom Search Users",
+							Description: "Custom search endpoint",
+							Method:      "POST",
+							Path:        "/custom-search",
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Should not generate a duplicate Search endpoint
+		assert.Equal(t, 1, len(result.Resources))
+		searchCount := 0
+		for _, endpoint := range result.Resources[0].Endpoints {
+			if endpoint.Name == "Search" {
+				searchCount++
+				// Should keep the existing custom endpoint, not the generated one
+				assert.Equal(t, "Custom Search Users", endpoint.Title)
+				assert.Equal(t, "/custom-search", endpoint.Path)
+			}
+		}
+		assert.Equal(t, 1, searchCount)
 	})
 }

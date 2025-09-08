@@ -227,6 +227,17 @@ const (
 	listOffsetDefaultValue   = "0"
 )
 
+// Search Endpoint Constants
+const (
+	searchEndpointName         = "Search"
+	searchEndpointPath         = "/_search"
+	searchEndpointTitlePrefix  = "Search "
+	searchEndpointDescTemplate = "Search for `%s` with filtering capabilities."
+	searchResponseStatusCode   = 200
+	searchFilterParamName      = "Filter"
+	searchFilterParamDesc      = "Filter criteria to search for specific records"
+)
+
 // Service is the definition of an API service.
 type Service struct {
 	// Name of the service
@@ -395,7 +406,7 @@ func containsOperation(operations []string, operation string) bool {
 	return false
 }
 
-// ApplyOverlay applies an overlay to a specification, generating Objects, Create endpoints, Update endpoints, Delete endpoints, Get endpoints, and List endpoints from Resources.
+// ApplyOverlay applies an overlay to a specification, generating Objects, Create endpoints, Update endpoints, Delete endpoints, Get endpoints, List endpoints, and Search endpoints from Resources.
 // It creates Objects for Resources that have the "Read" operation, including all fields
 // that support the "Read" operation in the generated Object.
 // It creates Create endpoints for Resources that have the "Create" operation, including all fields
@@ -405,6 +416,7 @@ func containsOperation(operations []string, operation string) bool {
 // It creates Delete endpoints for Resources that have the "Delete" operation, using ID as a path parameter, and returning nothing (status code 204).
 // It creates Get endpoints for Resources that have the "Read" operation, using ID as a path parameter, and returning the Resource object.
 // It creates List endpoints for Resources that have the "Read" operation, with limit and offset query parameters for pagination, and returning paginated data with the Resource objects.
+// It creates Search endpoints for Resources that have the "Read" operation, using POST method with /_search path, Filter body parameter of type <Resource>Filter, limit and offset query parameters for pagination, and returning paginated data with the Resource objects (same response as List endpoint).
 // It also adds default ErrorCode enum, Error object, ErrorFieldCode enum, ErrorField object, and Pagination object to every service.
 func ApplyOverlay(input *Service) *Service {
 	if input == nil {
@@ -911,6 +923,91 @@ func ApplyOverlay(input *Service) *Service {
 				for i := range result.Resources {
 					if result.Resources[i].Name == resource.Name {
 						result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, listEndpoint)
+						break
+					}
+				}
+			}
+		}
+
+		// Generate Search endpoints for resources that have Read operations
+		if containsOperation(resource.Operations, OperationRead) {
+			// Check if a Search endpoint already exists
+			searchEndpointExists := false
+			for _, endpoint := range resource.Endpoints {
+				if endpoint.Name == searchEndpointName {
+					searchEndpointExists = true
+					break
+				}
+			}
+
+			// Only create the endpoint if it doesn't already exist
+			if !searchEndpointExists {
+				// Create query parameters for pagination (same as List endpoint)
+				limitParam := Field{
+					Name:        listLimitParamName,
+					Description: listLimitParamDesc,
+					Type:        FieldTypeInt,
+					Default:     listLimitDefaultValue,
+				}
+
+				offsetParam := Field{
+					Name:        listOffsetParamName,
+					Description: listOffsetParamDesc,
+					Type:        FieldTypeInt,
+					Default:     listOffsetDefaultValue,
+				}
+
+				// Create filter body parameter
+				filterParam := Field{
+					Name:        searchFilterParamName,
+					Description: searchFilterParamDesc,
+					Type:        resource.Name + filterSuffix,
+				}
+
+				// Create pagination and data fields for the response (same as List endpoint)
+				paginationField := Field{
+					Name:        paginationObjectName,
+					Description: "Pagination information",
+					Type:        paginationObjectName,
+				}
+
+				dataField := Field{
+					Name:        "data",
+					Description: fmt.Sprintf("Array of %s objects", resource.Name),
+					Type:        resource.Name,
+					Modifiers:   []string{ModifierArray},
+				}
+
+				// Pluralize the resource name
+				pluralResourceName := strmangle.Plural(resource.Name)
+
+				// Create the Search endpoint
+				searchEndpoint := Endpoint{
+					Name:        searchEndpointName,
+					Title:       searchEndpointTitlePrefix + pluralResourceName,
+					Description: fmt.Sprintf(searchEndpointDescTemplate, pluralResourceName),
+					Method:      httpMethodPost,
+					Path:        searchEndpointPath,
+					Request: EndpointRequest{
+						ContentType: contentTypeJSON,
+						Headers:     []Field{},
+						PathParams:  []Field{},
+						QueryParams: []Field{limitParam, offsetParam},
+						BodyParams:  []Field{filterParam},
+					},
+					Response: EndpointResponse{
+						ContentType: contentTypeJSON,
+						StatusCode:  searchResponseStatusCode,
+						Headers:     []Field{},
+						BodyFields:  []Field{dataField, paginationField},
+						BodyObject:  nil,
+					},
+				}
+
+				// Add the Search endpoint to the resource
+				for i := range result.Resources {
+					if result.Resources[i].Name == resource.Name {
+						result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, searchEndpoint)
 						break
 					}
 				}
