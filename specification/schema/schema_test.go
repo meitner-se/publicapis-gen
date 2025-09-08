@@ -13,105 +13,131 @@ import (
 )
 
 func TestNewSchemaGenerator(t *testing.T) {
+	// Arrange
+	expectedAllowAdditionalProperties := false
+	expectedDoNotReference := false
+	expectedExpandedStruct := true
+
+	// Act
 	generator := NewSchemaGenerator()
-	assert.NotNil(t, generator)
-	assert.NotNil(t, generator.reflector)
+
+	// Assert
+	assert.NotNil(t, generator, "SchemaGenerator should not be nil")
+	assert.NotNil(t, generator.reflector, "Reflector should not be nil")
+	assert.Equal(t, expectedAllowAdditionalProperties, generator.reflector.AllowAdditionalProperties, "AllowAdditionalProperties should be configured correctly")
+	assert.Equal(t, expectedDoNotReference, generator.reflector.DoNotReference, "DoNotReference should be configured correctly")
+	assert.Equal(t, expectedExpandedStruct, generator.reflector.ExpandedStruct, "ExpandedStruct should be configured correctly")
 }
 
 func TestGenerateServiceSchema(t *testing.T) {
+	// Arrange
+	expectedType := "object"
+	expectedProperties := []string{"name", "enums", "objects", "resources"}
 	generator := NewSchemaGenerator()
 
+	// Act
 	schema, err := generator.GenerateServiceSchema()
-	require.NoError(t, err)
-	assert.NotNil(t, schema)
 
-	// Check that it's a valid schema
-	assert.NotEmpty(t, schema.Type)
-	assert.NotNil(t, schema.Properties)
+	// Assert
+	require.NoError(t, err, "Expected no error when generating Service schema")
+	assert.NotNil(t, schema, "Service schema should not be nil")
+	assert.Equal(t, expectedType, schema.Type, "Service schema should have object type")
+	assert.NotNil(t, schema.Properties, "Service schema should have properties")
 
-	// Check that expected properties are present
-	_, hasName := schema.Properties.Get("name")
-	assert.True(t, hasName)
-	_, hasEnums := schema.Properties.Get("enums")
-	assert.True(t, hasEnums)
-	_, hasObjects := schema.Properties.Get("objects")
-	assert.True(t, hasObjects)
-	_, hasResources := schema.Properties.Get("resources")
-	assert.True(t, hasResources)
+	// Check that all expected properties are present
+	for _, expectedProp := range expectedProperties {
+		property, hasProperty := schema.Properties.Get(expectedProp)
+		assert.True(t, hasProperty, "Service schema should have '%s' property", expectedProp)
+		assert.NotNil(t, property, "Service schema property '%s' should not be nil", expectedProp)
+	}
 }
 
 func TestGenerateEnumSchema(t *testing.T) {
+	// Arrange
+	expectedType := "object"
+	expectedProperties := []string{"name", "description", "values"}
 	generator := NewSchemaGenerator()
 
+	// Act
 	schema, err := generator.GenerateEnumSchema()
-	require.NoError(t, err)
-	assert.NotNil(t, schema)
 
-	// Check that expected properties are present
-	_, hasName := schema.Properties.Get("name")
-	assert.True(t, hasName)
-	_, hasDescription := schema.Properties.Get("description")
-	assert.True(t, hasDescription)
-	_, hasValues := schema.Properties.Get("values")
-	assert.True(t, hasValues)
+	// Assert
+	require.NoError(t, err, "Expected no error when generating Enum schema")
+	assert.NotNil(t, schema, "Enum schema should not be nil")
+	assert.Equal(t, expectedType, schema.Type, "Enum schema should have object type")
+
+	// Check that all expected properties are present
+	for _, expectedProp := range expectedProperties {
+		property, hasProperty := schema.Properties.Get(expectedProp)
+		assert.True(t, hasProperty, "Enum schema should have '%s' property", expectedProp)
+		assert.NotNil(t, property, "Enum schema property '%s' should not be nil", expectedProp)
+	}
 }
 
 func TestGenerateObjectSchema(t *testing.T) {
+	// Arrange
+	expectedType := "object"
+	expectedProperties := []string{"name", "description", "fields"}
 	generator := NewSchemaGenerator()
 
+	// Act
 	schema, err := generator.GenerateObjectSchema()
-	require.NoError(t, err)
-	assert.NotNil(t, schema)
 
-	// Check that expected properties are present
-	_, hasName := schema.Properties.Get("name")
-	assert.True(t, hasName)
-	_, hasDescription := schema.Properties.Get("description")
-	assert.True(t, hasDescription)
-	_, hasFields := schema.Properties.Get("fields")
-	assert.True(t, hasFields)
+	// Assert
+	require.NoError(t, err, "Expected no error when generating Object schema")
+	assert.NotNil(t, schema, "Object schema should not be nil")
+	assert.Equal(t, expectedType, schema.Type, "Object schema should have object type")
+
+	// Check that all expected properties are present
+	for _, expectedProp := range expectedProperties {
+		property, hasProperty := schema.Properties.Get(expectedProp)
+		assert.True(t, hasProperty, "Object schema should have '%s' property", expectedProp)
+		assert.NotNil(t, property, "Object schema property '%s' should not be nil", expectedProp)
+	}
 }
 
 func TestGenerateResourceSchema(t *testing.T) {
+	// Arrange
+	expectedType := "object"
+	expectedProperties := []string{"name", "description", "operations", "fields", "endpoints"}
 	generator := NewSchemaGenerator()
 
+	// Act
 	schema, err := generator.GenerateResourceSchema()
-	require.NoError(t, err)
-	assert.NotNil(t, schema)
 
-	// Check that expected properties are present
-	_, hasName := schema.Properties.Get("name")
-	assert.True(t, hasName)
-	_, hasDescription := schema.Properties.Get("description")
-	assert.True(t, hasDescription)
-	_, hasOperations := schema.Properties.Get("operations")
-	assert.True(t, hasOperations)
-	_, hasFields := schema.Properties.Get("fields")
-	assert.True(t, hasFields)
-	_, hasEndpoints := schema.Properties.Get("endpoints")
-	assert.True(t, hasEndpoints)
+	// Assert
+	require.NoError(t, err, "Expected no error when generating Resource schema")
+	assert.NotNil(t, schema, "Resource schema should not be nil")
+	assert.Equal(t, expectedType, schema.Type, "Resource schema should have object type")
+
+	// Check that all expected properties are present
+	for _, expectedProp := range expectedProperties {
+		property, hasProperty := schema.Properties.Get(expectedProp)
+		assert.True(t, hasProperty, "Resource schema should have '%s' property", expectedProp)
+		assert.NotNil(t, property, "Resource schema property '%s' should not be nil", expectedProp)
+	}
 }
 
 func TestGenerateFieldSchema(t *testing.T) {
+	// Arrange
+	expectedType := "object"
+	expectedProperties := []string{"name", "description", "type", "default", "example", "modifiers"}
 	generator := NewSchemaGenerator()
 
+	// Act
 	schema, err := generator.GenerateFieldSchema()
-	require.NoError(t, err)
-	assert.NotNil(t, schema)
 
-	// Check that expected properties are present
-	_, hasName := schema.Properties.Get("name")
-	assert.True(t, hasName)
-	_, hasDescription := schema.Properties.Get("description")
-	assert.True(t, hasDescription)
-	_, hasType := schema.Properties.Get("type")
-	assert.True(t, hasType)
-	_, hasDefault := schema.Properties.Get("default")
-	assert.True(t, hasDefault)
-	_, hasExample := schema.Properties.Get("example")
-	assert.True(t, hasExample)
-	_, hasModifiers := schema.Properties.Get("modifiers")
-	assert.True(t, hasModifiers)
+	// Assert
+	require.NoError(t, err, "Expected no error when generating Field schema")
+	assert.NotNil(t, schema, "Field schema should not be nil")
+	assert.Equal(t, expectedType, schema.Type, "Field schema should have object type")
+
+	// Check that all expected properties are present
+	for _, expectedProp := range expectedProperties {
+		property, hasProperty := schema.Properties.Get(expectedProp)
+		assert.True(t, hasProperty, "Field schema should have '%s' property", expectedProp)
+		assert.NotNil(t, property, "Field schema property '%s' should not be nil", expectedProp)
+	}
 }
 
 func TestGenerateResourceFieldSchema(t *testing.T) {
@@ -197,44 +223,57 @@ func TestGenerateEndpointResponseSchema(t *testing.T) {
 }
 
 func TestGenerateAllSchemas(t *testing.T) {
+	// Arrange
+	expectedSchemas := []string{"Service", "Enum", "Object", "Resource", "Field", "ResourceField", "Endpoint", "EndpointRequest", "EndpointResponse"}
+	expectedSchemaCount := len(expectedSchemas)
+	expectedSchemaType := "object"
 	generator := NewSchemaGenerator()
 
+	// Act
 	schemas, err := generator.GenerateAllSchemas()
-	require.NoError(t, err)
-	assert.NotNil(t, schemas)
 
-	// Check that all expected schemas are present
-	expectedSchemas := []string{"Service", "Enum", "Object", "Resource", "Field", "ResourceField", "Endpoint", "EndpointRequest", "EndpointResponse"}
-	for _, expectedSchema := range expectedSchemas {
-		assert.Contains(t, schemas, expectedSchema, "Schema %s should be present", expectedSchema)
-		assert.NotNil(t, schemas[expectedSchema], "Schema %s should not be nil", expectedSchema)
-	}
+	// Assert
+	require.NoError(t, err, "Expected no error when generating all schemas")
+	assert.NotNil(t, schemas, "Schemas map should not be nil")
+	assert.Equal(t, expectedSchemaCount, len(schemas), "Should generate exactly %d schemas", expectedSchemaCount)
 
-	// Check that each schema has the correct structure
-	for name, schema := range schemas {
-		assert.NotEmpty(t, schema.Type, "Schema %s should have a type", name)
-		assert.NotNil(t, schema.Properties, "Schema %s should have properties", name)
+	// Check that all expected schemas are present with correct structure
+	for _, expectedSchemaName := range expectedSchemas {
+		schema, exists := schemas[expectedSchemaName]
+		assert.True(t, exists, "Schema '%s' should be present in results", expectedSchemaName)
+		assert.NotNil(t, schema, "Schema '%s' should not be nil", expectedSchemaName)
+		assert.Equal(t, expectedSchemaType, schema.Type, "Schema '%s' should have object type", expectedSchemaName)
+		assert.NotNil(t, schema.Properties, "Schema '%s' should have properties", expectedSchemaName)
 	}
 }
 
 func TestSchemaToJSON(t *testing.T) {
+	// Arrange
+	expectedSchemaElements := []string{"type", "properties"}
+	expectedTypeValue := "object"
 	generator := NewSchemaGenerator()
 
 	schema, err := generator.GenerateServiceSchema()
-	require.NoError(t, err)
+	require.NoError(t, err, "Expected no error when generating Service schema")
 
+	// Act
 	jsonStr, err := generator.SchemaToJSON(schema)
-	require.NoError(t, err)
-	assert.NotEmpty(t, jsonStr)
 
-	// Verify it's valid JSON
+	// Assert
+	require.NoError(t, err, "Expected no error when converting schema to JSON")
+	assert.NotEmpty(t, jsonStr, "JSON string should not be empty")
+
+	// Verify it's valid JSON with expected structure
 	var jsonObj map[string]interface{}
 	err = json.Unmarshal([]byte(jsonStr), &jsonObj)
-	require.NoError(t, err)
+	require.NoError(t, err, "Generated JSON should be valid and parseable")
 
-	// Check that essential schema elements are present
-	assert.Contains(t, jsonObj, "type")
-	assert.Contains(t, jsonObj, "properties")
+	// Check that essential schema elements are present with expected values
+	for _, element := range expectedSchemaElements {
+		assert.Contains(t, jsonObj, element, "JSON schema should contain '%s' element", element)
+	}
+	assert.Equal(t, expectedTypeValue, jsonObj["type"], "Schema type should be 'object'")
+	assert.IsType(t, map[string]interface{}{}, jsonObj["properties"], "Properties should be an object")
 }
 
 func TestGenerateServiceSchemaJSON(t *testing.T) {
