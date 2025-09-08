@@ -925,3 +925,347 @@ func TestField_GetComment(t *testing.T) {
 		})
 	}
 }
+
+// ============================================================================
+// Factory Function Tests
+// ============================================================================
+
+func TestCreateLimitParam(t *testing.T) {
+	// Act
+	limitParam := CreateLimitParam()
+
+	// Assert
+	assert.Equal(t, listLimitParamName, limitParam.Name, "Limit parameter should have correct name")
+	assert.Equal(t, listLimitParamDesc, limitParam.Description, "Limit parameter should have correct description")
+	assert.Equal(t, FieldTypeInt, limitParam.Type, "Limit parameter should have Int type")
+	assert.Equal(t, listLimitDefaultValue, limitParam.Default, "Limit parameter should have correct default value")
+
+	t.Run("consistency", func(t *testing.T) {
+		// Test that factory methods always return consistent results
+		limit1 := CreateLimitParam()
+		limit2 := CreateLimitParam()
+
+		assert.Equal(t, limit1, limit2, "CreateLimitParam should return consistent results")
+	})
+}
+
+func TestCreateOffsetParam(t *testing.T) {
+	// Act
+	offsetParam := CreateOffsetParam()
+
+	// Assert
+	assert.Equal(t, listOffsetParamName, offsetParam.Name, "Offset parameter should have correct name")
+	assert.Equal(t, listOffsetParamDesc, offsetParam.Description, "Offset parameter should have correct description")
+	assert.Equal(t, FieldTypeInt, offsetParam.Type, "Offset parameter should have Int type")
+	assert.Equal(t, listOffsetDefaultValue, offsetParam.Default, "Offset parameter should have correct default value")
+
+	t.Run("consistency", func(t *testing.T) {
+		offset1 := CreateOffsetParam()
+		offset2 := CreateOffsetParam()
+
+		assert.Equal(t, offset1, offset2, "CreateOffsetParam should return consistent results")
+	})
+}
+
+func TestCreatePaginationField(t *testing.T) {
+	// Arrange
+	expectedName := paginationObjectName
+	expectedDescription := "Pagination information"
+	expectedType := paginationObjectName
+
+	// Act
+	paginationField := CreatePaginationField()
+
+	// Assert
+	assert.Equal(t, expectedName, paginationField.Name, "Pagination field should have correct name")
+	assert.Equal(t, expectedDescription, paginationField.Description, "Pagination field should have correct description")
+	assert.Equal(t, expectedType, paginationField.Type, "Pagination field should have correct type")
+
+	t.Run("consistency", func(t *testing.T) {
+		pagination1 := CreatePaginationField()
+		pagination2 := CreatePaginationField()
+
+		assert.Equal(t, pagination1, pagination2, "CreatePaginationField should return consistent results")
+	})
+}
+
+func TestCreateDataField(t *testing.T) {
+	testCases := []struct {
+		resourceName        string
+		expectedName        string
+		expectedDescription string
+		expectedType        string
+		expectedModifiers   []string
+	}{
+		{
+			resourceName:        "User",
+			expectedName:        "data",
+			expectedDescription: "Array of User objects",
+			expectedType:        "User",
+			expectedModifiers:   []string{ModifierArray},
+		},
+		{
+			resourceName:        "Product",
+			expectedName:        "data",
+			expectedDescription: "Array of Product objects",
+			expectedType:        "Product",
+			expectedModifiers:   []string{ModifierArray},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.resourceName, func(t *testing.T) {
+			dataField := CreateDataField(tc.resourceName)
+
+			assert.Equal(t, tc.expectedName, dataField.Name, "Data field should have correct name")
+			assert.Equal(t, tc.expectedDescription, dataField.Description, "Data field should have correct description")
+			assert.Equal(t, tc.expectedType, dataField.Type, "Data field should have correct type")
+			assert.Equal(t, tc.expectedModifiers, dataField.Modifiers, "Data field should have correct modifiers")
+			assert.True(t, dataField.IsArray(), "Data field should be an array")
+		})
+	}
+
+	t.Run("edge cases", func(t *testing.T) {
+		t.Run("empty string", func(t *testing.T) {
+			dataField := CreateDataField("")
+
+			assert.Equal(t, "data", dataField.Name, "Data field should have 'data' name even with empty resource name")
+			assert.Equal(t, "Array of  objects", dataField.Description, "Data field should handle empty resource name in description")
+			assert.Equal(t, "", dataField.Type, "Data field type should match empty resource name")
+			assert.True(t, dataField.IsArray(), "Data field should always be array")
+		})
+	})
+}
+
+func TestCreateIDParam(t *testing.T) {
+	testCases := []struct {
+		name         string
+		description  string
+		expectedName string
+		expectedType string
+	}{
+		{
+			name:         "user ID parameter",
+			description:  "The unique identifier of the user",
+			expectedName: "id",
+			expectedType: FieldTypeUUID,
+		},
+		{
+			name:         "product ID parameter",
+			description:  "Product identifier",
+			expectedName: "id",
+			expectedType: FieldTypeUUID,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			idParam := CreateIDParam(tc.description)
+
+			assert.Equal(t, tc.expectedName, idParam.Name, "ID parameter should have correct name")
+			assert.Equal(t, tc.description, idParam.Description, "ID parameter should have correct description")
+			assert.Equal(t, tc.expectedType, idParam.Type, "ID parameter should have UUID type")
+			assert.Empty(t, idParam.Modifiers, "ID parameter should have no modifiers")
+			assert.Empty(t, idParam.Default, "ID parameter should have no default value")
+			assert.Empty(t, idParam.Example, "ID parameter should have no example")
+		})
+	}
+
+	t.Run("edge cases", func(t *testing.T) {
+		t.Run("empty description", func(t *testing.T) {
+			idParam := CreateIDParam("")
+
+			assert.Equal(t, "id", idParam.Name, "ID param should always have 'id' name")
+			assert.Equal(t, "", idParam.Description, "ID param should accept empty description")
+			assert.Equal(t, FieldTypeUUID, idParam.Type, "ID param should always have UUID type")
+		})
+	})
+}
+
+// ============================================================================
+// Utility Function Tests
+// ============================================================================
+
+func TestCamelCase(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected string
+	}{
+		{"user_name", "userName"},
+		{"first_name", "firstName"},
+		{"id", "id"},
+		{"created_at", "createdAt"},
+		{"user_id", "userID"},
+		{"api_key", "apiKey"},
+		{"username", "username"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.input, func(t *testing.T) {
+			result := camelCase(tc.input)
+			assert.Equal(t, tc.expected, result, "CamelCase conversion for '%s' should be '%s'", tc.input, tc.expected)
+		})
+	}
+
+	t.Run("edge cases", func(t *testing.T) {
+		edgeCases := []struct {
+			input    string
+			expected string
+		}{
+			{"", ""},
+			{"a", "a"},
+			{"_", ""},
+			{"__", ""},
+			{"a_", "a"},
+			{"_a", "a"},
+			{"a__b", "aB"},
+			{"multiple___underscores", "multipleUnderscores"},
+		}
+
+		for _, tc := range edgeCases {
+			t.Run("camelCase_"+tc.input, func(t *testing.T) {
+				result := camelCase(tc.input)
+				assert.Equal(t, tc.expected, result, "CamelCase of '%s' should be '%s'", tc.input, tc.expected)
+			})
+		}
+	})
+}
+
+func TestToKebabCase(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected string
+	}{
+		{"UserProfile", "userprofile"},
+		{"user_profile", "user-profile"},
+		{"User Profile", "user-profile"},
+		{"UserAPI", "userapi"},
+		{"API_KEY", "api-key"},
+		{"simple", "simple"},
+		{"Multi Word String", "multi-word-string"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.input, func(t *testing.T) {
+			result := toKebabCase(tc.input)
+			assert.Equal(t, tc.expected, result, "KebabCase conversion for '%s' should be '%s'", tc.input, tc.expected)
+		})
+	}
+
+	t.Run("edge cases", func(t *testing.T) {
+		edgeCases := []struct {
+			input    string
+			expected string
+		}{
+			{"", ""},
+			{"a", "a"},
+			{"A", "a"},
+			{"_", "-"},
+			{" ", "-"},
+			{"__", "--"},
+			{"  ", "--"},
+			{"a_b c", "a-b-c"},
+			{"Multiple   Spaces", "multiple---spaces"},
+			{"Mixed_Case String", "mixed-case-string"},
+		}
+
+		for _, tc := range edgeCases {
+			t.Run("toKebabCase_"+tc.input, func(t *testing.T) {
+				result := toKebabCase(tc.input)
+				assert.Equal(t, tc.expected, result, "ToKebabCase of '%s' should be '%s'", tc.input, tc.expected)
+			})
+		}
+	})
+}
+
+func TestGetComment(t *testing.T) {
+	testCases := []struct {
+		name        string
+		tabs        string
+		description string
+		fieldName   string
+		expected    string
+	}{
+		{
+			name:        "simple comment with tabs",
+			tabs:        "\t",
+			description: "User's username",
+			fieldName:   "username",
+			expected:    "\t// username: User's username",
+		},
+		{
+			name:        "comment already prefixed with field name",
+			tabs:        "\t\t",
+			description: "id is the unique identifier",
+			fieldName:   "id",
+			expected:    "\t\t// id is the unique identifier",
+		},
+		{
+			name:        "multiline description",
+			tabs:        "\t",
+			description: "First line\nSecond line",
+			fieldName:   "field",
+			expected:    "\t// field: First line\n\t// Second line",
+		},
+		{
+			name:        "no tabs",
+			tabs:        "",
+			description: "Simple description",
+			fieldName:   "name",
+			expected:    "// name: Simple description",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := getComment(tc.tabs, tc.description, tc.fieldName)
+			assert.Equal(t, tc.expected, result, "Comment formatting should match expected for case '%s'", tc.name)
+		})
+	}
+
+	t.Run("edge cases", func(t *testing.T) {
+		edgeCases := []struct {
+			name        string
+			tabs        string
+			description string
+			fieldName   string
+			expected    string
+		}{
+			{
+				name:        "empty description",
+				tabs:        "\t",
+				description: "",
+				fieldName:   "field",
+				expected:    "\t// field: ",
+			},
+			{
+				name:        "empty field name",
+				tabs:        "\t",
+				description: "Some description",
+				fieldName:   "",
+				expected:    "\t// Some description",
+			},
+			{
+				name:        "description with only newlines",
+				tabs:        "\t",
+				description: "\n\n",
+				fieldName:   "field",
+				expected:    "\t// field: \n\t// \n\t// ",
+			},
+			{
+				name:        "trailing newline in description",
+				tabs:        "\t",
+				description: "Description with trailing newline\n",
+				fieldName:   "field",
+				expected:    "\t// field: Description with trailing newline\n\t// ",
+			},
+		}
+
+		for _, tc := range edgeCases {
+			t.Run(tc.name, func(t *testing.T) {
+				result := getComment(tc.tabs, tc.description, tc.fieldName)
+				assert.Equal(t, tc.expected, result, "Comment formatting should match expected for case '%s'", tc.name)
+			})
+		}
+	})
+}
