@@ -5,30 +5,46 @@
 // The generated specifications follow the OpenAPI 3.1.0 standard and include comprehensive
 // schema definitions, endpoint documentation, and validation rules.
 //
-// The package leverages the libopenapi library for robust OpenAPI 3.1 support, providing
+// The package leverages the pb33f/libopenapi library for robust OpenAPI 3.1 support, providing
 // enterprise-grade functionality for generating, validating, and manipulating OpenAPI specifications.
+// By using libopenapi's high-level v3.Document types instead of custom definitions, we ensure
+// compatibility with the official OpenAPI 3.1 specification and gain access to powerful
+// parsing, validation, and serialization capabilities.
 //
 // # Future Usage
 //
 // Once implementation is complete, typical usage will be:
 //
 //	generator := openapi.NewGenerator()
-//	spec, err := generator.GenerateFromService(service)
+//	document, err := generator.GenerateFromService(service)
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
 //
 //	// Convert to YAML
-//	yamlBytes, err := generator.ToYAML(spec)
+//	yamlBytes, err := generator.ToYAML(document)
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
 //
 //	// Convert to JSON
-//	jsonBytes, err := generator.ToJSON(spec)
+//	jsonBytes, err := generator.ToJSON(document)
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
+//
+// # libopenapi Integration
+//
+// This package uses types from github.com/pb33f/libopenapi:
+//   - v3.Document: High-level OpenAPI 3.1 document representation
+//   - base.Info: OpenAPI info section with title, description, and version
+//   - base.Schema: OpenAPI schema definitions for objects and types
+//   - v3.Components: OpenAPI components section for reusable schemas
+//   - v3.PathItem: OpenAPI path definitions with HTTP operations
+//
+// These types provide enterprise-grade OpenAPI 3.1 support with built-in
+// validation, parsing, and serialization capabilities, eliminating the need
+// for custom OpenAPI type definitions.
 //
 // # OpenAPI 3.1 Features
 //
