@@ -1,5 +1,9 @@
 package specification
 
+import (
+	"fmt"
+)
+
 // CRUD Operations
 const (
 	OperationCreate = "Create"
@@ -194,6 +198,16 @@ const (
 	deleteResponseStatusCode  = 204
 	deleteIDParamName         = "id"
 	deleteIDParamDescription  = "The unique identifier of the resource to delete"
+)
+
+// Get Endpoint Constants
+const (
+	getEndpointName        = "Get"
+	getEndpointPath        = "/{id}"
+	getEndpointTitlePrefix = "Retrieve an existing "
+	getResponseStatusCode  = 200
+	getIDParamName         = "id"
+	getIDParamDescTemplate = "The unique identifier of the %s to retrieve"
 )
 
 // Service is the definition of an API service.
@@ -744,6 +758,59 @@ func ApplyOverlay(input *Service) *Service {
 				for i := range result.Resources {
 					if result.Resources[i].Name == resource.Name {
 						result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, deleteEndpoint)
+						break
+					}
+				}
+			}
+		}
+
+		// Generate Get endpoints for resources that have Read operations
+		if containsOperation(resource.Operations, OperationRead) {
+			// Check if a Get endpoint already exists
+			getEndpointExists := false
+			for _, endpoint := range resource.Endpoints {
+				if endpoint.Name == getEndpointName {
+					getEndpointExists = true
+					break
+				}
+			}
+
+			// Only create the endpoint if it doesn't already exist
+			if !getEndpointExists {
+				// Create the ID path parameter
+				idParam := Field{
+					Name:        getIDParamName,
+					Description: fmt.Sprintf(getIDParamDescTemplate, resource.Name),
+					Type:        FieldTypeUUID,
+				}
+
+				// Create the Get endpoint
+				getEndpoint := Endpoint{
+					Name:        getEndpointName,
+					Title:       getEndpointTitlePrefix + resource.Name,
+					Description: fmt.Sprintf("Retrieves the `%s` with the given ID.", resource.Name),
+					Method:      httpMethodGet,
+					Path:        getEndpointPath,
+					Request: EndpointRequest{
+						ContentType: contentTypeJSON,
+						Headers:     []Field{},
+						PathParams:  []Field{idParam},
+						QueryParams: []Field{},
+						BodyParams:  []Field{},
+					},
+					Response: EndpointResponse{
+						ContentType: contentTypeJSON,
+						StatusCode:  getResponseStatusCode,
+						Headers:     []Field{},
+						BodyFields:  []Field{},
+						BodyObject:  &resource.Name,
+					},
+				}
+
+				// Add the Get endpoint to the resource
+				for i := range result.Resources {
+					if result.Resources[i].Name == resource.Name {
+						result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, getEndpoint)
 						break
 					}
 				}
