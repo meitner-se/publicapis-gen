@@ -1494,9 +1494,9 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Check that the resource has the Create, Update, and Delete endpoints generated
+		// Check that the resource has the Create, Update, Delete, and Get endpoints generated
 		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 3, len(result.Resources[0].Endpoints)) // Create, Update, and Delete endpoints
+		assert.Equal(t, 4, len(result.Resources[0].Endpoints)) // Create, Update, Delete, and Get endpoints
 
 		// Check the generated Create endpoint
 		createEndpoint := result.Resources[0].Endpoints[0]
@@ -1640,9 +1640,9 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should not generate any Create endpoints
+		// Should not generate any Create endpoints, but should generate Get endpoint
 		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 0, len(result.Resources[0].Endpoints))
+		assert.Equal(t, 1, len(result.Resources[0].Endpoints))
 	})
 
 	t.Run("ResourceWithExistingCreateEndpoint", func(t *testing.T) {
@@ -1694,9 +1694,9 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should preserve the existing Create endpoint, not add a new one
+		// Should preserve the existing Create endpoint and add a Get endpoint
 		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 1, len(result.Resources[0].Endpoints))
+		assert.Equal(t, 2, len(result.Resources[0].Endpoints))
 
 		existingEndpoint := result.Resources[0].Endpoints[0]
 		assert.Equal(t, "Create", existingEndpoint.Name)
@@ -1759,8 +1759,8 @@ func TestApplyOverlay(t *testing.T) {
 		// Resources should have endpoints generated based on their operations
 		assert.Equal(t, 2, len(result.Resources))
 
-		// Check Users - has Create and Read operations, so should have 1 endpoint (Create)
-		assert.Equal(t, 1, len(result.Resources[0].Endpoints))
+		// Check Users - has Create and Read operations, so should have 2 endpoints (Create and Get)
+		assert.Equal(t, 2, len(result.Resources[0].Endpoints))
 		usersCreateEndpoint := result.Resources[0].Endpoints[0]
 		assert.Equal(t, "Create", usersCreateEndpoint.Name)
 		assert.Equal(t, "Create Users", usersCreateEndpoint.Title)
@@ -1901,9 +1901,9 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should generate Create and Update endpoints but not Delete
+		// Should generate Create, Update, and Get endpoints but not Delete
 		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 2, len(result.Resources[0].Endpoints)) // Create and Update only
+		assert.Equal(t, 3, len(result.Resources[0].Endpoints)) // Create, Update, and Get endpoints
 
 		// Verify no Delete endpoint was created
 		for _, endpoint := range result.Resources[0].Endpoints {
@@ -2018,8 +2018,8 @@ func TestApplyOverlay(t *testing.T) {
 		// Resources should have endpoints generated based on their operations
 		assert.Equal(t, 2, len(result.Resources))
 
-		// Check Users - has Create, Read, and Delete operations, so should have 2 endpoints (Create and Delete)
-		assert.Equal(t, 2, len(result.Resources[0].Endpoints))
+		// Check Users - has Create, Read, and Delete operations, so should have 3 endpoints (Create, Delete, and Get)
+		assert.Equal(t, 3, len(result.Resources[0].Endpoints))
 
 		// Find and check Users Delete endpoint
 		var usersDeleteEndpoint *Endpoint
