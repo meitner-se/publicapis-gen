@@ -582,40 +582,14 @@ func ApplyOverlay(input *Service) *Service {
 	// Generate Objects from Resources that have Read operations
 	for _, resource := range input.Resources {
 		// Check if the resource has Read operation
-		if containsOperation(resource.Operations, OperationRead) {
+		if resource.HasReadOperation() {
 			// Check if an object with this name already exists
-			objectExists := false
-			for _, existingObj := range result.Objects {
-				if existingObj.Name == resource.Name {
-					objectExists = true
-					break
-				}
-			}
-
-			// Only create the object if it doesn't already exist
-			if !objectExists {
+			if !result.HasObject(resource.Name) {
 				// Create a new Object based on the Resource
 				newObject := Object{
 					Name:        resource.Name,
 					Description: resource.Description,
-					Fields:      make([]Field, 0),
-				}
-
-				// Add all fields that support Read operation
-				for _, resourceField := range resource.Fields {
-					if containsOperation(resourceField.Operations, OperationRead) {
-						// Convert ResourceField to Field by copying the embedded Field
-						field := Field{
-							Name:        resourceField.Field.Name,
-							Description: resourceField.Field.Description,
-							Type:        resourceField.Field.Type,
-							Default:     resourceField.Field.Default,
-							Example:     resourceField.Field.Example,
-							Modifiers:   make([]string, len(resourceField.Field.Modifiers)),
-						}
-						copy(field.Modifiers, resourceField.Field.Modifiers)
-						newObject.Fields = append(newObject.Fields, field)
-					}
+					Fields:      resource.GetReadableFields(),
 				}
 
 				// Add the new object to the result
@@ -624,35 +598,11 @@ func ApplyOverlay(input *Service) *Service {
 		}
 
 		// Generate Create endpoints for resources that have Create operations
-		if containsOperation(resource.Operations, OperationCreate) {
-			// Check if a Create endpoint already exists
-			createEndpointExists := false
-			for _, endpoint := range resource.Endpoints {
-				if endpoint.Name == createEndpointName {
-					createEndpointExists = true
-					break
-				}
-			}
-
+		if resource.HasCreateOperation() {
 			// Only create the endpoint if it doesn't already exist
-			if !createEndpointExists {
+			if !resource.HasEndpoint(createEndpointName) {
 				// Collect all fields that support Create operation for body parameters
-				var bodyParams []Field
-				for _, resourceField := range resource.Fields {
-					if containsOperation(resourceField.Operations, OperationCreate) {
-						// Convert ResourceField to Field by copying the embedded Field
-						field := Field{
-							Name:        resourceField.Field.Name,
-							Description: resourceField.Field.Description,
-							Type:        resourceField.Field.Type,
-							Default:     resourceField.Field.Default,
-							Example:     resourceField.Field.Example,
-							Modifiers:   make([]string, len(resourceField.Field.Modifiers)),
-						}
-						copy(field.Modifiers, resourceField.Field.Modifiers)
-						bodyParams = append(bodyParams, field)
-					}
-				}
+				bodyParams := resource.GetCreateBodyParams()
 
 				// Create the Create endpoint
 				resourceName := resource.Name
@@ -689,35 +639,11 @@ func ApplyOverlay(input *Service) *Service {
 		}
 
 		// Generate Update endpoints for resources that have Update operations
-		if containsOperation(resource.Operations, OperationUpdate) {
-			// Check if an Update endpoint already exists
-			updateEndpointExists := false
-			for _, endpoint := range resource.Endpoints {
-				if endpoint.Name == updateEndpointName {
-					updateEndpointExists = true
-					break
-				}
-			}
-
+		if resource.HasUpdateOperation() {
 			// Only create the endpoint if it doesn't already exist
-			if !updateEndpointExists {
+			if !resource.HasEndpoint(updateEndpointName) {
 				// Collect all fields that support Update operation for body parameters
-				var bodyParams []Field
-				for _, resourceField := range resource.Fields {
-					if containsOperation(resourceField.Operations, OperationUpdate) {
-						// Convert ResourceField to Field by copying the embedded Field
-						field := Field{
-							Name:        resourceField.Field.Name,
-							Description: resourceField.Field.Description,
-							Type:        resourceField.Field.Type,
-							Default:     resourceField.Field.Default,
-							Example:     resourceField.Field.Example,
-							Modifiers:   make([]string, len(resourceField.Field.Modifiers)),
-						}
-						copy(field.Modifiers, resourceField.Field.Modifiers)
-						bodyParams = append(bodyParams, field)
-					}
-				}
+				bodyParams := resource.GetUpdateBodyParams()
 
 				// Create the ID path parameter
 				idParam := Field{
@@ -761,18 +687,9 @@ func ApplyOverlay(input *Service) *Service {
 		}
 
 		// Generate Delete endpoints for resources that have Delete operations
-		if containsOperation(resource.Operations, OperationDelete) {
-			// Check if a Delete endpoint already exists
-			deleteEndpointExists := false
-			for _, endpoint := range resource.Endpoints {
-				if endpoint.Name == deleteEndpointName {
-					deleteEndpointExists = true
-					break
-				}
-			}
-
+		if resource.HasDeleteOperation() {
 			// Only create the endpoint if it doesn't already exist
-			if !deleteEndpointExists {
+			if !resource.HasEndpoint(deleteEndpointName) {
 				// Create the ID path parameter
 				idParam := Field{
 					Name:        deleteIDParamName,
@@ -814,18 +731,9 @@ func ApplyOverlay(input *Service) *Service {
 		}
 
 		// Generate Get endpoints for resources that have Read operations
-		if containsOperation(resource.Operations, OperationRead) {
-			// Check if a Get endpoint already exists
-			getEndpointExists := false
-			for _, endpoint := range resource.Endpoints {
-				if endpoint.Name == getEndpointName {
-					getEndpointExists = true
-					break
-				}
-			}
-
+		if resource.HasReadOperation() {
 			// Only create the endpoint if it doesn't already exist
-			if !getEndpointExists {
+			if !resource.HasEndpoint(getEndpointName) {
 				// Create the ID path parameter
 				idParam := Field{
 					Name:        getIDParamName,
@@ -909,8 +817,8 @@ func ApplyOverlay(input *Service) *Service {
 					Modifiers:   []string{ModifierArray},
 				}
 
-				// Pluralize the resource name
-				pluralResourceName := strmangle.Plural(resource.Name)
+				// Get the pluralized resource name
+				pluralResourceName := resource.GetPluralName()
 
 				// Create the List endpoint
 				listEndpoint := Endpoint{
@@ -946,18 +854,9 @@ func ApplyOverlay(input *Service) *Service {
 		}
 
 		// Generate Search endpoints for resources that have Read operations
-		if containsOperation(resource.Operations, OperationRead) {
-			// Check if a Search endpoint already exists
-			searchEndpointExists := false
-			for _, endpoint := range resource.Endpoints {
-				if endpoint.Name == searchEndpointName {
-					searchEndpointExists = true
-					break
-				}
-			}
-
+		if resource.HasReadOperation() {
 			// Only create the endpoint if it doesn't already exist
-			if !searchEndpointExists {
+			if !resource.HasEndpoint(searchEndpointName) {
 				// Create query parameters for pagination (same as List endpoint)
 				limitParam := Field{
 					Name:        listLimitParamName,
@@ -994,8 +893,8 @@ func ApplyOverlay(input *Service) *Service {
 					Modifiers:   []string{ModifierArray},
 				}
 
-				// Pluralize the resource name
-				pluralResourceName := strmangle.Plural(resource.Name)
+				// Get the pluralized resource name
+				pluralResourceName := resource.GetPluralName()
 
 				// Create the Search endpoint
 				searchEndpoint := Endpoint{
@@ -1139,7 +1038,7 @@ func isStringType(fieldType string) bool {
 
 // canBeNull returns true if the field can be null (has nullable modifier or is an array).
 func canBeNull(field Field) bool {
-	return containsModifier(field.Modifiers, ModifierNullable) || containsModifier(field.Modifiers, ModifierArray)
+	return field.IsNullable() || field.IsArray()
 }
 
 // isPrimitiveType returns true if the field type is a primitive type.
@@ -1560,11 +1459,213 @@ func (e Endpoint) GetFullPath(resourceName string) string {
 	return pathSeparator + toKebabCase(resourceName) + e.Path
 }
 
+// Resource methods
+
+// HasCreateOperation checks if the Resource supports Create operations.
+func (r Resource) HasCreateOperation() bool {
+	return slices.Contains(r.Operations, OperationCreate)
+}
+
+// HasDeleteOperation checks if the Resource supports Delete operations.
+func (r Resource) HasDeleteOperation() bool {
+	return slices.Contains(r.Operations, OperationDelete)
+}
+
+// HasReadOperation checks if the Resource supports Read operations.
+func (r Resource) HasReadOperation() bool {
+	return slices.Contains(r.Operations, OperationRead)
+}
+
+// HasUpdateOperation checks if the Resource supports Update operations.
+func (r Resource) HasUpdateOperation() bool {
+	return slices.Contains(r.Operations, OperationUpdate)
+}
+
+// GetPluralName returns the pluralized name of the resource.
+func (r Resource) GetPluralName() string {
+	return strmangle.Plural(r.Name)
+}
+
+// GetCreateBodyParams returns all fields that support Create operations.
+func (r Resource) GetCreateBodyParams() []Field {
+	bodyParams := make([]Field, 0)
+	for _, resourceField := range r.Fields {
+		if resourceField.HasCreateOperation() {
+			// Convert ResourceField to Field by copying the embedded Field
+			field := Field{
+				Name:        resourceField.Field.Name,
+				Description: resourceField.Field.Description,
+				Type:        resourceField.Field.Type,
+				Default:     resourceField.Field.Default,
+				Example:     resourceField.Field.Example,
+				Modifiers:   make([]string, len(resourceField.Field.Modifiers)),
+			}
+			copy(field.Modifiers, resourceField.Field.Modifiers)
+			bodyParams = append(bodyParams, field)
+		}
+	}
+	return bodyParams
+}
+
+// GetUpdateBodyParams returns all fields that support Update operations.
+func (r Resource) GetUpdateBodyParams() []Field {
+	bodyParams := make([]Field, 0)
+	for _, resourceField := range r.Fields {
+		if resourceField.HasUpdateOperation() {
+			// Convert ResourceField to Field by copying the embedded Field
+			field := Field{
+				Name:        resourceField.Field.Name,
+				Description: resourceField.Field.Description,
+				Type:        resourceField.Field.Type,
+				Default:     resourceField.Field.Default,
+				Example:     resourceField.Field.Example,
+				Modifiers:   make([]string, len(resourceField.Field.Modifiers)),
+			}
+			copy(field.Modifiers, resourceField.Field.Modifiers)
+			bodyParams = append(bodyParams, field)
+		}
+	}
+	return bodyParams
+}
+
+// GetReadableFields returns all fields that support Read operations.
+func (r Resource) GetReadableFields() []Field {
+	readableFields := make([]Field, 0)
+	for _, resourceField := range r.Fields {
+		if resourceField.HasReadOperation() {
+			// Convert ResourceField to Field by copying the embedded Field
+			field := Field{
+				Name:        resourceField.Field.Name,
+				Description: resourceField.Field.Description,
+				Type:        resourceField.Field.Type,
+				Default:     resourceField.Field.Default,
+				Example:     resourceField.Field.Example,
+				Modifiers:   make([]string, len(resourceField.Field.Modifiers)),
+			}
+			copy(field.Modifiers, resourceField.Field.Modifiers)
+			readableFields = append(readableFields, field)
+		}
+	}
+	return readableFields
+}
+
+// HasEndpoint checks if the resource has an endpoint with the given name.
+func (r Resource) HasEndpoint(name string) bool {
+	for _, endpoint := range r.Endpoints {
+		if endpoint.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
 // Service methods
 
 // IsObject checks if the given field type represents a custom object.
 func (s *Service) IsObject(fieldType string) bool {
 	return isObjectType(fieldType, s.Objects)
+}
+
+// HasObject checks if the service contains an object with the given name.
+func (s *Service) HasObject(name string) bool {
+	for _, obj := range s.Objects {
+		if obj.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+// HasEnum checks if the service contains an enum with the given name.
+func (s *Service) HasEnum(name string) bool {
+	for _, enum := range s.Enums {
+		if enum.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+// GetObject returns the object with the given name, or nil if not found.
+func (s *Service) GetObject(name string) *Object {
+	for _, obj := range s.Objects {
+		if obj.Name == name {
+			return &obj
+		}
+	}
+	return nil
+}
+
+// Object methods
+
+// HasField checks if the object contains a field with the given name.
+func (o Object) HasField(name string) bool {
+	for _, field := range o.Fields {
+		if field.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+// GetField returns the field with the given name, or nil if not found.
+func (o Object) GetField(name string) *Field {
+	for _, field := range o.Fields {
+		if field.Name == name {
+			return &field
+		}
+	}
+	return nil
+}
+
+// Utility factory methods
+
+// CreateLimitParam creates a standard limit parameter for pagination.
+func CreateLimitParam() Field {
+	return Field{
+		Name:        listLimitParamName,
+		Description: listLimitParamDesc,
+		Type:        FieldTypeInt,
+		Default:     listLimitDefaultValue,
+	}
+}
+
+// CreateOffsetParam creates a standard offset parameter for pagination.
+func CreateOffsetParam() Field {
+	return Field{
+		Name:        listOffsetParamName,
+		Description: listOffsetParamDesc,
+		Type:        FieldTypeInt,
+		Default:     listOffsetDefaultValue,
+	}
+}
+
+// CreatePaginationField creates a standard pagination field for responses.
+func CreatePaginationField() Field {
+	return Field{
+		Name:        paginationObjectName,
+		Description: "Pagination information",
+		Type:        paginationObjectName,
+	}
+}
+
+// CreateDataField creates a standard data field for array responses.
+func CreateDataField(resourceName string) Field {
+	return Field{
+		Name:        "data",
+		Description: fmt.Sprintf("Array of %s objects", resourceName),
+		Type:        resourceName,
+		Modifiers:   []string{ModifierArray},
+	}
+}
+
+// CreateIDParam creates a standard ID parameter for path parameters.
+func CreateIDParam(description string) Field {
+	return Field{
+		Name:        "id",
+		Description: description,
+		Type:        FieldTypeUUID,
+	}
 }
 
 // Helper functions
