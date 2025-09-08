@@ -12,6 +12,8 @@ require (
 )
 
 require (
+	github.com/aarondl/inflect v0.0.2 // indirect
+	github.com/aarondl/strmangle v0.0.9 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect

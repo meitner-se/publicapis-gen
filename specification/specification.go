@@ -2,6 +2,8 @@ package specification
 
 import (
 	"fmt"
+
+	"github.com/aarondl/strmangle"
 )
 
 // CRUD Operations
@@ -210,6 +212,21 @@ const (
 	getIDParamDescTemplate = "The unique identifier of the %s to retrieve"
 )
 
+// List Endpoint Constants
+const (
+	listEndpointName         = "List"
+	listEndpointPath         = ""
+	listEndpointTitlePrefix  = "List all "
+	listEndpointDescTemplate = "Returns a paginated list of all `%s` in your organization."
+	listResponseStatusCode   = 200
+	listLimitParamName       = "limit"
+	listLimitParamDesc       = "The maximum number of items to return (default: 50)"
+	listLimitDefaultValue    = "50"
+	listOffsetParamName      = "offset"
+	listOffsetParamDesc      = "The number of items to skip before starting to return results (default: 0)"
+	listOffsetDefaultValue   = "0"
+)
+
 // Service is the definition of an API service.
 type Service struct {
 	// Name of the service
@@ -378,7 +395,7 @@ func containsOperation(operations []string, operation string) bool {
 	return false
 }
 
-// ApplyOverlay applies an overlay to a specification, generating Objects, Create endpoints, Update endpoints, and Delete endpoints from Resources.
+// ApplyOverlay applies an overlay to a specification, generating Objects, Create endpoints, Update endpoints, Delete endpoints, Get endpoints, and List endpoints from Resources.
 // It creates Objects for Resources that have the "Read" operation, including all fields
 // that support the "Read" operation in the generated Object.
 // It creates Create endpoints for Resources that have the "Create" operation, including all fields
@@ -386,6 +403,8 @@ func containsOperation(operations []string, operation string) bool {
 // It creates Update endpoints for Resources that have the "Update" operation, including all fields
 // that support the "Update" operation as body parameters in the request, with ID as a path parameter, and returning the Resource object.
 // It creates Delete endpoints for Resources that have the "Delete" operation, using ID as a path parameter, and returning nothing (status code 204).
+// It creates Get endpoints for Resources that have the "Read" operation, using ID as a path parameter, and returning the Resource object.
+// It creates List endpoints for Resources that have the "Read" operation, with limit and offset query parameters for pagination, and returning paginated data with the Resource objects.
 // It also adds default ErrorCode enum, Error object, ErrorFieldCode enum, ErrorField object, and Pagination object to every service.
 func ApplyOverlay(input *Service) *Service {
 	if input == nil {
@@ -608,6 +627,7 @@ func ApplyOverlay(input *Service) *Service {
 				}
 
 				// Create the Create endpoint
+				resourceName := resource.Name
 				createEndpoint := Endpoint{
 					Name:        createEndpointName,
 					Title:       createEndpointTitlePrefix + resource.Name,
@@ -626,7 +646,7 @@ func ApplyOverlay(input *Service) *Service {
 						StatusCode:  createResponseStatusCode,
 						Headers:     []Field{},
 						BodyFields:  []Field{},
-						BodyObject:  &resource.Name,
+						BodyObject:  &resourceName,
 					},
 				}
 
@@ -679,6 +699,7 @@ func ApplyOverlay(input *Service) *Service {
 				}
 
 				// Create the Update endpoint
+				resourceName := resource.Name
 				updateEndpoint := Endpoint{
 					Name:        updateEndpointName,
 					Title:       updateEndpointTitlePrefix + resource.Name,
@@ -697,7 +718,7 @@ func ApplyOverlay(input *Service) *Service {
 						StatusCode:  updateResponseStatusCode,
 						Headers:     []Field{},
 						BodyFields:  []Field{},
-						BodyObject:  &resource.Name,
+						BodyObject:  &resourceName,
 					},
 				}
 
@@ -785,6 +806,7 @@ func ApplyOverlay(input *Service) *Service {
 				}
 
 				// Create the Get endpoint
+				resourceName := resource.Name
 				getEndpoint := Endpoint{
 					Name:        getEndpointName,
 					Title:       getEndpointTitlePrefix + resource.Name,
@@ -803,7 +825,7 @@ func ApplyOverlay(input *Service) *Service {
 						StatusCode:  getResponseStatusCode,
 						Headers:     []Field{},
 						BodyFields:  []Field{},
-						BodyObject:  &resource.Name,
+						BodyObject:  &resourceName,
 					},
 				}
 
@@ -811,6 +833,84 @@ func ApplyOverlay(input *Service) *Service {
 				for i := range result.Resources {
 					if result.Resources[i].Name == resource.Name {
 						result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, getEndpoint)
+						break
+					}
+				}
+			}
+		}
+
+		// Generate List endpoints for resources that have Read operations
+		if containsOperation(resource.Operations, OperationRead) {
+			// Check if a List endpoint already exists
+			listEndpointExists := false
+			for _, endpoint := range resource.Endpoints {
+				if endpoint.Name == listEndpointName {
+					listEndpointExists = true
+					break
+				}
+			}
+
+			// Only create the endpoint if it doesn't already exist
+			if !listEndpointExists {
+				// Create query parameters for pagination
+				limitParam := Field{
+					Name:        listLimitParamName,
+					Description: listLimitParamDesc,
+					Type:        FieldTypeInt,
+					Default:     listLimitDefaultValue,
+				}
+
+				offsetParam := Field{
+					Name:        listOffsetParamName,
+					Description: listOffsetParamDesc,
+					Type:        FieldTypeInt,
+					Default:     listOffsetDefaultValue,
+				}
+
+				// Create pagination and data fields for the response
+				paginationField := Field{
+					Name:        paginationObjectName,
+					Description: "Pagination information",
+					Type:        paginationObjectName,
+				}
+
+				dataField := Field{
+					Name:        "data",
+					Description: fmt.Sprintf("Array of %s objects", resource.Name),
+					Type:        resource.Name,
+					Modifiers:   []string{ModifierArray},
+				}
+
+				// Pluralize the resource name
+				pluralResourceName := strmangle.Plural(resource.Name)
+
+				// Create the List endpoint
+				listEndpoint := Endpoint{
+					Name:        listEndpointName,
+					Title:       listEndpointTitlePrefix + pluralResourceName,
+					Description: fmt.Sprintf(listEndpointDescTemplate, pluralResourceName),
+					Method:      httpMethodGet,
+					Path:        listEndpointPath,
+					Request: EndpointRequest{
+						ContentType: contentTypeJSON,
+						Headers:     []Field{},
+						PathParams:  []Field{},
+						QueryParams: []Field{limitParam, offsetParam},
+						BodyParams:  []Field{},
+					},
+					Response: EndpointResponse{
+						ContentType: contentTypeJSON,
+						StatusCode:  listResponseStatusCode,
+						Headers:     []Field{},
+						BodyFields:  []Field{dataField, paginationField},
+						BodyObject:  nil,
+					},
+				}
+
+				// Add the List endpoint to the resource
+				for i := range result.Resources {
+					if result.Resources[i].Name == resource.Name {
+						result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, listEndpoint)
 						break
 					}
 				}
