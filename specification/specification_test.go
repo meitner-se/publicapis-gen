@@ -2588,6 +2588,205 @@ func Test_containsOperation(t *testing.T) {
 	})
 }
 
+func TestRequestErrorObjectGeneration(t *testing.T) {
+	t.Run("GenerateRequestErrorObjectsForAllEndpoints", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "Users",
+					Description: "User management resource",
+					Operations:  []string{"Create", "Read", "Update", "Delete"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "id",
+								Type:        "UUID",
+								Description: "User ID",
+							},
+							Operations: []string{"Read"},
+						},
+						{
+							Field: Field{
+								Name:        "name",
+								Type:        "String",
+								Description: "User name",
+								Example:     "John Doe",
+							},
+							Operations: []string{"Create", "Read", "Update"},
+						},
+						{
+							Field: Field{
+								Name:        "email",
+								Type:        "String",
+								Description: "User email",
+							},
+							Operations: []string{"Create", "Read", "Update"},
+						},
+						{
+							Field: Field{
+								Name:        "password",
+								Type:        "String",
+								Description: "User password",
+							},
+							Operations: []string{"Create", "Update"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Find the RequestError objects
+		var usersCreateRequestError *Object
+		var usersUpdateRequestError *Object
+		var usersSearchRequestError *Object
+
+		for i := range result.Objects {
+			obj := &result.Objects[i]
+			switch obj.Name {
+			case "UsersCreateRequestError":
+				usersCreateRequestError = obj
+			case "UsersUpdateRequestError":
+				usersUpdateRequestError = obj
+			case "UsersSearchRequestError":
+				usersSearchRequestError = obj
+			}
+		}
+
+		// Verify Create RequestError object
+		require.NotNil(t, usersCreateRequestError, "UsersCreateRequestError should be generated")
+		assert.Equal(t, "UsersCreateRequestError", usersCreateRequestError.Name)
+		assert.Equal(t, "Request error object for Users Create endpoint", usersCreateRequestError.Description)
+		assert.Equal(t, 3, len(usersCreateRequestError.Fields)) // name, email, password
+
+		// Verify all fields are ErrorField type and nullable
+		for _, field := range usersCreateRequestError.Fields {
+			assert.Equal(t, "ErrorField", field.Type)
+			assert.Contains(t, field.Modifiers, "nullable")
+		}
+
+		// Check specific field names
+		fieldNames := make([]string, len(usersCreateRequestError.Fields))
+		for i, field := range usersCreateRequestError.Fields {
+			fieldNames[i] = field.Name
+		}
+		assert.Contains(t, fieldNames, "name")
+		assert.Contains(t, fieldNames, "email")
+		assert.Contains(t, fieldNames, "password")
+
+		// Verify Update RequestError object
+		require.NotNil(t, usersUpdateRequestError, "UsersUpdateRequestError should be generated")
+		assert.Equal(t, "UsersUpdateRequestError", usersUpdateRequestError.Name)
+		assert.Equal(t, "Request error object for Users Update endpoint", usersUpdateRequestError.Description)
+		assert.Equal(t, 3, len(usersUpdateRequestError.Fields)) // name, email, password
+
+		// Verify Search RequestError object
+		require.NotNil(t, usersSearchRequestError, "UsersSearchRequestError should be generated")
+		assert.Equal(t, "UsersSearchRequestError", usersSearchRequestError.Name)
+		assert.Equal(t, "Request error object for Users Search endpoint", usersSearchRequestError.Description)
+		assert.Equal(t, 1, len(usersSearchRequestError.Fields)) // Filter field
+
+		// Verify the Filter field points to the correct RequestError type
+		filterField := usersSearchRequestError.Fields[0]
+		assert.Equal(t, "Filter", filterField.Name)
+		assert.Equal(t, "UsersFilterRequestError", filterField.Type)
+		assert.Contains(t, filterField.Modifiers, "nullable")
+	})
+
+	t.Run("GenerateRequestErrorObjectsWithNestedObjects", func(t *testing.T) {
+		input := &Service{
+			Name:  "TestService",
+			Enums: []Enum{},
+			Objects: []Object{
+				{
+					Name:        "Address",
+					Description: "Address information",
+					Fields: []Field{
+						{
+							Name:        "street",
+							Type:        "String",
+							Description: "Street address",
+						},
+						{
+							Name:        "city",
+							Type:        "String",
+							Description: "City name",
+						},
+					},
+				},
+			},
+			Resources: []Resource{
+				{
+					Name:        "Users",
+					Description: "User management resource",
+					Operations:  []string{"Create", "Read"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "name",
+								Type:        "String",
+								Description: "User name",
+							},
+							Operations: []string{"Create", "Read"},
+						},
+						{
+							Field: Field{
+								Name:        "address",
+								Type:        "Address",
+								Description: "User address",
+							},
+							Operations: []string{"Create", "Read"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Find the RequestError objects
+		var usersCreateRequestError *Object
+		var addressRequestError *Object
+
+		for i := range result.Objects {
+			obj := &result.Objects[i]
+			switch obj.Name {
+			case "UsersCreateRequestError":
+				usersCreateRequestError = obj
+			case "AddressRequestError":
+				addressRequestError = obj
+			}
+		}
+
+		// Verify Create RequestError object with nested object
+		require.NotNil(t, usersCreateRequestError, "UsersCreateRequestError should be generated")
+		assert.Equal(t, 2, len(usersCreateRequestError.Fields)) // name, address
+
+		// Find the address field
+		var addressField *Field
+		for i := range usersCreateRequestError.Fields {
+			if usersCreateRequestError.Fields[i].Name == "address" {
+				addressField = &usersCreateRequestError.Fields[i]
+				break
+			}
+		}
+
+		require.NotNil(t, addressField, "address field should exist")
+		assert.Equal(t, "AddressRequestError", addressField.Type)
+		assert.Contains(t, addressField.Modifiers, "nullable")
+
+		// Verify that AddressRequestError object exists (should be generated for the existing Address object)
+		require.NotNil(t, addressRequestError, "AddressRequestError should be generated")
+		assert.Equal(t, 2, len(addressRequestError.Fields)) // street, city
+	})
+}
+
 func TestApplyFilterOverlay(t *testing.T) {
 	t.Run("NilInput", func(t *testing.T) {
 		result := ApplyFilterOverlay(nil)

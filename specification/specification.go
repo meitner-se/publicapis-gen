@@ -2,6 +2,7 @@ package specification
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/aarondl/strmangle"
 )
@@ -236,6 +237,12 @@ const (
 	searchResponseStatusCode   = 200
 	searchFilterParamName      = "Filter"
 	searchFilterParamDesc      = "Filter criteria to search for specific records"
+)
+
+// Request Error Constants
+const (
+	requestErrorSuffix            = "RequestError"
+	requestErrorDescriptionPrefix = "Request error object for "
 )
 
 // Service is the definition of an API service.
@@ -563,6 +570,15 @@ func ApplyOverlay(input *Service) *Service {
 	// Copy resources
 	copy(result.Resources, input.Resources)
 
+	// Generate RequestError objects for all existing Objects
+	// This includes Objects that might be used in nested structures
+	for _, obj := range input.Objects {
+		requestErrorName := obj.Name + requestErrorSuffix
+		requestErrorDescription := requestErrorDescriptionPrefix + obj.Name
+		requestError := generateRequestErrorObject(requestErrorName, requestErrorDescription, obj.Fields, result.Objects)
+		result.Objects = append(result.Objects, requestError)
+	}
+
 	// Generate Objects from Resources that have Read operations
 	for _, resource := range input.Resources {
 		// Check if the resource has Read operation
@@ -604,6 +620,12 @@ func ApplyOverlay(input *Service) *Service {
 
 				// Add the new object to the result
 				result.Objects = append(result.Objects, newObject)
+
+				// Generate RequestError object for the new Resource-based object
+				requestErrorName := newObject.Name + requestErrorSuffix
+				requestErrorDescription := requestErrorDescriptionPrefix + newObject.Name
+				requestError := generateRequestErrorObject(requestErrorName, requestErrorDescription, newObject.Fields, result.Objects)
+				result.Objects = append(result.Objects, requestError)
 			}
 		}
 
@@ -668,6 +690,14 @@ func ApplyOverlay(input *Service) *Service {
 						result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, createEndpoint)
 						break
 					}
+				}
+
+				// Generate RequestError object for Create endpoint
+				if len(bodyParams) > 0 {
+					requestErrorName := resource.Name + createEndpointName + requestErrorSuffix
+					requestErrorDescription := requestErrorDescriptionPrefix + resource.Name + " " + createEndpointName + " endpoint"
+					createRequestError := generateRequestErrorObject(requestErrorName, requestErrorDescription, bodyParams, result.Objects)
+					result.Objects = append(result.Objects, createRequestError)
 				}
 			}
 		}
@@ -740,6 +770,14 @@ func ApplyOverlay(input *Service) *Service {
 						result.Resources[i].Endpoints = append(result.Resources[i].Endpoints, updateEndpoint)
 						break
 					}
+				}
+
+				// Generate RequestError object for Update endpoint
+				if len(bodyParams) > 0 {
+					requestErrorName := resource.Name + updateEndpointName + requestErrorSuffix
+					requestErrorDescription := requestErrorDescriptionPrefix + resource.Name + " " + updateEndpointName + " endpoint"
+					updateRequestError := generateRequestErrorObject(requestErrorName, requestErrorDescription, bodyParams, result.Objects)
+					result.Objects = append(result.Objects, updateRequestError)
 				}
 			}
 		}
@@ -1011,6 +1049,14 @@ func ApplyOverlay(input *Service) *Service {
 						break
 					}
 				}
+
+				// Generate RequestError object for Search endpoint
+				// Search endpoints have a Filter body parameter
+				searchBodyParams := []Field{filterParam}
+				requestErrorName := resource.Name + searchEndpointName + requestErrorSuffix
+				requestErrorDescription := requestErrorDescriptionPrefix + resource.Name + " " + searchEndpointName + " endpoint"
+				searchRequestError := generateRequestErrorObject(requestErrorName, requestErrorDescription, searchBodyParams, result.Objects)
+				result.Objects = append(result.Objects, searchRequestError)
 			}
 		}
 	}
@@ -1071,6 +1117,46 @@ func isObjectType(fieldType string, objects []Object) bool {
 		}
 	}
 	return false
+}
+
+// convertFieldToErrorField converts a field to its error counterpart.
+// Primitive types become *ErrorField, object types become their RequestError equivalent.
+func convertFieldToErrorField(field Field, objects []Object) Field {
+	errorField := Field{
+		Name:        field.Name,
+		Description: field.Description,
+		Modifiers:   []string{ModifierNullable}, // All error fields are nullable
+	}
+
+	if isPrimitiveType(field.Type) {
+		errorField.Type = errorFieldObjectName
+	} else if isObjectType(field.Type, objects) {
+		errorField.Type = field.Type + requestErrorSuffix
+	} else if strings.HasSuffix(field.Type, filterSuffix) {
+		// Handle filter types (e.g., UsersFilter -> UsersFilterRequestError)
+		errorField.Type = field.Type + requestErrorSuffix
+	} else {
+		// For other types (enums, etc.), also use ErrorField
+		errorField.Type = errorFieldObjectName
+	}
+
+	return errorField
+}
+
+// generateRequestErrorObject generates a RequestError object from a list of fields.
+func generateRequestErrorObject(objectName string, description string, fields []Field, objects []Object) Object {
+	errorFields := make([]Field, 0, len(fields))
+
+	for _, field := range fields {
+		errorField := convertFieldToErrorField(field, objects)
+		errorFields = append(errorFields, errorField)
+	}
+
+	return Object{
+		Name:        objectName,
+		Description: description,
+		Fields:      errorFields,
+	}
 }
 
 // generateFilterField creates a filter field based on the original field and filter type.
@@ -1335,6 +1421,63 @@ func ApplyFilterOverlay(input *Service) *Service {
 			}
 		}
 		result.Objects = append(result.Objects, nullFilter)
+
+		// Generate RequestError objects for all filter objects
+		// This covers the filter objects used in search endpoints
+
+		// Main filter RequestError
+		mainFilterRequestError := generateRequestErrorObject(
+			mainFilter.Name+requestErrorSuffix,
+			requestErrorDescriptionPrefix+mainFilter.Name,
+			mainFilter.Fields,
+			result.Objects,
+		)
+		result.Objects = append(result.Objects, mainFilterRequestError)
+
+		// FilterEquals RequestError
+		equalsFilterRequestError := generateRequestErrorObject(
+			equalsFilter.Name+requestErrorSuffix,
+			requestErrorDescriptionPrefix+equalsFilter.Name,
+			equalsFilter.Fields,
+			result.Objects,
+		)
+		result.Objects = append(result.Objects, equalsFilterRequestError)
+
+		// FilterRange RequestError
+		rangeFilterRequestError := generateRequestErrorObject(
+			rangeFilter.Name+requestErrorSuffix,
+			requestErrorDescriptionPrefix+rangeFilter.Name,
+			rangeFilter.Fields,
+			result.Objects,
+		)
+		result.Objects = append(result.Objects, rangeFilterRequestError)
+
+		// FilterContains RequestError
+		containsFilterRequestError := generateRequestErrorObject(
+			containsFilter.Name+requestErrorSuffix,
+			requestErrorDescriptionPrefix+containsFilter.Name,
+			containsFilter.Fields,
+			result.Objects,
+		)
+		result.Objects = append(result.Objects, containsFilterRequestError)
+
+		// FilterLike RequestError
+		likeFilterRequestError := generateRequestErrorObject(
+			likeFilter.Name+requestErrorSuffix,
+			requestErrorDescriptionPrefix+likeFilter.Name,
+			likeFilter.Fields,
+			result.Objects,
+		)
+		result.Objects = append(result.Objects, likeFilterRequestError)
+
+		// FilterNull RequestError
+		nullFilterRequestError := generateRequestErrorObject(
+			nullFilter.Name+requestErrorSuffix,
+			requestErrorDescriptionPrefix+nullFilter.Name,
+			nullFilter.Fields,
+			result.Objects,
+		)
+		result.Objects = append(result.Objects, nullFilterRequestError)
 	}
 
 	return result
