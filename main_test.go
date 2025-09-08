@@ -11,23 +11,38 @@ import (
 )
 
 func Test_main(t *testing.T) {
+	// Arrange
+	expectedLogLevel := "level=ERROR"
+	expectedLogMessage := `msg="failed to run"`
+	expectedErrorMessage := `error="not implemented"`
+
 	t.Cleanup(func() {
 		slog.SetDefault(slog.Default())
 	})
 
 	buf := new(bytes.Buffer)
-
 	slog.SetDefault(slog.New(slog.NewTextHandler(buf, nil)))
 
+	// Act
 	main()
 
-	assert.Contains(t, buf.String(), "level=ERROR msg=\"failed to run\" error=\"not implemented\"\n")
+	// Assert
+	logOutput := buf.String()
+	assert.NotEmpty(t, logOutput, "Log output should not be empty")
+	assert.Contains(t, logOutput, expectedLogLevel, "Log should contain ERROR level")
+	assert.Contains(t, logOutput, expectedLogMessage, "Log should contain 'failed to run' message")
+	assert.Contains(t, logOutput, expectedErrorMessage, "Log should contain 'not implemented' error")
 }
 
 func Test_run(t *testing.T) {
+	// Arrange
+	expectedErrorMessage := errorNotImplemented
 	ctx := context.Background()
 
+	// Act
 	err := run(ctx)
-	require.Error(t, err)
-	assert.Equal(t, "not implemented", err.Error())
+
+	// Assert
+	require.Error(t, err, "run() should return an error")
+	assert.Equal(t, expectedErrorMessage, err.Error(), "Error message should match expected 'not implemented' message")
 }
