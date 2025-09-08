@@ -1494,9 +1494,9 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Check that the resource has the Create, Update, Delete, and Get endpoints generated
+		// Check that the resource has the Create, Update, Delete, Get, and List endpoints generated
 		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 4, len(result.Resources[0].Endpoints)) // Create, Update, Delete, and Get endpoints
+		assert.Equal(t, 5, len(result.Resources[0].Endpoints)) // Create, Update, Delete, Get, and List endpoints
 
 		// Check the generated Create endpoint
 		createEndpoint := result.Resources[0].Endpoints[0]
@@ -1668,9 +1668,9 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should not generate any Create endpoints, but should generate Get endpoint
+		// Should not generate any Create endpoints, but should generate Get and List endpoints
 		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 1, len(result.Resources[0].Endpoints))
+		assert.Equal(t, 2, len(result.Resources[0].Endpoints))
 
 		// Check the generated Get endpoint
 		getEndpoint := result.Resources[0].Endpoints[0]
@@ -1750,9 +1750,9 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should preserve the existing Create endpoint and add a Get endpoint
+		// Should preserve the existing Create endpoint and add Get and List endpoints
 		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 2, len(result.Resources[0].Endpoints))
+		assert.Equal(t, 3, len(result.Resources[0].Endpoints))
 
 		existingEndpoint := result.Resources[0].Endpoints[0]
 		assert.Equal(t, "Create", existingEndpoint.Name)
@@ -1843,19 +1843,31 @@ func TestApplyOverlay(t *testing.T) {
 		// Resources should have endpoints generated based on their operations
 		assert.Equal(t, 2, len(result.Resources))
 
-		// Check Users - has Create and Read operations, so should have 2 endpoints (Create and Get)
-		assert.Equal(t, 2, len(result.Resources[0].Endpoints))
-		usersCreateEndpoint := result.Resources[0].Endpoints[0]
+		// Find and check Users resource - has Create and Read operations, so should have 3 endpoints (Create, Get, and List)
+		var usersResource *Resource
+		var productsResource *Resource
+		for i := range result.Resources {
+			if result.Resources[i].Name == "Users" {
+				usersResource = &result.Resources[i]
+			} else if result.Resources[i].Name == "Products" {
+				productsResource = &result.Resources[i]
+			}
+		}
+		require.NotNil(t, usersResource, "Users resource should exist")
+		require.NotNil(t, productsResource, "Products resource should exist")
+
+		assert.Equal(t, 3, len(usersResource.Endpoints))
+		usersCreateEndpoint := usersResource.Endpoints[0]
 		assert.Equal(t, "Create", usersCreateEndpoint.Name)
 		assert.Equal(t, "Create Users", usersCreateEndpoint.Title)
 		assert.Equal(t, 1, len(usersCreateEndpoint.Request.BodyParams))
 		assert.Equal(t, "name", usersCreateEndpoint.Request.BodyParams[0].Name)
 
 		// Check Products - has Create and Update operations, so should have 2 endpoints (Create and Update)
-		assert.Equal(t, 2, len(result.Resources[1].Endpoints))
+		assert.Equal(t, 2, len(productsResource.Endpoints))
 
 		// Check Products Create endpoint
-		productsCreateEndpoint := result.Resources[1].Endpoints[0]
+		productsCreateEndpoint := productsResource.Endpoints[0]
 		assert.Equal(t, "Create", productsCreateEndpoint.Name)
 		assert.Equal(t, "Create Products", productsCreateEndpoint.Title)
 		assert.Equal(t, 2, len(productsCreateEndpoint.Request.BodyParams))
@@ -1868,7 +1880,7 @@ func TestApplyOverlay(t *testing.T) {
 		assert.Contains(t, productCreateBodyParamNames, "price")
 
 		// Check Products Update endpoint
-		productsUpdateEndpoint := result.Resources[1].Endpoints[1]
+		productsUpdateEndpoint := productsResource.Endpoints[1]
 		assert.Equal(t, "Update", productsUpdateEndpoint.Name)
 		assert.Equal(t, "Update Products", productsUpdateEndpoint.Title)
 		assert.Equal(t, "PATCH", productsUpdateEndpoint.Method)
@@ -2027,9 +2039,9 @@ func TestApplyOverlay(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should generate Create, Update, and Get endpoints but not Delete
+		// Should generate Create, Update, Get, and List endpoints but not Delete
 		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 3, len(result.Resources[0].Endpoints)) // Create, Update, and Get endpoints
+		assert.Equal(t, 4, len(result.Resources[0].Endpoints)) // Create, Update, Get, and List endpoints
 
 		// Verify no Delete endpoint was created
 		for _, endpoint := range result.Resources[0].Endpoints {
@@ -2179,14 +2191,22 @@ func TestApplyOverlay(t *testing.T) {
 		// Resources should have endpoints generated based on their operations
 		assert.Equal(t, 2, len(result.Resources))
 
-		// Check Users - has Create, Read, and Delete operations, so should have 3 endpoints (Create, Delete, and Get)
-		assert.Equal(t, 3, len(result.Resources[0].Endpoints))
+		// Find Users resource - has Create, Read, and Delete operations, so should have 4 endpoints (Create, Delete, Get, and List)
+		var usersResource *Resource
+		for i := range result.Resources {
+			if result.Resources[i].Name == "Users" {
+				usersResource = &result.Resources[i]
+				break
+			}
+		}
+		require.NotNil(t, usersResource, "Users resource should exist")
+		assert.Equal(t, 4, len(usersResource.Endpoints))
 
 		// Find and check Users Delete endpoint
 		var usersDeleteEndpoint *Endpoint
-		for i, endpoint := range result.Resources[0].Endpoints {
+		for i, endpoint := range usersResource.Endpoints {
 			if endpoint.Name == "Delete" {
-				usersDeleteEndpoint = &result.Resources[0].Endpoints[i]
+				usersDeleteEndpoint = &usersResource.Endpoints[i]
 				break
 			}
 		}
@@ -2307,9 +2327,9 @@ func TestApplyOverlay_GetEndpoints(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should generate exactly one Get endpoint
+		// Should generate Get and List endpoints
 		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 1, len(result.Resources[0].Endpoints))
+		assert.Equal(t, 2, len(result.Resources[0].Endpoints))
 
 		getEndpoint := result.Resources[0].Endpoints[0]
 
@@ -2432,9 +2452,9 @@ func TestApplyOverlay_GetEndpoints(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Should preserve existing Get endpoint, not add a new one
+		// Should preserve existing Get endpoint and add List endpoint
 		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 1, len(result.Resources[0].Endpoints))
+		assert.Equal(t, 2, len(result.Resources[0].Endpoints))
 
 		existingEndpoint := result.Resources[0].Endpoints[0]
 		assert.Equal(t, "Get", existingEndpoint.Name)
@@ -2486,10 +2506,10 @@ func TestApplyOverlay_GetEndpoints(t *testing.T) {
 		result := ApplyOverlay(input)
 		require.NotNil(t, result)
 
-		// Both resources should have Get endpoints
+		// Both resources should have Get and List endpoints
 		assert.Equal(t, 2, len(result.Resources))
-		assert.Equal(t, 1, len(result.Resources[0].Endpoints))
-		assert.Equal(t, 1, len(result.Resources[1].Endpoints))
+		assert.Equal(t, 2, len(result.Resources[0].Endpoints))
+		assert.Equal(t, 2, len(result.Resources[1].Endpoints))
 
 		// Find UserProfiles resource and check Get endpoint
 		var userGetEndpoint *Endpoint
@@ -2497,8 +2517,14 @@ func TestApplyOverlay_GetEndpoints(t *testing.T) {
 		for _, resource := range result.Resources {
 			if resource.Name == "UserProfiles" {
 				foundUserProfiles = true
-				assert.Equal(t, 1, len(resource.Endpoints))
-				userGetEndpoint = &resource.Endpoints[0]
+				assert.Equal(t, 2, len(resource.Endpoints)) // Get and List endpoints
+				// Find the Get endpoint
+				for _, endpoint := range resource.Endpoints {
+					if endpoint.Name == "Get" {
+						userGetEndpoint = &endpoint
+						break
+					}
+				}
 				break
 			}
 		}
@@ -2516,8 +2542,14 @@ func TestApplyOverlay_GetEndpoints(t *testing.T) {
 		for _, resource := range result.Resources {
 			if resource.Name == "ProductCategories" {
 				foundProductCategories = true
-				assert.Equal(t, 1, len(resource.Endpoints))
-				categoryGetEndpoint = &resource.Endpoints[0]
+				assert.Equal(t, 2, len(resource.Endpoints)) // Get and List endpoints
+				// Find the Get endpoint
+				for _, endpoint := range resource.Endpoints {
+					if endpoint.Name == "Get" {
+						categoryGetEndpoint = &endpoint
+						break
+					}
+				}
 				break
 			}
 		}
@@ -3095,5 +3127,241 @@ func Test_canBeNull(t *testing.T) {
 		}
 		result := canBeNull(field)
 		assert.False(t, result)
+	})
+}
+
+func TestApplyOverlay_ListEndpoints(t *testing.T) {
+	t.Run("ListEndpointGeneration", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "Books",
+					Description: "Book management resource",
+					Operations:  []string{"Read"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "id",
+								Type:        "UUID",
+								Description: "Book ID",
+								Example:     "123e4567-e89b-12d3-a456-426614174000",
+							},
+							Operations: []string{"Read"},
+						},
+						{
+							Field: Field{
+								Name:        "title",
+								Type:        "String",
+								Description: "Book title",
+								Example:     "The Great Gatsby",
+							},
+							Operations: []string{"Read"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Should generate both Get and List endpoints
+		assert.Equal(t, 1, len(result.Resources))
+		assert.Equal(t, 2, len(result.Resources[0].Endpoints))
+
+		// Find the List endpoint (should be the second one after Get)
+		var listEndpoint Endpoint
+		for _, endpoint := range result.Resources[0].Endpoints {
+			if endpoint.Name == "List" {
+				listEndpoint = endpoint
+				break
+			}
+		}
+
+		// Validate basic endpoint properties
+		assert.Equal(t, "List", listEndpoint.Name)
+		assert.Equal(t, "List all Books", listEndpoint.Title)
+		assert.Equal(t, "Returns a paginated list of all `Books` in your organization.", listEndpoint.Description)
+		assert.Equal(t, "GET", listEndpoint.Method)
+		assert.Equal(t, "", listEndpoint.Path)
+
+		// Validate request structure
+		assert.Equal(t, "application/json", listEndpoint.Request.ContentType)
+		assert.Equal(t, 0, len(listEndpoint.Request.Headers))
+		assert.Equal(t, 0, len(listEndpoint.Request.PathParams))
+		assert.Equal(t, 2, len(listEndpoint.Request.QueryParams))
+		assert.Equal(t, 0, len(listEndpoint.Request.BodyParams))
+
+		// Validate query parameters
+		limitParam := listEndpoint.Request.QueryParams[0]
+		assert.Equal(t, "limit", limitParam.Name)
+		assert.Equal(t, "Int", limitParam.Type)
+		assert.Equal(t, "The maximum number of items to return (default: 50)", limitParam.Description)
+		assert.Equal(t, "50", limitParam.Default)
+		assert.Empty(t, limitParam.Example)
+		assert.Empty(t, limitParam.Modifiers)
+
+		offsetParam := listEndpoint.Request.QueryParams[1]
+		assert.Equal(t, "offset", offsetParam.Name)
+		assert.Equal(t, "Int", offsetParam.Type)
+		assert.Equal(t, "The number of items to skip before starting to return results (default: 0)", offsetParam.Description)
+		assert.Equal(t, "0", offsetParam.Default)
+		assert.Empty(t, offsetParam.Example)
+		assert.Empty(t, offsetParam.Modifiers)
+
+		// Validate response structure
+		assert.Equal(t, "application/json", listEndpoint.Response.ContentType)
+		assert.Equal(t, 200, listEndpoint.Response.StatusCode)
+		assert.Equal(t, 0, len(listEndpoint.Response.Headers))
+		assert.Equal(t, 2, len(listEndpoint.Response.BodyFields))
+		assert.Nil(t, listEndpoint.Response.BodyObject)
+
+		// Validate response body fields
+		dataField := listEndpoint.Response.BodyFields[0]
+		assert.Equal(t, "data", dataField.Name)
+		assert.Equal(t, "Books", dataField.Type)
+		assert.Equal(t, "Array of Books objects", dataField.Description)
+		assert.Equal(t, []string{"array"}, dataField.Modifiers)
+
+		paginationField := listEndpoint.Response.BodyFields[1]
+		assert.Equal(t, "Pagination", paginationField.Name)
+		assert.Equal(t, "Pagination", paginationField.Type)
+		assert.Equal(t, "Pagination information", paginationField.Description)
+		assert.Empty(t, paginationField.Modifiers)
+	})
+
+	t.Run("ListEndpointNotGeneratedWithoutReadOperation", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "Books",
+					Description: "Book management resource",
+					Operations:  []string{"Create", "Update", "Delete"}, // No Read operation
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "title",
+								Type:        "String",
+								Description: "Book title",
+							},
+							Operations: []string{"Create", "Update"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Should generate Create, Update, Delete endpoints but NOT Get or List endpoints
+		assert.Equal(t, 1, len(result.Resources))
+		assert.Equal(t, 3, len(result.Resources[0].Endpoints))
+
+		// Verify no List endpoint was generated
+		listCount := 0
+		for _, endpoint := range result.Resources[0].Endpoints {
+			if endpoint.Name == "List" {
+				listCount++
+			}
+		}
+		assert.Equal(t, 0, listCount)
+	})
+
+	t.Run("ListEndpointNotDuplicatedWhenAlreadyExists", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "Books",
+					Description: "Book management resource",
+					Operations:  []string{"Read"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "id",
+								Type:        "UUID",
+								Description: "Book ID",
+							},
+							Operations: []string{"Read"},
+						},
+					},
+					Endpoints: []Endpoint{
+						{
+							Name:        "List",
+							Title:       "Custom List Books",
+							Description: "Custom list endpoint",
+							Method:      "GET",
+							Path:        "/custom",
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Should not generate a duplicate List endpoint
+		assert.Equal(t, 1, len(result.Resources))
+		listCount := 0
+		for _, endpoint := range result.Resources[0].Endpoints {
+			if endpoint.Name == "List" {
+				listCount++
+				// Should keep the existing custom endpoint, not the generated one
+				assert.Equal(t, "Custom List Books", endpoint.Title)
+				assert.Equal(t, "/custom", endpoint.Path)
+			}
+		}
+		assert.Equal(t, 1, listCount)
+	})
+
+	t.Run("ListEndpointPluralizationWorks", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "User",
+					Description: "User management resource",
+					Operations:  []string{"Read"},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "id",
+								Type:        "UUID",
+								Description: "User ID",
+							},
+							Operations: []string{"Read"},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Find the List endpoint
+		var listEndpoint Endpoint
+		for _, endpoint := range result.Resources[0].Endpoints {
+			if endpoint.Name == "List" {
+				listEndpoint = endpoint
+				break
+			}
+		}
+
+		// Should use pluralized resource name in title and description
+		assert.Equal(t, "List all Users", listEndpoint.Title)
+		assert.Equal(t, "Returns a paginated list of all `Users` in your organization.", listEndpoint.Description)
 	})
 }
