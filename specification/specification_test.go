@@ -2,8 +2,6 @@ package specification
 
 import (
 	"encoding/json"
-	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/goccy/go-yaml"
@@ -11,792 +9,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestServiceJSONMarshaling(t *testing.T) {
-	service := Service{
-		Name: "TestService",
-		Enums: []Enum{
-			{
-				Name:        "Gender",
-				Description: "Gender enumeration",
-				Values: []EnumValue{
-					{Name: "Male", Description: "Male gender"},
-					{Name: "Female", Description: "Female gender"},
-				},
-			},
-		},
-		Objects: []Object{
-			{
-				Name:        "User",
-				Description: "User object",
-				Fields: []Field{
-					{Name: "id", Type: "UUID", Description: "User ID"},
-					{Name: "name", Type: "String", Description: "User name"},
-				},
-			},
-		},
-		Resources: []Resource{
-			{
-				Name:        "Users",
-				Description: "User resource",
-				Operations:  []string{"Create", "Read", "Update", "Delete"},
-				Fields: []ResourceField{
-					{
-						Field: Field{
-							Name:        "id",
-							Type:        "UUID",
-							Description: "User ID",
-						},
-						Operations: []string{"Read"},
-					},
-				},
-				Endpoints: []Endpoint{
-					{
-						Name:        "GetUser",
-						Title:       "Get User",
-						Description: "Get a user by ID",
-						Method:      "GET",
-						Path:        "/{id}",
-						Request: EndpointRequest{
-							PathParams: []Field{
-								{Name: "id", Type: "UUID", Description: "User ID"},
-							},
-						},
-						Response: EndpointResponse{
-							StatusCode: 200,
-							BodyFields: []Field{
-								{Name: "id", Type: "UUID", Description: "User ID"},
-								{Name: "name", Type: "String", Description: "User name"},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	// Test JSON marshaling
-	jsonData, err := json.Marshal(service)
-	require.NoError(t, err)
-	assert.NotEmpty(t, jsonData)
-
-	// Test JSON unmarshaling
-	var unmarshaledService Service
-	err = json.Unmarshal(jsonData, &unmarshaledService)
-	require.NoError(t, err)
-	assert.Equal(t, service.Name, unmarshaledService.Name)
-	assert.Equal(t, len(service.Enums), len(unmarshaledService.Enums))
-	assert.Equal(t, len(service.Objects), len(unmarshaledService.Objects))
-	assert.Equal(t, len(service.Resources), len(unmarshaledService.Resources))
-}
-
-func TestServiceYAMLMarshaling(t *testing.T) {
-	service := Service{
-		Name: "TestService",
-		Enums: []Enum{
-			{
-				Name:        "Status",
-				Description: "Status enumeration",
-				Values: []EnumValue{
-					{Name: "Active", Description: "Active status"},
-					{Name: "Inactive", Description: "Inactive status"},
-				},
-			},
-		},
-		Objects: []Object{
-			{
-				Name:        "Person",
-				Description: "Person object",
-				Fields: []Field{
-					{Name: "id", Type: "UUID", Description: "Person ID"},
-					{Name: "email", Type: "String", Description: "Email address"},
-				},
-			},
-		},
-		Resources: []Resource{
-			{
-				Name:        "People",
-				Description: "People resource",
-				Operations:  []string{"Create", "Read"},
-				Fields: []ResourceField{
-					{
-						Field: Field{
-							Name:        "id",
-							Type:        "UUID",
-							Description: "Person ID",
-						},
-						Operations: []string{"Read"},
-					},
-				},
-				Endpoints: []Endpoint{
-					{
-						Name:        "ListPeople",
-						Title:       "List People",
-						Description: "List all people",
-						Method:      "GET",
-						Path:        "/",
-						Request:     EndpointRequest{},
-						Response: EndpointResponse{
-							StatusCode: 200,
-							BodyFields: []Field{
-								{Name: "data", Type: "array", Description: "Array of people", Modifiers: []string{"array"}},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	// Test YAML marshaling
-	yamlData, err := yaml.Marshal(service)
-	require.NoError(t, err)
-	assert.NotEmpty(t, yamlData)
-
-	// Test YAML unmarshaling
-	var unmarshaledService Service
-	err = yaml.Unmarshal(yamlData, &unmarshaledService)
-	require.NoError(t, err)
-	assert.Equal(t, service.Name, unmarshaledService.Name)
-	assert.Equal(t, len(service.Enums), len(unmarshaledService.Enums))
-	assert.Equal(t, len(service.Objects), len(unmarshaledService.Objects))
-	assert.Equal(t, len(service.Resources), len(unmarshaledService.Resources))
-}
-
-func TestEnumStructure(t *testing.T) {
-	enum := Enum{
-		Name:        "Priority",
-		Description: "Task priority levels",
-		Values: []EnumValue{
-			{Name: "Low", Description: "Low priority"},
-			{Name: "Medium", Description: "Medium priority"},
-			{Name: "High", Description: "High priority"},
-		},
-	}
-
-	// Test JSON marshaling
-	jsonData, err := json.Marshal(enum)
-	require.NoError(t, err)
-	assert.Contains(t, string(jsonData), "Priority")
-	assert.Contains(t, string(jsonData), "Low")
-	assert.Contains(t, string(jsonData), "Medium")
-	assert.Contains(t, string(jsonData), "High")
-
-	// Test JSON unmarshaling
-	var unmarshaledEnum Enum
-	err = json.Unmarshal(jsonData, &unmarshaledEnum)
-	require.NoError(t, err)
-	assert.Equal(t, enum.Name, unmarshaledEnum.Name)
-	assert.Equal(t, enum.Description, unmarshaledEnum.Description)
-	assert.Equal(t, len(enum.Values), len(unmarshaledEnum.Values))
-}
-
-func TestFieldWithModifiers(t *testing.T) {
-	field := Field{
-		Name:        "tags",
-		Description: "List of tags",
-		Type:        "String",
-		Default:     "[]",
-		Example:     `["tag1", "tag2"]`,
-		Modifiers:   []string{"array", "nullable"},
-	}
-
-	// Test JSON marshaling
-	jsonData, err := json.Marshal(field)
-	require.NoError(t, err)
-	assert.Contains(t, string(jsonData), "array")
-	assert.Contains(t, string(jsonData), "nullable")
-
-	// Test JSON unmarshaling
-	var unmarshaledField Field
-	err = json.Unmarshal(jsonData, &unmarshaledField)
-	require.NoError(t, err)
-	assert.Equal(t, field.Name, unmarshaledField.Name)
-	assert.Equal(t, field.Type, unmarshaledField.Type)
-	assert.Equal(t, field.Modifiers, unmarshaledField.Modifiers)
-}
-
-func TestResourceFieldInheritanceFromField(t *testing.T) {
-	resourceField := ResourceField{
-		Field: Field{
-			Name:        "username",
-			Description: "User's username",
-			Type:        "String",
-			Example:     "johndoe",
-		},
-		Operations: []string{"Create", "Read", "Update"},
-	}
-
-	// Test JSON marshaling
-	jsonData, err := json.Marshal(resourceField)
-	require.NoError(t, err)
-	assert.Contains(t, string(jsonData), "username")
-	assert.Contains(t, string(jsonData), "Create")
-	assert.Contains(t, string(jsonData), "Update")
-
-	// Test JSON unmarshaling
-	var unmarshaledResourceField ResourceField
-	err = json.Unmarshal(jsonData, &unmarshaledResourceField)
-	require.NoError(t, err)
-	assert.Equal(t, resourceField.Name, unmarshaledResourceField.Name)
-	assert.Equal(t, resourceField.Description, unmarshaledResourceField.Description)
-	assert.Equal(t, resourceField.Operations, unmarshaledResourceField.Operations)
-}
-
-func TestEndpointCompleteStructure(t *testing.T) {
-	endpoint := Endpoint{
-		Name:        "CreateUser",
-		Title:       "Create User",
-		Description: "Create a new user",
-		Method:      "POST",
-		Path:        "/",
-		Request: EndpointRequest{
-			BodyParams: []Field{
-				{Name: "name", Type: "String", Description: "User name", Example: "John Doe"},
-				{Name: "email", Type: "String", Description: "User email", Example: "john@example.com"},
-			},
-			QueryParams: []Field{
-				{Name: "validate", Type: "Bool", Description: "Whether to validate the user", Default: "true"},
-			},
-		},
-		Response: EndpointResponse{
-			StatusCode: 201,
-			BodyFields: []Field{
-				{Name: "id", Type: "UUID", Description: "Created user ID"},
-				{Name: "name", Type: "String", Description: "User name"},
-				{Name: "email", Type: "String", Description: "User email"},
-			},
-		},
-	}
-
-	// Test JSON marshaling
-	jsonData, err := json.Marshal(endpoint)
-	require.NoError(t, err)
-	assert.Contains(t, string(jsonData), "CreateUser")
-	assert.Contains(t, string(jsonData), "POST")
-	assert.Contains(t, string(jsonData), "\"/\"")
-
-	// Test JSON unmarshaling
-	var unmarshaledEndpoint Endpoint
-	err = json.Unmarshal(jsonData, &unmarshaledEndpoint)
-	require.NoError(t, err)
-	assert.Equal(t, endpoint.Name, unmarshaledEndpoint.Name)
-	assert.Equal(t, endpoint.Title, unmarshaledEndpoint.Title)
-	assert.Equal(t, endpoint.Method, unmarshaledEndpoint.Method)
-	assert.Equal(t, endpoint.Path, unmarshaledEndpoint.Path)
-	assert.Equal(t, len(endpoint.Request.BodyParams), len(unmarshaledEndpoint.Request.BodyParams))
-	assert.Equal(t, len(endpoint.Response.BodyFields), len(unmarshaledEndpoint.Response.BodyFields))
-	assert.Equal(t, len(endpoint.Request.QueryParams), len(unmarshaledEndpoint.Request.QueryParams))
-}
-
-func TestEndpointRequestStructure(t *testing.T) {
-	endpointRequest := EndpointRequest{
-		ContentType: "application/json",
-		Headers: []Field{
-			{Name: "Authorization", Type: "String", Description: "Bearer token"},
-		},
-		PathParams: []Field{
-			{Name: "id", Type: "UUID", Description: "Resource ID"},
-		},
-		QueryParams: []Field{
-			{Name: "limit", Type: "Int", Description: "Number of items to return", Default: "10"},
-		},
-		BodyParams: []Field{
-			{Name: "name", Type: "String", Description: "Resource name"},
-			{Name: "active", Type: "Bool", Description: "Is resource active", Default: "true"},
-		},
-	}
-
-	// Test JSON marshaling
-	jsonData, err := json.Marshal(endpointRequest)
-	require.NoError(t, err)
-	assert.Contains(t, string(jsonData), "application/json")
-	assert.Contains(t, string(jsonData), "Authorization")
-	assert.Contains(t, string(jsonData), "Bearer token")
-
-	// Test JSON unmarshaling
-	var unmarshaledRequest EndpointRequest
-	err = json.Unmarshal(jsonData, &unmarshaledRequest)
-	require.NoError(t, err)
-	assert.Equal(t, endpointRequest.ContentType, unmarshaledRequest.ContentType)
-	assert.Equal(t, len(endpointRequest.Headers), len(unmarshaledRequest.Headers))
-	assert.Equal(t, len(endpointRequest.PathParams), len(unmarshaledRequest.PathParams))
-	assert.Equal(t, len(endpointRequest.QueryParams), len(unmarshaledRequest.QueryParams))
-	assert.Equal(t, len(endpointRequest.BodyParams), len(unmarshaledRequest.BodyParams))
-}
-
-func TestEndpointResponseStructure(t *testing.T) {
-	endpointResponse := EndpointResponse{
-		ContentType: "application/json",
-		StatusCode:  201,
-		Headers: []Field{
-			{Name: "Location", Type: "String", Description: "URL of created resource"},
-		},
-		BodyFields: []Field{
-			{Name: "id", Type: "UUID", Description: "Created resource ID"},
-			{Name: "created_at", Type: "Timestamp", Description: "Creation timestamp"},
-		},
-		BodyObject: nil,
-	}
-
-	// Test JSON marshaling
-	jsonData, err := json.Marshal(endpointResponse)
-	require.NoError(t, err)
-	assert.Contains(t, string(jsonData), "application/json")
-	assert.Contains(t, string(jsonData), "201")
-	assert.Contains(t, string(jsonData), "Location")
-
-	// Test JSON unmarshaling
-	var unmarshaledResponse EndpointResponse
-	err = json.Unmarshal(jsonData, &unmarshaledResponse)
-	require.NoError(t, err)
-	assert.Equal(t, endpointResponse.ContentType, unmarshaledResponse.ContentType)
-	assert.Equal(t, endpointResponse.StatusCode, unmarshaledResponse.StatusCode)
-	assert.Equal(t, len(endpointResponse.Headers), len(unmarshaledResponse.Headers))
-	assert.Equal(t, len(endpointResponse.BodyFields), len(unmarshaledResponse.BodyFields))
-}
-
-func TestEndpointResponseWithBodyObject(t *testing.T) {
-	objectName := "User"
-	endpointResponse := EndpointResponse{
-		ContentType: "application/json",
-		StatusCode:  200,
-		Headers:     []Field{},
-		BodyFields:  []Field{},
-		BodyObject:  &objectName,
-	}
-
-	// Test JSON marshaling
-	jsonData, err := json.Marshal(endpointResponse)
-	require.NoError(t, err)
-	assert.Contains(t, string(jsonData), "User")
-
-	// Test JSON unmarshaling
-	var unmarshaledResponse EndpointResponse
-	err = json.Unmarshal(jsonData, &unmarshaledResponse)
-	require.NoError(t, err)
-	assert.Equal(t, endpointResponse.StatusCode, unmarshaledResponse.StatusCode)
-	require.NotNil(t, unmarshaledResponse.BodyObject)
-	assert.Equal(t, "User", *unmarshaledResponse.BodyObject)
-}
-
-func TestResourceCompleteStructure(t *testing.T) {
-	resource := Resource{
-		Name:        "Products",
-		Description: "Product management resource",
-		Operations:  []string{"Create", "Read", "Update", "Delete"},
-		Fields: []ResourceField{
-			{
-				Field: Field{
-					Name:        "id",
-					Type:        "UUID",
-					Description: "Product ID",
-				},
-				Operations: []string{"Read"},
-			},
-			{
-				Field: Field{
-					Name:        "name",
-					Type:        "String",
-					Description: "Product name",
-					Example:     "Widget",
-				},
-				Operations: []string{"Create", "Read", "Update"},
-			},
-		},
-		Endpoints: []Endpoint{
-			{
-				Name:        "GetProduct",
-				Title:       "Get Product",
-				Description: "Get product by ID",
-				Method:      "GET",
-				Path:        "/{id}",
-				Request: EndpointRequest{
-					PathParams: []Field{
-						{Name: "id", Type: "UUID", Description: "Product ID"},
-					},
-				},
-				Response: EndpointResponse{
-					StatusCode: 200,
-				},
-			},
-		},
-	}
-
-	// Test JSON marshaling
-	jsonData, err := json.Marshal(resource)
-	require.NoError(t, err)
-	assert.Contains(t, string(jsonData), "Products")
-	assert.Contains(t, string(jsonData), "Create")
-	assert.Contains(t, string(jsonData), "Delete")
-
-	// Test JSON unmarshaling
-	var unmarshaledResource Resource
-	err = json.Unmarshal(jsonData, &unmarshaledResource)
-	require.NoError(t, err)
-	assert.Equal(t, resource.Name, unmarshaledResource.Name)
-	assert.Equal(t, resource.Description, unmarshaledResource.Description)
-	assert.Equal(t, resource.Operations, unmarshaledResource.Operations)
-	assert.Equal(t, len(resource.Fields), len(unmarshaledResource.Fields))
-	assert.Equal(t, len(resource.Endpoints), len(unmarshaledResource.Endpoints))
-}
-
-func TestEmptyStructures(t *testing.T) {
-	// Test empty structures can be marshaled/unmarshaled
-	testCases := []struct {
-		name string
-		data interface{}
-	}{
-		{"EmptyService", Service{}},
-		{"EmptyEnum", Enum{}},
-		{"EmptyObject", Object{}},
-		{"EmptyResource", Resource{}},
-		{"EmptyField", Field{}},
-		{"EmptyResourceField", ResourceField{}},
-		{"EmptyEndpoint", Endpoint{}},
-		{"EmptyEndpointRequest", EndpointRequest{}},
-		{"EmptyEndpointResponse", EndpointResponse{}},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			// Test JSON marshaling
-			jsonData, err := json.Marshal(tc.data)
-			require.NoError(t, err)
-			assert.NotEmpty(t, jsonData)
-
-			// Test YAML marshaling
-			yamlData, err := yaml.Marshal(tc.data)
-			require.NoError(t, err)
-			assert.NotEmpty(t, yamlData)
-		})
-	}
-}
-
-func TestFieldModifiersEdgeCases(t *testing.T) {
-	// Test field with multiple modifiers
-	field := Field{
-		Name:        "complexField",
-		Description: "A complex field with multiple modifiers",
-		Type:        "String",
-		Default:     "",
-		Example:     "",
-		Modifiers:   []string{"nullable", "array", "optional"},
-	}
-
-	jsonData, err := json.Marshal(field)
-	require.NoError(t, err)
-	assert.Contains(t, string(jsonData), "nullable")
-	assert.Contains(t, string(jsonData), "array")
-	assert.Contains(t, string(jsonData), "optional")
-
-	var unmarshaledField Field
-	err = json.Unmarshal(jsonData, &unmarshaledField)
-	require.NoError(t, err)
-	assert.Equal(t, field.Modifiers, unmarshaledField.Modifiers)
-}
-
-func TestEndpointRequestWithAllFields(t *testing.T) {
-	request := EndpointRequest{
-		ContentType: "multipart/form-data",
-		Headers: []Field{
-			{Name: "X-API-Key", Type: "String", Description: "API key"},
-			{Name: "User-Agent", Type: "String", Description: "User agent"},
-		},
-		PathParams: []Field{
-			{Name: "userId", Type: "UUID", Description: "User ID"},
-			{Name: "resourceId", Type: "UUID", Description: "Resource ID"},
-		},
-		QueryParams: []Field{
-			{Name: "page", Type: "Int", Description: "Page number", Default: "1"},
-			{Name: "limit", Type: "Int", Description: "Items per page", Default: "10"},
-		},
-		BodyParams: []Field{
-			{Name: "data", Type: "Object", Description: "Request data"},
-			{Name: "metadata", Type: "Object", Description: "Additional metadata"},
-		},
-	}
-
-	jsonData, err := json.Marshal(request)
-	require.NoError(t, err)
-	assert.Contains(t, string(jsonData), "multipart/form-data")
-	assert.Contains(t, string(jsonData), "X-API-Key")
-	assert.Contains(t, string(jsonData), "userId")
-	assert.Contains(t, string(jsonData), "page")
-	assert.Contains(t, string(jsonData), "data")
-
-	var unmarshaledRequest EndpointRequest
-	err = json.Unmarshal(jsonData, &unmarshaledRequest)
-	require.NoError(t, err)
-	assert.Equal(t, request.ContentType, unmarshaledRequest.ContentType)
-	assert.Equal(t, len(request.Headers), len(unmarshaledRequest.Headers))
-	assert.Equal(t, len(request.PathParams), len(unmarshaledRequest.PathParams))
-	assert.Equal(t, len(request.QueryParams), len(unmarshaledRequest.QueryParams))
-	assert.Equal(t, len(request.BodyParams), len(unmarshaledRequest.BodyParams))
-}
-
-func TestEndpointResponseErrorCodes(t *testing.T) {
-	// Test various HTTP status codes
-	statusCodes := []int{200, 201, 400, 401, 403, 404, 500}
-
-	for _, code := range statusCodes {
-		t.Run(fmt.Sprintf("StatusCode%d", code), func(t *testing.T) {
-			response := EndpointResponse{
-				ContentType: "application/json",
-				StatusCode:  code,
-				Headers: []Field{
-					{Name: "X-Request-ID", Type: "String", Description: "Request ID"},
-				},
-				BodyFields: []Field{
-					{Name: "message", Type: "String", Description: "Response message"},
-				},
-			}
-
-			jsonData, err := json.Marshal(response)
-			require.NoError(t, err)
-			assert.Contains(t, string(jsonData), fmt.Sprintf("%d", code))
-
-			var unmarshaledResponse EndpointResponse
-			err = json.Unmarshal(jsonData, &unmarshaledResponse)
-			require.NoError(t, err)
-			assert.Equal(t, code, unmarshaledResponse.StatusCode)
-		})
-	}
-}
-
-func TestServiceWithComplexHierarchy(t *testing.T) {
-	// Create a complex service structure to test deep nesting
-	service := Service{
-		Name: "ComplexAPI",
-		Enums: []Enum{
-			{
-				Name:        "UserRole",
-				Description: "User roles in the system",
-				Values: []EnumValue{
-					{Name: "Admin", Description: "Administrator role"},
-					{Name: "User", Description: "Regular user role"},
-					{Name: "Guest", Description: "Guest user role"},
-				},
-			},
-			{
-				Name:        "Status",
-				Description: "Entity status",
-				Values: []EnumValue{
-					{Name: "Active", Description: "Entity is active"},
-					{Name: "Inactive", Description: "Entity is inactive"},
-					{Name: "Pending", Description: "Entity is pending"},
-				},
-			},
-		},
-		Objects: []Object{
-			{
-				Name:        "Address",
-				Description: "Address information",
-				Fields: []Field{
-					{Name: "street", Type: "String", Description: "Street address"},
-					{Name: "city", Type: "String", Description: "City"},
-					{Name: "zipCode", Type: "String", Description: "ZIP code"},
-					{Name: "country", Type: "String", Description: "Country"},
-				},
-			},
-			{
-				Name:        "ContactInfo",
-				Description: "Contact information",
-				Fields: []Field{
-					{Name: "email", Type: "String", Description: "Email address"},
-					{Name: "phone", Type: "String", Description: "Phone number"},
-					{Name: "address", Type: "Address", Description: "Physical address"},
-				},
-			},
-		},
-		Resources: []Resource{
-			{
-				Name:        "Users",
-				Description: "User management",
-				Operations:  []string{"Create", "Read", "Update", "Delete"},
-				Fields: []ResourceField{
-					{
-						Field: Field{
-							Name:        "id",
-							Type:        "UUID",
-							Description: "User ID",
-						},
-						Operations: []string{"Read"},
-					},
-					{
-						Field: Field{
-							Name:        "role",
-							Type:        "UserRole",
-							Description: "User role",
-							Default:     "User",
-						},
-						Operations: []string{"Create", "Read", "Update"},
-					},
-				},
-				Endpoints: []Endpoint{
-					{
-						Name:        "CreateUser",
-						Title:       "Create New User",
-						Description: "Create a new user account",
-						Method:      "POST",
-						Path:        "/",
-						Request: EndpointRequest{
-							ContentType: "application/json",
-							BodyParams: []Field{
-								{Name: "username", Type: "String", Description: "Username"},
-								{Name: "email", Type: "String", Description: "Email"},
-								{Name: "role", Type: "UserRole", Description: "User role"},
-							},
-						},
-						Response: EndpointResponse{
-							ContentType: "application/json",
-							StatusCode:  201,
-							BodyFields: []Field{
-								{Name: "id", Type: "UUID", Description: "Created user ID"},
-								{Name: "username", Type: "String", Description: "Username"},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	// Test JSON serialization of complex structure
-	jsonData, err := json.MarshalIndent(service, "", "  ")
-	require.NoError(t, err)
-	assert.NotEmpty(t, jsonData)
-
-	// Test YAML serialization of complex structure
-	yamlData, err := yaml.Marshal(service)
-	require.NoError(t, err)
-	assert.NotEmpty(t, yamlData)
-
-	// Test deserialization
-	var unmarshaledService Service
-	err = json.Unmarshal(jsonData, &unmarshaledService)
-	require.NoError(t, err)
-
-	// Verify structure integrity
-	assert.Equal(t, service.Name, unmarshaledService.Name)
-	assert.Equal(t, len(service.Enums), len(unmarshaledService.Enums))
-	assert.Equal(t, len(service.Objects), len(unmarshaledService.Objects))
-	assert.Equal(t, len(service.Resources), len(unmarshaledService.Resources))
-
-	// Test nested structures
-	assert.Equal(t, len(service.Enums[0].Values), len(unmarshaledService.Enums[0].Values))
-	assert.Equal(t, len(service.Objects[0].Fields), len(unmarshaledService.Objects[0].Fields))
-	assert.Equal(t, len(service.Resources[0].Fields), len(unmarshaledService.Resources[0].Fields))
-	assert.Equal(t, len(service.Resources[0].Endpoints), len(unmarshaledService.Resources[0].Endpoints))
-}
-
-func TestApplyOverlay(t *testing.T) {
-	t.Run("NilInput", func(t *testing.T) {
-		result := ApplyOverlay(nil)
-		assert.Nil(t, result)
-	})
-
-	t.Run("EmptyService", func(t *testing.T) {
-		input := &Service{
-			Name:      "EmptyService",
-			Enums:     []Enum{},
-			Objects:   []Object{},
-			Resources: []Resource{},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-		assert.Equal(t, input.Name, result.Name)
-
-		// Should have default ErrorCode and ErrorFieldCode enums, Error, ErrorField, and Pagination objects
-		assert.Equal(t, 2, len(result.Enums))   // ErrorCode and ErrorFieldCode enums
-		assert.Equal(t, 3, len(result.Objects)) // Error, ErrorField, and Pagination objects
-		assert.Equal(t, 0, len(result.Resources))
-
-		// Check ErrorCode enum (should be first since no existing enums)
-		errorCodeEnum := result.Enums[0]
-		assert.Equal(t, errorCodeEnumName, errorCodeEnum.Name)
-		assert.Equal(t, descriptionErrorCodeEnum, errorCodeEnum.Description)
-		assert.Equal(t, 8, len(errorCodeEnum.Values))
-
-		// Check ErrorCode enum values
-		expectedValues := map[string]string{
-			errorCodeBadRequest:          descriptionErrorCodeBadRequest,
-			errorCodeUnauthorized:        descriptionErrorCodeUnauthorized,
-			errorCodeForbidden:           descriptionErrorCodeForbidden,
-			errorCodeNotFound:            descriptionErrorCodeNotFound,
-			errorCodeConflict:            descriptionErrorCodeConflict,
-			errorCodeUnprocessableEntity: descriptionErrorCodeUnprocessableEntity,
-			errorCodeRateLimited:         descriptionErrorCodeRateLimited,
-			errorCodeInternal:            descriptionErrorCodeInternal,
-		}
-
-		for _, enumValue := range errorCodeEnum.Values {
-			expectedDescription, exists := expectedValues[enumValue.Name]
-			assert.True(t, exists, "Unexpected enum value: %s", enumValue.Name)
-			assert.Equal(t, expectedDescription, enumValue.Description)
-		}
-
-		// Check ErrorFieldCode enum (should be second)
-		errorFieldCodeEnum := result.Enums[1]
-		assert.Equal(t, errorFieldCodeEnumName, errorFieldCodeEnum.Name)
-		assert.Equal(t, descriptionErrorFieldCodeEnum, errorFieldCodeEnum.Description)
-		assert.Equal(t, 4, len(errorFieldCodeEnum.Values))
-
-		// Check ErrorFieldCode enum values
-		expectedFieldValues := map[string]string{
-			errorFieldCodeAlreadyExists: descriptionErrorFieldCodeAlreadyExists,
-			errorFieldCodeRequired:      descriptionErrorFieldCodeRequired,
-			errorFieldCodeNotFound:      descriptionErrorFieldCodeNotFound,
-			errorFieldCodeInvalidValue:  descriptionErrorFieldCodeInvalidValue,
-		}
-
-		for _, enumValue := range errorFieldCodeEnum.Values {
-			expectedDescription, exists := expectedFieldValues[enumValue.Name]
-			assert.True(t, exists, "Unexpected enum value: %s", enumValue.Name)
-			assert.Equal(t, expectedDescription, enumValue.Description)
-		}
-
-		// Check Error object (should be first since no existing objects)
-		errorObject := result.Objects[0]
-		assert.Equal(t, errorObjectName, errorObject.Name)
-		assert.Equal(t, errorObjectDescription, errorObject.Description)
-		assert.Equal(t, 2, len(errorObject.Fields))
-
-		// Check Error object fields
-		assert.Equal(t, errorCodeFieldName, errorObject.Fields[0].Name)
-		assert.Equal(t, errorCodeFieldDescription, errorObject.Fields[0].Description)
-		assert.Equal(t, errorCodeEnumName, errorObject.Fields[0].Type)
-
-		assert.Equal(t, errorMessageFieldName, errorObject.Fields[1].Name)
-		assert.Equal(t, errorMessageFieldDescription, errorObject.Fields[1].Description)
-		assert.Equal(t, FieldTypeString, errorObject.Fields[1].Type)
-
-		// Check ErrorField object (should be second)
-		errorFieldObject := result.Objects[1]
-		assert.Equal(t, errorFieldObjectName, errorFieldObject.Name)
-		assert.Equal(t, errorFieldObjectDescription, errorFieldObject.Description)
-		assert.Equal(t, 2, len(errorFieldObject.Fields))
-
-		// Check ErrorField object fields
-		assert.Equal(t, errorFieldCodeFieldName, errorFieldObject.Fields[0].Name)
-		assert.Equal(t, errorFieldCodeFieldDescription, errorFieldObject.Fields[0].Description)
-		assert.Equal(t, errorFieldCodeEnumName, errorFieldObject.Fields[0].Type)
-
-		assert.Equal(t, errorFieldMessageFieldName, errorFieldObject.Fields[1].Name)
-		assert.Equal(t, errorFieldMessageFieldDescription, errorFieldObject.Fields[1].Description)
-		assert.Equal(t, FieldTypeString, errorFieldObject.Fields[1].Type)
-	})
-
-	t.Run("DefaultErrorObjectsWithExistingContent", func(t *testing.T) {
-		input := &Service{
+// ============================================================================
+// Service Tests
+// ============================================================================
+
+func TestService(t *testing.T) {
+	t.Run("JSON marshaling and unmarshaling", func(t *testing.T) {
+		service := Service{
 			Name: "TestService",
 			Enums: []Enum{
 				{
-					Name:        "UserRole",
-					Description: "User role enumeration",
+					Name:        "Gender",
+					Description: "Gender enumeration",
 					Values: []EnumValue{
-						{Name: "Admin", Description: "Administrator"},
-						{Name: "User", Description: "Regular user"},
+						{Name: "Male", Description: "Male gender"},
+						{Name: "Female", Description: "Female gender"},
 					},
 				},
 			},
@@ -810,218 +37,10 @@ func TestApplyOverlay(t *testing.T) {
 					},
 				},
 			},
-			Resources: []Resource{},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Should have ErrorCode and ErrorFieldCode enums plus existing enum
-		assert.Equal(t, 3, len(result.Enums))
-
-		// First enum should be the existing UserRole enum (existing enums come first)
-		assert.Equal(t, "UserRole", result.Enums[0].Name)
-
-		// Second enum should be ErrorCode (added by overlay)
-		assert.Equal(t, errorCodeEnumName, result.Enums[1].Name)
-
-		// Third enum should be ErrorFieldCode (added by overlay)
-		assert.Equal(t, errorFieldCodeEnumName, result.Enums[2].Name)
-
-		// Should have Error, ErrorField, and Pagination objects plus existing object
-		assert.Equal(t, 4, len(result.Objects))
-
-		// First object should be the existing User object (existing objects come first)
-		assert.Equal(t, "User", result.Objects[0].Name)
-
-		// Second object should be Error (added by overlay)
-		assert.Equal(t, errorObjectName, result.Objects[1].Name)
-
-		// Third object should be ErrorField (added by overlay)
-		assert.Equal(t, errorFieldObjectName, result.Objects[2].Name)
-	})
-
-	t.Run("PreventsDuplicateErrorDefinitions", func(t *testing.T) {
-		// Test that if ErrorCode enum or Error object already exist, they are not duplicated
-		input := &Service{
-			Name: "TestService",
-			Enums: []Enum{
-				{
-					Name:        errorCodeEnumName,
-					Description: "Custom error code enum",
-					Values: []EnumValue{
-						{Name: "CustomError", Description: "Custom error"},
-					},
-				},
-			},
-			Objects: []Object{
-				{
-					Name:        errorObjectName,
-					Description: "Custom error object",
-					Fields: []Field{
-						{Name: "customField", Type: "String", Description: "Custom field"},
-					},
-				},
-			},
-			Resources: []Resource{},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Should have existing ErrorCode enum + new ErrorFieldCode enum
-		assert.Equal(t, 2, len(result.Enums))
-
-		// Should have existing Error object + new ErrorField and Pagination objects
-		assert.Equal(t, 3, len(result.Objects))
-
-		// Check that existing ErrorCode definition is preserved, not replaced (first position)
-		assert.Equal(t, errorCodeEnumName, result.Enums[0].Name)
-		assert.Equal(t, "Custom error code enum", result.Enums[0].Description)
-		assert.Equal(t, 1, len(result.Enums[0].Values))
-		assert.Equal(t, "CustomError", result.Enums[0].Values[0].Name)
-
-		// Check that ErrorFieldCode enum is added (second position)
-		assert.Equal(t, errorFieldCodeEnumName, result.Enums[1].Name)
-		assert.Equal(t, descriptionErrorFieldCodeEnum, result.Enums[1].Description)
-
-		// Check that existing Error object is preserved, not replaced (first position)
-		assert.Equal(t, errorObjectName, result.Objects[0].Name)
-		assert.Equal(t, "Custom error object", result.Objects[0].Description)
-		assert.Equal(t, 1, len(result.Objects[0].Fields))
-		assert.Equal(t, "customField", result.Objects[0].Fields[0].Name)
-
-		// Check that ErrorField object is added (second position)
-		assert.Equal(t, errorFieldObjectName, result.Objects[1].Name)
-		assert.Equal(t, errorFieldObjectDescription, result.Objects[1].Description)
-	})
-
-	t.Run("PreventsDuplicateErrorFieldDefinitions", func(t *testing.T) {
-		// Test that if ErrorFieldCode enum or ErrorField object already exist, they are not duplicated
-		input := &Service{
-			Name: "TestService",
-			Enums: []Enum{
-				{
-					Name:        errorFieldCodeEnumName,
-					Description: "Custom error field code enum",
-					Values: []EnumValue{
-						{Name: "CustomFieldError", Description: "Custom field error"},
-					},
-				},
-			},
-			Objects: []Object{
-				{
-					Name:        errorFieldObjectName,
-					Description: "Custom error field object",
-					Fields: []Field{
-						{Name: "customFieldField", Type: "String", Description: "Custom field field"},
-					},
-				},
-			},
-			Resources: []Resource{},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Should have default ErrorCode enum + existing ErrorFieldCode enum
-		assert.Equal(t, 2, len(result.Enums))
-
-		// Should have default Error and Pagination objects + existing ErrorField object
-		assert.Equal(t, 3, len(result.Objects))
-
-		// Check that existing ErrorFieldCode definition is preserved, not replaced (first position)
-		assert.Equal(t, errorFieldCodeEnumName, result.Enums[0].Name)
-		assert.Equal(t, "Custom error field code enum", result.Enums[0].Description)
-		assert.Equal(t, 1, len(result.Enums[0].Values))
-		assert.Equal(t, "CustomFieldError", result.Enums[0].Values[0].Name)
-
-		// Check that ErrorCode enum is added (second position)
-		assert.Equal(t, errorCodeEnumName, result.Enums[1].Name)
-		assert.Equal(t, descriptionErrorCodeEnum, result.Enums[1].Description)
-
-		// Check that existing ErrorField object is preserved, not replaced (first position)
-		assert.Equal(t, errorFieldObjectName, result.Objects[0].Name)
-		assert.Equal(t, "Custom error field object", result.Objects[0].Description)
-		assert.Equal(t, 1, len(result.Objects[0].Fields))
-		assert.Equal(t, "customFieldField", result.Objects[0].Fields[0].Name)
-
-		// Check that Error object is added (second position)
-		assert.Equal(t, errorObjectName, result.Objects[1].Name)
-		assert.Equal(t, errorObjectDescription, result.Objects[1].Description)
-	})
-
-	t.Run("PreventsDuplicateAllErrorDefinitions", func(t *testing.T) {
-		// Test that if both ErrorCode/Error and ErrorFieldCode/ErrorField already exist, none are duplicated
-		input := &Service{
-			Name: "TestService",
-			Enums: []Enum{
-				{
-					Name:        errorCodeEnumName,
-					Description: "Custom error code enum",
-					Values: []EnumValue{
-						{Name: "CustomError", Description: "Custom error"},
-					},
-				},
-				{
-					Name:        errorFieldCodeEnumName,
-					Description: "Custom error field code enum",
-					Values: []EnumValue{
-						{Name: "CustomFieldError", Description: "Custom field error"},
-					},
-				},
-			},
-			Objects: []Object{
-				{
-					Name:        errorObjectName,
-					Description: "Custom error object",
-					Fields: []Field{
-						{Name: "customField", Type: "String", Description: "Custom field"},
-					},
-				},
-				{
-					Name:        errorFieldObjectName,
-					Description: "Custom error field object",
-					Fields: []Field{
-						{Name: "customFieldField", Type: "String", Description: "Custom field field"},
-					},
-				},
-			},
-			Resources: []Resource{},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Should have both existing enums (no new ones added)
-		assert.Equal(t, 2, len(result.Enums))
-
-		// Should have both existing objects + new Pagination object
-		assert.Equal(t, 3, len(result.Objects))
-
-		// Check that existing definitions are preserved, not replaced
-		assert.Equal(t, errorCodeEnumName, result.Enums[0].Name)
-		assert.Equal(t, "Custom error code enum", result.Enums[0].Description)
-
-		assert.Equal(t, errorFieldCodeEnumName, result.Enums[1].Name)
-		assert.Equal(t, "Custom error field code enum", result.Enums[1].Description)
-
-		assert.Equal(t, errorObjectName, result.Objects[0].Name)
-		assert.Equal(t, "Custom error object", result.Objects[0].Description)
-
-		assert.Equal(t, errorFieldObjectName, result.Objects[1].Name)
-		assert.Equal(t, "Custom error field object", result.Objects[1].Description)
-	})
-
-	t.Run("ResourceWithReadOperation", func(t *testing.T) {
-		input := &Service{
-			Name:    "TestService",
-			Enums:   []Enum{},
-			Objects: []Object{},
 			Resources: []Resource{
 				{
 					Name:        "Users",
-					Description: "User management resource",
+					Description: "User resource",
 					Operations:  []string{"Create", "Read", "Update", "Delete"},
 					Fields: []ResourceField{
 						{
@@ -1032,2590 +51,152 @@ func TestApplyOverlay(t *testing.T) {
 							},
 							Operations: []string{"Read"},
 						},
+					},
+					Endpoints: []Endpoint{
 						{
-							Field: Field{
-								Name:        "name",
-								Type:        "String",
-								Description: "User name",
-								Example:     "John Doe",
+							Name:        "GetUser",
+							Title:       "Get User",
+							Description: "Get a user by ID",
+							Method:      "GET",
+							Path:        "/{id}",
+							Request: EndpointRequest{
+								PathParams: []Field{
+									{Name: "id", Type: "UUID", Description: "User ID"},
+								},
 							},
-							Operations: []string{"Create", "Read", "Update"},
-						},
-						{
-							Field: Field{
-								Name:        "password",
-								Type:        "String",
-								Description: "User password",
+							Response: EndpointResponse{
+								StatusCode: 200,
+								BodyFields: []Field{
+									{Name: "id", Type: "UUID", Description: "User ID"},
+									{Name: "name", Type: "String", Description: "User name"},
+								},
 							},
-							Operations: []string{"Create", "Update"}, // No Read operation
 						},
 					},
 				},
 			},
 		}
 
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
+		// Test JSON marshaling
+		jsonData, err := json.Marshal(service)
+		require.NoError(t, err)
+		assert.NotEmpty(t, jsonData)
 
-		// Should have Error + ErrorField + Pagination objects (from overlay) + generated Users object + 3 RequestError objects
-		assert.Equal(t, 7, len(result.Objects))
-
-		// First object should be Error (from overlay, no existing objects)
-		errorObject := result.Objects[0]
-		assert.Equal(t, "Error", errorObject.Name)
-
-		// Second object should be ErrorField (from overlay)
-		errorFieldObject := result.Objects[1]
-		assert.Equal(t, "ErrorField", errorFieldObject.Name)
-
-		// Check Pagination object (third object)
-		paginationObject := result.Objects[2]
-		assert.Equal(t, "Pagination", paginationObject.Name)
-
-		// Check the generated Users object (fourth object)
-		userObject := result.Objects[3]
-		assert.Equal(t, "Users", userObject.Name)
-		assert.Equal(t, "User management resource", userObject.Description)
-		assert.Equal(t, 2, len(userObject.Fields)) // Only id and name have Read operation
-
-		// Check fields are correct
-		assert.Equal(t, "id", userObject.Fields[0].Name)
-		assert.Equal(t, "UUID", userObject.Fields[0].Type)
-		assert.Equal(t, "name", userObject.Fields[1].Name)
-		assert.Equal(t, "String", userObject.Fields[1].Type)
-		assert.Equal(t, "John Doe", userObject.Fields[1].Example)
+		// Test JSON unmarshaling
+		var unmarshaledService Service
+		err = json.Unmarshal(jsonData, &unmarshaledService)
+		require.NoError(t, err)
+		assert.Equal(t, service.Name, unmarshaledService.Name)
+		assert.Equal(t, len(service.Enums), len(unmarshaledService.Enums))
+		assert.Equal(t, len(service.Objects), len(unmarshaledService.Objects))
+		assert.Equal(t, len(service.Resources), len(unmarshaledService.Resources))
 	})
 
-	t.Run("ResourceWithoutReadOperation", func(t *testing.T) {
-		input := &Service{
-			Name:    "TestService",
-			Enums:   []Enum{},
-			Objects: []Object{},
-			Resources: []Resource{
-				{
-					Name:        "InternalLogs",
-					Description: "Internal logging resource",
-					Operations:  []string{"Create", "Delete"}, // No Read operation
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "id",
-								Type:        "UUID",
-								Description: "Log ID",
-							},
-							Operations: []string{"Create"},
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Should only have Error, ErrorField, and Pagination objects (from overlay) + 1 RequestError object for Create endpoint
-		assert.Equal(t, 4, len(result.Objects))
-		assert.Equal(t, "Error", result.Objects[0].Name)
-		assert.Equal(t, "ErrorField", result.Objects[1].Name)
-	})
-
-	t.Run("MultipleResourcesWithReadOperation", func(t *testing.T) {
-		input := &Service{
-			Name:    "TestService",
-			Enums:   []Enum{},
-			Objects: []Object{},
-			Resources: []Resource{
-				{
-					Name:        "Users",
-					Description: "User resource",
-					Operations:  []string{"Create", "Read"},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "id",
-								Type:        "UUID",
-								Description: "User ID",
-							},
-							Operations: []string{"Read"},
-						},
-					},
-				},
-				{
-					Name:        "Products",
-					Description: "Product resource",
-					Operations:  []string{"Read", "Update"},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "id",
-								Type:        "UUID",
-								Description: "Product ID",
-							},
-							Operations: []string{"Read"},
-						},
-						{
-							Field: Field{
-								Name:        "name",
-								Type:        "String",
-								Description: "Product name",
-							},
-							Operations: []string{"Read", "Update"},
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Should have Error + ErrorField + Pagination objects + two generated objects + 3 RequestError objects
-		assert.Equal(t, 8, len(result.Objects))
-
-		// First object should be Error (from overlay, no existing objects)
-		assert.Equal(t, "Error", result.Objects[0].Name)
-
-		// Second object should be ErrorField (from overlay)
-		assert.Equal(t, "ErrorField", result.Objects[1].Name)
-
-		// Third object should be Pagination (from overlay)
-		assert.Equal(t, "Pagination", result.Objects[2].Name)
-
-		// Check fourth object (Users)
-		usersObject := result.Objects[3]
-		assert.Equal(t, "Users", usersObject.Name)
-		assert.Equal(t, 1, len(usersObject.Fields))
-
-		// Check fifth object (Products)
-		productsObject := result.Objects[4]
-		assert.Equal(t, "Products", productsObject.Name)
-		assert.Equal(t, 2, len(productsObject.Fields)) // Both id and name have Read operation
-	})
-
-	t.Run("DefaultPaginationObjectGeneration", func(t *testing.T) {
-		input := &Service{
-			Name:      "TestService",
-			Enums:     []Enum{},
-			Objects:   []Object{},
-			Resources: []Resource{},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Should have Error + ErrorField + Pagination objects
-		assert.Equal(t, 3, len(result.Objects))
-
-		// Check that Pagination object is created
-		var paginationObject *Object
-		for i := range result.Objects {
-			if result.Objects[i].Name == "Pagination" {
-				paginationObject = &result.Objects[i]
-				break
-			}
-		}
-		require.NotNil(t, paginationObject)
-
-		// Verify Pagination object structure
-		assert.Equal(t, "Pagination", paginationObject.Name)
-		assert.Equal(t, "Pagination parameters for controlling result sets in list operations", paginationObject.Description)
-		assert.Equal(t, 2, len(paginationObject.Fields))
-
-		// Check Offset field
-		offsetField := paginationObject.Fields[0]
-		assert.Equal(t, "Offset", offsetField.Name)
-		assert.Equal(t, "Number of items to skip from the beginning of the result set", offsetField.Description)
-		assert.Equal(t, "Int", offsetField.Type)
-
-		// Check Limit field
-		limitField := paginationObject.Fields[1]
-		assert.Equal(t, "Limit", limitField.Name)
-		assert.Equal(t, "Maximum number of items to return in the result set", limitField.Description)
-		assert.Equal(t, "Int", limitField.Type)
-	})
-
-	t.Run("ExistingPaginationObjectNotDuplicated", func(t *testing.T) {
-		input := &Service{
-			Name:  "TestService",
-			Enums: []Enum{},
-			Objects: []Object{
-				{
-					Name:        "Pagination",
-					Description: "Custom pagination object",
-					Fields: []Field{
-						{Name: "CustomOffset", Type: "Int", Description: "Custom offset"},
-					},
-				},
-			},
-			Resources: []Resource{},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Should have existing Pagination + Error + ErrorField objects (3 total)
-		assert.Equal(t, 3, len(result.Objects))
-
-		// Verify that the existing Pagination object is preserved
-		paginationObject := result.Objects[0]
-		assert.Equal(t, "Pagination", paginationObject.Name)
-		assert.Equal(t, "Custom pagination object", paginationObject.Description)
-		assert.Equal(t, 1, len(paginationObject.Fields))
-		assert.Equal(t, "CustomOffset", paginationObject.Fields[0].Name)
-	})
-
-	t.Run("ExistingObjectWithSameName", func(t *testing.T) {
-		input := &Service{
-			Name:  "TestService",
-			Enums: []Enum{},
-			Objects: []Object{
-				{
-					Name:        "Users",
-					Description: "Existing user object",
-					Fields: []Field{
-						{
-							Name:        "existingField",
-							Type:        "String",
-							Description: "Existing field",
-						},
-					},
-				},
-			},
-			Resources: []Resource{
-				{
-					Name:        "Users",
-					Description: "User resource",
-					Operations:  []string{"Create", "Read"},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "id",
-								Type:        "UUID",
-								Description: "User ID",
-							},
-							Operations: []string{"Read"},
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Should have Error + ErrorField + Pagination objects + existing Users object + 1 RequestError object
-		assert.Equal(t, 5, len(result.Objects))
-
-		// First object should be the existing Users object (existing objects come first)
-		assert.Equal(t, "Users", result.Objects[0].Name)
-		assert.Equal(t, "Existing user object", result.Objects[0].Description)
-		assert.Equal(t, 1, len(result.Objects[0].Fields))
-		assert.Equal(t, "existingField", result.Objects[0].Fields[0].Name)
-
-		// Second object should be Error (from overlay)
-		assert.Equal(t, "Error", result.Objects[1].Name)
-
-		// Third object should be ErrorField (from overlay)
-		assert.Equal(t, "ErrorField", result.Objects[2].Name)
-	})
-
-	t.Run("FieldsWithModifiers", func(t *testing.T) {
-		input := &Service{
-			Name:    "TestService",
-			Enums:   []Enum{},
-			Objects: []Object{},
-			Resources: []Resource{
-				{
-					Name:        "Users",
-					Description: "User resource",
-					Operations:  []string{"Create", "Read"},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "tags",
-								Type:        "String",
-								Description: "User tags",
-								Default:     "[]",
-								Example:     `["admin", "user"]`,
-								Modifiers:   []string{"array", "nullable"},
-							},
-							Operations: []string{"Create", "Read", "Update"},
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Should have Error + ErrorField + Pagination objects + generated Users object + 2 RequestError objects
-		assert.Equal(t, 6, len(result.Objects))
-
-		// First object should be Error (from overlay, no existing objects)
-		assert.Equal(t, "Error", result.Objects[0].Name)
-
-		// Second object should be ErrorField (from overlay)
-		assert.Equal(t, "ErrorField", result.Objects[1].Name)
-
-		// Third object should be Pagination (from overlay)
-		assert.Equal(t, "Pagination", result.Objects[2].Name)
-
-		// Check field modifiers are preserved in generated Users object
-		userObject := result.Objects[3]
-		assert.Equal(t, "Users", userObject.Name)
-		assert.Equal(t, 1, len(userObject.Fields))
-
-		field := userObject.Fields[0]
-		assert.Equal(t, "tags", field.Name)
-		assert.Equal(t, "String", field.Type)
-		assert.Equal(t, "[]", field.Default)
-		assert.Equal(t, `["admin", "user"]`, field.Example)
-		assert.Equal(t, []string{"array", "nullable"}, field.Modifiers)
-	})
-
-	t.Run("PreservesOriginalServiceStructure", func(t *testing.T) {
-		input := &Service{
+	t.Run("YAML marshaling and unmarshaling", func(t *testing.T) {
+		service := Service{
 			Name: "TestService",
 			Enums: []Enum{
 				{
 					Name:        "Status",
-					Description: "Status enum",
+					Description: "Status enumeration",
 					Values: []EnumValue{
 						{Name: "Active", Description: "Active status"},
+						{Name: "Inactive", Description: "Inactive status"},
 					},
 				},
 			},
-			Objects: []Object{
-				{
-					Name:        "ExistingObject",
-					Description: "Pre-existing object",
-					Fields: []Field{
-						{Name: "field1", Type: "String", Description: "Field 1"},
-					},
-				},
-			},
-			Resources: []Resource{
-				{
-					Name:        "Users",
-					Description: "User resource",
-					Operations:  []string{"Read"},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "id",
-								Type:        "UUID",
-								Description: "User ID",
-							},
-							Operations: []string{"Read"},
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Should preserve all original structure
-		assert.Equal(t, input.Name, result.Name)
-		// Should have ErrorCode + ErrorFieldCode enums + existing enum
-		assert.Equal(t, 3, len(result.Enums))
-		assert.Equal(t, len(input.Resources), len(result.Resources))
-
-		// Should have Error + ErrorField + Pagination objects + existing object + generated Users object + 1 RequestError object
-		assert.Equal(t, 6, len(result.Objects))
-
-		// First object should be the existing ExistingObject (existing objects come first)
-		assert.Equal(t, "ExistingObject", result.Objects[0].Name)
-
-		// Second object should be Error (from overlay)
-		assert.Equal(t, "Error", result.Objects[1].Name)
-
-		// Third object should be ErrorField (from overlay)
-		assert.Equal(t, "ErrorField", result.Objects[2].Name)
-
-		// Fourth object should be Pagination (from overlay)
-		assert.Equal(t, "Pagination", result.Objects[3].Name)
-
-		// Fifth object should be the generated Users object
-		assert.Equal(t, "Users", result.Objects[4].Name)
-	})
-
-	t.Run("ResourceWithCreateOperation", func(t *testing.T) {
-		input := &Service{
-			Name:    "TestService",
-			Enums:   []Enum{},
-			Objects: []Object{},
-			Resources: []Resource{
-				{
-					Name:        "Users",
-					Description: "User management resource",
-					Operations:  []string{"Create", "Read", "Update", "Delete"},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "id",
-								Type:        "UUID",
-								Description: "User ID",
-							},
-							Operations: []string{"Read"},
-						},
-						{
-							Field: Field{
-								Name:        "name",
-								Type:        "String",
-								Description: "User name",
-								Example:     "John Doe",
-							},
-							Operations: []string{"Create", "Read", "Update"},
-						},
-						{
-							Field: Field{
-								Name:        "email",
-								Type:        "String",
-								Description: "User email",
-								Example:     "john@example.com",
-							},
-							Operations: []string{"Create", "Read", "Update"},
-						},
-						{
-							Field: Field{
-								Name:        "password",
-								Type:        "String",
-								Description: "User password",
-							},
-							Operations: []string{"Create", "Update"}, // No Read operation
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Check that the resource has the Create, Update, Delete, Get, List, and Search endpoints generated
-		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 6, len(result.Resources[0].Endpoints)) // Create, Update, Delete, Get, List, and Search endpoints
-
-		// Check the generated Create endpoint
-		createEndpoint := result.Resources[0].Endpoints[0]
-		assert.Equal(t, "Create", createEndpoint.Name)
-		assert.Equal(t, "Create Users", createEndpoint.Title)
-		assert.Equal(t, "Create a new Users", createEndpoint.Description)
-		assert.Equal(t, "POST", createEndpoint.Method)
-		assert.Equal(t, "", createEndpoint.Path)
-
-		// Check the request structure
-		assert.Equal(t, "application/json", createEndpoint.Request.ContentType)
-		assert.Equal(t, 0, len(createEndpoint.Request.Headers))
-		assert.Equal(t, 0, len(createEndpoint.Request.PathParams))
-		assert.Equal(t, 0, len(createEndpoint.Request.QueryParams))
-
-		// Check body parameters - should include fields that support Create operation
-		assert.Equal(t, 3, len(createEndpoint.Request.BodyParams))
-
-		bodyParamNames := make([]string, len(createEndpoint.Request.BodyParams))
-		for i, param := range createEndpoint.Request.BodyParams {
-			bodyParamNames[i] = param.Name
-		}
-
-		// Should have name, email, and password (all have Create operation)
-		assert.Contains(t, bodyParamNames, "name")
-		assert.Contains(t, bodyParamNames, "email")
-		assert.Contains(t, bodyParamNames, "password")
-
-		// Should NOT have id (only has Read operation)
-		assert.NotContains(t, bodyParamNames, "id")
-
-		// Check the response structure
-		assert.Equal(t, "application/json", createEndpoint.Response.ContentType)
-		assert.Equal(t, 201, createEndpoint.Response.StatusCode)
-		assert.Equal(t, 0, len(createEndpoint.Response.Headers))
-		assert.Equal(t, 0, len(createEndpoint.Response.BodyFields))
-		require.NotNil(t, createEndpoint.Response.BodyObject)
-		assert.Equal(t, "Users", *createEndpoint.Response.BodyObject)
-
-		// Check the generated Update endpoint
-		updateEndpoint := result.Resources[0].Endpoints[1]
-		assert.Equal(t, "Update", updateEndpoint.Name)
-		assert.Equal(t, "Update Users", updateEndpoint.Title)
-		assert.Equal(t, "Update a Users", updateEndpoint.Description)
-		assert.Equal(t, "PATCH", updateEndpoint.Method)
-		assert.Equal(t, "/{id}", updateEndpoint.Path)
-
-		// Check the request structure
-		assert.Equal(t, "application/json", updateEndpoint.Request.ContentType)
-		assert.Equal(t, 0, len(updateEndpoint.Request.Headers))
-		assert.Equal(t, 1, len(updateEndpoint.Request.PathParams)) // Should have id path param
-		assert.Equal(t, 0, len(updateEndpoint.Request.QueryParams))
-
-		// Check path parameter
-		assert.Equal(t, "id", updateEndpoint.Request.PathParams[0].Name)
-		assert.Equal(t, "UUID", updateEndpoint.Request.PathParams[0].Type)
-		assert.Equal(t, "The unique identifier of the resource to update", updateEndpoint.Request.PathParams[0].Description)
-
-		// Check body parameters - should include fields that support Update operation
-		assert.Equal(t, 3, len(updateEndpoint.Request.BodyParams))
-
-		updateBodyParamNames := make([]string, len(updateEndpoint.Request.BodyParams))
-		for i, param := range updateEndpoint.Request.BodyParams {
-			updateBodyParamNames[i] = param.Name
-		}
-
-		// Should have name, email, and password (all have Update operation)
-		assert.Contains(t, updateBodyParamNames, "name")
-		assert.Contains(t, updateBodyParamNames, "email")
-		assert.Contains(t, updateBodyParamNames, "password")
-
-		// Should NOT have id (only has Read operation)
-		assert.NotContains(t, updateBodyParamNames, "id")
-
-		// Check the response structure
-		assert.Equal(t, "application/json", updateEndpoint.Response.ContentType)
-		assert.Equal(t, 200, updateEndpoint.Response.StatusCode)
-		assert.Equal(t, 0, len(updateEndpoint.Response.Headers))
-		assert.Equal(t, 0, len(updateEndpoint.Response.BodyFields))
-		require.NotNil(t, updateEndpoint.Response.BodyObject)
-		assert.Equal(t, "Users", *updateEndpoint.Response.BodyObject)
-
-		// Check the generated Delete endpoint
-		deleteEndpoint := result.Resources[0].Endpoints[2]
-		assert.Equal(t, "Delete", deleteEndpoint.Name)
-		assert.Equal(t, "Delete Users", deleteEndpoint.Title)
-		assert.Equal(t, "Delete a Users", deleteEndpoint.Description)
-		assert.Equal(t, "DELETE", deleteEndpoint.Method)
-		assert.Equal(t, "/{id}", deleteEndpoint.Path)
-
-		// Check the Delete request structure
-		assert.Equal(t, "application/json", deleteEndpoint.Request.ContentType)
-		assert.Equal(t, 0, len(deleteEndpoint.Request.Headers))
-		assert.Equal(t, 1, len(deleteEndpoint.Request.PathParams))
-		assert.Equal(t, "id", deleteEndpoint.Request.PathParams[0].Name)
-		assert.Equal(t, "The unique identifier of the resource to delete", deleteEndpoint.Request.PathParams[0].Description)
-		assert.Equal(t, "UUID", deleteEndpoint.Request.PathParams[0].Type)
-		assert.Equal(t, 0, len(deleteEndpoint.Request.QueryParams))
-		assert.Equal(t, 0, len(deleteEndpoint.Request.BodyParams)) // No body for delete
-
-		// Check the Delete response structure
-		assert.Equal(t, "application/json", deleteEndpoint.Response.ContentType)
-		assert.Equal(t, 204, deleteEndpoint.Response.StatusCode)
-		assert.Equal(t, 0, len(deleteEndpoint.Response.Headers))
-		assert.Equal(t, 0, len(deleteEndpoint.Response.BodyFields))
-		assert.Nil(t, deleteEndpoint.Response.BodyObject) // No body object for delete (returns nothing)
-
-		// Check the generated Get endpoint
-		getEndpoint := result.Resources[0].Endpoints[3]
-		assert.Equal(t, "Get", getEndpoint.Name)
-		assert.Equal(t, "Retrieve an existing Users", getEndpoint.Title)
-		assert.Equal(t, "Retrieves the `Users` with the given ID.", getEndpoint.Description)
-		assert.Equal(t, "GET", getEndpoint.Method)
-		assert.Equal(t, "/{id}", getEndpoint.Path)
-
-		// Check the Get request structure
-		assert.Equal(t, "application/json", getEndpoint.Request.ContentType)
-		assert.Equal(t, 0, len(getEndpoint.Request.Headers))
-		assert.Equal(t, 1, len(getEndpoint.Request.PathParams)) // Should have id path param
-		assert.Equal(t, 0, len(getEndpoint.Request.QueryParams))
-		assert.Equal(t, 0, len(getEndpoint.Request.BodyParams)) // No body for get
-
-		// Check path parameter
-		assert.Equal(t, "id", getEndpoint.Request.PathParams[0].Name)
-		assert.Equal(t, "UUID", getEndpoint.Request.PathParams[0].Type)
-		assert.Equal(t, "The unique identifier of the Users to retrieve", getEndpoint.Request.PathParams[0].Description)
-
-		// Check the Get response structure
-		assert.Equal(t, "application/json", getEndpoint.Response.ContentType)
-		assert.Equal(t, 200, getEndpoint.Response.StatusCode)
-		assert.Equal(t, 0, len(getEndpoint.Response.Headers))
-		assert.Equal(t, 0, len(getEndpoint.Response.BodyFields))
-		assert.NotNil(t, getEndpoint.Response.BodyObject)
-		assert.Equal(t, "Users", *getEndpoint.Response.BodyObject)
-	})
-
-	t.Run("ResourceWithoutCreateOperation", func(t *testing.T) {
-		input := &Service{
-			Name:    "TestService",
-			Enums:   []Enum{},
-			Objects: []Object{},
-			Resources: []Resource{
-				{
-					Name:        "ReadOnlyLogs",
-					Description: "Read-only logging resource",
-					Operations:  []string{"Read"}, // No Create operation
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "id",
-								Type:        "UUID",
-								Description: "Log ID",
-							},
-							Operations: []string{"Read"},
-						},
-						{
-							Field: Field{
-								Name:        "message",
-								Type:        "String",
-								Description: "Log message",
-							},
-							Operations: []string{"Read"},
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Should not generate any Create endpoints, but should generate Get, List, and Search endpoints
-		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 3, len(result.Resources[0].Endpoints))
-
-		// Check the generated Get endpoint
-		getEndpoint := result.Resources[0].Endpoints[0]
-		assert.Equal(t, "Get", getEndpoint.Name)
-		assert.Equal(t, "Retrieve an existing ReadOnlyLogs", getEndpoint.Title)
-		assert.Equal(t, "Retrieves the `ReadOnlyLogs` with the given ID.", getEndpoint.Description)
-		assert.Equal(t, "GET", getEndpoint.Method)
-		assert.Equal(t, "/{id}", getEndpoint.Path)
-
-		// Check the Get request structure
-		assert.Equal(t, "application/json", getEndpoint.Request.ContentType)
-		assert.Equal(t, 0, len(getEndpoint.Request.Headers))
-		assert.Equal(t, 1, len(getEndpoint.Request.PathParams)) // Should have id path param
-		assert.Equal(t, 0, len(getEndpoint.Request.QueryParams))
-		assert.Equal(t, 0, len(getEndpoint.Request.BodyParams)) // No body for get
-
-		// Check path parameter
-		assert.Equal(t, "id", getEndpoint.Request.PathParams[0].Name)
-		assert.Equal(t, "UUID", getEndpoint.Request.PathParams[0].Type)
-		assert.Equal(t, "The unique identifier of the ReadOnlyLogs to retrieve", getEndpoint.Request.PathParams[0].Description)
-
-		// Check the Get response structure
-		assert.Equal(t, "application/json", getEndpoint.Response.ContentType)
-		assert.Equal(t, 200, getEndpoint.Response.StatusCode)
-		assert.Equal(t, 0, len(getEndpoint.Response.Headers))
-		assert.Equal(t, 0, len(getEndpoint.Response.BodyFields))
-		assert.NotNil(t, getEndpoint.Response.BodyObject)
-		assert.Equal(t, "ReadOnlyLogs", *getEndpoint.Response.BodyObject)
-	})
-
-	t.Run("ResourceWithExistingCreateEndpoint", func(t *testing.T) {
-		input := &Service{
-			Name:    "TestService",
-			Enums:   []Enum{},
-			Objects: []Object{},
-			Resources: []Resource{
-				{
-					Name:        "Users",
-					Description: "User management resource",
-					Operations:  []string{"Create", "Read"},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "name",
-								Type:        "String",
-								Description: "User name",
-							},
-							Operations: []string{"Create", "Read"},
-						},
-					},
-					Endpoints: []Endpoint{
-						{
-							Name:        "Create",
-							Description: "Custom create endpoint",
-							Method:      "POST",
-							Path:        "/custom",
-							Request: EndpointRequest{
-								ContentType: "application/json",
-								BodyParams: []Field{
-									{
-										Name:        "customField",
-										Type:        "String",
-										Description: "Custom field",
-									},
-								},
-							},
-							Response: EndpointResponse{
-								ContentType: "application/json",
-								StatusCode:  200,
-							},
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Should preserve the existing Create endpoint and add Get, List, and Search endpoints
-		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 4, len(result.Resources[0].Endpoints))
-
-		existingEndpoint := result.Resources[0].Endpoints[0]
-		assert.Equal(t, "Create", existingEndpoint.Name)
-		assert.Equal(t, "Custom create endpoint", existingEndpoint.Description)
-		assert.Equal(t, "/custom", existingEndpoint.Path)
-		assert.Equal(t, 200, existingEndpoint.Response.StatusCode) // Should preserve custom status code
-
-		// Check the generated Get endpoint
-		getEndpoint := result.Resources[0].Endpoints[1]
-		assert.Equal(t, "Get", getEndpoint.Name)
-		assert.Equal(t, "Retrieve an existing Users", getEndpoint.Title)
-		assert.Equal(t, "Retrieves the `Users` with the given ID.", getEndpoint.Description)
-		assert.Equal(t, "GET", getEndpoint.Method)
-		assert.Equal(t, "/{id}", getEndpoint.Path)
-
-		// Check the Get request structure
-		assert.Equal(t, "application/json", getEndpoint.Request.ContentType)
-		assert.Equal(t, 0, len(getEndpoint.Request.Headers))
-		assert.Equal(t, 1, len(getEndpoint.Request.PathParams)) // Should have id path param
-		assert.Equal(t, 0, len(getEndpoint.Request.QueryParams))
-		assert.Equal(t, 0, len(getEndpoint.Request.BodyParams)) // No body for get
-
-		// Check path parameter
-		assert.Equal(t, "id", getEndpoint.Request.PathParams[0].Name)
-		assert.Equal(t, "UUID", getEndpoint.Request.PathParams[0].Type)
-		assert.Equal(t, "The unique identifier of the Users to retrieve", getEndpoint.Request.PathParams[0].Description)
-
-		// Check the Get response structure
-		assert.Equal(t, "application/json", getEndpoint.Response.ContentType)
-		assert.Equal(t, 200, getEndpoint.Response.StatusCode)
-		assert.Equal(t, 0, len(getEndpoint.Response.Headers))
-		assert.Equal(t, 0, len(getEndpoint.Response.BodyFields))
-		assert.NotNil(t, getEndpoint.Response.BodyObject)
-		assert.Equal(t, "Users", *getEndpoint.Response.BodyObject)
-	})
-
-	t.Run("MultipleResourcesWithCreateOperations", func(t *testing.T) {
-		input := &Service{
-			Name:    "TestService",
-			Enums:   []Enum{},
-			Objects: []Object{},
-			Resources: []Resource{
-				{
-					Name:        "Users",
-					Description: "User resource",
-					Operations:  []string{"Create", "Read"},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "name",
-								Type:        "String",
-								Description: "User name",
-							},
-							Operations: []string{"Create", "Read"},
-						},
-					},
-				},
-				{
-					Name:        "Products",
-					Description: "Product resource",
-					Operations:  []string{"Create", "Update"},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "title",
-								Type:        "String",
-								Description: "Product title",
-							},
-							Operations: []string{"Create", "Update"},
-						},
-						{
-							Field: Field{
-								Name:        "price",
-								Type:        "Int",
-								Description: "Product price",
-								Example:     "100",
-							},
-							Operations: []string{"Create", "Update"},
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Resources should have endpoints generated based on their operations
-		assert.Equal(t, 2, len(result.Resources))
-
-		// Find and check Users resource - has Create and Read operations, so should have 3 endpoints (Create, Get, and List)
-		var usersResource *Resource
-		var productsResource *Resource
-		for i := range result.Resources {
-			if result.Resources[i].Name == "Users" {
-				usersResource = &result.Resources[i]
-			} else if result.Resources[i].Name == "Products" {
-				productsResource = &result.Resources[i]
-			}
-		}
-		require.NotNil(t, usersResource, "Users resource should exist")
-		require.NotNil(t, productsResource, "Products resource should exist")
-
-		assert.Equal(t, 4, len(usersResource.Endpoints))
-		usersCreateEndpoint := usersResource.Endpoints[0]
-		assert.Equal(t, "Create", usersCreateEndpoint.Name)
-		assert.Equal(t, "Create Users", usersCreateEndpoint.Title)
-		assert.Equal(t, 1, len(usersCreateEndpoint.Request.BodyParams))
-		assert.Equal(t, "name", usersCreateEndpoint.Request.BodyParams[0].Name)
-
-		// Check Products - has Create and Update operations, so should have 2 endpoints (Create and Update)
-		assert.Equal(t, 2, len(productsResource.Endpoints))
-
-		// Check Products Create endpoint
-		productsCreateEndpoint := productsResource.Endpoints[0]
-		assert.Equal(t, "Create", productsCreateEndpoint.Name)
-		assert.Equal(t, "Create Products", productsCreateEndpoint.Title)
-		assert.Equal(t, 2, len(productsCreateEndpoint.Request.BodyParams))
-
-		productCreateBodyParamNames := make([]string, len(productsCreateEndpoint.Request.BodyParams))
-		for i, param := range productsCreateEndpoint.Request.BodyParams {
-			productCreateBodyParamNames[i] = param.Name
-		}
-		assert.Contains(t, productCreateBodyParamNames, "title")
-		assert.Contains(t, productCreateBodyParamNames, "price")
-
-		// Check Products Update endpoint
-		productsUpdateEndpoint := productsResource.Endpoints[1]
-		assert.Equal(t, "Update", productsUpdateEndpoint.Name)
-		assert.Equal(t, "Update Products", productsUpdateEndpoint.Title)
-		assert.Equal(t, "PATCH", productsUpdateEndpoint.Method)
-		assert.Equal(t, "/{id}", productsUpdateEndpoint.Path)
-		assert.Equal(t, 1, len(productsUpdateEndpoint.Request.PathParams))
-		assert.Equal(t, "id", productsUpdateEndpoint.Request.PathParams[0].Name)
-		assert.Equal(t, 2, len(productsUpdateEndpoint.Request.BodyParams))
-
-		productUpdateBodyParamNames := make([]string, len(productsUpdateEndpoint.Request.BodyParams))
-		for i, param := range productsUpdateEndpoint.Request.BodyParams {
-			productUpdateBodyParamNames[i] = param.Name
-		}
-		assert.Contains(t, productUpdateBodyParamNames, "title")
-		assert.Contains(t, productUpdateBodyParamNames, "price")
-
-		// Find and check Users Get endpoint (should exist because Users has Read operation)
-		var usersGetEndpoint *Endpoint
-		var foundUsers bool
-		for _, resource := range result.Resources {
-			if resource.Name == "Users" {
-				foundUsers = true
-				for i, endpoint := range resource.Endpoints {
-					if endpoint.Name == "Get" {
-						usersGetEndpoint = &resource.Endpoints[i]
-						break
-					}
-				}
-				break
-			}
-		}
-		require.True(t, foundUsers, "Users resource should exist")
-		require.NotNil(t, usersGetEndpoint, "Users should have a Get endpoint")
-		assert.Equal(t, "Get", usersGetEndpoint.Name)
-		assert.Equal(t, "Retrieve an existing Users", usersGetEndpoint.Title)
-		assert.Equal(t, "Retrieves the `Users` with the given ID.", usersGetEndpoint.Description)
-		assert.Equal(t, "GET", usersGetEndpoint.Method)
-		assert.Equal(t, "/{id}", usersGetEndpoint.Path)
-		assert.Equal(t, 1, len(usersGetEndpoint.Request.PathParams))
-		assert.Equal(t, "id", usersGetEndpoint.Request.PathParams[0].Name)
-		assert.Equal(t, "The unique identifier of the Users to retrieve", usersGetEndpoint.Request.PathParams[0].Description)
-		assert.Equal(t, 200, usersGetEndpoint.Response.StatusCode)
-		assert.NotNil(t, usersGetEndpoint.Response.BodyObject)
-		assert.Equal(t, "Users", *usersGetEndpoint.Response.BodyObject)
-
-		// Check Products does NOT have Get endpoint (no Read operation)
-		var foundProducts bool
-		for _, resource := range result.Resources {
-			if resource.Name == "Products" {
-				foundProducts = true
-				for _, endpoint := range resource.Endpoints {
-					assert.NotEqual(t, "Get", endpoint.Name, "Products should not have a Get endpoint")
-				}
-				break
-			}
-		}
-		require.True(t, foundProducts, "Products resource should exist")
-	})
-
-	t.Run("ResourceWithDeleteOperation", func(t *testing.T) {
-		input := &Service{
-			Name:    "TestService",
-			Enums:   []Enum{},
-			Objects: []Object{},
-			Resources: []Resource{
-				{
-					Name:        "Orders",
-					Description: "Order management resource",
-					Operations:  []string{"Delete"}, // Only Delete operation
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "id",
-								Type:        "UUID",
-								Description: "Order ID",
-							},
-							Operations: []string{"Read"},
-						},
-						{
-							Field: Field{
-								Name:        "total",
-								Type:        "Int",
-								Description: "Order total",
-							},
-							Operations: []string{"Read"},
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Check that the resource has only the Delete endpoint generated
-		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 1, len(result.Resources[0].Endpoints))
-
-		// Check the generated Delete endpoint
-		deleteEndpoint := result.Resources[0].Endpoints[0]
-		assert.Equal(t, "Delete", deleteEndpoint.Name)
-		assert.Equal(t, "Delete Orders", deleteEndpoint.Title)
-		assert.Equal(t, "Delete a Orders", deleteEndpoint.Description)
-		assert.Equal(t, "DELETE", deleteEndpoint.Method)
-		assert.Equal(t, "/{id}", deleteEndpoint.Path)
-
-		// Check the request structure
-		assert.Equal(t, "application/json", deleteEndpoint.Request.ContentType)
-		assert.Equal(t, 0, len(deleteEndpoint.Request.Headers))
-		assert.Equal(t, 1, len(deleteEndpoint.Request.PathParams))
-		assert.Equal(t, "id", deleteEndpoint.Request.PathParams[0].Name)
-		assert.Equal(t, "The unique identifier of the resource to delete", deleteEndpoint.Request.PathParams[0].Description)
-		assert.Equal(t, "UUID", deleteEndpoint.Request.PathParams[0].Type)
-		assert.Equal(t, 0, len(deleteEndpoint.Request.QueryParams))
-		assert.Equal(t, 0, len(deleteEndpoint.Request.BodyParams))
-
-		// Check the response structure
-		assert.Equal(t, "application/json", deleteEndpoint.Response.ContentType)
-		assert.Equal(t, 204, deleteEndpoint.Response.StatusCode)
-		assert.Equal(t, 0, len(deleteEndpoint.Response.Headers))
-		assert.Equal(t, 0, len(deleteEndpoint.Response.BodyFields))
-		assert.Nil(t, deleteEndpoint.Response.BodyObject)
-	})
-
-	t.Run("ResourceWithoutDeleteOperation", func(t *testing.T) {
-		input := &Service{
-			Name:    "TestService",
-			Enums:   []Enum{},
-			Objects: []Object{},
-			Resources: []Resource{
-				{
-					Name:        "ReadOnlyData",
-					Description: "Read-only data resource",
-					Operations:  []string{"Read", "Create", "Update"}, // No Delete operation
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "id",
-								Type:        "UUID",
-								Description: "Data ID",
-							},
-							Operations: []string{"Read"},
-						},
-						{
-							Field: Field{
-								Name:        "value",
-								Type:        "String",
-								Description: "Data value",
-							},
-							Operations: []string{"Create", "Read", "Update"},
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Should generate Create, Update, Get, List, and Search endpoints but not Delete
-		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 5, len(result.Resources[0].Endpoints)) // Create, Update, Get, List, and Search endpoints
-
-		// Verify no Delete endpoint was created
-		for _, endpoint := range result.Resources[0].Endpoints {
-			assert.NotEqual(t, "Delete", endpoint.Name)
-		}
-
-		// Find and check the Get endpoint (should exist because resource has Read operation)
-		var getEndpoint *Endpoint
-		for i, endpoint := range result.Resources[0].Endpoints {
-			if endpoint.Name == "Get" {
-				getEndpoint = &result.Resources[0].Endpoints[i]
-				break
-			}
-		}
-		require.NotNil(t, getEndpoint, "ReadOnlyData should have a Get endpoint")
-		assert.Equal(t, "Get", getEndpoint.Name)
-		assert.Equal(t, "Retrieve an existing ReadOnlyData", getEndpoint.Title)
-		assert.Equal(t, "Retrieves the `ReadOnlyData` with the given ID.", getEndpoint.Description)
-		assert.Equal(t, "GET", getEndpoint.Method)
-		assert.Equal(t, "/{id}", getEndpoint.Path)
-
-		// Check the Get request structure
-		assert.Equal(t, "application/json", getEndpoint.Request.ContentType)
-		assert.Equal(t, 0, len(getEndpoint.Request.Headers))
-		assert.Equal(t, 1, len(getEndpoint.Request.PathParams))
-		assert.Equal(t, 0, len(getEndpoint.Request.QueryParams))
-		assert.Equal(t, 0, len(getEndpoint.Request.BodyParams))
-
-		// Check path parameter
-		assert.Equal(t, "id", getEndpoint.Request.PathParams[0].Name)
-		assert.Equal(t, "UUID", getEndpoint.Request.PathParams[0].Type)
-		assert.Equal(t, "The unique identifier of the ReadOnlyData to retrieve", getEndpoint.Request.PathParams[0].Description)
-
-		// Check the Get response structure
-		assert.Equal(t, "application/json", getEndpoint.Response.ContentType)
-		assert.Equal(t, 200, getEndpoint.Response.StatusCode)
-		assert.Equal(t, 0, len(getEndpoint.Response.Headers))
-		assert.Equal(t, 0, len(getEndpoint.Response.BodyFields))
-		assert.NotNil(t, getEndpoint.Response.BodyObject)
-		assert.Equal(t, "ReadOnlyData", *getEndpoint.Response.BodyObject)
-	})
-
-	t.Run("ResourceWithExistingDeleteEndpoint", func(t *testing.T) {
-		input := &Service{
-			Name:    "TestService",
-			Enums:   []Enum{},
-			Objects: []Object{},
-			Resources: []Resource{
-				{
-					Name:        "CustomResource",
-					Description: "Resource with custom delete endpoint",
-					Operations:  []string{"Delete"},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "id",
-								Type:        "UUID",
-								Description: "Resource ID",
-							},
-							Operations: []string{"Read"},
-						},
-					},
-					Endpoints: []Endpoint{
-						{
-							Name:        "Delete",
-							Title:       "Custom Delete",
-							Description: "Custom delete endpoint with special logic",
-							Method:      "DELETE",
-							Path:        "/remove/{id}",
-							Request: EndpointRequest{
-								ContentType: "application/json",
-								PathParams: []Field{
-									{
-										Name:        "id",
-										Type:        "UUID",
-										Description: "Custom ID parameter",
-									},
-								},
-							},
-							Response: EndpointResponse{
-								ContentType: "application/json",
-								StatusCode:  200, // Custom status code
-							},
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Should preserve the existing Delete endpoint, not add a new one
-		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 1, len(result.Resources[0].Endpoints))
-
-		existingEndpoint := result.Resources[0].Endpoints[0]
-		assert.Equal(t, "Delete", existingEndpoint.Name)
-		assert.Equal(t, "Custom Delete", existingEndpoint.Title)
-		assert.Equal(t, "Custom delete endpoint with special logic", existingEndpoint.Description)
-		assert.Equal(t, "/remove/{id}", existingEndpoint.Path)
-		assert.Equal(t, 200, existingEndpoint.Response.StatusCode) // Should preserve custom status code
-	})
-
-	t.Run("MultipleResourcesWithDeleteOperations", func(t *testing.T) {
-		input := &Service{
-			Name:    "TestService",
-			Enums:   []Enum{},
-			Objects: []Object{},
-			Resources: []Resource{
-				{
-					Name:        "Users",
-					Description: "User resource",
-					Operations:  []string{"Create", "Read", "Delete"},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "name",
-								Type:        "String",
-								Description: "User name",
-							},
-							Operations: []string{"Create", "Read"},
-						},
-					},
-				},
-				{
-					Name:        "Files",
-					Description: "File resource",
-					Operations:  []string{"Delete"}, // Only Delete operation
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "filename",
-								Type:        "String",
-								Description: "File name",
-							},
-							Operations: []string{"Read"},
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Resources should have endpoints generated based on their operations
-		assert.Equal(t, 2, len(result.Resources))
-
-		// Find Users resource - has Create, Read, and Delete operations, so should have 4 endpoints (Create, Delete, Get, and List)
-		var usersResource *Resource
-		for i := range result.Resources {
-			if result.Resources[i].Name == "Users" {
-				usersResource = &result.Resources[i]
-				break
-			}
-		}
-		require.NotNil(t, usersResource, "Users resource should exist")
-		assert.Equal(t, 5, len(usersResource.Endpoints))
-
-		// Find and check Users Delete endpoint
-		var usersDeleteEndpoint *Endpoint
-		for i, endpoint := range usersResource.Endpoints {
-			if endpoint.Name == "Delete" {
-				usersDeleteEndpoint = &usersResource.Endpoints[i]
-				break
-			}
-		}
-		require.NotNil(t, usersDeleteEndpoint, "Users should have a Delete endpoint")
-		assert.Equal(t, "Delete Users", usersDeleteEndpoint.Title)
-		assert.Equal(t, "DELETE", usersDeleteEndpoint.Method)
-		assert.Equal(t, "/{id}", usersDeleteEndpoint.Path)
-		assert.Equal(t, 204, usersDeleteEndpoint.Response.StatusCode)
-
-		// Find and check Users Get endpoint (should exist because Users has Read operation)
-		var usersGetEndpoint *Endpoint
-		var foundUsers bool
-		for _, resource := range result.Resources {
-			if resource.Name == "Users" {
-				foundUsers = true
-				for i, endpoint := range resource.Endpoints {
-					if endpoint.Name == "Get" {
-						usersGetEndpoint = &resource.Endpoints[i]
-						break
-					}
-				}
-				break
-			}
-		}
-		require.True(t, foundUsers, "Users resource should exist")
-		require.NotNil(t, usersGetEndpoint, "Users should have a Get endpoint")
-		assert.Equal(t, "Get", usersGetEndpoint.Name)
-		assert.Equal(t, "Retrieve an existing Users", usersGetEndpoint.Title)
-		assert.Equal(t, "Retrieves the `Users` with the given ID.", usersGetEndpoint.Description)
-		assert.Equal(t, "GET", usersGetEndpoint.Method)
-		assert.Equal(t, "/{id}", usersGetEndpoint.Path)
-		assert.Equal(t, 1, len(usersGetEndpoint.Request.PathParams))
-		assert.Equal(t, "id", usersGetEndpoint.Request.PathParams[0].Name)
-		assert.Equal(t, "The unique identifier of the Users to retrieve", usersGetEndpoint.Request.PathParams[0].Description)
-		assert.Equal(t, 200, usersGetEndpoint.Response.StatusCode)
-		assert.NotNil(t, usersGetEndpoint.Response.BodyObject)
-		assert.Equal(t, "Users", *usersGetEndpoint.Response.BodyObject)
-
-		// Check Files - has Delete operation only, so should have 1 endpoint (Delete)
-		var foundFiles bool
-		for _, resource := range result.Resources {
-			if resource.Name == "Files" {
-				foundFiles = true
-				assert.Equal(t, 1, len(resource.Endpoints))
-				filesDeleteEndpoint := resource.Endpoints[0]
-				assert.Equal(t, "Delete", filesDeleteEndpoint.Name)
-				assert.Equal(t, "Delete Files", filesDeleteEndpoint.Title)
-				assert.Equal(t, "DELETE", filesDeleteEndpoint.Method)
-				assert.Equal(t, "/{id}", filesDeleteEndpoint.Path)
-				assert.Equal(t, 204, filesDeleteEndpoint.Response.StatusCode)
-				assert.Nil(t, filesDeleteEndpoint.Response.BodyObject)
-
-				// Verify Files does NOT have Get endpoint (no Read operation)
-				for _, endpoint := range resource.Endpoints {
-					assert.NotEqual(t, "Get", endpoint.Name, "Files should not have a Get endpoint")
-				}
-				break
-			}
-		}
-		require.True(t, foundFiles, "Files resource should exist")
-	})
-}
-
-func TestApplyOverlay_GetEndpoints(t *testing.T) {
-	t.Run("GetEndpointGeneration", func(t *testing.T) {
-		input := &Service{
-			Name:    "TestService",
-			Enums:   []Enum{},
-			Objects: []Object{},
-			Resources: []Resource{
-				{
-					Name:        "Books",
-					Description: "Book management resource",
-					Operations:  []string{"Read"},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "id",
-								Type:        "UUID",
-								Description: "Book ID",
-								Example:     "123e4567-e89b-12d3-a456-426614174000",
-							},
-							Operations: []string{"Read"},
-						},
-						{
-							Field: Field{
-								Name:        "title",
-								Type:        "String",
-								Description: "Book title",
-								Example:     "The Great Gatsby",
-							},
-							Operations: []string{"Read"},
-						},
-						{
-							Field: Field{
-								Name:        "author",
-								Type:        "String",
-								Description: "Book author",
-								Example:     "F. Scott Fitzgerald",
-							},
-							Operations: []string{"Read"},
-						},
-						{
-							Field: Field{
-								Name:        "isbn",
-								Type:        "String",
-								Description: "Book ISBN",
-								Example:     "978-0-7432-7356-5",
-								Modifiers:   []string{"nullable"},
-							},
-							Operations: []string{"Read"},
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Should generate Get, List, and Search endpoints
-		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 3, len(result.Resources[0].Endpoints))
-
-		getEndpoint := result.Resources[0].Endpoints[0]
-
-		// Validate basic endpoint properties
-		assert.Equal(t, "Get", getEndpoint.Name)
-		assert.Equal(t, "Retrieve an existing Books", getEndpoint.Title)
-		assert.Equal(t, "Retrieves the `Books` with the given ID.", getEndpoint.Description)
-		assert.Equal(t, "GET", getEndpoint.Method)
-		assert.Equal(t, "/{id}", getEndpoint.Path)
-
-		// Validate request structure
-		assert.Equal(t, "application/json", getEndpoint.Request.ContentType)
-		assert.Equal(t, 0, len(getEndpoint.Request.Headers))
-		assert.Equal(t, 1, len(getEndpoint.Request.PathParams))
-		assert.Equal(t, 0, len(getEndpoint.Request.QueryParams))
-		assert.Equal(t, 0, len(getEndpoint.Request.BodyParams))
-
-		// Validate path parameter details
-		pathParam := getEndpoint.Request.PathParams[0]
-		assert.Equal(t, "id", pathParam.Name)
-		assert.Equal(t, "UUID", pathParam.Type)
-		assert.Equal(t, "The unique identifier of the Books to retrieve", pathParam.Description)
-		assert.Empty(t, pathParam.Example)
-		assert.Empty(t, pathParam.Default)
-		assert.Empty(t, pathParam.Modifiers)
-
-		// Validate response structure
-		assert.Equal(t, "application/json", getEndpoint.Response.ContentType)
-		assert.Equal(t, 200, getEndpoint.Response.StatusCode)
-		assert.Equal(t, 0, len(getEndpoint.Response.Headers))
-		assert.Equal(t, 0, len(getEndpoint.Response.BodyFields))
-		assert.NotNil(t, getEndpoint.Response.BodyObject)
-		assert.Equal(t, "Books", *getEndpoint.Response.BodyObject)
-	})
-
-	t.Run("GetEndpointNotGeneratedWithoutReadOperation", func(t *testing.T) {
-		input := &Service{
-			Name:    "TestService",
-			Enums:   []Enum{},
-			Objects: []Object{},
-			Resources: []Resource{
-				{
-					Name:        "WriteOnlyLogs",
-					Description: "Write-only log resource",
-					Operations:  []string{"Create", "Update", "Delete"}, // No Read operation
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "message",
-								Type:        "String",
-								Description: "Log message",
-							},
-							Operations: []string{"Create", "Update"},
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Should generate Create, Update, and Delete endpoints but NOT Get
-		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 3, len(result.Resources[0].Endpoints)) // Create, Update, Delete
-
-		// Verify no Get endpoint was created
-		for _, endpoint := range result.Resources[0].Endpoints {
-			assert.NotEqual(t, "Get", endpoint.Name, "Get endpoint should not exist without Read operation")
-		}
-	})
-
-	t.Run("GetEndpointWithExistingGetEndpoint", func(t *testing.T) {
-		input := &Service{
-			Name:    "TestService",
-			Enums:   []Enum{},
-			Objects: []Object{},
-			Resources: []Resource{
-				{
-					Name:        "CustomBooks",
-					Description: "Book resource with custom Get endpoint",
-					Operations:  []string{"Read"},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "title",
-								Type:        "String",
-								Description: "Book title",
-							},
-							Operations: []string{"Read"},
-						},
-					},
-					Endpoints: []Endpoint{
-						{
-							Name:        "Get",
-							Title:       "Custom Get Books",
-							Description: "Custom endpoint to retrieve books",
-							Method:      "GET",
-							Path:        "/custom/{bookId}",
-							Request: EndpointRequest{
-								ContentType: "application/json",
-								PathParams: []Field{
-									{
-										Name:        "bookId",
-										Type:        "String",
-										Description: "Custom book identifier",
-									},
-								},
-							},
-							Response: EndpointResponse{
-								ContentType: "application/json",
-								StatusCode:  200,
-							},
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Should preserve existing Get endpoint and add List and Search endpoints
-		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 3, len(result.Resources[0].Endpoints))
-
-		existingEndpoint := result.Resources[0].Endpoints[0]
-		assert.Equal(t, "Get", existingEndpoint.Name)
-		assert.Equal(t, "Custom Get Books", existingEndpoint.Title)
-		assert.Equal(t, "Custom endpoint to retrieve books", existingEndpoint.Description)
-		assert.Equal(t, "/custom/{bookId}", existingEndpoint.Path)
-		assert.Equal(t, "bookId", existingEndpoint.Request.PathParams[0].Name)
-	})
-
-	t.Run("GetEndpointWithDifferentResourceNames", func(t *testing.T) {
-		input := &Service{
-			Name:    "TestService",
-			Enums:   []Enum{},
-			Objects: []Object{},
-			Resources: []Resource{
-				{
-					Name:        "UserProfiles",
-					Description: "User profile resource",
-					Operations:  []string{"Read"},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "profileId",
-								Type:        "UUID",
-								Description: "Profile identifier",
-							},
-							Operations: []string{"Read"},
-						},
-					},
-				},
-				{
-					Name:        "ProductCategories",
-					Description: "Product category resource",
-					Operations:  []string{"Read"},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "categoryName",
-								Type:        "String",
-								Description: "Category name",
-							},
-							Operations: []string{"Read"},
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Both resources should have Get, List, and Search endpoints
-		assert.Equal(t, 2, len(result.Resources))
-		assert.Equal(t, 3, len(result.Resources[0].Endpoints))
-		assert.Equal(t, 3, len(result.Resources[1].Endpoints))
-
-		// Find UserProfiles resource and check Get endpoint
-		var userGetEndpoint *Endpoint
-		var foundUserProfiles bool
-		for _, resource := range result.Resources {
-			if resource.Name == "UserProfiles" {
-				foundUserProfiles = true
-				assert.Equal(t, 3, len(resource.Endpoints)) // Get, List, and Search endpoints
-				// Find the Get endpoint
-				for _, endpoint := range resource.Endpoints {
-					if endpoint.Name == "Get" {
-						userGetEndpoint = &endpoint
-						break
-					}
-				}
-				break
-			}
-		}
-		require.True(t, foundUserProfiles, "UserProfiles resource should exist")
-		require.NotNil(t, userGetEndpoint, "UserProfiles should have a Get endpoint")
-		assert.Equal(t, "Get", userGetEndpoint.Name)
-		assert.Equal(t, "Retrieve an existing UserProfiles", userGetEndpoint.Title)
-		assert.Equal(t, "Retrieves the `UserProfiles` with the given ID.", userGetEndpoint.Description)
-		assert.Equal(t, "The unique identifier of the UserProfiles to retrieve", userGetEndpoint.Request.PathParams[0].Description)
-		assert.Equal(t, "UserProfiles", *userGetEndpoint.Response.BodyObject)
-
-		// Find ProductCategories resource and check Get endpoint
-		var categoryGetEndpoint *Endpoint
-		var foundProductCategories bool
-		for _, resource := range result.Resources {
-			if resource.Name == "ProductCategories" {
-				foundProductCategories = true
-				assert.Equal(t, 3, len(resource.Endpoints)) // Get, List, and Search endpoints
-				// Find the Get endpoint
-				for _, endpoint := range resource.Endpoints {
-					if endpoint.Name == "Get" {
-						categoryGetEndpoint = &endpoint
-						break
-					}
-				}
-				break
-			}
-		}
-		require.True(t, foundProductCategories, "ProductCategories resource should exist")
-		require.NotNil(t, categoryGetEndpoint, "ProductCategories should have a Get endpoint")
-		assert.Equal(t, "Get", categoryGetEndpoint.Name)
-		assert.Equal(t, "Retrieve an existing ProductCategories", categoryGetEndpoint.Title)
-		assert.Equal(t, "Retrieves the `ProductCategories` with the given ID.", categoryGetEndpoint.Description)
-		assert.Equal(t, "The unique identifier of the ProductCategories to retrieve", categoryGetEndpoint.Request.PathParams[0].Description)
-		assert.Equal(t, "ProductCategories", *categoryGetEndpoint.Response.BodyObject)
-	})
-}
-
-func TestRequestErrorObjectGeneration(t *testing.T) {
-	t.Run("GenerateRequestErrorObjectsForAllEndpoints", func(t *testing.T) {
-		input := &Service{
-			Name:    "TestService",
-			Enums:   []Enum{},
-			Objects: []Object{},
-			Resources: []Resource{
-				{
-					Name:        "Users",
-					Description: "User management resource",
-					Operations:  []string{"Create", "Read", "Update", "Delete"},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "id",
-								Type:        "UUID",
-								Description: "User ID",
-							},
-							Operations: []string{"Read"},
-						},
-						{
-							Field: Field{
-								Name:        "name",
-								Type:        "String",
-								Description: "User name",
-								Example:     "John Doe",
-							},
-							Operations: []string{"Create", "Read", "Update"},
-						},
-						{
-							Field: Field{
-								Name:        "email",
-								Type:        "String",
-								Description: "User email",
-							},
-							Operations: []string{"Create", "Read", "Update"},
-						},
-						{
-							Field: Field{
-								Name:        "password",
-								Type:        "String",
-								Description: "User password",
-							},
-							Operations: []string{"Create", "Update"},
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Find the RequestError objects
-		var usersCreateRequestError *Object
-		var usersUpdateRequestError *Object
-		var usersSearchRequestError *Object
-
-		for i := range result.Objects {
-			obj := &result.Objects[i]
-			switch obj.Name {
-			case "UsersCreateRequestError":
-				usersCreateRequestError = obj
-			case "UsersUpdateRequestError":
-				usersUpdateRequestError = obj
-			case "UsersSearchRequestError":
-				usersSearchRequestError = obj
-			}
-		}
-
-		// Verify Create RequestError object
-		require.NotNil(t, usersCreateRequestError, "UsersCreateRequestError should be generated")
-		assert.Equal(t, "UsersCreateRequestError", usersCreateRequestError.Name)
-		assert.Equal(t, "Request error object for Users Create endpoint", usersCreateRequestError.Description)
-		assert.Equal(t, 3, len(usersCreateRequestError.Fields)) // name, email, password
-
-		// Verify all fields are ErrorField type and nullable
-		for _, field := range usersCreateRequestError.Fields {
-			assert.Equal(t, "ErrorField", field.Type)
-			assert.Contains(t, field.Modifiers, "nullable")
-		}
-
-		// Check specific field names
-		fieldNames := make([]string, len(usersCreateRequestError.Fields))
-		for i, field := range usersCreateRequestError.Fields {
-			fieldNames[i] = field.Name
-		}
-		assert.Contains(t, fieldNames, "name")
-		assert.Contains(t, fieldNames, "email")
-		assert.Contains(t, fieldNames, "password")
-
-		// Verify Update RequestError object
-		require.NotNil(t, usersUpdateRequestError, "UsersUpdateRequestError should be generated")
-		assert.Equal(t, "UsersUpdateRequestError", usersUpdateRequestError.Name)
-		assert.Equal(t, "Request error object for Users Update endpoint", usersUpdateRequestError.Description)
-		assert.Equal(t, 3, len(usersUpdateRequestError.Fields)) // name, email, password
-
-		// Verify Search RequestError object
-		require.NotNil(t, usersSearchRequestError, "UsersSearchRequestError should be generated")
-		assert.Equal(t, "UsersSearchRequestError", usersSearchRequestError.Name)
-		assert.Equal(t, "Request error object for Users Search endpoint", usersSearchRequestError.Description)
-		assert.Equal(t, 1, len(usersSearchRequestError.Fields)) // Filter field
-
-		// Verify the Filter field points to the correct RequestError type
-		filterField := usersSearchRequestError.Fields[0]
-		assert.Equal(t, "Filter", filterField.Name)
-		assert.Equal(t, "UsersFilterRequestError", filterField.Type)
-		assert.Contains(t, filterField.Modifiers, "nullable")
-	})
-
-	t.Run("GenerateRequestErrorObjectsWithNestedObjects", func(t *testing.T) {
-		input := &Service{
-			Name:  "TestService",
-			Enums: []Enum{},
-			Objects: []Object{
-				{
-					Name:        "Address",
-					Description: "Address information",
-					Fields: []Field{
-						{
-							Name:        "street",
-							Type:        "String",
-							Description: "Street address",
-						},
-						{
-							Name:        "city",
-							Type:        "String",
-							Description: "City name",
-						},
-					},
-				},
-			},
-			Resources: []Resource{
-				{
-					Name:        "Users",
-					Description: "User management resource",
-					Operations:  []string{"Create", "Read"},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "name",
-								Type:        "String",
-								Description: "User name",
-							},
-							Operations: []string{"Create", "Read"},
-						},
-						{
-							Field: Field{
-								Name:        "address",
-								Type:        "Address",
-								Description: "User address",
-							},
-							Operations: []string{"Create", "Read"},
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Find the RequestError objects
-		var usersCreateRequestError *Object
-		var addressRequestError *Object
-
-		for i := range result.Objects {
-			obj := &result.Objects[i]
-			switch obj.Name {
-			case "UsersCreateRequestError":
-				usersCreateRequestError = obj
-			case "AddressRequestError":
-				addressRequestError = obj
-			}
-		}
-
-		// Verify Create RequestError object with nested object
-		require.NotNil(t, usersCreateRequestError, "UsersCreateRequestError should be generated")
-		assert.Equal(t, 2, len(usersCreateRequestError.Fields)) // name, address
-
-		// Find the address field
-		var addressField *Field
-		for i := range usersCreateRequestError.Fields {
-			if usersCreateRequestError.Fields[i].Name == "address" {
-				addressField = &usersCreateRequestError.Fields[i]
-				break
-			}
-		}
-
-		require.NotNil(t, addressField, "address field should exist")
-		assert.Equal(t, "AddressRequestError", addressField.Type)
-		assert.Contains(t, addressField.Modifiers, "nullable")
-
-		// Verify that AddressRequestError object exists (should be generated for the existing Address object)
-		require.NotNil(t, addressRequestError, "AddressRequestError should be generated")
-		assert.Equal(t, 2, len(addressRequestError.Fields)) // street, city
-	})
-
-	t.Run("OnlyGeneratesRequestErrorObjectsForUsedTypes", func(t *testing.T) {
-		input := &Service{
-			Name:  "TestService",
-			Enums: []Enum{},
-			Objects: []Object{
-				{
-					Name:        "UsedObject",
-					Description: "Object used in body parameters",
-					Fields: []Field{
-						{Name: "field1", Type: "String", Description: "Field 1"},
-					},
-				},
-				{
-					Name:        "UnusedObject",
-					Description: "Object NOT used in body parameters",
-					Fields: []Field{
-						{Name: "field2", Type: "String", Description: "Field 2"},
-					},
-				},
-			},
-			Resources: []Resource{
-				{
-					Name:        "TestResource",
-					Description: "Test resource",
-					Operations:  []string{"Create", "Read"},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "usedField",
-								Type:        "UsedObject",
-								Description: "Field using UsedObject",
-							},
-							Operations: []string{"Create", "Read"},
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Check which RequestError objects were generated
-		var foundRequestErrorObjects []string
-		for _, obj := range result.Objects {
-			if strings.HasSuffix(obj.Name, "RequestError") {
-				foundRequestErrorObjects = append(foundRequestErrorObjects, obj.Name)
-			}
-		}
-
-		// Should have RequestError objects for:
-		// 1. UsedObject (because it's used in Create endpoint body params)
-		// 2. TestResourceCreateRequestError (for the Create endpoint)
-		// Should NOT have:
-		// - UnusedObjectRequestError (because UnusedObject is not used in any body params)
-
-		expectedRequestErrors := []string{
-			"UsedObjectRequestError",
-			"TestResourceCreateRequestError",
-		}
-
-		notExpectedRequestErrors := []string{
-			"UnusedObjectRequestError",
-		}
-
-		for _, expected := range expectedRequestErrors {
-			assert.Contains(t, foundRequestErrorObjects, expected,
-				"Should generate RequestError for used object: %s", expected)
-		}
-
-		for _, notExpected := range notExpectedRequestErrors {
-			assert.NotContains(t, foundRequestErrorObjects, notExpected,
-				"Should NOT generate RequestError for unused object: %s", notExpected)
-		}
-
-		// Verify the UsedObjectRequestError has the correct structure
-		var usedObjectRequestError *Object
-		for i := range result.Objects {
-			if result.Objects[i].Name == "UsedObjectRequestError" {
-				usedObjectRequestError = &result.Objects[i]
-				break
-			}
-		}
-
-		require.NotNil(t, usedObjectRequestError, "UsedObjectRequestError should exist")
-		assert.Equal(t, 1, len(usedObjectRequestError.Fields))
-		assert.Equal(t, "field1", usedObjectRequestError.Fields[0].Name)
-		assert.Equal(t, "ErrorField", usedObjectRequestError.Fields[0].Type)
-	})
-}
-
-func TestApplyFilterOverlay(t *testing.T) {
-	t.Run("NilInput", func(t *testing.T) {
-		result := ApplyFilterOverlay(nil)
-		assert.Nil(t, result)
-	})
-
-	t.Run("EmptyService", func(t *testing.T) {
-		input := &Service{
-			Name:      "TestService",
-			Enums:     []Enum{},
-			Objects:   []Object{},
-			Resources: []Resource{},
-		}
-
-		result := ApplyFilterOverlay(input)
-		require.NotNil(t, result)
-
-		// Should preserve service structure with no additional objects
-		assert.Equal(t, input.Name, result.Name)
-		assert.Equal(t, 0, len(result.Objects))
-		assert.Equal(t, 0, len(result.Enums))
-		assert.Equal(t, 0, len(result.Resources))
-	})
-
-	t.Run("ServiceWithOneObject", func(t *testing.T) {
-		input := &Service{
-			Name:  "TestService",
-			Enums: []Enum{},
-			Objects: []Object{
-				{
-					Name:        "Person",
-					Description: "Person object",
-					Fields: []Field{
-						{
-							Name:        "FirstName",
-							Type:        FieldTypeString,
-							Description: "First name",
-							Modifiers:   []string{},
-						},
-						{
-							Name:        "LastName",
-							Type:        FieldTypeString,
-							Description: "Last name",
-							Modifiers:   []string{},
-						},
-						{
-							Name:        "Age",
-							Type:        FieldTypeInt,
-							Description: "Age in years",
-							Modifiers:   []string{},
-						},
-						{
-							Name:        "RelatedPersonIDs",
-							Type:        FieldTypeString,
-							Description: "Related person IDs",
-							Modifiers:   []string{ModifierArray},
-						},
-					},
-				},
-			},
-			Resources: []Resource{},
-		}
-
-		result := ApplyFilterOverlay(input)
-		require.NotNil(t, result)
-
-		// Should have original object plus 6 filter objects (main + 5 filter types)
-		assert.Equal(t, 7, len(result.Objects))
-
-		// Check main filter object
-		mainFilter := result.Objects[1] // First is original Person object
-		assert.Equal(t, "PersonFilter", mainFilter.Name)
-		assert.Equal(t, "Filter object for Person", mainFilter.Description)
-		assert.Equal(t, 14, len(mainFilter.Fields)) // 12 filter types + OrCondition + NestedFilters
-
-		// Check that all filter field types are present
-		fieldNames := make(map[string]bool)
-		for _, field := range mainFilter.Fields {
-			fieldNames[field.Name] = true
-		}
-		assert.True(t, fieldNames["Equals"])
-		assert.True(t, fieldNames["NotEquals"])
-		assert.True(t, fieldNames["GreaterThan"])
-		assert.True(t, fieldNames["SmallerThan"])
-		assert.True(t, fieldNames["GreaterOrEqual"])
-		assert.True(t, fieldNames["SmallerOrEqual"])
-		assert.True(t, fieldNames["Contains"])
-		assert.True(t, fieldNames["NotContains"])
-		assert.True(t, fieldNames["Like"])
-		assert.True(t, fieldNames["NotLike"])
-		assert.True(t, fieldNames["Null"])
-		assert.True(t, fieldNames["NotNull"])
-		assert.True(t, fieldNames["OrCondition"])
-		assert.True(t, fieldNames["NestedFilters"])
-
-		// Check FilterEquals object
-		equalsFilter := result.Objects[2]
-		assert.Equal(t, "PersonFilterEquals", equalsFilter.Name)
-		assert.Equal(t, "Equality/Inequality filter fields for Person", equalsFilter.Description)
-		assert.Equal(t, 4, len(equalsFilter.Fields)) // All original fields
-
-		// Check that fields have nullable modifier instead of pointer prefix
-		for _, field := range equalsFilter.Fields {
-			assert.Contains(t, field.Modifiers, ModifierNullable, "Field %s should have nullable modifier", field.Name)
-			assert.NotContains(t, field.Type, "*", "Field %s type should not have * prefix, got %s", field.Name, field.Type)
-		}
-
-		// Check FilterRange object
-		rangeFilter := result.Objects[3] // PersonFilterRange
-		assert.Equal(t, "PersonFilterRange", rangeFilter.Name)
-		assert.Equal(t, 1, len(rangeFilter.Fields)) // Only Age is comparable
-		assert.Equal(t, "Age", rangeFilter.Fields[0].Name)
-		assert.Equal(t, FieldTypeInt, rangeFilter.Fields[0].Type)
-		assert.Contains(t, rangeFilter.Fields[0].Modifiers, ModifierNullable)
-
-		// Check FilterContains object
-		containsFilter := result.Objects[4] // PersonFilterContains
-		assert.Equal(t, "PersonFilterContains", containsFilter.Name)
-		assert.Equal(t, 4, len(containsFilter.Fields)) // All fields except timestamp (none in this case)
-
-		// Check that Contains fields have array modifier instead of [] prefix
-		for _, field := range containsFilter.Fields {
-			assert.Contains(t, field.Modifiers, ModifierArray, "Field %s should have array modifier", field.Name)
-			assert.NotContains(t, field.Type, "[]", "Field %s type should not have [] prefix, got %s", field.Name, field.Type)
-		}
-
-		// Check FilterLike object
-		likeFilter := result.Objects[5] // PersonFilterLike
-		assert.Equal(t, "PersonFilterLike", likeFilter.Name)
-		assert.Equal(t, 3, len(likeFilter.Fields)) // Only string fields (FirstName, LastName, RelatedPersonIDs)
-
-		// Check FilterNull object
-		nullFilter := result.Objects[6] // PersonFilterNull
-		assert.Equal(t, "PersonFilterNull", nullFilter.Name)
-		assert.Equal(t, 1, len(nullFilter.Fields)) // Only RelatedPersonIDs has array modifier
-		assert.Equal(t, "RelatedPersonIDs", nullFilter.Fields[0].Name)
-		assert.Equal(t, FieldTypeBool, nullFilter.Fields[0].Type)
-		assert.Contains(t, nullFilter.Fields[0].Modifiers, ModifierNullable)
-	})
-
-	t.Run("ServiceWithMultipleObjects", func(t *testing.T) {
-		input := &Service{
-			Name:  "TestService",
-			Enums: []Enum{},
 			Objects: []Object{
 				{
 					Name:        "User",
 					Description: "User object",
 					Fields: []Field{
-						{
-							Name:        "ID",
-							Type:        FieldTypeUUID,
-							Description: "User ID",
-							Modifiers:   []string{},
-						},
-						{
-							Name:        "Email",
-							Type:        FieldTypeString,
-							Description: "User email",
-							Modifiers:   []string{ModifierNullable},
-						},
-					},
-				},
-				{
-					Name:        "Product",
-					Description: "Product object",
-					Fields: []Field{
-						{
-							Name:        "ID",
-							Type:        FieldTypeUUID,
-							Description: "Product ID",
-							Modifiers:   []string{},
-						},
-						{
-							Name:        "Price",
-							Type:        FieldTypeInt,
-							Description: "Product price",
-							Modifiers:   []string{},
-						},
-					},
-				},
-			},
-			Resources: []Resource{},
-		}
-
-		result := ApplyFilterOverlay(input)
-		require.NotNil(t, result)
-
-		// Should have 2 original objects + 2 * 6 filter objects = 14 total objects
-		assert.Equal(t, 14, len(result.Objects))
-
-		// Check that we have filters for both User and Product
-		objectNames := make(map[string]bool)
-		for _, obj := range result.Objects {
-			objectNames[obj.Name] = true
-		}
-
-		// Original objects
-		assert.True(t, objectNames["User"])
-		assert.True(t, objectNames["Product"])
-
-		// User filter objects
-		assert.True(t, objectNames["UserFilter"])
-		assert.True(t, objectNames["UserFilterEquals"])
-		assert.True(t, objectNames["UserFilterRange"])
-		assert.True(t, objectNames["UserFilterContains"])
-		assert.True(t, objectNames["UserFilterLike"])
-		assert.True(t, objectNames["UserFilterNull"])
-
-		// Product filter objects
-		assert.True(t, objectNames["ProductFilter"])
-		assert.True(t, objectNames["ProductFilterEquals"])
-		assert.True(t, objectNames["ProductFilterRange"])
-		assert.True(t, objectNames["ProductFilterContains"])
-		assert.True(t, objectNames["ProductFilterLike"])
-		assert.True(t, objectNames["ProductFilterNull"])
-	})
-
-	t.Run("PreservesOriginalStructure", func(t *testing.T) {
-		input := &Service{
-			Name: "TestService",
-			Enums: []Enum{
-				{
-					Name:        "Status",
-					Description: "Status enum",
-					Values: []EnumValue{
-						{Name: "Active", Description: "Active status"},
-					},
-				},
-			},
-			Objects: []Object{
-				{
-					Name:        "TestObject",
-					Description: "Test object",
-					Fields: []Field{
-						{Name: "field1", Type: FieldTypeString, Description: "Field 1"},
+						{Name: "id", Type: "UUID", Description: "User ID"},
+						{Name: "name", Type: "String", Description: "User name"},
 					},
 				},
 			},
 			Resources: []Resource{
 				{
-					Name:        "TestResource",
-					Description: "Test resource",
-					Operations:  []string{OperationRead},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "id",
-								Type:        FieldTypeUUID,
-								Description: "Resource ID",
-							},
-							Operations: []string{OperationRead},
-						},
-					},
+					Name:        "Users",
+					Description: "User resource",
+					Operations:  []string{"Create", "Read"},
 				},
 			},
 		}
 
-		result := ApplyFilterOverlay(input)
-		require.NotNil(t, result)
+		// Test YAML marshaling
+		yamlData, err := yaml.Marshal(service)
+		require.NoError(t, err)
+		assert.NotEmpty(t, yamlData)
 
-		// Should preserve all original structure
-		assert.Equal(t, input.Name, result.Name)
-		assert.Equal(t, len(input.Enums), len(result.Enums))
-		assert.Equal(t, len(input.Resources), len(result.Resources))
-
-		// Should have original object plus 6 filter objects
-		assert.Equal(t, 7, len(result.Objects)) // 1 original + 6 filter objects
-
-		// First object should be the original one
-		assert.Equal(t, "TestObject", result.Objects[0].Name)
-
-		// Should have generated filter objects
-		assert.Equal(t, "TestObjectFilter", result.Objects[1].Name)
+		// Test YAML unmarshaling
+		var unmarshaledService Service
+		err = yaml.Unmarshal(yamlData, &unmarshaledService)
+		require.NoError(t, err)
+		assert.Equal(t, service.Name, unmarshaledService.Name)
+		assert.Equal(t, len(service.Enums), len(unmarshaledService.Enums))
+		assert.Equal(t, len(service.Objects), len(unmarshaledService.Objects))
+		assert.Equal(t, len(service.Resources), len(unmarshaledService.Resources))
 	})
 
-	t.Run("ServiceWithNestedObjects", func(t *testing.T) {
-		input := &Service{
-			Name:  "TestService",
-			Enums: []Enum{},
+	t.Run("with complex hierarchy", func(t *testing.T) {
+		service := Service{
+			Name: "ComplexService",
+			Enums: []Enum{
+				{
+					Name:        "UserRole",
+					Description: "User role enumeration",
+					Values: []EnumValue{
+						{Name: "Admin", Description: "Administrator role"},
+						{Name: "User", Description: "Regular user role"},
+						{Name: "Guest", Description: "Guest user role"},
+					},
+				},
+				{
+					Name:        "Status",
+					Description: "General status enumeration",
+					Values: []EnumValue{
+						{Name: "Active", Description: "Active status"},
+						{Name: "Inactive", Description: "Inactive status"},
+						{Name: "Pending", Description: "Pending status"},
+						{Name: "Deleted", Description: "Deleted status"},
+					},
+				},
+			},
 			Objects: []Object{
 				{
 					Name:        "Address",
 					Description: "Address object",
 					Fields: []Field{
-						{
-							Name:        "PostalAddress",
-							Type:        FieldTypeString,
-							Description: "Postal address",
-							Modifiers:   []string{},
-						},
-						{
-							Name:        "PostalCode",
-							Type:        FieldTypeString,
-							Description: "Postal code",
-							Modifiers:   []string{},
-						},
-						{
-							Name:        "PostalCity",
-							Type:        FieldTypeString,
-							Description: "Postal city",
-							Modifiers:   []string{ModifierNullable},
-						},
+						{Name: "street", Type: "String", Description: "Street address"},
+						{Name: "city", Type: "String", Description: "City name"},
+						{Name: "zipCode", Type: "String", Description: "ZIP code"},
+						{Name: "country", Type: "String", Description: "Country name"},
 					},
 				},
 				{
-					Name:        "Person",
-					Description: "Person object",
+					Name:        "Contact",
+					Description: "Contact information object",
 					Fields: []Field{
-						{
-							Name:        "FirstName",
-							Type:        FieldTypeString,
-							Description: "First name",
-							Modifiers:   []string{},
-						},
-						{
-							Name:        "Age",
-							Type:        FieldTypeInt,
-							Description: "Age in years",
-							Modifiers:   []string{},
-						},
-						{
-							Name:        "Address",
-							Type:        "Address",
-							Description: "Person address",
-							Modifiers:   []string{ModifierNullable},
-						},
+						{Name: "email", Type: "String", Description: "Email address"},
+						{Name: "phone", Type: "String", Description: "Phone number"},
+						{Name: "address", Type: "Address", Description: "Physical address"},
 					},
 				},
-			},
-			Resources: []Resource{},
-		}
-
-		result := ApplyFilterOverlay(input)
-		require.NotNil(t, result)
-
-		// Should have 2 original objects + 2 * 6 filter objects = 14 total objects
-		assert.Equal(t, 14, len(result.Objects))
-
-		// Find Person filter objects
-		var personEqualsFilter, personRangeFilter, personContainsFilter, personLikeFilter, personNullFilter Object
-		for _, obj := range result.Objects {
-			switch obj.Name {
-			case "PersonFilterEquals":
-				personEqualsFilter = obj
-			case "PersonFilterRange":
-				personRangeFilter = obj
-			case "PersonFilterContains":
-				personContainsFilter = obj
-			case "PersonFilterLike":
-				personLikeFilter = obj
-			case "PersonFilterNull":
-				personNullFilter = obj
-			}
-		}
-
-		// Check PersonFilterEquals has nested Address filter
-		assert.Equal(t, 3, len(personEqualsFilter.Fields))
-		var addressFilterField Field
-		for _, field := range personEqualsFilter.Fields {
-			if field.Name == "Address" {
-				addressFilterField = field
-				break
-			}
-		}
-		assert.Equal(t, "AddressFilterEquals", addressFilterField.Type, "Address field should use AddressFilterEquals type")
-		assert.Contains(t, addressFilterField.Modifiers, ModifierNullable)
-
-		// Check PersonFilterRange has nested Address filter
-		assert.Equal(t, 2, len(personRangeFilter.Fields)) // Age (int) + Address (nested)
-		var addressRangeField Field
-		for _, field := range personRangeFilter.Fields {
-			if field.Name == "Address" {
-				addressRangeField = field
-				break
-			}
-		}
-		assert.Equal(t, "AddressFilterRange", addressRangeField.Type, "Address field should use AddressFilterRange type")
-
-		// Check PersonFilterContains has nested Address filter
-		assert.Equal(t, 3, len(personContainsFilter.Fields)) // All fields
-		var addressContainsField Field
-		for _, field := range personContainsFilter.Fields {
-			if field.Name == "Address" {
-				addressContainsField = field
-				break
-			}
-		}
-		assert.Equal(t, "AddressFilterContains", addressContainsField.Type, "Address field should use AddressFilterContains type")
-		assert.Contains(t, addressContainsField.Modifiers, ModifierNullable)
-
-		// Check PersonFilterLike has nested Address filter
-		assert.Equal(t, 2, len(personLikeFilter.Fields)) // FirstName (string) + Address (nested)
-		var addressLikeField Field
-		for _, field := range personLikeFilter.Fields {
-			if field.Name == "Address" {
-				addressLikeField = field
-				break
-			}
-		}
-		assert.Equal(t, "AddressFilterLike", addressLikeField.Type, "Address field should use AddressFilterLike type")
-
-		// Check PersonFilterNull has nested Address filter
-		assert.Equal(t, 1, len(personNullFilter.Fields)) // Only Address is nullable
-		addressNullField := personNullFilter.Fields[0]
-		assert.Equal(t, "Address", addressNullField.Name)
-		assert.Equal(t, FieldTypeBool, addressNullField.Type, "Null filter fields should be Bool type")
-		assert.Contains(t, addressNullField.Modifiers, ModifierNullable)
-
-		// Verify that AddressFilter objects were also generated correctly
-		var addressEqualsFilter Object
-		for _, obj := range result.Objects {
-			if obj.Name == "AddressFilterEquals" {
-				addressEqualsFilter = obj
-				break
-			}
-		}
-		assert.Equal(t, "AddressFilterEquals", addressEqualsFilter.Name)
-		assert.Equal(t, 3, len(addressEqualsFilter.Fields)) // PostalAddress, PostalCode, PostalCity
-	})
-}
-
-func Test_isComparableType(t *testing.T) {
-	t.Run("IntType", func(t *testing.T) {
-		result := isComparableType(FieldTypeInt)
-		assert.True(t, result)
-	})
-
-	t.Run("DateType", func(t *testing.T) {
-		result := isComparableType(FieldTypeDate)
-		assert.True(t, result)
-	})
-
-	t.Run("TimestampType", func(t *testing.T) {
-		result := isComparableType(FieldTypeTimestamp)
-		assert.True(t, result)
-	})
-
-	t.Run("StringType", func(t *testing.T) {
-		result := isComparableType(FieldTypeString)
-		assert.False(t, result)
-	})
-
-	t.Run("BoolType", func(t *testing.T) {
-		result := isComparableType(FieldTypeBool)
-		assert.False(t, result)
-	})
-
-	t.Run("UUIDType", func(t *testing.T) {
-		result := isComparableType(FieldTypeUUID)
-		assert.False(t, result)
-	})
-}
-
-func Test_isStringType(t *testing.T) {
-	t.Run("StringType", func(t *testing.T) {
-		result := isStringType(FieldTypeString)
-		assert.True(t, result)
-	})
-
-	t.Run("IntType", func(t *testing.T) {
-		result := isStringType(FieldTypeInt)
-		assert.False(t, result)
-	})
-
-	t.Run("BoolType", func(t *testing.T) {
-		result := isStringType(FieldTypeBool)
-		assert.False(t, result)
-	})
-}
-
-func Test_canBeNull(t *testing.T) {
-	t.Run("NullableField", func(t *testing.T) {
-		field := Field{
-			Name:      "test",
-			Type:      FieldTypeString,
-			Modifiers: []string{ModifierNullable},
-		}
-		result := canBeNull(field)
-		assert.True(t, result)
-	})
-
-	t.Run("ArrayField", func(t *testing.T) {
-		field := Field{
-			Name:      "test",
-			Type:      FieldTypeString,
-			Modifiers: []string{ModifierArray},
-		}
-		result := canBeNull(field)
-		assert.True(t, result)
-	})
-
-	t.Run("BothModifiers", func(t *testing.T) {
-		field := Field{
-			Name:      "test",
-			Type:      FieldTypeString,
-			Modifiers: []string{ModifierNullable, ModifierArray},
-		}
-		result := canBeNull(field)
-		assert.True(t, result)
-	})
-
-	t.Run("NoModifiers", func(t *testing.T) {
-		field := Field{
-			Name:      "test",
-			Type:      FieldTypeString,
-			Modifiers: []string{},
-		}
-		result := canBeNull(field)
-		assert.False(t, result)
-	})
-
-	t.Run("OtherModifiers", func(t *testing.T) {
-		field := Field{
-			Name:      "test",
-			Type:      FieldTypeString,
-			Modifiers: []string{"other"},
-		}
-		result := canBeNull(field)
-		assert.False(t, result)
-	})
-}
-
-func TestApplyOverlay_ListEndpoints(t *testing.T) {
-	t.Run("ListEndpointGeneration", func(t *testing.T) {
-		input := &Service{
-			Name:    "TestService",
-			Enums:   []Enum{},
-			Objects: []Object{},
-			Resources: []Resource{
-				{
-					Name:        "Books",
-					Description: "Book management resource",
-					Operations:  []string{"Read"},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "id",
-								Type:        "UUID",
-								Description: "Book ID",
-								Example:     "123e4567-e89b-12d3-a456-426614174000",
-							},
-							Operations: []string{"Read"},
-						},
-						{
-							Field: Field{
-								Name:        "title",
-								Type:        "String",
-								Description: "Book title",
-								Example:     "The Great Gatsby",
-							},
-							Operations: []string{"Read"},
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Should generate Get, List, and Search endpoints
-		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 3, len(result.Resources[0].Endpoints))
-
-		// Find the List endpoint (should be the second one after Get)
-		var listEndpoint Endpoint
-		for _, endpoint := range result.Resources[0].Endpoints {
-			if endpoint.Name == "List" {
-				listEndpoint = endpoint
-				break
-			}
-		}
-
-		// Validate basic endpoint properties
-		assert.Equal(t, "List", listEndpoint.Name)
-		assert.Equal(t, "List all Books", listEndpoint.Title)
-		assert.Equal(t, "Returns a paginated list of all `Books` in your organization.", listEndpoint.Description)
-		assert.Equal(t, "GET", listEndpoint.Method)
-		assert.Equal(t, "", listEndpoint.Path)
-
-		// Validate request structure
-		assert.Equal(t, "application/json", listEndpoint.Request.ContentType)
-		assert.Equal(t, 0, len(listEndpoint.Request.Headers))
-		assert.Equal(t, 0, len(listEndpoint.Request.PathParams))
-		assert.Equal(t, 2, len(listEndpoint.Request.QueryParams))
-		assert.Equal(t, 0, len(listEndpoint.Request.BodyParams))
-
-		// Validate query parameters
-		limitParam := listEndpoint.Request.QueryParams[0]
-		assert.Equal(t, "limit", limitParam.Name)
-		assert.Equal(t, "Int", limitParam.Type)
-		assert.Equal(t, "The maximum number of items to return (default: 50)", limitParam.Description)
-		assert.Equal(t, "50", limitParam.Default)
-		assert.Empty(t, limitParam.Example)
-		assert.Empty(t, limitParam.Modifiers)
-
-		offsetParam := listEndpoint.Request.QueryParams[1]
-		assert.Equal(t, "offset", offsetParam.Name)
-		assert.Equal(t, "Int", offsetParam.Type)
-		assert.Equal(t, "The number of items to skip before starting to return results (default: 0)", offsetParam.Description)
-		assert.Equal(t, "0", offsetParam.Default)
-		assert.Empty(t, offsetParam.Example)
-		assert.Empty(t, offsetParam.Modifiers)
-
-		// Validate response structure
-		assert.Equal(t, "application/json", listEndpoint.Response.ContentType)
-		assert.Equal(t, 200, listEndpoint.Response.StatusCode)
-		assert.Equal(t, 0, len(listEndpoint.Response.Headers))
-		assert.Equal(t, 2, len(listEndpoint.Response.BodyFields))
-		assert.Nil(t, listEndpoint.Response.BodyObject)
-
-		// Validate response body fields
-		dataField := listEndpoint.Response.BodyFields[0]
-		assert.Equal(t, "data", dataField.Name)
-		assert.Equal(t, "Books", dataField.Type)
-		assert.Equal(t, "Array of Books objects", dataField.Description)
-		assert.Equal(t, []string{"array"}, dataField.Modifiers)
-
-		paginationField := listEndpoint.Response.BodyFields[1]
-		assert.Equal(t, "Pagination", paginationField.Name)
-		assert.Equal(t, "Pagination", paginationField.Type)
-		assert.Equal(t, "Pagination information", paginationField.Description)
-		assert.Empty(t, paginationField.Modifiers)
-	})
-
-	t.Run("ListEndpointNotGeneratedWithoutReadOperation", func(t *testing.T) {
-		input := &Service{
-			Name:    "TestService",
-			Enums:   []Enum{},
-			Objects: []Object{},
-			Resources: []Resource{
-				{
-					Name:        "Books",
-					Description: "Book management resource",
-					Operations:  []string{"Create", "Update", "Delete"}, // No Read operation
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "title",
-								Type:        "String",
-								Description: "Book title",
-							},
-							Operations: []string{"Create", "Update"},
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Should generate Create, Update, Delete endpoints but NOT Get or List endpoints
-		assert.Equal(t, 1, len(result.Resources))
-		assert.Equal(t, 3, len(result.Resources[0].Endpoints))
-
-		// Verify no List endpoint was generated
-		listCount := 0
-		for _, endpoint := range result.Resources[0].Endpoints {
-			if endpoint.Name == "List" {
-				listCount++
-			}
-		}
-		assert.Equal(t, 0, listCount)
-	})
-
-	t.Run("ListEndpointNotDuplicatedWhenAlreadyExists", func(t *testing.T) {
-		input := &Service{
-			Name:    "TestService",
-			Enums:   []Enum{},
-			Objects: []Object{},
-			Resources: []Resource{
-				{
-					Name:        "Books",
-					Description: "Book management resource",
-					Operations:  []string{"Read"},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "id",
-								Type:        "UUID",
-								Description: "Book ID",
-							},
-							Operations: []string{"Read"},
-						},
-					},
-					Endpoints: []Endpoint{
-						{
-							Name:        "List",
-							Title:       "Custom List Books",
-							Description: "Custom list endpoint",
-							Method:      "GET",
-							Path:        "/custom",
-						},
-					},
-				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Should not generate a duplicate List endpoint
-		assert.Equal(t, 1, len(result.Resources))
-		listCount := 0
-		for _, endpoint := range result.Resources[0].Endpoints {
-			if endpoint.Name == "List" {
-				listCount++
-				// Should keep the existing custom endpoint, not the generated one
-				assert.Equal(t, "Custom List Books", endpoint.Title)
-				assert.Equal(t, "/custom", endpoint.Path)
-			}
-		}
-		assert.Equal(t, 1, listCount)
-	})
-
-	t.Run("ListEndpointPluralizationWorks", func(t *testing.T) {
-		input := &Service{
-			Name:    "TestService",
-			Enums:   []Enum{},
-			Objects: []Object{},
-			Resources: []Resource{
 				{
 					Name:        "User",
-					Description: "User management resource",
-					Operations:  []string{"Read"},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "id",
-								Type:        "UUID",
-								Description: "User ID",
-							},
-							Operations: []string{"Read"},
-						},
+					Description: "User object",
+					Fields: []Field{
+						{Name: "id", Type: "UUID", Description: "User ID"},
+						{Name: "username", Type: "String", Description: "Username"},
+						{Name: "role", Type: "UserRole", Description: "User role"},
+						{Name: "status", Type: "Status", Description: "User status"},
+						{Name: "contact", Type: "Contact", Description: "Contact information"},
+						{Name: "tags", Type: "String", Modifiers: []string{"array"}, Description: "User tags"},
+						{Name: "metadata", Type: "String", Modifiers: []string{"nullable"}, Description: "Additional metadata"},
 					},
 				},
 			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Find the List endpoint
-		var listEndpoint Endpoint
-		for _, endpoint := range result.Resources[0].Endpoints {
-			if endpoint.Name == "List" {
-				listEndpoint = endpoint
-				break
-			}
-		}
-
-		// Should use pluralized resource name in title and description
-		assert.Equal(t, "List all Users", listEndpoint.Title)
-		assert.Equal(t, "Returns a paginated list of all `Users` in your organization.", listEndpoint.Description)
-	})
-}
-
-func TestApplyOverlay_SearchEndpoints(t *testing.T) {
-	t.Run("SearchEndpointGeneration", func(t *testing.T) {
-		input := &Service{
-			Name: "TestService",
 			Resources: []Resource{
 				{
 					Name:        "Users",
@@ -3632,10 +213,52 @@ func TestApplyOverlay_SearchEndpoints(t *testing.T) {
 						},
 						{
 							Field: Field{
-								Name:        "name",
+								Name:        "username",
 								Type:        "String",
-								Description: "User name",
-								Example:     "John Doe",
+								Description: "Username",
+							},
+							Operations: []string{"Create", "Read", "Update"},
+						},
+						{
+							Field: Field{
+								Name:        "role",
+								Type:        "UserRole",
+								Description: "User role",
+							},
+							Operations: []string{"Create", "Read", "Update"},
+						},
+						{
+							Field: Field{
+								Name:        "status",
+								Type:        "Status",
+								Description: "User status",
+								Default:     "Active",
+							},
+							Operations: []string{"Create", "Read", "Update"},
+						},
+						{
+							Field: Field{
+								Name:        "contact",
+								Type:        "Contact",
+								Description: "Contact information",
+							},
+							Operations: []string{"Create", "Read", "Update"},
+						},
+						{
+							Field: Field{
+								Name:        "tags",
+								Type:        "String",
+								Modifiers:   []string{"array"},
+								Description: "User tags",
+							},
+							Operations: []string{"Create", "Read", "Update"},
+						},
+						{
+							Field: Field{
+								Name:        "metadata",
+								Type:        "String",
+								Modifiers:   []string{"nullable"},
+								Description: "Additional metadata",
 							},
 							Operations: []string{"Create", "Read", "Update"},
 						},
@@ -3644,136 +267,661 @@ func TestApplyOverlay_SearchEndpoints(t *testing.T) {
 			},
 		}
 
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
+		// Verify structure integrity
+		assert.NotEmpty(t, service.Name)
+		assert.Len(t, service.Enums, 2)
+		assert.Len(t, service.Objects, 3)
+		assert.Len(t, service.Resources, 1)
 
-		// Should generate a Search endpoint for the Users resource
-		assert.Equal(t, 1, len(result.Resources))
+		// Verify enum structure
+		userRoleEnum := service.Enums[0]
+		assert.Equal(t, "UserRole", userRoleEnum.Name)
+		assert.Len(t, userRoleEnum.Values, 3)
 
-		var searchEndpointFound bool
-		for _, endpoint := range result.Resources[0].Endpoints {
-			if endpoint.Name == "Search" {
-				searchEndpointFound = true
+		// Verify object nesting
+		userObject := service.Objects[2]
+		assert.Equal(t, "User", userObject.Name)
+		assert.Len(t, userObject.Fields, 7)
 
-				// Verify Search endpoint properties
-				assert.Equal(t, "Search Users", endpoint.Title)
-				assert.Equal(t, "Search for `Users` with filtering capabilities.", endpoint.Description)
-				assert.Equal(t, "POST", endpoint.Method)
-				assert.Equal(t, "/_search", endpoint.Path)
-				assert.Equal(t, 200, endpoint.Response.StatusCode)
-				assert.Equal(t, "application/json", endpoint.Request.ContentType)
-				assert.Equal(t, "application/json", endpoint.Response.ContentType)
+		// Verify resource field operations
+		userResource := service.Resources[0]
+		assert.Equal(t, "Users", userResource.Name)
+		assert.Len(t, userResource.Fields, 7)
 
-				// Verify query parameters (offset and limit)
-				assert.Equal(t, 2, len(endpoint.Request.QueryParams))
-				assert.Equal(t, "limit", endpoint.Request.QueryParams[0].Name)
-				assert.Equal(t, "50", endpoint.Request.QueryParams[0].Default)
-				assert.Equal(t, "offset", endpoint.Request.QueryParams[1].Name)
-				assert.Equal(t, "0", endpoint.Request.QueryParams[1].Default)
+		// Test JSON marshaling of complex structure
+		jsonData, err := json.Marshal(service)
+		require.NoError(t, err)
+		assert.NotEmpty(t, jsonData)
 
-				// Verify body parameter (Filter)
-				assert.Equal(t, 1, len(endpoint.Request.BodyParams))
-				assert.Equal(t, "Filter", endpoint.Request.BodyParams[0].Name)
-				assert.Equal(t, "UsersFilter", endpoint.Request.BodyParams[0].Type)
-				assert.Equal(t, "Filter criteria to search for specific records", endpoint.Request.BodyParams[0].Description)
-
-				// Verify response structure (same as List endpoint)
-				assert.Equal(t, 2, len(endpoint.Response.BodyFields))
-				assert.Equal(t, "data", endpoint.Response.BodyFields[0].Name)
-				assert.Equal(t, "Users", endpoint.Response.BodyFields[0].Type)
-				assert.Contains(t, endpoint.Response.BodyFields[0].Modifiers, "array")
-				assert.Equal(t, "Pagination", endpoint.Response.BodyFields[1].Name)
-				assert.Equal(t, "Pagination", endpoint.Response.BodyFields[1].Type)
-
-				break
-			}
-		}
-		assert.True(t, searchEndpointFound, "Search endpoint should be generated for Users resource with Read operation")
+		// Test JSON unmarshaling of complex structure
+		var unmarshaledService Service
+		err = json.Unmarshal(jsonData, &unmarshaledService)
+		require.NoError(t, err)
+		assert.Equal(t, service.Name, unmarshaledService.Name)
+		assert.Equal(t, len(service.Enums), len(unmarshaledService.Enums))
+		assert.Equal(t, len(service.Objects), len(unmarshaledService.Objects))
+		assert.Equal(t, len(service.Resources), len(unmarshaledService.Resources))
 	})
+}
 
-	t.Run("SearchEndpointNotGeneratedForNonReadResources", func(t *testing.T) {
-		input := &Service{
-			Name: "TestService",
-			Resources: []Resource{
-				{
-					Name:        "WriteOnlyFiles",
-					Description: "Write-only file resource",
-					Operations:  []string{"Create"}, // No Read operation
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "name",
-								Type:        "String",
-								Description: "File name",
-							},
-							Operations: []string{"Create"},
-						},
-					},
+func TestService_IsObject(t *testing.T) {
+	// Arrange
+	objectName := "User"
+	nonObjectType := FieldTypeString
+
+	service := Service{
+		Objects: []Object{
+			{Name: objectName, Description: "User object"},
+			{Name: "Company", Description: "Company object"},
+		},
+	}
+
+	// Act & Assert - existing object
+	result := service.IsObject(objectName)
+	assert.True(t, result, "Should return true for existing object type '%s'", objectName)
+
+	// Act & Assert - primitive type
+	result = service.IsObject(nonObjectType)
+	assert.False(t, result, "Should return false for primitive type '%s'", nonObjectType)
+
+	// Act & Assert - non-existent object
+	result = service.IsObject("NonExistentObject")
+	assert.False(t, result, "Should return false for non-existent object type")
+
+	t.Run("edge cases", func(t *testing.T) {
+		t.Run("empty collections", func(t *testing.T) {
+			emptyService := Service{
+				Name:      "EmptyService",
+				Enums:     []Enum{},
+				Objects:   []Object{},
+				Resources: []Resource{},
+			}
+
+			assert.False(t, emptyService.IsObject("AnyType"), "Should return false for any type when no objects")
+		})
+
+		t.Run("nil collections", func(t *testing.T) {
+			nilService := Service{
+				Name:      "NilService",
+				Enums:     nil,
+				Objects:   nil,
+				Resources: nil,
+			}
+
+			assert.False(t, nilService.IsObject("AnyType"), "Should return false for any type when objects is nil")
+		})
+
+		t.Run("case sensitivity", func(t *testing.T) {
+			caseService := Service{
+				Name: "CaseService",
+				Objects: []Object{
+					{Name: "User", Description: "User object"},
 				},
+			}
+
+			// Should be case sensitive
+			assert.True(t, caseService.IsObject("User"), "Should find exact case match")
+			assert.False(t, caseService.IsObject("user"), "Should not find different case")
+			assert.False(t, caseService.IsObject("USER"), "Should not find different case")
+		})
+	})
+}
+
+func TestService_HasObject(t *testing.T) {
+	// Arrange
+	existingObjectName := "User"
+	nonExistentObjectName := "NonExistent"
+
+	service := Service{
+		Objects: []Object{
+			{Name: existingObjectName, Description: "User object"},
+			{Name: "Company", Description: "Company object"},
+		},
+	}
+
+	// Act & Assert - existing object
+	result := service.HasObject(existingObjectName)
+	assert.True(t, result, "Should return true for existing object '%s'", existingObjectName)
+
+	// Act & Assert - non-existent object
+	result = service.HasObject(nonExistentObjectName)
+	assert.False(t, result, "Should return false for non-existent object '%s'", nonExistentObjectName)
+
+	t.Run("edge cases", func(t *testing.T) {
+		t.Run("empty objects", func(t *testing.T) {
+			emptyService := Service{
+				Name:    "EmptyService",
+				Objects: []Object{},
+			}
+
+			assert.False(t, emptyService.HasObject("AnyObject"), "Should return false for any object when no objects")
+		})
+
+		t.Run("duplicate object names", func(t *testing.T) {
+			duplicateService := Service{
+				Name: "DuplicateService",
+				Objects: []Object{
+					{Name: "User", Description: "First user"},
+					{Name: "User", Description: "Second user"},
+				},
+			}
+
+			// Should find the first occurrence
+			assert.True(t, duplicateService.HasObject("User"), "Should find object with duplicate name")
+		})
+	})
+}
+
+func TestService_HasEnum(t *testing.T) {
+	// Arrange
+	existingEnumName := "UserRole"
+	nonExistentEnumName := "NonExistent"
+
+	service := Service{
+		Enums: []Enum{
+			{Name: existingEnumName, Description: "User role enumeration"},
+			{Name: "Status", Description: "Status enumeration"},
+		},
+	}
+
+	// Act & Assert - existing enum
+	result := service.HasEnum(existingEnumName)
+	assert.True(t, result, "Should return true for existing enum '%s'", existingEnumName)
+
+	// Act & Assert - non-existent enum
+	result = service.HasEnum(nonExistentEnumName)
+	assert.False(t, result, "Should return false for non-existent enum '%s'", nonExistentEnumName)
+
+	t.Run("edge cases", func(t *testing.T) {
+		t.Run("empty enums", func(t *testing.T) {
+			emptyService := Service{
+				Name:  "EmptyService",
+				Enums: []Enum{},
+			}
+
+			assert.False(t, emptyService.HasEnum("AnyEnum"), "Should return false for any enum when no enums")
+		})
+
+		t.Run("duplicate enum names", func(t *testing.T) {
+			duplicateService := Service{
+				Name: "DuplicateService",
+				Enums: []Enum{
+					{Name: "Status", Description: "First status"},
+					{Name: "Status", Description: "Second status"},
+				},
+			}
+
+			// Should find the first occurrence
+			assert.True(t, duplicateService.HasEnum("Status"), "Should find enum with duplicate name")
+		})
+	})
+}
+
+func TestService_GetObject(t *testing.T) {
+	// Arrange
+	existingObjectName := "User"
+	expectedDescription := "User object"
+	nonExistentObjectName := "NonExistent"
+
+	service := Service{
+		Objects: []Object{
+			{Name: existingObjectName, Description: expectedDescription},
+			{Name: "Company", Description: "Company object"},
+		},
+	}
+
+	// Act & Assert - existing object
+	result := service.GetObject(existingObjectName)
+	assert.NotNil(t, result, "Should return object for existing object name '%s'", existingObjectName)
+	assert.Equal(t, existingObjectName, result.Name, "Returned object should have correct name")
+	assert.Equal(t, expectedDescription, result.Description, "Returned object should have correct description")
+
+	// Act & Assert - non-existent object
+	result = service.GetObject(nonExistentObjectName)
+	assert.Nil(t, result, "Should return nil for non-existent object '%s'", nonExistentObjectName)
+
+	t.Run("edge cases", func(t *testing.T) {
+		t.Run("empty objects", func(t *testing.T) {
+			emptyService := Service{
+				Name:    "EmptyService",
+				Objects: []Object{},
+			}
+
+			assert.Nil(t, emptyService.GetObject("AnyObject"), "Should return nil for any object when no objects")
+		})
+
+		t.Run("duplicate object names", func(t *testing.T) {
+			duplicateService := Service{
+				Name: "DuplicateService",
+				Objects: []Object{
+					{Name: "User", Description: "First user"},
+					{Name: "User", Description: "Second user"},
+				},
+			}
+
+			foundObject := duplicateService.GetObject("User")
+			assert.NotNil(t, foundObject, "Should return first object with duplicate name")
+			assert.Equal(t, "First user", foundObject.Description, "Should return first object with duplicate name")
+		})
+	})
+}
+
+// ============================================================================
+// Enum Tests
+// ============================================================================
+
+func TestEnum(t *testing.T) {
+	t.Run("structure", func(t *testing.T) {
+		enum := Enum{
+			Name:        "UserRole",
+			Description: "User role enumeration",
+			Values: []EnumValue{
+				{Name: "Admin", Description: "Administrator role"},
+				{Name: "User", Description: "Regular user role"},
+				{Name: "Guest", Description: "Guest user role"},
 			},
 		}
 
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
+		assert.Equal(t, "UserRole", enum.Name)
+		assert.Equal(t, "User role enumeration", enum.Description)
+		assert.Len(t, enum.Values, 3)
 
-		// Should not generate a Search endpoint for WriteOnlyFiles resource
-		assert.Equal(t, 1, len(result.Resources))
-
-		var searchEndpointFound bool
-		for _, endpoint := range result.Resources[0].Endpoints {
-			if endpoint.Name == "Search" {
-				searchEndpointFound = true
-				break
-			}
-		}
-		assert.False(t, searchEndpointFound, "Search endpoint should NOT be generated for resources without Read operation")
+		// Check enum values
+		assert.Equal(t, "Admin", enum.Values[0].Name)
+		assert.Equal(t, "Administrator role", enum.Values[0].Description)
+		assert.Equal(t, "User", enum.Values[1].Name)
+		assert.Equal(t, "Regular user role", enum.Values[1].Description)
+		assert.Equal(t, "Guest", enum.Values[2].Name)
+		assert.Equal(t, "Guest user role", enum.Values[2].Description)
 	})
+}
 
-	t.Run("SearchEndpointNotDuplicatedWhenExists", func(t *testing.T) {
-		input := &Service{
-			Name: "TestService",
-			Resources: []Resource{
-				{
-					Name:        "Users",
-					Description: "User management resource",
-					Operations:  []string{"Read"},
-					Fields: []ResourceField{
-						{
-							Field: Field{
-								Name:        "id",
-								Type:        "UUID",
-								Description: "User ID",
-							},
-							Operations: []string{"Read"},
-						},
-					},
-					Endpoints: []Endpoint{
-						{
-							Name:        "Search",
-							Title:       "Custom Search Users",
-							Description: "Custom search endpoint",
-							Method:      "POST",
-							Path:        "/custom-search",
-						},
-					},
+// ============================================================================
+// Object Tests
+// ============================================================================
+
+func TestObject_HasField(t *testing.T) {
+	// Arrange
+	existingFieldName := "id"
+	nonExistentFieldName := "nonExistent"
+
+	object := Object{
+		Name: "User",
+		Fields: []Field{
+			{Name: existingFieldName, Type: FieldTypeUUID},
+			{Name: "username", Type: FieldTypeString},
+		},
+	}
+
+	// Act & Assert - existing field
+	result := object.HasField(existingFieldName)
+	assert.True(t, result, "Should return true for existing field '%s'", existingFieldName)
+
+	// Act & Assert - non-existent field
+	result = object.HasField(nonExistentFieldName)
+	assert.False(t, result, "Should return false for non-existent field '%s'", nonExistentFieldName)
+
+	t.Run("edge cases", func(t *testing.T) {
+		t.Run("empty fields", func(t *testing.T) {
+			emptyObject := Object{
+				Name:        "EmptyObject",
+				Description: "Object with no fields",
+				Fields:      []Field{},
+			}
+
+			assert.False(t, emptyObject.HasField("anyField"), "Should return false for any field when no fields")
+		})
+
+		t.Run("nil fields", func(t *testing.T) {
+			nilFieldsObject := Object{
+				Name:        "NilFieldsObject",
+				Description: "Object with nil fields",
+				Fields:      nil,
+			}
+
+			assert.False(t, nilFieldsObject.HasField("anyField"), "Should return false for any field when fields is nil")
+		})
+
+		t.Run("case sensitivity", func(t *testing.T) {
+			caseObject := Object{
+				Name: "CaseObject",
+				Fields: []Field{
+					{Name: "userName", Type: FieldTypeString, Description: "User name"},
 				},
-			},
-		}
-
-		result := ApplyOverlay(input)
-		require.NotNil(t, result)
-
-		// Should not generate a duplicate Search endpoint
-		assert.Equal(t, 1, len(result.Resources))
-		searchCount := 0
-		for _, endpoint := range result.Resources[0].Endpoints {
-			if endpoint.Name == "Search" {
-				searchCount++
-				// Should keep the existing custom endpoint, not the generated one
-				assert.Equal(t, "Custom Search Users", endpoint.Title)
-				assert.Equal(t, "/custom-search", endpoint.Path)
 			}
-		}
-		assert.Equal(t, 1, searchCount)
+
+			// Should be case sensitive
+			assert.True(t, caseObject.HasField("userName"), "Should find exact case match")
+			assert.False(t, caseObject.HasField("username"), "Should not find different case")
+			assert.False(t, caseObject.HasField("USERNAME"), "Should not find different case")
+			assert.False(t, caseObject.HasField("UserName"), "Should not find different case")
+		})
 	})
+}
+
+func TestObject_GetField(t *testing.T) {
+	// Arrange
+	existingFieldName := "id"
+	expectedFieldType := FieldTypeUUID
+	nonExistentFieldName := "nonExistent"
+
+	object := Object{
+		Name: "User",
+		Fields: []Field{
+			{Name: existingFieldName, Type: expectedFieldType},
+			{Name: "username", Type: FieldTypeString},
+		},
+	}
+
+	// Act & Assert - existing field
+	result := object.GetField(existingFieldName)
+	assert.NotNil(t, result, "Should return field for existing field name '%s'", existingFieldName)
+	assert.Equal(t, existingFieldName, result.Name, "Returned field should have correct name")
+	assert.Equal(t, expectedFieldType, result.Type, "Returned field should have correct type")
+
+	// Act & Assert - non-existent field
+	result = object.GetField(nonExistentFieldName)
+	assert.Nil(t, result, "Should return nil for non-existent field '%s'", nonExistentFieldName)
+
+	t.Run("edge cases", func(t *testing.T) {
+		t.Run("empty fields", func(t *testing.T) {
+			emptyObject := Object{
+				Name:        "EmptyObject",
+				Description: "Object with no fields",
+				Fields:      []Field{},
+			}
+
+			assert.Nil(t, emptyObject.GetField("anyField"), "Should return nil for any field when no fields")
+		})
+
+		t.Run("duplicate field names", func(t *testing.T) {
+			duplicateObject := Object{
+				Name:        "DuplicateFieldsObject",
+				Description: "Object with duplicate field names",
+				Fields: []Field{
+					{Name: "id", Type: FieldTypeUUID, Description: "First ID"},
+					{Name: "id", Type: FieldTypeString, Description: "Second ID"},
+				},
+			}
+
+			// Should find the first occurrence
+			assert.True(t, duplicateObject.HasField("id"), "Should find field with duplicate name")
+
+			foundField := duplicateObject.GetField("id")
+			assert.NotNil(t, foundField, "Should return first field with duplicate name")
+			assert.Equal(t, FieldTypeUUID, foundField.Type, "Should return first field with duplicate name")
+			assert.Equal(t, "First ID", foundField.Description, "Should return first field with duplicate name")
+		})
+	})
+}
+
+// ============================================================================
+// Field Tests
+// ============================================================================
+
+func TestField_IsArray(t *testing.T) {
+	// Test field with array modifier
+	fieldWithArray := Field{
+		Name:      "tags",
+		Type:      FieldTypeString,
+		Modifiers: []string{ModifierArray},
+	}
+
+	result := fieldWithArray.IsArray()
+	assert.True(t, result, "Field with array modifier should return true")
+
+	// Test field without array modifier
+	fieldWithoutArray := Field{
+		Name:      "name",
+		Type:      FieldTypeString,
+		Modifiers: []string{ModifierNullable},
+	}
+
+	result = fieldWithoutArray.IsArray()
+	assert.False(t, result, "Field without array modifier should return false")
+
+	// Test field with no modifiers
+	fieldNoModifiers := Field{
+		Name: "name",
+		Type: FieldTypeString,
+	}
+
+	result = fieldNoModifiers.IsArray()
+	assert.False(t, result, "Field with no modifiers should return false")
+
+	t.Run("edge cases", func(t *testing.T) {
+		t.Run("multiple modifiers including array", func(t *testing.T) {
+			field := Field{
+				Name:      "multiModifierField",
+				Type:      FieldTypeString,
+				Modifiers: []string{ModifierArray, ModifierNullable},
+			}
+
+			assert.True(t, field.IsArray(), "Should be array with both modifiers")
+		})
+
+		t.Run("duplicate modifiers", func(t *testing.T) {
+			field := Field{
+				Name:      "duplicateModifierField",
+				Type:      FieldTypeString,
+				Modifiers: []string{ModifierArray, ModifierArray, ModifierNullable, ModifierNullable},
+			}
+
+			assert.True(t, field.IsArray(), "Should handle duplicate array modifiers")
+		})
+
+		t.Run("empty modifiers", func(t *testing.T) {
+			field := Field{
+				Name:      "noModifierField",
+				Type:      FieldTypeString,
+				Modifiers: []string{},
+			}
+
+			assert.False(t, field.IsArray(), "Should not be array with empty modifiers")
+		})
+
+		t.Run("nil modifiers", func(t *testing.T) {
+			field := Field{
+				Name:      "nilModifierField",
+				Type:      FieldTypeString,
+				Modifiers: nil,
+			}
+
+			assert.False(t, field.IsArray(), "Should not be array with nil modifiers")
+		})
+	})
+}
+
+func TestField_IsNullable(t *testing.T) {
+	// Test field with nullable modifier
+	fieldWithNullable := Field{
+		Name:      "description",
+		Type:      FieldTypeString,
+		Modifiers: []string{ModifierNullable},
+	}
+
+	result := fieldWithNullable.IsNullable()
+	assert.True(t, result, "Field with nullable modifier should return true")
+
+	// Test field without nullable modifier
+	fieldWithoutNullable := Field{
+		Name:      "name",
+		Type:      FieldTypeString,
+		Modifiers: []string{ModifierArray},
+	}
+
+	result = fieldWithoutNullable.IsNullable()
+	assert.False(t, result, "Field without nullable modifier should return false")
+
+	// Test field with both modifiers
+	fieldWithBoth := Field{
+		Name:      "tags",
+		Type:      FieldTypeString,
+		Modifiers: []string{ModifierArray, ModifierNullable},
+	}
+
+	result = fieldWithBoth.IsNullable()
+	assert.True(t, result, "Field with nullable modifier (among others) should return true")
+
+	t.Run("edge cases", func(t *testing.T) {
+		t.Run("multiple modifiers including nullable", func(t *testing.T) {
+			field := Field{
+				Name:      "multiModifierField",
+				Type:      FieldTypeString,
+				Modifiers: []string{ModifierArray, ModifierNullable},
+			}
+
+			assert.True(t, field.IsNullable(), "Should be nullable with both modifiers")
+		})
+
+		t.Run("duplicate modifiers", func(t *testing.T) {
+			field := Field{
+				Name:      "duplicateModifierField",
+				Type:      FieldTypeString,
+				Modifiers: []string{ModifierArray, ModifierArray, ModifierNullable, ModifierNullable},
+			}
+
+			assert.True(t, field.IsNullable(), "Should handle duplicate nullable modifiers")
+		})
+	})
+}
+
+func TestField_TagJSON(t *testing.T) {
+	testCases := []struct {
+		fieldName   string
+		expectedTag string
+	}{
+		{"user_name", "userName"},
+		{"first_name", "firstName"},
+		{"id", "id"},
+		{"created_at", "createdAt"},
+		{"user_id", "userID"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.fieldName, func(t *testing.T) {
+			field := Field{Name: tc.fieldName}
+			result := field.TagJSON()
+			assert.Equal(t, tc.expectedTag, result, "JSON tag for field '%s' should be '%s'", tc.fieldName, tc.expectedTag)
+		})
+	}
+}
+
+func TestField_IsRequired(t *testing.T) {
+	service := &Service{
+		Objects: []Object{
+			{Name: "User", Fields: []Field{{Name: "id", Type: FieldTypeUUID}}},
+		},
+	}
+
+	// Test required field (no nullable, no array, no default, not object type)
+	requiredField := Field{
+		Name: "username",
+		Type: FieldTypeString,
+	}
+
+	result := requiredField.IsRequired(service)
+	assert.True(t, result, "Field without nullable, array, default, or object type should be required")
+
+	// Test nullable field (not required)
+	nullableField := Field{
+		Name:      "description",
+		Type:      FieldTypeString,
+		Modifiers: []string{ModifierNullable},
+	}
+
+	result = nullableField.IsRequired(service)
+	assert.False(t, result, "Nullable field should not be required")
+
+	// Test array field (not required)
+	arrayField := Field{
+		Name:      "tags",
+		Type:      FieldTypeString,
+		Modifiers: []string{ModifierArray},
+	}
+
+	result = arrayField.IsRequired(service)
+	assert.False(t, result, "Array field should not be required")
+
+	// Test field with default (not required)
+	fieldWithDefault := Field{
+		Name:    "status",
+		Type:    FieldTypeString,
+		Default: "active",
+	}
+
+	result = fieldWithDefault.IsRequired(service)
+	assert.False(t, result, "Field with default value should not be required")
+
+	// Test object type field (not required)
+	objectField := Field{
+		Name: "user",
+		Type: "User", // Matches object in service
+	}
+
+	result = objectField.IsRequired(service)
+	assert.False(t, result, "Object type field should not be required")
+
+	t.Run("edge cases", func(t *testing.T) {
+		t.Run("field with empty vs no default", func(t *testing.T) {
+			// Test field with empty default vs no default
+			fieldEmptyDefault := Field{
+				Name:    "emptyDefault",
+				Type:    FieldTypeString,
+				Default: "",
+			}
+			fieldNoDefault := Field{
+				Name: "noDefault",
+				Type: FieldTypeString,
+			}
+
+			assert.True(t, fieldNoDefault.IsRequired(service), "Field with no default should be required")
+			assert.True(t, fieldEmptyDefault.IsRequired(service), "Field with empty default should be required")
+		})
+
+		t.Run("field with whitespace default", func(t *testing.T) {
+			fieldWhitespaceDefault := Field{
+				Name:    "whitespaceDefault",
+				Type:    FieldTypeString,
+				Default: "   ",
+			}
+			assert.False(t, fieldWhitespaceDefault.IsRequired(service), "Field with whitespace default should not be required")
+		})
+	})
+}
+
+func TestField_GetComment(t *testing.T) {
+	// Test Field.GetComment method which uses the getComment helper
+	testCases := []struct {
+		name     string
+		field    Field
+		tabs     string
+		expected string
+	}{
+		{
+			name: "basic field comment",
+			field: Field{
+				Name:        "username",
+				Description: "User's username",
+			},
+			tabs:     "\t",
+			expected: "\t// username: User's username",
+		},
+		{
+			name: "field with description starting with field name",
+			field: Field{
+				Name:        "id",
+				Description: "id is the unique identifier",
+			},
+			tabs:     "\t\t",
+			expected: "\t\t// id is the unique identifier",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.field.GetComment(tc.tabs)
+			assert.Equal(t, tc.expected, result, "Field comment should match expected for case '%s'", tc.name)
+		})
+	}
 }
