@@ -1,0 +1,179 @@
+name: "Blog Management API"
+version: "1.0.0"
+servers:
+  - url: "http://localhost:8080"
+    description: "Local development server"
+  - url: "https://api.myblog.com/v1" 
+    description: "Production server"
+
+enums:
+  - name: "PostStatus"
+    description: "Blog post publication status"
+    values:
+      - name: "Draft"
+        description: "Post is being written"
+      - name: "Published"
+        description: "Post is live and visible"
+      - name: "Archived"
+        description: "Post is archived and hidden"
+
+  - name: "AuthorRole"
+    description: "Author role in the blog"
+    values:
+      - name: "Admin"
+        description: "Full access to all content"
+      - name: "Editor"
+        description: "Can edit and publish posts"
+      - name: "Writer"
+        description: "Can create and edit own posts"
+
+objects:
+  - name: "Author"
+    description: "Blog author information"
+    fields:
+      - name: "name"
+        type: "String"
+        description: "Author's full name"
+      - name: "email"
+        type: "String"
+        description: "Author's email address"
+      - name: "bio"
+        type: "String"
+        description: "Author biography"
+        modifiers: ["Nullable"]
+      - name: "role"
+        type: "AuthorRole"
+        description: "Author's role"
+
+  - name: "Category"
+    description: "Post category information"
+    fields:
+      - name: "name"
+        type: "String"
+        description: "Category name"
+      - name: "description"
+        type: "String"
+        description: "Category description"
+      - name: "slug"
+        type: "String"
+        description: "URL-friendly category identifier"
+
+resources:
+  - name: "Posts"
+    description: "Blog post management"
+    operations: ["Create", "Read", "Update", "Delete"]
+    fields:
+      - field:
+          name: "title"
+          type: "String"
+          description: "Post title"
+        operations: ["Create", "Read", "Update"]
+      - field:
+          name: "slug"
+          type: "String"
+          description: "URL-friendly post identifier"
+        operations: ["Create", "Read", "Update"]
+      - field:
+          name: "content"
+          type: "String"
+          description: "Post content in markdown"
+        operations: ["Create", "Read", "Update"]
+      - field:
+          name: "excerpt"
+          type: "String"
+          description: "Short post summary"
+          modifiers: ["Nullable"]
+        operations: ["Create", "Read", "Update"]
+      - field:
+          name: "status"
+          type: "PostStatus"
+          description: "Publication status"
+        operations: ["Create", "Read", "Update"]
+      - field:
+          name: "publishedAt"
+          type: "Timestamp"
+          description: "When the post was published"
+          modifiers: ["Nullable"]
+        operations: ["Read", "Update"]
+      - field:
+          name: "author"
+          type: "Author"
+          description: "Post author"
+        operations: ["Create", "Read", "Update"]
+      - field:
+          name: "category"
+          type: "Category"
+          description: "Post category"
+        operations: ["Create", "Read", "Update"]
+      - field:
+          name: "tags"
+          type: "String"
+          description: "Post tags for organization"
+          modifiers: ["Array", "Nullable"]
+        operations: ["Create", "Read", "Update"]
+      - field:
+          name: "viewCount"
+          type: "Int"
+          description: "Number of times post was viewed"
+        operations: ["Read"]
+      - field:
+          name: "featured"
+          type: "Bool"
+          description: "Whether post is featured"
+        operations: ["Create", "Read", "Update"]
+
+  - name: "Authors"
+    description: "Author management"
+    operations: ["Create", "Read", "Update", "Delete"]
+    fields:
+      - field:
+          name: "name"
+          type: "String"
+          description: "Author's full name"
+        operations: ["Create", "Read", "Update"]
+      - field:
+          name: "email"
+          type: "String"
+          description: "Author's email address"
+        operations: ["Create", "Read", "Update"]
+      - field:
+          name: "bio"
+          type: "String"
+          description: "Author biography"
+          modifiers: ["Nullable"]
+        operations: ["Create", "Read", "Update"]
+      - field:
+          name: "role"
+          type: "AuthorRole"
+          description: "Author's role"
+        operations: ["Create", "Read", "Update"]
+      - field:
+          name: "postCount"
+          type: "Int"
+          description: "Number of posts by this author"
+        operations: ["Read"]
+
+  - name: "Categories"
+    description: "Category management"
+    operations: ["Create", "Read", "Update", "Delete"]
+    fields:
+      - field:
+          name: "name"
+          type: "String"
+          description: "Category name"
+        operations: ["Create", "Read", "Update"]
+      - field:
+          name: "description"
+          type: "String"
+          description: "Category description"
+        operations: ["Create", "Read", "Update"]
+      - field:
+          name: "slug"
+          type: "String"
+          description: "URL-friendly category identifier"
+        operations: ["Create", "Read", "Update"]
+      - field:
+          name: "postCount"
+          type: "Int"
+          description: "Number of posts in this category"
+        operations: ["Read"]
