@@ -1,0 +1,1538 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "School Management API API",
+    "description": "Generated API documentation",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.school.example.com/v1",
+      "description": "Production server for School Management API"
+    }
+  ],
+  "paths": {
+    "/students": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "List all Students",
+        "description": "Returns a paginated list of all `Students` in your organization.",
+        "operationId": "List",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of items to return (default: 50)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "The maximum number of items to return (default: 50)",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "The number of items to skip before starting to return results (default: 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "The number of items to skip before starting to return results (default: 0)",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "title": "Students"
+                      },
+                      "description": "Array of Students objects"
+                    },
+                    "pagination": {
+                      "title": "Pagination",
+                      "description": "Pagination information"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was malformed or contained invalid parameters. 400 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is missing valid authentication credentials. 401 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "When the rate limit has been exceeded, 429 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Some serverside issue, 5xx status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Create Students",
+        "description": "Create a new Students",
+        "operationId": "Create",
+        "parameters": [],
+        "requestBody": {
+          "description": "Request body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": {
+                    "type": "string",
+                    "description": "Student's first name"
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "description": "Student's last name"
+                  },
+                  "studentId": {
+                    "type": "string",
+                    "description": "School-assigned student ID"
+                  },
+                  "status": {
+                    "title": "StudentStatus",
+                    "description": "Current status of the student",
+                    "default": "Active"
+                  },
+                  "gradeLevel": {
+                    "title": "GradeLevel",
+                    "description": "Current grade level"
+                  },
+                  "contact": {
+                    "title": "Contact",
+                    "description": "Student contact information"
+                  },
+                  "address": {
+                    "title": "Address",
+                    "description": "Student home address",
+                    "nullable": true
+                  },
+                  "enrollmentDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Date when student was enrolled"
+                  }
+                },
+                "required": [
+                  "firstName",
+                  "lastName",
+                  "studentId",
+                  "gradeLevel",
+                  "enrollmentDate"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Students"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was malformed or contained invalid parameters. 400 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is missing valid authentication credentials. 401 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The request was well-formed but failed validation (e.g. invalid field format or constraints), 422 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "When the rate limit has been exceeded, 429 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Some serverside issue, 5xx status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/students/{id}": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Retrieve an existing Students",
+        "description": "Retrieves the `Students` with the given ID.",
+        "operationId": "Get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Students to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The unique identifier of the Students to retrieve"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Students"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was malformed or contained invalid parameters. 400 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is missing valid authentication credentials. 401 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "When the rate limit has been exceeded, 429 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Some serverside issue, 5xx status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Delete Students",
+        "description": "Delete a Students",
+        "operationId": "Delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Students to delete",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The unique identifier of the Students to delete"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "The request was malformed or contained invalid parameters. 400 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is missing valid authentication credentials. 401 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "When the rate limit has been exceeded, 429 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Some serverside issue, 5xx status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Update Students",
+        "description": "Update a Students",
+        "operationId": "Update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Students to update",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The unique identifier of the Students to update"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Request body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": {
+                    "type": "string",
+                    "description": "Student's first name"
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "description": "Student's last name"
+                  },
+                  "status": {
+                    "title": "StudentStatus",
+                    "description": "Current status of the student",
+                    "default": "Active"
+                  },
+                  "gradeLevel": {
+                    "title": "GradeLevel",
+                    "description": "Current grade level"
+                  },
+                  "contact": {
+                    "title": "Contact",
+                    "description": "Student contact information"
+                  },
+                  "address": {
+                    "title": "Address",
+                    "description": "Student home address",
+                    "nullable": true
+                  },
+                  "graduationDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Expected or actual graduation date",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "firstName",
+                  "lastName",
+                  "gradeLevel"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Students"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was malformed or contained invalid parameters. 400 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is missing valid authentication credentials. 401 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The request was well-formed but failed validation (e.g. invalid field format or constraints), 422 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "When the rate limit has been exceeded, 429 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Some serverside issue, 5xx status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/students/_search": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Search Students",
+        "description": "Search for `Students` with filtering capabilities.",
+        "operationId": "Search",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of items to return (default: 50)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "The maximum number of items to return (default: 50)",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "The number of items to skip before starting to return results (default: 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "The number of items to skip before starting to return results (default: 0)",
+              "default": 0
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Request body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "filter": {
+                    "type": "string",
+                    "description": "Filter criteria to search for specific records"
+                  }
+                },
+                "required": [
+                  "filter"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "title": "Students"
+                      },
+                      "description": "Array of Students objects"
+                    },
+                    "pagination": {
+                      "title": "Pagination",
+                      "description": "Pagination information"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was malformed or contained invalid parameters. 400 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is missing valid authentication credentials. 401 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The request was well-formed but failed validation (e.g. invalid field format or constraints), 422 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "When the rate limit has been exceeded, 429 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Some serverside issue, 5xx status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "StudentStatus": {
+        "type": "string",
+        "enum": [
+          "Active",
+          "Inactive",
+          "Graduated"
+        ],
+        "description": "Status of a student in the system"
+      },
+      "GradeLevel": {
+        "type": "string",
+        "enum": [
+          "Elementary",
+          "Middle",
+          "High"
+        ],
+        "description": "Grade levels in the school"
+      },
+      "ErrorCode": {
+        "type": "string",
+        "enum": [
+          "BadRequest",
+          "Unauthorized",
+          "Forbidden",
+          "NotFound",
+          "Conflict",
+          "UnprocessableEntity",
+          "RateLimited",
+          "Internal"
+        ],
+        "description": "Standard error codes used in API responses"
+      },
+      "ErrorFieldCode": {
+        "type": "string",
+        "enum": [
+          "AlreadyExists",
+          "Required",
+          "NotFound",
+          "InvalidValue"
+        ],
+        "description": "Error codes for field-level validation errors"
+      },
+      "Contact": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Email address"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number",
+            "nullable": true
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "description": "Contact information"
+      },
+      "Address": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "type": "string",
+            "description": "Street address"
+          },
+          "city": {
+            "type": "string",
+            "description": "City"
+          },
+          "state": {
+            "type": "string",
+            "description": "State or province"
+          },
+          "zipCode": {
+            "type": "string",
+            "description": "ZIP or postal code"
+          }
+        },
+        "required": [
+          "street",
+          "city",
+          "state",
+          "zipCode"
+        ],
+        "description": "Physical address information"
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "title": "ErrorCode",
+            "description": "The specific error code indicating the type of error"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable error message providing additional details"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "description": "Standard error response object containing error code and message"
+      },
+      "ErrorField": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "title": "ErrorFieldCode",
+            "description": "The specific error code indicating the type of field validation error"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable error message providing details about the field validation error"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "description": "Field-specific error information containing error code and message for validation errors"
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "offset": {
+            "type": "integer",
+            "description": "Number of items to skip from the beginning of the result set"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of items to return in the result set"
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total number of items available for pagination"
+          }
+        },
+        "required": [
+          "offset",
+          "limit",
+          "total"
+        ],
+        "description": "Pagination parameters for controlling result sets in list operations"
+      },
+      "Meta": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the resource was created"
+          },
+          "createdBy": {
+            "type": "string",
+            "format": "uuid",
+            "description": "User who created the resource",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the resource was last updated"
+          },
+          "updatedBy": {
+            "type": "string",
+            "format": "uuid",
+            "description": "User who last updated the resource",
+            "nullable": true
+          }
+        },
+        "required": [
+          "createdAt",
+          "updatedAt"
+        ],
+        "description": "Metadata fields containing creation and update information"
+      },
+      "Students": {
+        "type": "object",
+        "properties": {
+          "iD": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the Students"
+          },
+          "meta": {
+            "title": "Meta",
+            "description": "Metadata information for the Students"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique student identifier"
+          },
+          "firstName": {
+            "type": "string",
+            "description": "Student's first name"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Student's last name"
+          },
+          "studentId": {
+            "type": "string",
+            "description": "School-assigned student ID"
+          },
+          "status": {
+            "title": "StudentStatus",
+            "description": "Current status of the student",
+            "default": "Active"
+          },
+          "gradeLevel": {
+            "title": "GradeLevel",
+            "description": "Current grade level"
+          },
+          "contact": {
+            "title": "Contact",
+            "description": "Student contact information"
+          },
+          "address": {
+            "title": "Address",
+            "description": "Student home address",
+            "nullable": true
+          },
+          "enrollmentDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date when student was enrolled"
+          },
+          "graduationDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Expected or actual graduation date",
+            "nullable": true
+          }
+        },
+        "required": [
+          "iD",
+          "id",
+          "firstName",
+          "lastName",
+          "studentId",
+          "gradeLevel",
+          "enrollmentDate"
+        ],
+        "description": "Student management resource"
+      },
+      "ContactRequestError": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "title": "ErrorField",
+            "description": "Email address",
+            "nullable": true
+          },
+          "phone": {
+            "title": "ErrorField",
+            "description": "Phone number",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Contact"
+      },
+      "AddressRequestError": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "title": "ErrorField",
+            "description": "Street address",
+            "nullable": true
+          },
+          "city": {
+            "title": "ErrorField",
+            "description": "City",
+            "nullable": true
+          },
+          "state": {
+            "title": "ErrorField",
+            "description": "State or province",
+            "nullable": true
+          },
+          "zipCode": {
+            "title": "ErrorField",
+            "description": "ZIP or postal code",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Address"
+      },
+      "StudentsCreateRequestError": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "title": "ErrorField",
+            "description": "Student's first name",
+            "nullable": true
+          },
+          "lastName": {
+            "title": "ErrorField",
+            "description": "Student's last name",
+            "nullable": true
+          },
+          "studentId": {
+            "title": "ErrorField",
+            "description": "School-assigned student ID",
+            "nullable": true
+          },
+          "status": {
+            "title": "ErrorField",
+            "description": "Current status of the student",
+            "nullable": true
+          },
+          "gradeLevel": {
+            "title": "ErrorField",
+            "description": "Current grade level",
+            "nullable": true
+          },
+          "contact": {
+            "title": "ContactRequestError",
+            "description": "Student contact information",
+            "nullable": true
+          },
+          "address": {
+            "title": "AddressRequestError",
+            "description": "Student home address",
+            "nullable": true
+          },
+          "enrollmentDate": {
+            "title": "ErrorField",
+            "description": "Date when student was enrolled",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Students Create endpoint"
+      },
+      "StudentsUpdateRequestError": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "title": "ErrorField",
+            "description": "Student's first name",
+            "nullable": true
+          },
+          "lastName": {
+            "title": "ErrorField",
+            "description": "Student's last name",
+            "nullable": true
+          },
+          "status": {
+            "title": "ErrorField",
+            "description": "Current status of the student",
+            "nullable": true
+          },
+          "gradeLevel": {
+            "title": "ErrorField",
+            "description": "Current grade level",
+            "nullable": true
+          },
+          "contact": {
+            "title": "ContactRequestError",
+            "description": "Student contact information",
+            "nullable": true
+          },
+          "address": {
+            "title": "AddressRequestError",
+            "description": "Student home address",
+            "nullable": true
+          },
+          "graduationDate": {
+            "title": "ErrorField",
+            "description": "Expected or actual graduation date",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Students Update endpoint"
+      },
+      "StudentsSearchRequestError": {
+        "type": "object",
+        "properties": {
+          "filter": {
+            "type": "string",
+            "description": "Filter criteria to search for specific records",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Students Search endpoint"
+      },
+      "ContactFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "title": "ContactFilterEquals",
+            "description": "Equality filters for Contact",
+            "nullable": true
+          },
+          "notEquals": {
+            "title": "ContactFilterEquals",
+            "description": "Inequality filters for Contact",
+            "nullable": true
+          },
+          "greaterThan": {
+            "title": "ContactFilterRange",
+            "description": "Greater than filters for Contact",
+            "nullable": true
+          },
+          "smallerThan": {
+            "title": "ContactFilterRange",
+            "description": "Smaller than filters for Contact",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "title": "ContactFilterRange",
+            "description": "Greater than or equal filters for Contact",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "title": "ContactFilterRange",
+            "description": "Smaller than or equal filters for Contact",
+            "nullable": true
+          },
+          "contains": {
+            "title": "ContactFilterContains",
+            "description": "Contains filters for Contact",
+            "nullable": true
+          },
+          "notContains": {
+            "title": "ContactFilterContains",
+            "description": "Not contains filters for Contact",
+            "nullable": true
+          },
+          "like": {
+            "title": "ContactFilterLike",
+            "description": "LIKE filters for Contact",
+            "nullable": true
+          },
+          "notLike": {
+            "title": "ContactFilterLike",
+            "description": "NOT LIKE filters for Contact",
+            "nullable": true
+          },
+          "null": {
+            "title": "ContactFilterNull",
+            "description": "Null filters for Contact",
+            "nullable": true
+          },
+          "notNull": {
+            "title": "ContactFilterNull",
+            "description": "Not null filters for Contact",
+            "nullable": true
+          },
+          "orCondition": {
+            "type": "boolean",
+            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
+          },
+          "nestedFilters": {
+            "type": "array",
+            "items": {
+              "title": "ContactFilter"
+            },
+            "description": "NestedFilters of the Contact, useful for more complex filters"
+          }
+        },
+        "required": [
+          "orCondition"
+        ],
+        "description": "Filter object for Contact"
+      },
+      "ContactFilterEquals": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Email address",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number",
+            "nullable": true
+          }
+        },
+        "description": "Equality/Inequality filter fields for Contact"
+      },
+      "ContactFilterRange": {
+        "type": "object",
+        "description": "Range filter fields for Contact"
+      },
+      "ContactFilterContains": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Email address"
+          },
+          "phone": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Phone number"
+          }
+        },
+        "description": "Contains filter fields for Contact"
+      },
+      "ContactFilterLike": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Email address",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number",
+            "nullable": true
+          }
+        },
+        "description": "LIKE filter fields for Contact"
+      },
+      "ContactFilterNull": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "boolean",
+            "description": "Phone number",
+            "nullable": true
+          }
+        },
+        "description": "Null filter fields for Contact"
+      },
+      "AddressFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "title": "AddressFilterEquals",
+            "description": "Equality filters for Address",
+            "nullable": true
+          },
+          "notEquals": {
+            "title": "AddressFilterEquals",
+            "description": "Inequality filters for Address",
+            "nullable": true
+          },
+          "greaterThan": {
+            "title": "AddressFilterRange",
+            "description": "Greater than filters for Address",
+            "nullable": true
+          },
+          "smallerThan": {
+            "title": "AddressFilterRange",
+            "description": "Smaller than filters for Address",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "title": "AddressFilterRange",
+            "description": "Greater than or equal filters for Address",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "title": "AddressFilterRange",
+            "description": "Smaller than or equal filters for Address",
+            "nullable": true
+          },
+          "contains": {
+            "title": "AddressFilterContains",
+            "description": "Contains filters for Address",
+            "nullable": true
+          },
+          "notContains": {
+            "title": "AddressFilterContains",
+            "description": "Not contains filters for Address",
+            "nullable": true
+          },
+          "like": {
+            "title": "AddressFilterLike",
+            "description": "LIKE filters for Address",
+            "nullable": true
+          },
+          "notLike": {
+            "title": "AddressFilterLike",
+            "description": "NOT LIKE filters for Address",
+            "nullable": true
+          },
+          "null": {
+            "title": "AddressFilterNull",
+            "description": "Null filters for Address",
+            "nullable": true
+          },
+          "notNull": {
+            "title": "AddressFilterNull",
+            "description": "Not null filters for Address",
+            "nullable": true
+          },
+          "orCondition": {
+            "type": "boolean",
+            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
+          },
+          "nestedFilters": {
+            "type": "array",
+            "items": {
+              "title": "AddressFilter"
+            },
+            "description": "NestedFilters of the Address, useful for more complex filters"
+          }
+        },
+        "required": [
+          "orCondition"
+        ],
+        "description": "Filter object for Address"
+      },
+      "AddressFilterEquals": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "type": "string",
+            "description": "Street address",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "description": "City",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "description": "State or province",
+            "nullable": true
+          },
+          "zipCode": {
+            "type": "string",
+            "description": "ZIP or postal code",
+            "nullable": true
+          }
+        },
+        "description": "Equality/Inequality filter fields for Address"
+      },
+      "AddressFilterRange": {
+        "type": "object",
+        "description": "Range filter fields for Address"
+      },
+      "AddressFilterContains": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Street address"
+          },
+          "city": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "City"
+          },
+          "state": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "State or province"
+          },
+          "zipCode": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "ZIP or postal code"
+          }
+        },
+        "description": "Contains filter fields for Address"
+      },
+      "AddressFilterLike": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "type": "string",
+            "description": "Street address",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "description": "City",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "description": "State or province",
+            "nullable": true
+          },
+          "zipCode": {
+            "type": "string",
+            "description": "ZIP or postal code",
+            "nullable": true
+          }
+        },
+        "description": "LIKE filter fields for Address"
+      },
+      "AddressFilterNull": {
+        "type": "object",
+        "description": "Null filter fields for Address"
+      }
+    }
+  }
+}

@@ -145,126 +145,18 @@ func Test_run(t *testing.T) {
 		// Reset flag package for this test
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 
-		// Create temporary YAML specification file
-		yamlContent := `name: "School Management API"
-version: "1.0.0"
-servers:
-  - url: "https://api.school.example.com/v1"
-    description: "Production server for School Management API"
+		// Use test data files
+		inputSpecFile := "testdata/school-management-api.yaml"
+		expectedOutputFile := "testdata/school-management-api-expected.json"
 
-enums:
-  - name: "StudentStatus"
-    description: "Status of a student in the system"
-    values:
-      - name: "Active"
-        description: "Student is actively enrolled"
-      - name: "Inactive"  
-        description: "Student is not currently enrolled"
-      - name: "Graduated"
-        description: "Student has graduated"
-
-  - name: "GradeLevel"
-    description: "Grade levels in the school"
-    values:
-      - name: "Elementary"
-        description: "Elementary school level"
-      - name: "Middle"
-        description: "Middle school level"
-      - name: "High"
-        description: "High school level"
-
-objects:
-  - name: "Contact"
-    description: "Contact information"
-    fields:
-      - name: "email"
-        type: "String"
-        description: "Email address"
-      - name: "phone"
-        type: "String"
-        description: "Phone number"
-        modifiers: ["nullable"]
-
-  - name: "Address"
-    description: "Physical address information"  
-    fields:
-      - name: "street"
-        type: "String"
-        description: "Street address"
-      - name: "city"
-        type: "String"
-        description: "City"
-      - name: "state"
-        type: "String"
-        description: "State or province"
-      - name: "zipCode"
-        type: "String" 
-        description: "ZIP or postal code"
-
-resources:
-  - name: "Students"
-    description: "Student management resource"
-    operations: ["Create", "Read", "Update", "Delete"]
-    fields:
-      - name: "id"
-        type: "UUID"
-        description: "Unique student identifier"
-        operations: ["Read"]
-      - name: "firstName"
-        type: "String"
-        description: "Student's first name"
-        operations: ["Create", "Read", "Update"]
-      - name: "lastName"
-        type: "String"
-        description: "Student's last name"
-        operations: ["Create", "Read", "Update"]
-      - name: "studentId"
-        type: "String"
-        description: "School-assigned student ID"
-        operations: ["Create", "Read"]
-      - name: "status"
-        type: "StudentStatus"
-        description: "Current status of the student"
-        default: "Active"
-        operations: ["Create", "Read", "Update"]
-      - name: "gradeLevel"
-        type: "GradeLevel"
-        description: "Current grade level"
-        operations: ["Create", "Read", "Update"]
-      - name: "contact"
-        type: "Contact"
-        description: "Student contact information"
-        operations: ["Create", "Read", "Update"]
-      - name: "address"
-        type: "Address"
-        description: "Student home address"
-        modifiers: ["nullable"]
-        operations: ["Create", "Read", "Update"]
-      - name: "enrollmentDate"
-        type: "Date"
-        description: "Date when student was enrolled"
-        operations: ["Create", "Read"]
-      - name: "graduationDate"
-        type: "Date"
-        description: "Expected or actual graduation date"
-        modifiers: ["nullable"]
-        operations: ["Read", "Update"]`
-
-		// Create temporary YAML file
-		tmpYAMLFile, err := os.CreateTemp("", "test-spec-*.yaml")
+		// Create temporary output file
+		tmpOutputFile, err := os.CreateTemp("", "test-output-*.json")
 		require.NoError(t, err)
-		defer os.Remove(tmpYAMLFile.Name())
-
-		_, err = tmpYAMLFile.Write([]byte(yamlContent))
-		require.NoError(t, err)
-		tmpYAMLFile.Close()
-
-		// Determine expected output file path
-		expectedOutputPath := generateOpenAPIOutputPath(tmpYAMLFile.Name())
-		defer os.Remove(expectedOutputPath) // Clean up output file
+		defer os.Remove(tmpOutputFile.Name())
+		tmpOutputFile.Close()
 
 		// Arrange command line arguments for OpenAPI generation
-		os.Args = []string{"publicapis-gen", "-file=" + tmpYAMLFile.Name(), "-mode=openapi"}
+		os.Args = []string{"publicapis-gen", "-file=" + inputSpecFile, "-mode=openapi", "-output=" + tmpOutputFile.Name()}
 		ctx := context.Background()
 
 		// Act - run the command
@@ -274,63 +166,26 @@ resources:
 		require.NoError(t, err, "run() should not return an error for valid YAML to OpenAPI conversion")
 
 		// Verify output file was created
-		_, err = os.Stat(expectedOutputPath)
+		_, err = os.Stat(tmpOutputFile.Name())
 		require.NoError(t, err, "Output OpenAPI JSON file should be created")
 
-		// Read and verify the generated JSON content
-		outputData, err := os.ReadFile(expectedOutputPath)
+		// Read the generated JSON content
+		actualOutputData, err := os.ReadFile(tmpOutputFile.Name())
 		require.NoError(t, err, "Should be able to read generated OpenAPI JSON file")
 
-		// Parse JSON to ensure it's valid
-		var openAPIDoc map[string]interface{}
-		err = json.Unmarshal(outputData, &openAPIDoc)
+		// Read the expected JSON content
+		expectedOutputData, err := os.ReadFile(expectedOutputFile)
+		require.NoError(t, err, "Should be able to read expected OpenAPI JSON file")
+
+		// Parse both JSON files to ensure they're valid
+		var actualJSON, expectedJSON map[string]interface{}
+		err = json.Unmarshal(actualOutputData, &actualJSON)
 		require.NoError(t, err, "Generated file should contain valid JSON")
+		err = json.Unmarshal(expectedOutputData, &expectedJSON)
+		require.NoError(t, err, "Expected file should contain valid JSON")
 
-		// Verify basic OpenAPI structure
-		assert.Equal(t, "3.1.0", openAPIDoc["openapi"], "Should have correct OpenAPI version")
-
-		info, ok := openAPIDoc["info"].(map[string]interface{})
-		require.True(t, ok, "Should have info section")
-		assert.Equal(t, "School Management API API", info["title"], "Should have correct API title")
-		assert.Equal(t, "1.0.0", info["version"], "Should have correct version")
-
-		// Verify servers section
-		servers, ok := openAPIDoc["servers"].([]interface{})
-		require.True(t, ok, "Should have servers section")
-		require.Len(t, servers, 1, "Should have one server")
-		server := servers[0].(map[string]interface{})
-		assert.Equal(t, "https://api.school.example.com/v1", server["url"], "Should have correct server URL")
-
-		// Verify paths section exists and contains expected endpoints
-		paths, ok := openAPIDoc["paths"].(map[string]interface{})
-		require.True(t, ok, "Should have paths section")
-
-		// Check for generated CRUD endpoints
-		assert.Contains(t, paths, "/students", "Should have students collection endpoint")
-		assert.Contains(t, paths, "/students/{id}", "Should have students individual resource endpoint")
-		assert.Contains(t, paths, "/students/_search", "Should have students search endpoint")
-
-		// Verify components/schemas section
-		components, ok := openAPIDoc["components"].(map[string]interface{})
-		require.True(t, ok, "Should have components section")
-		schemas, ok := components["schemas"].(map[string]interface{})
-		require.True(t, ok, "Should have schemas section")
-
-		// Verify enum schemas
-		assert.Contains(t, schemas, "StudentStatus", "Should have StudentStatus enum schema")
-		assert.Contains(t, schemas, "GradeLevel", "Should have GradeLevel enum schema")
-
-		// Verify object schemas
-		assert.Contains(t, schemas, "Contact", "Should have Contact object schema")
-		assert.Contains(t, schemas, "Address", "Should have Address object schema")
-
-		// Verify resource schema
-		assert.Contains(t, schemas, "Students", "Should have Students resource schema")
-
-		// Verify overlay-generated schemas (error handling, pagination, etc.)
-		assert.Contains(t, schemas, "Error", "Should have Error schema")
-		assert.Contains(t, schemas, "ErrorCode", "Should have ErrorCode enum schema")
-		assert.Contains(t, schemas, "Pagination", "Should have Pagination schema")
+		// Assert exact JSON match
+		assert.JSONEq(t, string(expectedOutputData), string(actualOutputData), "Generated OpenAPI JSON should exactly match expected output")
 	})
 }
 
