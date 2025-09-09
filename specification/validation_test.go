@@ -7,7 +7,7 @@ import (
 )
 
 // ============================================================================
-// ValidateService Tests
+// validateService Tests
 // ============================================================================
 
 func TestValidateService(t *testing.T) {
@@ -57,14 +57,14 @@ func TestValidateService(t *testing.T) {
 		},
 	}
 
-	err := ValidateService(validService)
+	err := validateService(validService)
 	assert.NoError(t, err, "Valid service should pass validation")
 
 	t.Run("invalid resource operation", func(t *testing.T) {
 		invalidService := *validService
 		invalidService.Resources[0].Operations = []string{"invalid"}
 
-		err := ValidateService(&invalidService)
+		err := validateService(&invalidService)
 		assert.Error(t, err, "Service with invalid operation should fail validation")
 		assert.Contains(t, err.Error(), "invalid operation")
 	})
@@ -92,29 +92,29 @@ func TestValidateService(t *testing.T) {
 			},
 		}
 
-		err := ValidateService(serviceWithInvalidFieldType)
+		err := validateService(serviceWithInvalidFieldType)
 		assert.Error(t, err, "Service with invalid field type should fail validation")
 		assert.Contains(t, err.Error(), "field type")
 	})
 }
 
 // ============================================================================
-// ValidateOperations Tests
+// validateOperations Tests
 // ============================================================================
 
 func TestValidateOperations(t *testing.T) {
 	// Test valid operations
 	validOperations := []string{OperationCreate, OperationRead, OperationUpdate, OperationDelete}
-	err := ValidateOperations(validOperations)
+	err := validateOperations(validOperations)
 	assert.NoError(t, err, "Valid operations should pass validation")
 
 	// Test empty operations
-	err = ValidateOperations([]string{})
+	err = validateOperations([]string{})
 	assert.NoError(t, err, "Empty operations should pass validation")
 
 	t.Run("invalid operation", func(t *testing.T) {
 		invalidOperations := []string{OperationCreate, "invalid"}
-		err := ValidateOperations(invalidOperations)
+		err := validateOperations(invalidOperations)
 		assert.Error(t, err, "Invalid operation should fail validation")
 		assert.Contains(t, err.Error(), "invalid operation")
 		assert.Contains(t, err.Error(), "invalid")
@@ -122,7 +122,7 @@ func TestValidateOperations(t *testing.T) {
 
 	t.Run("lowercase operation", func(t *testing.T) {
 		invalidOperations := []string{"create", OperationRead}
-		err := ValidateOperations(invalidOperations)
+		err := validateOperations(invalidOperations)
 		assert.Error(t, err, "Lowercase operation should fail validation")
 		assert.Contains(t, err.Error(), "invalid operation")
 		assert.Contains(t, err.Error(), "create")
@@ -130,14 +130,14 @@ func TestValidateOperations(t *testing.T) {
 
 	t.Run("multiple invalid operations", func(t *testing.T) {
 		invalidOperations := []string{"create", "read", "invalid"}
-		err := ValidateOperations(invalidOperations)
+		err := validateOperations(invalidOperations)
 		assert.Error(t, err, "Multiple invalid operations should fail validation")
 		assert.Contains(t, err.Error(), "invalid operation")
 	})
 }
 
 // ============================================================================
-// ValidateFieldType Tests
+// validateFieldType Tests
 // ============================================================================
 
 func TestValidateFieldType(t *testing.T) {
@@ -156,27 +156,27 @@ func TestValidateFieldType(t *testing.T) {
 		FieldTypeString, FieldTypeInt, FieldTypeBool,
 	}
 	for _, primitiveType := range primitiveTypes {
-		err := ValidateFieldType(service, primitiveType)
+		err := validateFieldType(service, primitiveType)
 		assert.NoError(t, err, "Valid primitive type %s should pass validation", primitiveType)
 	}
 
 	// Test valid enum type
-	err := ValidateFieldType(service, "Status")
+	err := validateFieldType(service, "Status")
 	assert.NoError(t, err, "Valid enum type should pass validation")
 
 	// Test valid object type
-	err = ValidateFieldType(service, "User")
+	err = validateFieldType(service, "User")
 	assert.NoError(t, err, "Valid object type should pass validation")
 
 	t.Run("invalid type", func(t *testing.T) {
-		err := ValidateFieldType(service, "InvalidType")
+		err := validateFieldType(service, "InvalidType")
 		assert.Error(t, err, "Invalid type should fail validation")
 		assert.Contains(t, err.Error(), "invalid field type")
 		assert.Contains(t, err.Error(), "InvalidType")
 	})
 
 	t.Run("lowercase primitive type", func(t *testing.T) {
-		err := ValidateFieldType(service, "string")
+		err := validateFieldType(service, "string")
 		assert.Error(t, err, "Lowercase primitive type should fail validation")
 		assert.Contains(t, err.Error(), "invalid field type")
 		assert.Contains(t, err.Error(), "string")
@@ -184,29 +184,29 @@ func TestValidateFieldType(t *testing.T) {
 }
 
 // ============================================================================
-// ValidateModifiers Tests
+// validateModifiers Tests
 // ============================================================================
 
 func TestValidateModifiers(t *testing.T) {
 	// Test valid modifiers
 	validModifiers := []string{ModifierNullable, ModifierArray}
-	err := ValidateModifiers(validModifiers)
+	err := validateModifiers(validModifiers)
 	assert.NoError(t, err, "Valid modifiers should pass validation")
 
 	// Test empty modifiers
-	err = ValidateModifiers([]string{})
+	err = validateModifiers([]string{})
 	assert.NoError(t, err, "Empty modifiers should pass validation")
 
 	// Test single valid modifier
-	err = ValidateModifiers([]string{ModifierNullable})
+	err = validateModifiers([]string{ModifierNullable})
 	assert.NoError(t, err, "Single valid modifier should pass validation")
 
-	err = ValidateModifiers([]string{ModifierArray})
+	err = validateModifiers([]string{ModifierArray})
 	assert.NoError(t, err, "Single valid modifier should pass validation")
 
 	t.Run("invalid modifier", func(t *testing.T) {
 		invalidModifiers := []string{ModifierNullable, "invalid"}
-		err := ValidateModifiers(invalidModifiers)
+		err := validateModifiers(invalidModifiers)
 		assert.Error(t, err, "Invalid modifier should fail validation")
 		assert.Contains(t, err.Error(), "invalid modifier")
 		assert.Contains(t, err.Error(), "invalid")
@@ -214,7 +214,7 @@ func TestValidateModifiers(t *testing.T) {
 
 	t.Run("lowercase modifier", func(t *testing.T) {
 		invalidModifiers := []string{"nullable", ModifierArray}
-		err := ValidateModifiers(invalidModifiers)
+		err := validateModifiers(invalidModifiers)
 		assert.Error(t, err, "Lowercase modifier should fail validation")
 		assert.Contains(t, err.Error(), "invalid modifier")
 		assert.Contains(t, err.Error(), "nullable")
@@ -222,14 +222,14 @@ func TestValidateModifiers(t *testing.T) {
 
 	t.Run("mixed case modifiers", func(t *testing.T) {
 		invalidModifiers := []string{"nullable", "array"}
-		err := ValidateModifiers(invalidModifiers)
+		err := validateModifiers(invalidModifiers)
 		assert.Error(t, err, "Mixed case modifiers should fail validation")
 		assert.Contains(t, err.Error(), "invalid modifier")
 	})
 }
 
 // ============================================================================
-// ValidateField Tests
+// validateField Tests
 // ============================================================================
 
 func TestValidateField(t *testing.T) {
@@ -250,14 +250,14 @@ func TestValidateField(t *testing.T) {
 		Modifiers:   []string{ModifierNullable},
 	}
 
-	err := ValidateField(service, &validField)
+	err := validateField(service, &validField)
 	assert.NoError(t, err, "Valid field should pass validation")
 
 	t.Run("field with invalid type", func(t *testing.T) {
 		invalidField := validField
 		invalidField.Type = "InvalidType"
 
-		err := ValidateField(service, &invalidField)
+		err := validateField(service, &invalidField)
 		assert.Error(t, err, "Field with invalid type should fail validation")
 		assert.Contains(t, err.Error(), "field type")
 	})
@@ -266,7 +266,7 @@ func TestValidateField(t *testing.T) {
 		invalidField := validField
 		invalidField.Modifiers = []string{"invalid"}
 
-		err := ValidateField(service, &invalidField)
+		err := validateField(service, &invalidField)
 		assert.Error(t, err, "Field with invalid modifier should fail validation")
 		assert.Contains(t, err.Error(), "field modifiers")
 	})
@@ -276,13 +276,13 @@ func TestValidateField(t *testing.T) {
 		invalidField.Type = "InvalidType"
 		invalidField.Modifiers = []string{"invalid"}
 
-		err := ValidateField(service, &invalidField)
+		err := validateField(service, &invalidField)
 		assert.Error(t, err, "Field with both invalid type and modifier should fail validation")
 	})
 }
 
 // ============================================================================
-// ValidateResourceField Tests
+// validateResourceField Tests
 // ============================================================================
 
 func TestValidateResourceField(t *testing.T) {
@@ -302,14 +302,14 @@ func TestValidateResourceField(t *testing.T) {
 		Operations: []string{OperationCreate, OperationRead},
 	}
 
-	err := ValidateResourceField(service, &validResourceField)
+	err := validateResourceField(service, &validResourceField)
 	assert.NoError(t, err, "Valid resource field should pass validation")
 
 	t.Run("resource field with invalid operation", func(t *testing.T) {
 		invalidResourceField := validResourceField
 		invalidResourceField.Operations = []string{"invalid"}
 
-		err := ValidateResourceField(service, &invalidResourceField)
+		err := validateResourceField(service, &invalidResourceField)
 		assert.Error(t, err, "Resource field with invalid operation should fail validation")
 		assert.Contains(t, err.Error(), "field operations")
 	})
@@ -318,14 +318,14 @@ func TestValidateResourceField(t *testing.T) {
 		invalidResourceField := validResourceField
 		invalidResourceField.Type = "InvalidType"
 
-		err := ValidateResourceField(service, &invalidResourceField)
+		err := validateResourceField(service, &invalidResourceField)
 		assert.Error(t, err, "Resource field with invalid field type should fail validation")
 		assert.Contains(t, err.Error(), "field type")
 	})
 }
 
 // ============================================================================
-// ValidateResource Tests
+// validateResource Tests
 // ============================================================================
 
 func TestValidateResource(t *testing.T) {
@@ -352,14 +352,14 @@ func TestValidateResource(t *testing.T) {
 		Endpoints: []Endpoint{},
 	}
 
-	err := ValidateResource(service, &validResource)
+	err := validateResource(service, &validResource)
 	assert.NoError(t, err, "Valid resource should pass validation")
 
 	t.Run("resource with invalid operation", func(t *testing.T) {
 		invalidResource := validResource
 		invalidResource.Operations = []string{"invalid"}
 
-		err := ValidateResource(service, &invalidResource)
+		err := validateResource(service, &invalidResource)
 		assert.Error(t, err, "Resource with invalid operation should fail validation")
 		assert.Contains(t, err.Error(), "resource operations")
 	})
@@ -368,14 +368,14 @@ func TestValidateResource(t *testing.T) {
 		invalidResource := validResource
 		invalidResource.Fields[0].Type = "InvalidType"
 
-		err := ValidateResource(service, &invalidResource)
+		err := validateResource(service, &invalidResource)
 		assert.Error(t, err, "Resource with invalid field should fail validation")
 		assert.Contains(t, err.Error(), "field 0 (name)")
 	})
 }
 
 // ============================================================================
-// ValidateObject Tests
+// validateObject Tests
 // ============================================================================
 
 func TestValidateObject(t *testing.T) {
@@ -397,21 +397,21 @@ func TestValidateObject(t *testing.T) {
 		},
 	}
 
-	err := ValidateObject(service, &validObject)
+	err := validateObject(service, &validObject)
 	assert.NoError(t, err, "Valid object should pass validation")
 
 	t.Run("object with invalid field", func(t *testing.T) {
 		invalidObject := validObject
 		invalidObject.Fields[0].Type = "InvalidType"
 
-		err := ValidateObject(service, &invalidObject)
+		err := validateObject(service, &invalidObject)
 		assert.Error(t, err, "Object with invalid field should fail validation")
 		assert.Contains(t, err.Error(), "field 0 (name)")
 	})
 }
 
 // ============================================================================
-// ValidateEndpoint Tests
+// validateEndpoint Tests
 // ============================================================================
 
 func TestValidateEndpoint(t *testing.T) {
@@ -447,14 +447,14 @@ func TestValidateEndpoint(t *testing.T) {
 		},
 	}
 
-	err := ValidateEndpoint(service, &validEndpoint)
+	err := validateEndpoint(service, &validEndpoint)
 	assert.NoError(t, err, "Valid endpoint should pass validation")
 
 	t.Run("endpoint with invalid request field", func(t *testing.T) {
 		invalidEndpoint := validEndpoint
 		invalidEndpoint.Request.QueryParams[0].Type = "InvalidType"
 
-		err := ValidateEndpoint(service, &invalidEndpoint)
+		err := validateEndpoint(service, &invalidEndpoint)
 		assert.Error(t, err, "Endpoint with invalid request field should fail validation")
 		assert.Contains(t, err.Error(), "request query param 0")
 	})
@@ -479,7 +479,7 @@ func TestValidateEndpoint(t *testing.T) {
 			},
 		}
 
-		err := ValidateEndpoint(service, &endpointWithInvalidResponse)
+		err := validateEndpoint(service, &endpointWithInvalidResponse)
 		assert.Error(t, err, "Endpoint with invalid response field should fail validation")
 		assert.Contains(t, err.Error(), "response body field 0")
 	})

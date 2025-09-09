@@ -124,8 +124,8 @@ type Generator struct {
 	ServerURL string
 }
 
-// NewGenerator creates a new OpenAPI generator with default settings.
-func NewGenerator() *Generator {
+// newGenerator creates a new OpenAPI generator with default settings.
+func newGenerator() *Generator {
 	return &Generator{
 		Version: defaultOpenAPIVersion,
 	}
@@ -698,7 +698,7 @@ func GenerateFromSpecificationToJSON(service *specification.Service) ([]byte, er
 	}
 
 	// Create generator with default configuration
-	generator := NewGenerator()
+	generator := newGenerator()
 
 	// Set basic configuration based on service
 	generator.Title = service.Name + apiTitleSuffix

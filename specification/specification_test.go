@@ -933,7 +933,7 @@ func TestField_GetComment(t *testing.T) {
 
 func TestCreateLimitParam(t *testing.T) {
 	// Act
-	limitParam := CreateLimitParam()
+	limitParam := createLimitParam()
 
 	// Assert
 	assert.Equal(t, listLimitParamName, limitParam.Name, "Limit parameter should have correct name")
@@ -943,8 +943,8 @@ func TestCreateLimitParam(t *testing.T) {
 
 	t.Run("consistency", func(t *testing.T) {
 		// Test that factory methods always return consistent results
-		limit1 := CreateLimitParam()
-		limit2 := CreateLimitParam()
+		limit1 := createLimitParam()
+		limit2 := createLimitParam()
 
 		assert.Equal(t, limit1, limit2, "CreateLimitParam should return consistent results")
 	})
@@ -952,7 +952,7 @@ func TestCreateLimitParam(t *testing.T) {
 
 func TestCreateOffsetParam(t *testing.T) {
 	// Act
-	offsetParam := CreateOffsetParam()
+	offsetParam := createOffsetParam()
 
 	// Assert
 	assert.Equal(t, listOffsetParamName, offsetParam.Name, "Offset parameter should have correct name")
@@ -961,8 +961,8 @@ func TestCreateOffsetParam(t *testing.T) {
 	assert.Equal(t, listOffsetDefaultValue, offsetParam.Default, "Offset parameter should have correct default value")
 
 	t.Run("consistency", func(t *testing.T) {
-		offset1 := CreateOffsetParam()
-		offset2 := CreateOffsetParam()
+		offset1 := createOffsetParam()
+		offset2 := createOffsetParam()
 
 		assert.Equal(t, offset1, offset2, "CreateOffsetParam should return consistent results")
 	})
@@ -975,7 +975,7 @@ func TestCreatePaginationField(t *testing.T) {
 	expectedType := paginationObjectName
 
 	// Act
-	paginationField := CreatePaginationField()
+	paginationField := createPaginationField()
 
 	// Assert
 	assert.Equal(t, expectedName, paginationField.Name, "Pagination field should have correct name")
@@ -983,8 +983,8 @@ func TestCreatePaginationField(t *testing.T) {
 	assert.Equal(t, expectedType, paginationField.Type, "Pagination field should have correct type")
 
 	t.Run("consistency", func(t *testing.T) {
-		pagination1 := CreatePaginationField()
-		pagination2 := CreatePaginationField()
+		pagination1 := createPaginationField()
+		pagination2 := createPaginationField()
 
 		assert.Equal(t, pagination1, pagination2, "CreatePaginationField should return consistent results")
 	})
@@ -1016,7 +1016,7 @@ func TestCreateDataField(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.resourceName, func(t *testing.T) {
-			dataField := CreateDataField(tc.resourceName)
+			dataField := createDataField(tc.resourceName)
 
 			assert.Equal(t, tc.expectedName, dataField.Name, "Data field should have correct name")
 			assert.Equal(t, tc.expectedDescription, dataField.Description, "Data field should have correct description")
@@ -1028,7 +1028,7 @@ func TestCreateDataField(t *testing.T) {
 
 	t.Run("edge cases", func(t *testing.T) {
 		t.Run("empty string", func(t *testing.T) {
-			dataField := CreateDataField("")
+			dataField := createDataField("")
 
 			assert.Equal(t, "data", dataField.Name, "Data field should have 'data' name even with empty resource name")
 			assert.Equal(t, "Array of  objects", dataField.Description, "Data field should handle empty resource name in description")
@@ -1061,7 +1061,7 @@ func TestCreateIDParam(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			idParam := CreateIDParam(tc.description)
+			idParam := createIDParam(tc.description)
 
 			assert.Equal(t, tc.expectedName, idParam.Name, "ID parameter should have correct name")
 			assert.Equal(t, tc.description, idParam.Description, "ID parameter should have correct description")
@@ -1074,7 +1074,7 @@ func TestCreateIDParam(t *testing.T) {
 
 	t.Run("edge cases", func(t *testing.T) {
 		t.Run("empty description", func(t *testing.T) {
-			idParam := CreateIDParam("")
+			idParam := createIDParam("")
 
 			assert.Equal(t, "id", idParam.Name, "ID param should always have 'id' name")
 			assert.Equal(t, "", idParam.Description, "ID param should accept empty description")
@@ -1089,7 +1089,7 @@ func TestCreateAutoColumnID(t *testing.T) {
 	expectedDescription := fmt.Sprintf(autoColumnIDDescTemplate, resourceName)
 
 	// Act
-	idField := CreateAutoColumnID(resourceName)
+	idField := createAutoColumnID(resourceName)
 
 	// Assert
 	assert.Equal(t, autoColumnIDName, idField.Name, "Auto-column ID should have correct name")
@@ -1100,8 +1100,8 @@ func TestCreateAutoColumnID(t *testing.T) {
 	assert.Empty(t, idField.Example, "Auto-column ID should have no example")
 
 	t.Run("consistency", func(t *testing.T) {
-		id1 := CreateAutoColumnID(resourceName)
-		id2 := CreateAutoColumnID(resourceName)
+		id1 := createAutoColumnID(resourceName)
+		id2 := createAutoColumnID(resourceName)
 
 		assert.Equal(t, id1, id2, "CreateAutoColumnID should return consistent results")
 	})
@@ -1113,7 +1113,7 @@ func TestCreateAutoColumnCreatedAt(t *testing.T) {
 	expectedDescription := fmt.Sprintf(autoColumnCreatedAtTemplate, resourceName)
 
 	// Act
-	createdAtField := CreateAutoColumnCreatedAt(resourceName)
+	createdAtField := createAutoColumnCreatedAt(resourceName)
 
 	// Assert
 	assert.Equal(t, autoColumnCreatedAtName, createdAtField.Name, "Auto-column CreatedAt should have correct name")
@@ -1124,8 +1124,8 @@ func TestCreateAutoColumnCreatedAt(t *testing.T) {
 	assert.Empty(t, createdAtField.Example, "Auto-column CreatedAt should have no example")
 
 	t.Run("consistency", func(t *testing.T) {
-		createdAt1 := CreateAutoColumnCreatedAt(resourceName)
-		createdAt2 := CreateAutoColumnCreatedAt(resourceName)
+		createdAt1 := createAutoColumnCreatedAt(resourceName)
+		createdAt2 := createAutoColumnCreatedAt(resourceName)
 
 		assert.Equal(t, createdAt1, createdAt2, "CreateAutoColumnCreatedAt should return consistent results")
 	})
@@ -1137,7 +1137,7 @@ func TestCreateAutoColumnCreatedBy(t *testing.T) {
 	expectedDescription := fmt.Sprintf(autoColumnCreatedByTemplate, resourceName)
 
 	// Act
-	createdByField := CreateAutoColumnCreatedBy(resourceName)
+	createdByField := createAutoColumnCreatedBy(resourceName)
 
 	// Assert
 	assert.Equal(t, autoColumnCreatedByName, createdByField.Name, "Auto-column CreatedBy should have correct name")
@@ -1148,8 +1148,8 @@ func TestCreateAutoColumnCreatedBy(t *testing.T) {
 	assert.Empty(t, createdByField.Example, "Auto-column CreatedBy should have no example")
 
 	t.Run("consistency", func(t *testing.T) {
-		createdBy1 := CreateAutoColumnCreatedBy(resourceName)
-		createdBy2 := CreateAutoColumnCreatedBy(resourceName)
+		createdBy1 := createAutoColumnCreatedBy(resourceName)
+		createdBy2 := createAutoColumnCreatedBy(resourceName)
 
 		assert.Equal(t, createdBy1, createdBy2, "CreateAutoColumnCreatedBy should return consistent results")
 	})
@@ -1161,7 +1161,7 @@ func TestCreateAutoColumnUpdatedAt(t *testing.T) {
 	expectedDescription := fmt.Sprintf(autoColumnUpdatedAtTemplate, resourceName)
 
 	// Act
-	updatedAtField := CreateAutoColumnUpdatedAt(resourceName)
+	updatedAtField := createAutoColumnUpdatedAt(resourceName)
 
 	// Assert
 	assert.Equal(t, autoColumnUpdatedAtName, updatedAtField.Name, "Auto-column UpdatedAt should have correct name")
@@ -1172,8 +1172,8 @@ func TestCreateAutoColumnUpdatedAt(t *testing.T) {
 	assert.Empty(t, updatedAtField.Example, "Auto-column UpdatedAt should have no example")
 
 	t.Run("consistency", func(t *testing.T) {
-		updatedAt1 := CreateAutoColumnUpdatedAt(resourceName)
-		updatedAt2 := CreateAutoColumnUpdatedAt(resourceName)
+		updatedAt1 := createAutoColumnUpdatedAt(resourceName)
+		updatedAt2 := createAutoColumnUpdatedAt(resourceName)
 
 		assert.Equal(t, updatedAt1, updatedAt2, "CreateAutoColumnUpdatedAt should return consistent results")
 	})
@@ -1185,7 +1185,7 @@ func TestCreateAutoColumnUpdatedBy(t *testing.T) {
 	expectedDescription := fmt.Sprintf(autoColumnUpdatedByTemplate, resourceName)
 
 	// Act
-	updatedByField := CreateAutoColumnUpdatedBy(resourceName)
+	updatedByField := createAutoColumnUpdatedBy(resourceName)
 
 	// Assert
 	assert.Equal(t, autoColumnUpdatedByName, updatedByField.Name, "Auto-column UpdatedBy should have correct name")
@@ -1196,8 +1196,8 @@ func TestCreateAutoColumnUpdatedBy(t *testing.T) {
 	assert.Empty(t, updatedByField.Example, "Auto-column UpdatedBy should have no example")
 
 	t.Run("consistency", func(t *testing.T) {
-		updatedBy1 := CreateAutoColumnUpdatedBy(resourceName)
-		updatedBy2 := CreateAutoColumnUpdatedBy(resourceName)
+		updatedBy1 := createAutoColumnUpdatedBy(resourceName)
+		updatedBy2 := createAutoColumnUpdatedBy(resourceName)
 
 		assert.Equal(t, updatedBy1, updatedBy2, "CreateAutoColumnUpdatedBy should return consistent results")
 	})
@@ -1208,7 +1208,7 @@ func TestCreateAutoColumns(t *testing.T) {
 	resourceName := "User"
 
 	// Act
-	autoColumns := CreateAutoColumns(resourceName)
+	autoColumns := createAutoColumns(resourceName)
 
 	// Assert
 	assert.Equal(t, 5, len(autoColumns), "Should return exactly 5 auto-columns")
@@ -1242,8 +1242,8 @@ func TestCreateAutoColumns(t *testing.T) {
 	assert.Equal(t, fmt.Sprintf(autoColumnUpdatedByTemplate, resourceName), autoColumns[4].Description, "UpdatedBy description should use resource name")
 
 	t.Run("consistency", func(t *testing.T) {
-		autoColumns1 := CreateAutoColumns(resourceName)
-		autoColumns2 := CreateAutoColumns(resourceName)
+		autoColumns1 := createAutoColumns(resourceName)
+		autoColumns2 := createAutoColumns(resourceName)
 
 		assert.Equal(t, autoColumns1, autoColumns2, "CreateAutoColumns should return consistent results")
 	})
@@ -1251,7 +1251,7 @@ func TestCreateAutoColumns(t *testing.T) {
 
 func TestCreateDefaultMeta(t *testing.T) {
 	// Act
-	metaObject := CreateDefaultMeta()
+	metaObject := createDefaultMeta()
 
 	// Assert
 	assert.Equal(t, metaObjectName, metaObject.Name, "Meta object should have correct name")
@@ -1283,8 +1283,8 @@ func TestCreateDefaultMeta(t *testing.T) {
 	assert.Equal(t, "User who last updated the resource", metaObject.Fields[3].Description, "UpdatedBy should have generic description")
 
 	t.Run("consistency", func(t *testing.T) {
-		meta1 := CreateDefaultMeta()
-		meta2 := CreateDefaultMeta()
+		meta1 := createDefaultMeta()
+		meta2 := createDefaultMeta()
 
 		assert.Equal(t, meta1, meta2, "CreateDefaultMeta should return consistent results")
 	})
@@ -1295,7 +1295,7 @@ func TestCreateAutoColumnsWithMeta(t *testing.T) {
 	resourceName := "User"
 
 	// Act
-	autoColumns := CreateAutoColumnsWithMeta(resourceName)
+	autoColumns := createAutoColumnsWithMeta(resourceName)
 
 	// Assert
 	assert.Equal(t, 2, len(autoColumns), "Should return exactly 2 auto-columns (ID + Meta)")
@@ -1313,8 +1313,8 @@ func TestCreateAutoColumnsWithMeta(t *testing.T) {
 	assert.Empty(t, autoColumns[1].Modifiers, "Meta should have no modifiers")
 
 	t.Run("consistency", func(t *testing.T) {
-		autoColumns1 := CreateAutoColumnsWithMeta(resourceName)
-		autoColumns2 := CreateAutoColumnsWithMeta(resourceName)
+		autoColumns1 := createAutoColumnsWithMeta(resourceName)
+		autoColumns2 := createAutoColumnsWithMeta(resourceName)
 
 		assert.Equal(t, autoColumns1, autoColumns2, "CreateAutoColumnsWithMeta should return consistent results")
 	})
@@ -1386,7 +1386,7 @@ func TestToKebabCase(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.input, func(t *testing.T) {
-			result := ToKebabCase(tc.input)
+			result := toKebabCase(tc.input)
 			assert.Equal(t, tc.expected, result, "KebabCase conversion for '%s' should be '%s'", tc.input, tc.expected)
 		})
 	}
@@ -1409,9 +1409,9 @@ func TestToKebabCase(t *testing.T) {
 		}
 
 		for _, tc := range edgeCases {
-			t.Run("ToKebabCase_"+tc.input, func(t *testing.T) {
-				result := ToKebabCase(tc.input)
-				assert.Equal(t, tc.expected, result, "ToKebabCase of '%s' should be '%s'", tc.input, tc.expected)
+			t.Run("toKebabCase_"+tc.input, func(t *testing.T) {
+				result := toKebabCase(tc.input)
+				assert.Equal(t, tc.expected, result, "toKebabCase of '%s' should be '%s'", tc.input, tc.expected)
 			})
 		}
 	})
