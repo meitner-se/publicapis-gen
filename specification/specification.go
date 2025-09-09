@@ -1114,197 +1114,188 @@ func ApplyFilterOverlay(input *Service) *Service {
 		if !usedTypes[obj.Name] {
 			continue
 		}
-		// Generate main filter object
-		mainFilter := Object{
-			Name:        obj.Name + filterSuffix,
-			Description: descriptionFilterObject + obj.Name,
-			Fields: []Field{
-				{
-					Name:        filterFieldEquals,
-					Description: descriptionEqualityFilters + obj.Name,
-					Type:        obj.Name + filterEqualsSuffix,
-					Modifiers:   []string{ModifierNullable},
-				},
-				{
-					Name:        filterFieldNotEquals,
-					Description: descriptionInequalityFilters + obj.Name,
-					Type:        obj.Name + filterEqualsSuffix,
-					Modifiers:   []string{ModifierNullable},
-				},
-				{
-					Name:        filterFieldGreaterThan,
-					Description: descriptionGreaterThanFilters + obj.Name,
-					Type:        obj.Name + filterRangeSuffix,
-					Modifiers:   []string{ModifierNullable},
-				},
-				{
-					Name:        filterFieldSmallerThan,
-					Description: descriptionSmallerThanFilters + obj.Name,
-					Type:        obj.Name + filterRangeSuffix,
-					Modifiers:   []string{ModifierNullable},
-				},
-				{
-					Name:        filterFieldGreaterOrEqual,
-					Description: descriptionGreaterOrEqualFilters + obj.Name,
-					Type:        obj.Name + filterRangeSuffix,
-					Modifiers:   []string{ModifierNullable},
-				},
-				{
-					Name:        filterFieldSmallerOrEqual,
-					Description: descriptionSmallerOrEqualFilters + obj.Name,
-					Type:        obj.Name + filterRangeSuffix,
-					Modifiers:   []string{ModifierNullable},
-				},
-				{
-					Name:        filterFieldContains,
-					Description: descriptionContainsFilters + obj.Name,
-					Type:        obj.Name + filterContainsSuffix,
-					Modifiers:   []string{ModifierNullable},
-				},
-				{
-					Name:        filterFieldNotContains,
-					Description: descriptionNotContainsFilters + obj.Name,
-					Type:        obj.Name + filterContainsSuffix,
-					Modifiers:   []string{ModifierNullable},
-				},
-				{
-					Name:        filterFieldLike,
-					Description: descriptionLikeFilters + obj.Name,
-					Type:        obj.Name + filterLikeSuffix,
-					Modifiers:   []string{ModifierNullable},
-				},
-				{
-					Name:        filterFieldNotLike,
-					Description: descriptionNotLikeFilters + obj.Name,
-					Type:        obj.Name + filterLikeSuffix,
-					Modifiers:   []string{ModifierNullable},
-				},
-				{
-					Name:        filterFieldNull,
-					Description: descriptionNullFilters + obj.Name,
-					Type:        obj.Name + filterNullSuffix,
-					Modifiers:   []string{ModifierNullable},
-				},
-				{
-					Name:        filterFieldNotNull,
-					Description: descriptionNotNullFilters + obj.Name,
-					Type:        obj.Name + filterNullSuffix,
-					Modifiers:   []string{ModifierNullable},
-				},
-				{
-					Name:        filterFieldOrCondition,
-					Description: descriptionOrCondition,
-					Type:        FieldTypeBool,
-					Modifiers:   []string{},
-				},
-				{
-					Name:        filterFieldNestedFilters,
-					Description: descriptionNestedFiltersTemplate + obj.Name + descriptionNestedFiltersSuffix,
-					Type:        obj.Name + filterSuffix,
-					Modifiers:   []string{ModifierArray},
-				},
-			},
-		}
-		result.Objects = append(result.Objects, mainFilter)
-
-		// Generate FilterEquals object - contains all fields as nullable (used for both Equals and NotEquals)
-		equalsFilter := Object{
-			Name:        obj.Name + filterEqualsSuffix,
-			Description: descriptionEqualityInequalityFilterFields + obj.Name,
-			Fields:      make([]Field, 0, len(obj.Fields)),
-		}
-		for _, field := range obj.Fields {
-			if isObjectType(field.Type, input.Objects) {
-				// For nested objects, use the filter version
-				equalsFilter.Fields = append(equalsFilter.Fields, generateNestedFilterField(field, filterEqualsSuffix, true, false, input.Objects))
-			} else {
-				// For primitive types, use the original field type
-				equalsFilter.Fields = append(equalsFilter.Fields, generateFilterField(field, true, false))
-			}
-		}
-		result.Objects = append(result.Objects, equalsFilter)
-
-		// Generate FilterRange object - only comparable fields and nested objects
-		rangeFilter := Object{
-			Name:        obj.Name + filterRangeSuffix,
-			Description: descriptionRangeFilterFields + obj.Name,
-			Fields:      make([]Field, 0),
-		}
-		for _, field := range obj.Fields {
-			if isComparableType(field.Type) {
-				// For comparable primitive types
-				rangeFilter.Fields = append(rangeFilter.Fields, generateFilterField(field, true, false))
-			} else if isObjectType(field.Type, input.Objects) {
-				// For nested objects, include the filter version
-				rangeFilter.Fields = append(rangeFilter.Fields, generateNestedFilterField(field, filterRangeSuffix, true, false, input.Objects))
-			}
-		}
-		result.Objects = append(result.Objects, rangeFilter)
-
-		// Generate FilterContains object - all fields except timestamps as arrays
-		containsFilter := Object{
-			Name:        obj.Name + filterContainsSuffix,
-			Description: descriptionContainsFilterFields + obj.Name,
-			Fields:      make([]Field, 0),
-		}
-		for _, field := range obj.Fields {
-			if field.Type != FieldTypeTimestamp {
-				if isObjectType(field.Type, input.Objects) {
-					// For nested objects, use the filter version (nullable, not array - arrays are for fields inside the nested filter)
-					containsFilter.Fields = append(containsFilter.Fields, generateNestedFilterField(field, filterContainsSuffix, true, false, input.Objects))
-				} else {
-					// For primitive types, use the original field type
-					containsFilter.Fields = append(containsFilter.Fields, generateFilterField(field, false, true))
-				}
-			}
-		}
-		result.Objects = append(result.Objects, containsFilter)
-
-		// Generate FilterLike object - only string fields and nested objects
-		likeFilter := Object{
-			Name:        obj.Name + filterLikeSuffix,
-			Description: descriptionLikeFilterFields + obj.Name,
-			Fields:      make([]Field, 0),
-		}
-		for _, field := range obj.Fields {
-			if isStringType(field.Type) {
-				// For string primitive types
-				likeFilter.Fields = append(likeFilter.Fields, generateFilterField(field, true, false))
-			} else if isObjectType(field.Type, input.Objects) {
-				// For nested objects, include the filter version
-				likeFilter.Fields = append(likeFilter.Fields, generateNestedFilterField(field, filterLikeSuffix, true, false, input.Objects))
-			}
-		}
-		result.Objects = append(result.Objects, likeFilter)
-
-		// Generate FilterNull object - only nullable fields or arrays
-		nullFilter := Object{
-			Name:        obj.Name + filterNullSuffix,
-			Description: descriptionNullFilterFields + obj.Name,
-			Fields:      make([]Field, 0),
-		}
-		for _, field := range obj.Fields {
-			if canBeNull(field) {
-				if isObjectType(field.Type, input.Objects) {
-					// For nested objects, use the filter version
-					nestedNullField := generateNestedFilterField(field, filterNullSuffix, true, false, input.Objects)
-					// But for null filters, we change the type to Bool to indicate null/not null
-					nestedNullField.Type = FieldTypeBool
-					nullFilter.Fields = append(nullFilter.Fields, nestedNullField)
-				} else {
-					// For primitive types, create a boolean field to indicate null/not null
-					nullField := generateFilterField(Field{
-						Name:        field.Name,
-						Description: field.Description,
-						Type:        FieldTypeBool,
-					}, true, false)
-					nullFilter.Fields = append(nullFilter.Fields, nullField)
-				}
-			}
-		}
-		result.Objects = append(result.Objects, nullFilter)
+		// Generate all filter objects for this object
+		filterObjects := generateFilterObjectsForObject(obj, input.Objects)
+		result.Objects = append(result.Objects, filterObjects...)
 	}
 
+	return result
+}
+
+// generateFilterObjectsForObject generates all filter-related objects for a given object.
+func generateFilterObjectsForObject(obj Object, allObjects []Object) []Object {
+	var filterObjects []Object
+
+	// Generate main filter object
+	mainFilter := generateMainFilterObject(obj)
+	filterObjects = append(filterObjects, mainFilter)
+
+	// Generate specialized filter objects
+	equalsFilter := generateEqualsFilterObject(obj, allObjects)
+	rangeFilter := generateRangeFilterObject(obj, allObjects)
+	containsFilter := generateContainsFilterObject(obj, allObjects)
+	likeFilter := generateLikeFilterObject(obj, allObjects)
+	nullFilter := generateNullFilterObject(obj, allObjects)
+
+	filterObjects = append(filterObjects, equalsFilter, rangeFilter, containsFilter, likeFilter, nullFilter)
+
+	return filterObjects
+}
+
+// generateMainFilterObject creates the main filter object with all filter type references.
+func generateMainFilterObject(obj Object) Object {
+	return Object{
+		Name:        obj.Name + filterSuffix,
+		Description: descriptionFilterObject + obj.Name,
+		Fields: []Field{
+			createFilterField(filterFieldEquals, descriptionEqualityFilters+obj.Name, obj.Name+filterEqualsSuffix, true),
+			createFilterField(filterFieldNotEquals, descriptionInequalityFilters+obj.Name, obj.Name+filterEqualsSuffix, true),
+			createFilterField(filterFieldGreaterThan, descriptionGreaterThanFilters+obj.Name, obj.Name+filterRangeSuffix, true),
+			createFilterField(filterFieldSmallerThan, descriptionSmallerThanFilters+obj.Name, obj.Name+filterRangeSuffix, true),
+			createFilterField(filterFieldGreaterOrEqual, descriptionGreaterOrEqualFilters+obj.Name, obj.Name+filterRangeSuffix, true),
+			createFilterField(filterFieldSmallerOrEqual, descriptionSmallerOrEqualFilters+obj.Name, obj.Name+filterRangeSuffix, true),
+			createFilterField(filterFieldContains, descriptionContainsFilters+obj.Name, obj.Name+filterContainsSuffix, true),
+			createFilterField(filterFieldNotContains, descriptionNotContainsFilters+obj.Name, obj.Name+filterContainsSuffix, true),
+			createFilterField(filterFieldLike, descriptionLikeFilters+obj.Name, obj.Name+filterLikeSuffix, true),
+			createFilterField(filterFieldNotLike, descriptionNotLikeFilters+obj.Name, obj.Name+filterLikeSuffix, true),
+			createFilterField(filterFieldNull, descriptionNullFilters+obj.Name, obj.Name+filterNullSuffix, true),
+			createFilterField(filterFieldNotNull, descriptionNotNullFilters+obj.Name, obj.Name+filterNullSuffix, true),
+			createFilterField(filterFieldOrCondition, descriptionOrCondition, FieldTypeBool, false),
+			createFilterField(filterFieldNestedFilters, descriptionNestedFiltersTemplate+obj.Name+descriptionNestedFiltersSuffix, obj.Name+filterSuffix, false, ModifierArray),
+		},
+	}
+}
+
+// createFilterField is a helper to create filter fields with consistent structure.
+func createFilterField(name, description, fieldType string, nullable bool, extraModifiers ...string) Field {
+	modifiers := make([]string, 0, 2)
+	if nullable {
+		modifiers = append(modifiers, ModifierNullable)
+	}
+	modifiers = append(modifiers, extraModifiers...)
+
+	return Field{
+		Name:        name,
+		Description: description,
+		Type:        fieldType,
+		Modifiers:   modifiers,
+	}
+}
+
+// generateEqualsFilterObject generates the FilterEquals object for equality comparisons.
+func generateEqualsFilterObject(obj Object, allObjects []Object) Object {
+	fields := processFieldsForFilter(obj.Fields, allObjects, func(field Field, objects []Object) (Field, bool) {
+		// All fields are included in equals filter
+		if isObjectType(field.Type, objects) {
+			return generateNestedFilterField(field, filterEqualsSuffix, true, false, objects), true
+		}
+		return generateFilterField(field, true, false), true
+	})
+
+	return Object{
+		Name:        obj.Name + filterEqualsSuffix,
+		Description: descriptionEqualityInequalityFilterFields + obj.Name,
+		Fields:      fields,
+	}
+}
+
+// generateRangeFilterObject generates the FilterRange object for range comparisons.
+func generateRangeFilterObject(obj Object, allObjects []Object) Object {
+	fields := processFieldsForFilter(obj.Fields, allObjects, func(field Field, objects []Object) (Field, bool) {
+		// Only comparable types and nested objects
+		if isComparableType(field.Type) {
+			return generateFilterField(field, true, false), true
+		}
+		if isObjectType(field.Type, objects) {
+			return generateNestedFilterField(field, filterRangeSuffix, true, false, objects), true
+		}
+		return Field{}, false
+	})
+
+	return Object{
+		Name:        obj.Name + filterRangeSuffix,
+		Description: descriptionRangeFilterFields + obj.Name,
+		Fields:      fields,
+	}
+}
+
+// generateContainsFilterObject generates the FilterContains object for contains operations.
+func generateContainsFilterObject(obj Object, allObjects []Object) Object {
+	fields := processFieldsForFilter(obj.Fields, allObjects, func(field Field, objects []Object) (Field, bool) {
+		// All fields except timestamps
+		if field.Type == FieldTypeTimestamp {
+			return Field{}, false
+		}
+		if isObjectType(field.Type, objects) {
+			return generateNestedFilterField(field, filterContainsSuffix, true, false, objects), true
+		}
+		return generateFilterField(field, false, true), true
+	})
+
+	return Object{
+		Name:        obj.Name + filterContainsSuffix,
+		Description: descriptionContainsFilterFields + obj.Name,
+		Fields:      fields,
+	}
+}
+
+// generateLikeFilterObject generates the FilterLike object for LIKE operations.
+func generateLikeFilterObject(obj Object, allObjects []Object) Object {
+	fields := processFieldsForFilter(obj.Fields, allObjects, func(field Field, objects []Object) (Field, bool) {
+		// Only string types and nested objects
+		if isStringType(field.Type) {
+			return generateFilterField(field, true, false), true
+		}
+		if isObjectType(field.Type, objects) {
+			return generateNestedFilterField(field, filterLikeSuffix, true, false, objects), true
+		}
+		return Field{}, false
+	})
+
+	return Object{
+		Name:        obj.Name + filterLikeSuffix,
+		Description: descriptionLikeFilterFields + obj.Name,
+		Fields:      fields,
+	}
+}
+
+// generateNullFilterObject generates the FilterNull object for null checks.
+func generateNullFilterObject(obj Object, allObjects []Object) Object {
+	fields := processFieldsForFilter(obj.Fields, allObjects, func(field Field, objects []Object) (Field, bool) {
+		// Only nullable fields or arrays
+		if !canBeNull(field) {
+			return Field{}, false
+		}
+
+		if isObjectType(field.Type, objects) {
+			// For nested objects, create boolean field for null check
+			nestedField := generateNestedFilterField(field, filterNullSuffix, true, false, objects)
+			nestedField.Type = FieldTypeBool
+			return nestedField, true
+		}
+		// For primitive types, create boolean field
+		return generateFilterField(Field{
+			Name:        field.Name,
+			Description: field.Description,
+			Type:        FieldTypeBool,
+		}, true, false), true
+	})
+
+	return Object{
+		Name:        obj.Name + filterNullSuffix,
+		Description: descriptionNullFilterFields + obj.Name,
+		Fields:      fields,
+	}
+}
+
+// processFieldsForFilter is a generic helper that processes fields with a custom filter function.
+func processFieldsForFilter(fields []Field, allObjects []Object, filterFunc func(Field, []Object) (Field, bool)) []Field {
+	var result []Field
+	for _, field := range fields {
+		if filterField, include := filterFunc(field, allObjects); include {
+			result = append(result, filterField)
+		}
+	}
 	return result
 }
 
@@ -1431,65 +1422,43 @@ func (r Resource) GetPluralName() string {
 
 // GetCreateBodyParams returns all fields that support Create operations.
 func (r Resource) GetCreateBodyParams() []Field {
-	bodyParams := make([]Field, 0)
-	for _, resourceField := range r.Fields {
-		if resourceField.HasCreateOperation() {
-			// Convert ResourceField to Field by copying the embedded Field
-			field := Field{
-				Name:        resourceField.Name,
-				Description: resourceField.Description,
-				Type:        resourceField.Type,
-				Default:     resourceField.Default,
-				Example:     resourceField.Example,
-				Modifiers:   make([]string, len(resourceField.Modifiers)),
-			}
-			copy(field.Modifiers, resourceField.Modifiers)
-			bodyParams = append(bodyParams, field)
-		}
-	}
-	return bodyParams
+	return r.getFieldsByOperation(ResourceField.HasCreateOperation)
 }
 
 // GetUpdateBodyParams returns all fields that support Update operations.
 func (r Resource) GetUpdateBodyParams() []Field {
-	bodyParams := make([]Field, 0)
-	for _, resourceField := range r.Fields {
-		if resourceField.HasUpdateOperation() {
-			// Convert ResourceField to Field by copying the embedded Field
-			field := Field{
-				Name:        resourceField.Name,
-				Description: resourceField.Description,
-				Type:        resourceField.Type,
-				Default:     resourceField.Default,
-				Example:     resourceField.Example,
-				Modifiers:   make([]string, len(resourceField.Modifiers)),
-			}
-			copy(field.Modifiers, resourceField.Modifiers)
-			bodyParams = append(bodyParams, field)
-		}
-	}
-	return bodyParams
+	return r.getFieldsByOperation(ResourceField.HasUpdateOperation)
 }
 
 // GetReadableFields returns all fields that support Read operations.
 func (r Resource) GetReadableFields() []Field {
-	readableFields := make([]Field, 0)
+	return r.getFieldsByOperation(ResourceField.HasReadOperation)
+}
+
+// getFieldsByOperation is a helper method that filters ResourceFields by operation and converts them to Fields.
+func (r Resource) getFieldsByOperation(operationCheck func(ResourceField) bool) []Field {
+	var result []Field
 	for _, resourceField := range r.Fields {
-		if resourceField.HasReadOperation() {
-			// Convert ResourceField to Field by copying the embedded Field
-			field := Field{
-				Name:        resourceField.Name,
-				Description: resourceField.Description,
-				Type:        resourceField.Type,
-				Default:     resourceField.Default,
-				Example:     resourceField.Example,
-				Modifiers:   make([]string, len(resourceField.Modifiers)),
-			}
-			copy(field.Modifiers, resourceField.Modifiers)
-			readableFields = append(readableFields, field)
+		if operationCheck(resourceField) {
+			field := r.convertResourceFieldToField(resourceField)
+			result = append(result, field)
 		}
 	}
-	return readableFields
+	return result
+}
+
+// convertResourceFieldToField converts a ResourceField to a Field by copying the embedded Field data.
+func (r Resource) convertResourceFieldToField(resourceField ResourceField) Field {
+	field := Field{
+		Name:        resourceField.Name,
+		Description: resourceField.Description,
+		Type:        resourceField.Type,
+		Default:     resourceField.Default,
+		Example:     resourceField.Example,
+		Modifiers:   make([]string, len(resourceField.Modifiers)),
+	}
+	copy(field.Modifiers, resourceField.Modifiers)
+	return field
 }
 
 // HasEndpoint checks if the resource has an endpoint with the given name.
