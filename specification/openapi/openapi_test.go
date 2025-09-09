@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/meitner-se/publicapis-gen/specification"
@@ -669,6 +670,171 @@ func TestCamelCaseParametersInOpenAPI(t *testing.T) {
 	assert.NotContains(t, jsonString, "\"created_at\"", "Response body property should not contain underscores: created_at")
 
 	t.Logf("Generated OpenAPI JSON for camelCase verification:\n%s", jsonString)
+}
+
+// TestIssueReproduction reproduces the Linear issue INF-247 where resource objects and overlay endpoints are missing.
+func TestIssueReproduction(t *testing.T) {
+	// This test reproduces the issue where "we only get the enums and the custom endpoints,
+	// but not the resource objects or overlay endpoints"
+
+	t.Run("without explicit overlay - fix automatically applies overlay", func(t *testing.T) {
+		generator := NewGenerator()
+
+		// Create a service as the user might have it - with resources but no overlay applied
+		inputService := &specification.Service{
+			Name:    "UserAPI",
+			Version: "1.0.0",
+			Enums: []specification.Enum{
+				{
+					Name:        "Status",
+					Description: "User status enumeration",
+					Values: []specification.EnumValue{
+						{Name: "Active", Description: "User is active"},
+						{Name: "Inactive", Description: "User is inactive"},
+					},
+				},
+			},
+			Resources: []specification.Resource{
+				{
+					Name:        "User",
+					Description: "User resource",
+					Operations:  []string{specification.OperationCreate, specification.OperationRead},
+					Fields: []specification.ResourceField{
+						{
+							Field: specification.Field{
+								Name:        "email",
+								Description: "User email address",
+								Type:        specification.FieldTypeString,
+							},
+							Operations: []string{specification.OperationCreate, specification.OperationRead},
+						},
+					},
+					// User has a custom endpoint defined
+					Endpoints: []specification.Endpoint{
+						{
+							Name:        "CustomAction",
+							Title:       "Custom User Action",
+							Description: "A custom endpoint for users",
+							Method:      "POST",
+							Path:        "/custom",
+							Response: specification.EndpointResponse{
+								StatusCode: 200,
+							},
+						},
+					},
+				},
+			},
+		}
+
+		// Generate OpenAPI directly from input service (the generator now automatically applies overlay)
+		document, err := generator.GenerateFromService(inputService)
+		assert.NoError(t, err, "Should generate document without error")
+
+		jsonBytes, err := generator.ToJSON(document)
+		assert.NoError(t, err, "Should convert to JSON")
+		jsonString := string(jsonBytes)
+
+		t.Logf("Generated OpenAPI with automatic overlay:\n%s", jsonString)
+
+		// Check that everything is now present - the fix automatically applied overlays
+		assert.Contains(t, jsonString, "Status", "Original enums should be present")
+		assert.Contains(t, jsonString, "CustomAction", "Custom endpoints should be present")
+
+		// These issues should now be fixed:
+		// 1. Resource objects should now be present
+		assert.Contains(t, jsonString, `"User": {`, "User object should be present in components")
+		userObjectInComponents := strings.Contains(jsonString, `"User": {`) && strings.Contains(jsonString, `"type": "object"`)
+		assert.True(t, userObjectInComponents, "User object schema should be in components/schemas section")
+
+		// 2. Overlay endpoints should now be present
+		assert.Contains(t, jsonString, "Create", "Create endpoint should be present (auto-generated overlay endpoint)")
+		assert.Contains(t, jsonString, "Get", "Get endpoint should be present (auto-generated overlay endpoint)")
+		assert.Contains(t, jsonString, "List", "List endpoint should be present (auto-generated overlay endpoint)")
+
+		// Check that ErrorCode enum was added by automatic overlay
+		assert.Contains(t, jsonString, "ErrorCode", "ErrorCode enum should be added by automatic overlay")
+		assert.Contains(t, jsonString, "Error", "Error object should be added by automatic overlay")
+	})
+
+	t.Run("with overlay applied - should work correctly", func(t *testing.T) {
+		generator := NewGenerator()
+
+		// Same input service
+		inputService := &specification.Service{
+			Name:    "UserAPI",
+			Version: "1.0.0",
+			Enums: []specification.Enum{
+				{
+					Name:        "Status",
+					Description: "User status enumeration",
+					Values: []specification.EnumValue{
+						{Name: "Active", Description: "User is active"},
+						{Name: "Inactive", Description: "User is inactive"},
+					},
+				},
+			},
+			Resources: []specification.Resource{
+				{
+					Name:        "User",
+					Description: "User resource",
+					Operations:  []string{specification.OperationCreate, specification.OperationRead},
+					Fields: []specification.ResourceField{
+						{
+							Field: specification.Field{
+								Name:        "email",
+								Description: "User email address",
+								Type:        specification.FieldTypeString,
+							},
+							Operations: []string{specification.OperationCreate, specification.OperationRead},
+						},
+					},
+					Endpoints: []specification.Endpoint{
+						{
+							Name:        "CustomAction",
+							Title:       "Custom User Action",
+							Description: "A custom endpoint for users",
+							Method:      "POST",
+							Path:        "/custom",
+							Response: specification.EndpointResponse{
+								StatusCode: 200,
+							},
+						},
+					},
+				},
+			},
+		}
+
+		// Apply overlay properly (like main.go does)
+		overlayedService := specification.ApplyOverlay(inputService)
+		finalService := specification.ApplyFilterOverlay(overlayedService)
+
+		// Generate OpenAPI from overlayed service
+		document, err := generator.GenerateFromService(finalService)
+		assert.NoError(t, err, "Should generate document without error")
+
+		jsonBytes, err := generator.ToJSON(document)
+		assert.NoError(t, err, "Should convert to JSON")
+		jsonString := string(jsonBytes)
+
+		t.Logf("Generated OpenAPI with overlay:\n%s", jsonString)
+
+		// Check everything is present
+		assert.Contains(t, jsonString, "Status", "Original enums should still be present")
+		assert.Contains(t, jsonString, "CustomAction", "Custom endpoints should still be present")
+
+		// These should now be fixed:
+		// 1. Resource objects should be present
+		assert.Contains(t, jsonString, `"User"`, "User object should be present in components")
+
+		// 2. Overlay endpoints should be present
+		assert.Contains(t, jsonString, "Create", "Create endpoint should be present (overlay endpoint)")
+		assert.Contains(t, jsonString, "Get", "Get endpoint should be present (overlay endpoint)")
+		assert.Contains(t, jsonString, "List", "List endpoint should be present (overlay endpoint)")
+
+		// Check that ErrorCode enum was added by overlay
+		assert.Contains(t, jsonString, "ErrorCode", "ErrorCode enum should be added by overlay")
+		assert.Contains(t, jsonString, "Error", "Error object should be added by overlay")
+	})
 }
 
 // Helper function to create a string pointer
