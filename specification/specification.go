@@ -348,6 +348,9 @@ type Resource struct {
 
 	// Endpoints of the resource
 	Endpoints []Endpoint `json:"endpoints"`
+
+	// SkipAutoColumns indicates whether to skip generating auto columns (ID, CreatedAt, etc.) for this resource
+	SkipAutoColumns bool `json:"skip_auto_columns,omitempty"`
 }
 
 // Field contains information about a field within an endpoint or resource or Object.
@@ -619,9 +622,11 @@ func generateObjectsFromResources(result *Service, resources []Resource) {
 				// Get readable fields from the resource
 				fields := resource.GetReadableFields()
 
-				// Add auto-columns to the object
-				autoColumns := CreateAutoColumns()
-				fields = append(autoColumns, fields...)
+				// Add auto-columns to the object if not skipped
+				if !resource.ShouldSkipAutoColumns() {
+					autoColumns := CreateAutoColumns()
+					fields = append(autoColumns, fields...)
+				}
 
 				// Create a new Object based on the Resource
 				newObject := Object{
@@ -1363,6 +1368,11 @@ func (r Resource) HasReadOperation() bool {
 // HasUpdateOperation checks if the Resource supports Update operations.
 func (r Resource) HasUpdateOperation() bool {
 	return slices.Contains(r.Operations, OperationUpdate)
+}
+
+// ShouldSkipAutoColumns checks if the Resource should skip generating auto columns.
+func (r Resource) ShouldSkipAutoColumns() bool {
+	return r.SkipAutoColumns
 }
 
 // GetPluralName returns the pluralized name of the resource.

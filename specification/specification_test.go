@@ -1927,6 +1927,32 @@ func TestResource_HasDeleteOperation(t *testing.T) {
 	assert.False(t, result, "Resource without Delete operation should return false")
 }
 
+func TestResource_ShouldSkipAutoColumns(t *testing.T) {
+	resourceWithSkip := Resource{
+		Name:            "SpecialResource",
+		Description:     "Resource that should skip auto columns",
+		SkipAutoColumns: true,
+	}
+
+	resourceWithoutSkip := Resource{
+		Name:        "NormalResource",
+		Description: "Resource that should include auto columns",
+	}
+
+	assert.True(t, resourceWithSkip.ShouldSkipAutoColumns(), "Resource with SkipAutoColumns=true should skip auto columns")
+	assert.False(t, resourceWithoutSkip.ShouldSkipAutoColumns(), "Resource with SkipAutoColumns=false should not skip auto columns")
+
+	t.Run("edge cases", func(t *testing.T) {
+		t.Run("explicit false value", func(t *testing.T) {
+			explicitFalse := Resource{
+				Name:            "ExplicitFalse",
+				SkipAutoColumns: false,
+			}
+			assert.False(t, explicitFalse.ShouldSkipAutoColumns(), "Resource with explicitly set SkipAutoColumns=false should not skip auto columns")
+		})
+	})
+}
+
 func TestResource_GetPluralName(t *testing.T) {
 	testCases := []struct {
 		resourceName   string
@@ -2166,6 +2192,152 @@ func TestEndpointRequest_GetRequiredBodyParams(t *testing.T) {
 	assert.Equal(t, expectedRequiredParams, requiredParams, "Should return only required body parameter names")
 	assert.Len(t, requiredParams, 1, "Should return exactly 1 required parameter")
 	assert.Contains(t, requiredParams, "username", "Should contain 'username' as required parameter")
+}
+
+func TestApplyOverlay_SkipAutoColumns(t *testing.T) {
+	t.Run("resource with skip auto columns enabled", func(t *testing.T) {
+		input := &Service{
+			Name: "TestService",
+			Resources: []Resource{
+				{
+					Name:            "SpecialResource",
+					Description:     "Resource that should skip auto columns",
+					Operations:      []string{OperationRead},
+					SkipAutoColumns: true,
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "customField",
+								Type:        FieldTypeString,
+								Description: "Custom field",
+							},
+							Operations: []string{OperationRead},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Find the generated SpecialResource object
+		var specialResourceObject *Object
+		for i := range result.Objects {
+			if result.Objects[i].Name == "SpecialResource" {
+				specialResourceObject = &result.Objects[i]
+				break
+			}
+		}
+
+		require.NotNil(t, specialResourceObject, "Should have generated SpecialResource object")
+		assert.Equal(t, "SpecialResource", specialResourceObject.Name)
+		assert.Equal(t, "Resource that should skip auto columns", specialResourceObject.Description)
+
+		// Should only have the original field, no auto columns
+		expectedFieldCount := 1
+		assert.Equal(t, expectedFieldCount, len(specialResourceObject.Fields), "Should only have original fields, no auto columns")
+
+		// Verify the custom field is present
+		assert.Equal(t, "customField", specialResourceObject.Fields[0].Name)
+		assert.Equal(t, "Custom field", specialResourceObject.Fields[0].Description)
+		assert.Equal(t, FieldTypeString, specialResourceObject.Fields[0].Type)
+	})
+
+	t.Run("resource with skip auto columns disabled", func(t *testing.T) {
+		input := &Service{
+			Name: "TestService",
+			Resources: []Resource{
+				{
+					Name:            "NormalResource",
+					Description:     "Resource that should include auto columns",
+					Operations:      []string{OperationRead},
+					SkipAutoColumns: false,
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "customField",
+								Type:        FieldTypeString,
+								Description: "Custom field",
+							},
+							Operations: []string{OperationRead},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Find the generated NormalResource object
+		var normalResourceObject *Object
+		for i := range result.Objects {
+			if result.Objects[i].Name == "NormalResource" {
+				normalResourceObject = &result.Objects[i]
+				break
+			}
+		}
+
+		require.NotNil(t, normalResourceObject, "Should have generated NormalResource object")
+
+		// Should have auto columns plus the original field
+		expectedFieldCount := 6 // 5 auto columns + 1 original field
+		assert.Equal(t, expectedFieldCount, len(normalResourceObject.Fields), "Should have auto columns plus original fields")
+
+		// Verify auto columns are present
+		autoColumnFields := normalResourceObject.Fields[:5] // First 5 should be auto columns
+		assert.Equal(t, autoColumnIDName, autoColumnFields[0].Name, "First field should be auto column ID")
+		assert.Equal(t, autoColumnCreatedAtName, autoColumnFields[1].Name, "Second field should be auto column CreatedAt")
+		assert.Equal(t, autoColumnCreatedByName, autoColumnFields[2].Name, "Third field should be auto column CreatedBy")
+		assert.Equal(t, autoColumnUpdatedAtName, autoColumnFields[3].Name, "Fourth field should be auto column UpdatedAt")
+		assert.Equal(t, autoColumnUpdatedByName, autoColumnFields[4].Name, "Fifth field should be auto column UpdatedBy")
+
+		// Verify the custom field is last
+		assert.Equal(t, "customField", normalResourceObject.Fields[5].Name, "Custom field should be after auto columns")
+	})
+
+	t.Run("default behavior should include auto columns", func(t *testing.T) {
+		input := &Service{
+			Name: "TestService",
+			Resources: []Resource{
+				{
+					Name:        "DefaultResource",
+					Description: "Resource with default behavior",
+					Operations:  []string{OperationRead},
+					// SkipAutoColumns not explicitly set, should default to false
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "customField",
+								Type:        FieldTypeString,
+								Description: "Custom field",
+							},
+							Operations: []string{OperationRead},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Find the generated DefaultResource object
+		var defaultResourceObject *Object
+		for i := range result.Objects {
+			if result.Objects[i].Name == "DefaultResource" {
+				defaultResourceObject = &result.Objects[i]
+				break
+			}
+		}
+
+		require.NotNil(t, defaultResourceObject, "Should have generated DefaultResource object")
+
+		// Should have auto columns by default
+		expectedFieldCount := 6 // 5 auto columns + 1 original field
+		assert.Equal(t, expectedFieldCount, len(defaultResourceObject.Fields), "Should have auto columns by default")
+	})
 }
 
 // ============================================================================
