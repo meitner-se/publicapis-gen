@@ -9,86 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Test constants
-const (
-	expectedErrorInvalidService  = "invalid service: service cannot be nil"
-	expectedErrorInvalidDocument = "invalid document: document cannot be nil"
-	expectedVersion              = "3.1.0"
-	emptyString                  = ""
-	testServiceName              = "TestService"
-	userAPIServiceName           = "UserAPI"
-	customAPITitle               = "Custom API"
-	customAPIDescription         = "Custom API Description"
-	customServerURL              = "https://custom.example.com"
-	testServiceVersion           = "2.0.0"
-	prodServerURL                = "https://api.example.com"
-	stagingServerURL             = "https://staging-api.example.com"
-	prodServerDescription        = "Production server"
-	stagingServerDescription     = "Staging server"
-	statusEnumName               = "Status"
-	statusEnumDescription        = "User status enumeration"
-	activeEnumValue              = "Active"
-	inactiveEnumValue            = "Inactive"
-	activeEnumDescription        = "User is active"
-	inactiveEnumDescription      = "User is inactive"
-	userObjectName               = "User"
-	userObjectDescription        = "User object"
-	idFieldName                  = "id"
-	idFieldDescription           = "User identifier"
-	emailFieldName               = "email"
-	emailFieldDescription        = "User email address"
-	statusFieldName              = "status"
-	statusFieldDescription       = "User status"
-	userResourceDescription      = "User resource"
-	createEndpointName           = "Create"
-	createEndpointTitle          = "Create User"
-	createEndpointDescription    = "Create a new user"
-	postMethod                   = "POST"
-	pathEmpty                    = ""
-	contentTypeJSON              = "application/json"
-	statusCode201                = 201
-
-	// Error response test constants
-	errorCodeEnumName            = "ErrorCode"
-	errorCodeEnumDescription     = "Standard error codes used in API responses"
-	badRequestErrorCode          = "BadRequest"
-	unauthorizedErrorCode        = "Unauthorized"
-	forbiddenErrorCode           = "Forbidden"
-	notFoundErrorCode            = "NotFound"
-	conflictErrorCode            = "Conflict"
-	unprocessableEntityErrorCode = "UnprocessableEntity"
-	rateLimitedErrorCode         = "RateLimited"
-	internalErrorCode            = "Internal"
-	badRequestDescription        = "The request was malformed or contained invalid parameters. 400 status code"
-	unauthorizedDescription      = "The request is missing valid authentication credentials. 401 status code"
-	forbiddenDescription         = "Request is authenticated, but the user is not allowed to perform the operation. 403 status code"
-	notFoundDescription          = "The requested resource or endpoint does not exist. 404 status code"
-	conflictDescription          = "The request could not be completed due to a conflict. 409 status code"
-	unprocessableDescription     = "The request was well-formed but failed validation. 422 status code"
-	rateLimitedDescription       = "When the rate limit has been exceeded. 429 status code"
-	internalDescription          = "Some serverside issue. 500 status code"
-
-	// Error object constants
-	errorObjectName              = "Error"
-	errorObjectDescription       = "Standard error response object containing error code and message"
-	errorCodeFieldName           = "Code"
-	errorCodeFieldDescription    = "The specific error code"
-	errorMessageFieldName        = "Message"
-	errorMessageFieldDescription = "Human-readable error message"
-
-	// Test endpoint constants
-	createUserEndpointName     = "CreateUser"
-	getUserEndpointName        = "GetUser"
-	testEndpointName           = "TestEndpoint"
-	usersPath                  = "/users"
-	userIDPath                 = "/users/{id}"
-	testPath                   = "/test"
-	getMethod                  = "GET"
-	statusCode200              = 200
-	expectedStatusCodes        = 8
-	expectedDefaultStatusCodes = 4
-)
-
 // ============================================================================
 // NewGenerator Function Tests
 // ============================================================================
@@ -98,10 +18,10 @@ func TestNewGenerator(t *testing.T) {
 	generator := NewGenerator()
 
 	assert.NotNil(t, generator, "Generator should not be nil")
-	assert.Equal(t, expectedVersion, generator.Version, "Generator version should be 3.1.0")
-	assert.Equal(t, emptyString, generator.Title, "Generator title should be empty by default")
-	assert.Equal(t, emptyString, generator.Description, "Generator description should be empty by default")
-	assert.Equal(t, emptyString, generator.ServerURL, "Generator server URL should be empty by default")
+	assert.Equal(t, "3.1.0", generator.Version, "Generator version should be 3.1.0")
+	assert.Equal(t, "", generator.Title, "Generator title should be empty by default")
+	assert.Equal(t, "", generator.Description, "Generator description should be empty by default")
+	assert.Equal(t, "", generator.ServerURL, "Generator server URL should be empty by default")
 }
 
 // ============================================================================
@@ -117,80 +37,80 @@ func TestGenerator_GenerateFromService(t *testing.T) {
 		document, err := generator.GenerateFromService(nil)
 
 		assert.Nil(t, document, "Document should be nil when service is nil")
-		assert.EqualError(t, err, expectedErrorInvalidService, "Should return invalid service error")
+		assert.EqualError(t, err, "invalid service: service cannot be nil", "Should return invalid service error")
 	})
 
 	// Test with valid service
 	t.Run("valid service generates document", func(t *testing.T) {
 		generator := NewGenerator()
 		service := &specification.Service{
-			Name: testServiceName,
+			Name: "TestService",
 		}
 
 		document, err := generator.GenerateFromService(service)
 
 		assert.NotNil(t, document, "Document should not be nil with valid service")
 		assert.NoError(t, err, "Should not return error with valid service")
-		assert.Equal(t, expectedVersion, document.Version, "Document version should be 3.1.0")
-		assert.Equal(t, testServiceName, document.Info.Title, "Document title should match service name")
+		assert.Equal(t, "3.1.0", document.Version, "Document version should be 3.1.0")
+		assert.Equal(t, "TestService", document.Info.Title, "Document title should match service name")
 	})
 
 	// Test with complex service
 	t.Run("complex service with enums and objects", func(t *testing.T) {
 		generator := NewGenerator()
 		service := &specification.Service{
-			Name: userAPIServiceName,
+			Name: "UserAPI",
 			Enums: []specification.Enum{
 				{
-					Name:        statusEnumName,
-					Description: statusEnumDescription,
+					Name:        "Status",
+					Description: "User status enumeration",
 					Values: []specification.EnumValue{
-						{Name: activeEnumValue, Description: activeEnumDescription},
-						{Name: inactiveEnumValue, Description: inactiveEnumDescription},
+						{Name: "Active", Description: "User is active"},
+						{Name: "Inactive", Description: "User is inactive"},
 					},
 				},
 			},
 			Objects: []specification.Object{
 				{
-					Name:        userObjectName,
-					Description: userObjectDescription,
+					Name:        "User",
+					Description: "User object",
 					Fields: []specification.Field{
 						{
-							Name:        idFieldName,
-							Description: idFieldDescription,
+							Name:        "id",
+							Description: "User identifier",
 							Type:        specification.FieldTypeUUID,
 						},
 						{
-							Name:        emailFieldName,
-							Description: emailFieldDescription,
+							Name:        "email",
+							Description: "User email address",
 							Type:        specification.FieldTypeString,
 						},
 						{
-							Name:        statusFieldName,
-							Description: statusFieldDescription,
-							Type:        statusEnumName,
+							Name:        "status",
+							Description: "User status",
+							Type:        "Status",
 						},
 					},
 				},
 			},
 			Resources: []specification.Resource{
 				{
-					Name:        userObjectName,
-					Description: userResourceDescription,
+					Name:        "User",
+					Description: "User resource",
 					Operations:  []string{specification.OperationCreate, specification.OperationRead},
 					Fields: []specification.ResourceField{
 						{
 							Field: specification.Field{
-								Name:        idFieldName,
-								Description: idFieldDescription,
+								Name:        "id",
+								Description: "User identifier",
 								Type:        specification.FieldTypeUUID,
 							},
 							Operations: []string{specification.OperationRead},
 						},
 						{
 							Field: specification.Field{
-								Name:        emailFieldName,
-								Description: emailFieldDescription,
+								Name:        "email",
+								Description: "User email address",
 								Type:        specification.FieldTypeString,
 							},
 							Operations: []string{specification.OperationCreate, specification.OperationRead},
@@ -198,25 +118,25 @@ func TestGenerator_GenerateFromService(t *testing.T) {
 					},
 					Endpoints: []specification.Endpoint{
 						{
-							Name:        createEndpointName,
-							Title:       createEndpointTitle,
-							Description: createEndpointDescription,
-							Method:      postMethod,
-							Path:        pathEmpty,
+							Name:        "Create",
+							Title:       "Create User",
+							Description: "Create a new user",
+							Method:      "POST",
+							Path:        "",
 							Request: specification.EndpointRequest{
-								ContentType: contentTypeJSON,
+								ContentType: "application/json",
 								BodyParams: []specification.Field{
 									{
-										Name:        emailFieldName,
-										Description: emailFieldDescription,
+										Name:        "email",
+										Description: "User email address",
 										Type:        specification.FieldTypeString,
 									},
 								},
 							},
 							Response: specification.EndpointResponse{
-								ContentType: contentTypeJSON,
-								StatusCode:  statusCode201,
-								BodyObject:  stringPtr(userObjectName),
+								ContentType: "application/json",
+								StatusCode:  201,
+								BodyObject:  stringPtr("User"),
 							},
 						},
 					},
@@ -228,15 +148,15 @@ func TestGenerator_GenerateFromService(t *testing.T) {
 
 		assert.NoError(t, err, "Should generate document successfully")
 		assert.NotNil(t, document, "Document should not be nil")
-		assert.Equal(t, userAPIServiceName, document.Info.Title, "Document title should match service name")
+		assert.Equal(t, "UserAPI", document.Info.Title, "Document title should match service name")
 
 		// Test JSON output contains expected elements
 		jsonBytes, err := generator.ToJSON(document)
 		assert.NoError(t, err, "Should convert document to JSON successfully")
 		jsonString := string(jsonBytes)
-		assert.Contains(t, jsonString, statusEnumName, "JSON should contain Status enum")
-		assert.Contains(t, jsonString, userObjectName, "JSON should contain User object")
-		assert.Contains(t, jsonString, activeEnumValue, "JSON should contain enum values")
+		assert.Contains(t, jsonString, "Status", "JSON should contain Status enum")
+		assert.Contains(t, jsonString, "User", "JSON should contain User object")
+		assert.Contains(t, jsonString, "Active", "JSON should contain enum values")
 		assert.Contains(t, jsonString, "/user", "JSON should contain user path")
 	})
 
@@ -244,25 +164,25 @@ func TestGenerator_GenerateFromService(t *testing.T) {
 	t.Run("service with version and servers", func(t *testing.T) {
 		generator := NewGenerator()
 		service := &specification.Service{
-			Name:    userAPIServiceName,
-			Version: testServiceVersion,
+			Name:    "UserAPI",
+			Version: "2.0.0",
 			Servers: []specification.ServiceServer{
 				{
-					URL:         prodServerURL,
-					Description: prodServerDescription,
+					URL:         "https://api.example.com",
+					Description: "Production server",
 				},
 				{
-					URL:         stagingServerURL,
-					Description: stagingServerDescription,
+					URL:         "https://staging-api.example.com",
+					Description: "Staging server",
 				},
 			},
 			Objects: []specification.Object{
 				{
-					Name:        userObjectName,
-					Description: userObjectDescription,
+					Name:        "User",
+					Description: "User object",
 					Fields: []specification.Field{
 						{
-							Name:        emailFieldName,
+							Name:        "email",
 							Description: "User email",
 							Type:        specification.FieldTypeString,
 							Modifiers:   []string{specification.ModifierNullable},
@@ -276,20 +196,20 @@ func TestGenerator_GenerateFromService(t *testing.T) {
 
 		assert.NoError(t, err, "Should generate document successfully")
 		assert.NotNil(t, document, "Document should not be nil")
-		assert.Equal(t, testServiceVersion, document.Info.Version, "Document version should come from service")
+		assert.Equal(t, "2.0.0", document.Info.Version, "Document version should come from service")
 		assert.Equal(t, 2, len(document.Servers), "Document should have 2 servers from service")
-		assert.Equal(t, prodServerURL, document.Servers[0].URL, "First server URL should match service")
-		assert.Equal(t, prodServerDescription, document.Servers[0].Description, "First server description should match service")
-		assert.Equal(t, stagingServerURL, document.Servers[1].URL, "Second server URL should match service")
-		assert.Equal(t, stagingServerDescription, document.Servers[1].Description, "Second server description should match service")
+		assert.Equal(t, "https://api.example.com", document.Servers[0].URL, "First server URL should match service")
+		assert.Equal(t, "Production server", document.Servers[0].Description, "First server description should match service")
+		assert.Equal(t, "https://staging-api.example.com", document.Servers[1].URL, "Second server URL should match service")
+		assert.Equal(t, "Staging server", document.Servers[1].Description, "Second server description should match service")
 
 		// Test JSON output
 		jsonBytes, err := generator.ToJSON(document)
 		assert.NoError(t, err, "Should convert document to JSON successfully")
 		jsonString := string(jsonBytes)
-		assert.Contains(t, jsonString, testServiceVersion, "JSON should contain service version")
-		assert.Contains(t, jsonString, prodServerURL, "JSON should contain first server URL")
-		assert.Contains(t, jsonString, stagingServerURL, "JSON should contain second server URL")
+		assert.Contains(t, jsonString, "2.0.0", "JSON should contain service version")
+		assert.Contains(t, jsonString, "https://api.example.com", "JSON should contain first server URL")
+		assert.Contains(t, jsonString, "https://staging-api.example.com", "JSON should contain second server URL")
 	})
 }
 
@@ -302,14 +222,14 @@ func TestGenerator_ToYAML(t *testing.T) {
 		yamlBytes, err := generator.ToYAML(nil)
 
 		assert.Nil(t, yamlBytes, "YAML bytes should be nil when document is nil")
-		assert.EqualError(t, err, expectedErrorInvalidDocument, "Should return invalid document error")
+		assert.EqualError(t, err, "invalid document: document cannot be nil", "Should return invalid document error")
 	})
 
 	// Test with valid document
 	t.Run("valid document converts successfully", func(t *testing.T) {
 		generator := NewGenerator()
 		service := &specification.Service{
-			Name: testServiceName,
+			Name: "TestService",
 		}
 
 		document, err := generator.GenerateFromService(service)
@@ -319,8 +239,8 @@ func TestGenerator_ToYAML(t *testing.T) {
 
 		assert.NoError(t, err, "Should convert document to YAML successfully")
 		assert.NotNil(t, yamlBytes, "YAML bytes should not be nil")
-		assert.Contains(t, string(yamlBytes), testServiceName, "YAML should contain service name")
-		assert.Contains(t, string(yamlBytes), expectedVersion, "YAML should contain OpenAPI version")
+		assert.Contains(t, string(yamlBytes), "TestService", "YAML should contain service name")
+		assert.Contains(t, string(yamlBytes), "3.1.0", "YAML should contain OpenAPI version")
 	})
 }
 
@@ -333,14 +253,14 @@ func TestGenerator_ToJSON(t *testing.T) {
 		jsonBytes, err := generator.ToJSON(nil)
 
 		assert.Nil(t, jsonBytes, "JSON bytes should be nil when document is nil")
-		assert.EqualError(t, err, expectedErrorInvalidDocument, "Should return invalid document error")
+		assert.EqualError(t, err, "invalid document: document cannot be nil", "Should return invalid document error")
 	})
 
 	// Test with valid document
 	t.Run("valid document converts successfully", func(t *testing.T) {
 		generator := NewGenerator()
 		service := &specification.Service{
-			Name: testServiceName,
+			Name: "TestService",
 		}
 
 		document, err := generator.GenerateFromService(service)
@@ -350,187 +270,23 @@ func TestGenerator_ToJSON(t *testing.T) {
 
 		assert.NoError(t, err, "Should convert document to JSON successfully")
 		assert.NotNil(t, jsonBytes, "JSON bytes should not be nil")
-		assert.Contains(t, string(jsonBytes), testServiceName, "JSON should contain service name")
-		assert.Contains(t, string(jsonBytes), expectedVersion, "JSON should contain OpenAPI version")
+		assert.Contains(t, string(jsonBytes), "TestService", "JSON should contain service name")
+		assert.Contains(t, string(jsonBytes), "3.1.0", "JSON should contain OpenAPI version")
 	})
 }
 
 // TestGeneratorConfiguration tests generator configuration options.
 func TestGeneratorConfiguration(t *testing.T) {
 	generator := &Generator{
-		Version:     expectedVersion,
-		Title:       customAPITitle,
-		Description: customAPIDescription,
-		ServerURL:   customServerURL,
+		Version:     "3.1.0",
+		Title:       "Custom API",
+		Description: "Custom API Description",
+		ServerURL:   "https://custom.example.com",
 	}
 
-	assert.Equal(t, customAPITitle, generator.Title, "Generator title should match configured value")
-	assert.Equal(t, customAPIDescription, generator.Description, "Generator description should match configured value")
-	assert.Equal(t, customServerURL, generator.ServerURL, "Generator server URL should match configured value")
-}
-
-// TestGenerator_addErrorResponses tests error response generation functionality.
-func TestGenerator_addErrorResponses(t *testing.T) {
-	generator := NewGenerator()
-	service := &specification.Service{
-		Name: userAPIServiceName,
-		Enums: []specification.Enum{
-			{
-				Name:        statusEnumName,
-				Description: statusEnumDescription,
-				Values: []specification.EnumValue{
-					{Name: activeEnumValue, Description: activeEnumDescription},
-					{Name: inactiveEnumValue, Description: inactiveEnumDescription},
-				},
-			},
-		},
-		Objects: []specification.Object{
-			{
-				Name:        userObjectName,
-				Description: userObjectDescription,
-				Fields: []specification.Field{
-					{
-						Name:        idFieldName,
-						Description: idFieldDescription,
-						Type:        specification.FieldTypeUUID,
-					},
-					{
-						Name:        emailFieldName,
-						Description: emailFieldDescription,
-						Type:        specification.FieldTypeString,
-					},
-					{
-						Name:        statusFieldName,
-						Description: statusFieldDescription,
-						Type:        statusEnumName,
-					},
-				},
-			},
-		},
-		Resources: []specification.Resource{
-			{
-				Name:        userObjectName,
-				Description: userResourceDescription,
-				Operations:  []string{specification.OperationCreate, specification.OperationRead},
-				Fields: []specification.ResourceField{
-					{
-						Field: specification.Field{
-							Name:        idFieldName,
-							Description: idFieldDescription,
-							Type:        specification.FieldTypeUUID,
-						},
-						Operations: []string{specification.OperationRead},
-					},
-					{
-						Field: specification.Field{
-							Name:        emailFieldName,
-							Description: emailFieldDescription,
-							Type:        specification.FieldTypeString,
-						},
-						Operations: []string{specification.OperationCreate, specification.OperationRead},
-					},
-				},
-				Endpoints: []specification.Endpoint{
-					{
-						Name:        createEndpointName,
-						Title:       createEndpointTitle,
-						Description: createEndpointDescription,
-						Method:      postMethod,
-						Path:        pathEmpty,
-						Request: specification.EndpointRequest{
-							ContentType: contentTypeJSON,
-							BodyParams: []specification.Field{
-								{
-									Name:        emailFieldName,
-									Description: emailFieldDescription,
-									Type:        specification.FieldTypeString,
-								},
-							},
-						},
-						Response: specification.EndpointResponse{
-							ContentType: contentTypeJSON,
-							StatusCode:  statusCode201,
-							BodyObject:  stringPtr(userObjectName),
-						},
-					},
-				},
-			},
-		},
-	}
-
-	document, err := generator.GenerateFromService(service)
-
-	assert.NoError(t, err, "Should generate document successfully")
-	assert.NotNil(t, document, "Document should not be nil")
-	assert.Equal(t, userAPIServiceName, document.Info.Title, "Document title should match service name")
-
-	// Test JSON output contains expected elements
-	jsonBytes, err := generator.ToJSON(document)
-	assert.NoError(t, err, "Should convert document to JSON successfully")
-	jsonString := string(jsonBytes)
-	assert.Contains(t, jsonString, statusEnumName, "JSON should contain Status enum")
-	assert.Contains(t, jsonString, userObjectName, "JSON should contain User object")
-	assert.Contains(t, jsonString, activeEnumValue, "JSON should contain enum values")
-	assert.Contains(t, jsonString, "/user", "JSON should contain user path")
-}
-
-// ============================================================================
-// Error Response Tests
-// ============================================================================
-
-// TestGenerator_addErrorResponses tests error response generation functionality.
-func TestGenerator_addErrorResponses(t *testing.T) {
-	// Test with ErrorCode enum
-	t.Run("with ErrorCode enum generates all responses", func(t *testing.T) {
-		generator := NewGenerator()
-		service := &specification.Service{
-			Name:    userAPIServiceName,
-			Version: testServiceVersion,
-			Servers: []specification.ServiceServer{
-				{
-					URL:         prodServerURL,
-					Description: prodServerDescription,
-				},
-				{
-					URL:         stagingServerURL,
-					Description: stagingServerDescription,
-				},
-			},
-			Objects: []specification.Object{
-				{
-					Name:        userObjectName,
-					Description: userObjectDescription,
-					Fields: []specification.Field{
-						{
-							Name:        emailFieldName,
-							Description: "User email",
-							Type:        specification.FieldTypeString,
-							Modifiers:   []string{specification.ModifierNullable},
-						},
-					},
-				},
-			},
-		}
-
-		document, err := generator.GenerateFromService(service)
-
-		assert.NoError(t, err, "Should generate document successfully")
-		assert.NotNil(t, document, "Document should not be nil")
-		assert.Equal(t, testServiceVersion, document.Info.Version, "Document version should come from service")
-		assert.Equal(t, 2, len(document.Servers), "Document should have 2 servers from service")
-		assert.Equal(t, prodServerURL, document.Servers[0].URL, "First server URL should match service")
-		assert.Equal(t, prodServerDescription, document.Servers[0].Description, "First server description should match service")
-		assert.Equal(t, stagingServerURL, document.Servers[1].URL, "Second server URL should match service")
-		assert.Equal(t, stagingServerDescription, document.Servers[1].Description, "Second server description should match service")
-
-		// Test JSON output
-		jsonBytes, err := generator.ToJSON(document)
-		assert.NoError(t, err, "Should convert document to JSON successfully")
-		jsonString := string(jsonBytes)
-		assert.Contains(t, jsonString, testServiceVersion, "JSON should contain service version")
-		assert.Contains(t, jsonString, prodServerURL, "JSON should contain first server URL")
-		assert.Contains(t, jsonString, stagingServerURL, "JSON should contain second server URL")
-	})
+	assert.Equal(t, "Custom API", generator.Title, "Generator title should match configured value")
+	assert.Equal(t, "Custom API Description", generator.Description, "Generator description should match configured value")
+	assert.Equal(t, "https://custom.example.com", generator.ServerURL, "Generator server URL should match configured value")
 }
 
 // ============================================================================
@@ -545,30 +301,30 @@ func TestGenerator_addErrorResponses(t *testing.T) {
 
 		// Create service with ErrorCode enum (simulating ApplyOverlay result)
 		service := &specification.Service{
-			Name: testServiceName,
+			Name: "TestService",
 			Enums: []specification.Enum{
 				{
-					Name:        errorCodeEnumName,
-					Description: errorCodeEnumDescription,
+					Name:        "ErrorCode",
+					Description: "Standard error codes used in API responses",
 					Values: []specification.EnumValue{
-						{Name: badRequestErrorCode, Description: badRequestDescription},
-						{Name: unauthorizedErrorCode, Description: unauthorizedDescription},
-						{Name: forbiddenErrorCode, Description: forbiddenDescription},
-						{Name: notFoundErrorCode, Description: notFoundDescription},
-						{Name: conflictErrorCode, Description: conflictDescription},
-						{Name: unprocessableEntityErrorCode, Description: unprocessableDescription},
-						{Name: rateLimitedErrorCode, Description: rateLimitedDescription},
-						{Name: internalErrorCode, Description: internalDescription},
+						{Name: "BadRequest", Description: "The request was malformed or contained invalid parameters. 400 status code"},
+						{Name: "Unauthorized", Description: "The request is missing valid authentication credentials. 401 status code"},
+						{Name: "Forbidden", Description: "Request is authenticated, but the user is not allowed to perform the operation. 403 status code"},
+						{Name: "NotFound", Description: "The requested resource or endpoint does not exist. 404 status code"},
+						{Name: "Conflict", Description: "The request could not be completed due to a conflict. 409 status code"},
+						{Name: "UnprocessableEntity", Description: "The request was well-formed but failed validation. 422 status code"},
+						{Name: "RateLimited", Description: "When the rate limit has been exceeded. 429 status code"},
+						{Name: "Internal", Description: "Some serverside issue. 500 status code"},
 					},
 				},
 			},
 			Objects: []specification.Object{
 				{
-					Name:        errorObjectName,
-					Description: errorObjectDescription,
+					Name:        "Error",
+					Description: "Standard error response object containing error code and message",
 					Fields: []specification.Field{
-						{Name: errorCodeFieldName, Description: errorCodeFieldDescription, Type: errorCodeEnumName},
-						{Name: errorMessageFieldName, Description: errorMessageFieldDescription, Type: specification.FieldTypeString},
+						{Name: "Code", Description: "The specific error code", Type: "ErrorCode"},
+						{Name: "Message", Description: "Human-readable error message", Type: specification.FieldTypeString},
 					},
 				},
 			},
@@ -576,15 +332,15 @@ func TestGenerator_addErrorResponses(t *testing.T) {
 
 		// Test endpoint with body parameters (should include 422)
 		endpointWithBody := specification.Endpoint{
-			Name:   createUserEndpointName,
-			Method: postMethod,
-			Path:   usersPath,
+			Name:   "CreateUser",
+			Method: "POST",
+			Path:   "/users",
 			Request: specification.EndpointRequest{
 				BodyParams: []specification.Field{
-					{Name: emailFieldName, Type: specification.FieldTypeString},
+					{Name: "email", Type: specification.FieldTypeString},
 				},
 			},
-			Response: specification.EndpointResponse{StatusCode: statusCode201},
+			Response: specification.EndpointResponse{StatusCode: 201},
 		}
 
 		responses := orderedmap.New[string, *v3.Response]()
@@ -599,7 +355,7 @@ func TestGenerator_addErrorResponses(t *testing.T) {
 			assert.NotNil(t, response, "Should have %s error response", statusCode)
 			assert.NotEmpty(t, response.Description, "Error response %s should have description", statusCode)
 			assert.NotNil(t, response.Content, "Error response %s should have content", statusCode)
-			mediaType := response.Content.GetOrZero(contentTypeJSON)
+			mediaType := response.Content.GetOrZero("application/json")
 			assert.NotNil(t, mediaType, "Error response %s should have JSON content", statusCode)
 		}
 	})
@@ -610,15 +366,15 @@ func TestGenerator_addErrorResponses(t *testing.T) {
 
 		// Create service with ErrorCode enum
 		service := &specification.Service{
-			Name: testServiceName,
+			Name: "TestService",
 			Enums: []specification.Enum{
 				{
-					Name:        errorCodeEnumName,
-					Description: errorCodeEnumDescription,
+					Name:        "ErrorCode",
+					Description: "Standard error codes used in API responses",
 					Values: []specification.EnumValue{
-						{Name: badRequestErrorCode, Description: "Bad request error"},
-						{Name: unprocessableEntityErrorCode, Description: "Validation error"},
-						{Name: notFoundErrorCode, Description: "Not found error"},
+						{Name: "BadRequest", Description: "Bad request error"},
+						{Name: "UnprocessableEntity", Description: "Validation error"},
+						{Name: "NotFound", Description: "Not found error"},
 					},
 				},
 			},
@@ -626,15 +382,15 @@ func TestGenerator_addErrorResponses(t *testing.T) {
 
 		// Test endpoint without body parameters (should not include 422)
 		endpointWithoutBody := specification.Endpoint{
-			Name:   getUserEndpointName,
-			Method: getMethod,
-			Path:   userIDPath,
+			Name:   "GetUser",
+			Method: "GET",
+			Path:   "/users/{id}",
 			Request: specification.EndpointRequest{
 				PathParams: []specification.Field{
-					{Name: idFieldName, Type: specification.FieldTypeUUID},
+					{Name: "id", Type: specification.FieldTypeUUID},
 				},
 			},
-			Response: specification.EndpointResponse{StatusCode: statusCode200},
+			Response: specification.EndpointResponse{StatusCode: 200},
 		}
 
 		responses := orderedmap.New[string, *v3.Response]()
@@ -656,17 +412,17 @@ func TestGenerator_addErrorResponses(t *testing.T) {
 
 		// Create service without ErrorCode enum
 		service := &specification.Service{
-			Name: testServiceName,
+			Name: "TestService",
 			Enums: []specification.Enum{
 				{Name: "SomeOtherEnum", Description: "Some other enum", Values: []specification.EnumValue{}},
 			},
 		}
 
 		endpoint := specification.Endpoint{
-			Name:     testEndpointName,
-			Method:   getMethod,
-			Path:     testPath,
-			Response: specification.EndpointResponse{StatusCode: statusCode200},
+			Name:     "TestEndpoint",
+			Method:   "GET",
+			Path:     "/test",
+			Response: specification.EndpointResponse{StatusCode: 200},
 		}
 
 		responses := orderedmap.New[string, *v3.Response]()
