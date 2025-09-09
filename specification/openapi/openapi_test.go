@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/meitner-se/publicapis-gen/specification"
+	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
+	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -279,6 +281,256 @@ func TestGenerateFromServiceWithVersionAndServers(t *testing.T) {
 	assert.Contains(t, jsonString, "2.0.0", "JSON should contain service version")
 	assert.Contains(t, jsonString, "https://api.example.com", "JSON should contain first server URL")
 	assert.Contains(t, jsonString, "https://staging-api.example.com", "JSON should contain second server URL")
+}
+
+// ============================================================================
+// Error Response Tests
+// ============================================================================
+
+// TestAddErrorResponsesWithErrorCodeEnum tests error response generation based on ErrorCode enum.
+func TestGenerator_addErrorResponses(t *testing.T) {
+	generator := NewGenerator()
+
+	// Create service with ErrorCode enum (simulating ApplyOverlay result)
+	service := &specification.Service{
+		Name: "TestService",
+		Enums: []specification.Enum{
+			{
+				Name:        "ErrorCode",
+				Description: "Standard error codes used in API responses",
+				Values: []specification.EnumValue{
+					{Name: "BadRequest", Description: "The request was malformed or contained invalid parameters. 400 status code"},
+					{Name: "Unauthorized", Description: "The request is missing valid authentication credentials. 401 status code"},
+					{Name: "Forbidden", Description: "Request is authenticated, but the user is not allowed to perform the operation. 403 status code"},
+					{Name: "NotFound", Description: "The requested resource or endpoint does not exist. 404 status code"},
+					{Name: "Conflict", Description: "The request could not be completed due to a conflict. 409 status code"},
+					{Name: "UnprocessableEntity", Description: "The request was well-formed but failed validation. 422 status code"},
+					{Name: "RateLimited", Description: "When the rate limit has been exceeded. 429 status code"},
+					{Name: "Internal", Description: "Some serverside issue. 500 status code"},
+				},
+			},
+		},
+		Objects: []specification.Object{
+			{
+				Name:        "Error",
+				Description: "Standard error response object containing error code and message",
+				Fields: []specification.Field{
+					{Name: "Code", Description: "The specific error code", Type: "ErrorCode"},
+					{Name: "Message", Description: "Human-readable error message", Type: specification.FieldTypeString},
+				},
+			},
+		},
+	}
+
+	// Test endpoint with body parameters (should include 422)
+	endpointWithBody := specification.Endpoint{
+		Name:   "CreateUser",
+		Method: "POST",
+		Path:   "/users",
+		Request: specification.EndpointRequest{
+			BodyParams: []specification.Field{
+				{Name: "email", Type: specification.FieldTypeString},
+			},
+		},
+		Response: specification.EndpointResponse{StatusCode: 201},
+	}
+
+	responses := orderedmap.New[string, *v3.Response]()
+	generator.addErrorResponses(responses, endpointWithBody, service)
+
+	// Should have all error responses including 422
+	expectedStatusCodes := []string{"400", "401", "403", "404", "409", "422", "429", "500"}
+	assert.Equal(t, len(expectedStatusCodes), responses.Len(), "Should have all error responses for endpoint with body params")
+
+	for _, statusCode := range expectedStatusCodes {
+		response := responses.GetOrZero(statusCode)
+		assert.NotNil(t, response, "Should have %s error response", statusCode)
+		assert.NotEmpty(t, response.Description, "Error response %s should have description", statusCode)
+		assert.NotNil(t, response.Content, "Error response %s should have content", statusCode)
+		mediaType := response.Content.GetOrZero("application/json")
+		assert.NotNil(t, mediaType, "Error response %s should have JSON content", statusCode)
+	}
+}
+
+// TestAddErrorResponsesWithoutBodyParams tests that 422 is not included for endpoints without body params.
+func TestGenerator_addErrorResponses_withoutBodyParams(t *testing.T) {
+	generator := NewGenerator()
+
+	// Create service with ErrorCode enum
+	service := &specification.Service{
+		Name: "TestService",
+		Enums: []specification.Enum{
+			{
+				Name:        "ErrorCode",
+				Description: "Standard error codes used in API responses",
+				Values: []specification.EnumValue{
+					{Name: "BadRequest", Description: "Bad request error"},
+					{Name: "UnprocessableEntity", Description: "Validation error"},
+					{Name: "NotFound", Description: "Not found error"},
+				},
+			},
+		},
+	}
+
+	// Test endpoint without body parameters (should not include 422)
+	endpointWithoutBody := specification.Endpoint{
+		Name:   "GetUser",
+		Method: "GET",
+		Path:   "/users/{id}",
+		Request: specification.EndpointRequest{
+			PathParams: []specification.Field{
+				{Name: "id", Type: specification.FieldTypeUUID},
+			},
+		},
+		Response: specification.EndpointResponse{StatusCode: 200},
+	}
+
+	responses := orderedmap.New[string, *v3.Response]()
+	generator.addErrorResponses(responses, endpointWithoutBody, service)
+
+	// Should have error responses but not 422
+	assert.Equal(t, 2, responses.Len(), "Should have 2 error responses (excluding 422)")
+	response400 := responses.GetOrZero("400")
+	assert.NotNil(t, response400, "Should have 400 error response")
+	response404 := responses.GetOrZero("404")
+	assert.NotNil(t, response404, "Should have 404 error response")
+	response422 := responses.GetOrZero("422")
+	assert.Nil(t, response422, "Should not have 422 error response for endpoint without body params")
+}
+
+// TestAddErrorResponsesWithoutErrorCodeEnum tests fallback behavior when ErrorCode enum is not found.
+func TestGenerator_addErrorResponses_withoutErrorCodeEnum(t *testing.T) {
+	generator := NewGenerator()
+
+	// Create service without ErrorCode enum
+	service := &specification.Service{
+		Name: "TestService",
+		Enums: []specification.Enum{
+			{Name: "SomeOtherEnum", Description: "Some other enum", Values: []specification.EnumValue{}},
+		},
+	}
+
+	endpoint := specification.Endpoint{
+		Name:     "TestEndpoint",
+		Method:   "GET",
+		Path:     "/test",
+		Response: specification.EndpointResponse{StatusCode: 200},
+	}
+
+	responses := orderedmap.New[string, *v3.Response]()
+	generator.addErrorResponses(responses, endpoint, service)
+
+	// Should fall back to default error responses
+	expectedDefaultStatusCodes := []string{"400", "401", "404", "500"}
+	assert.Equal(t, len(expectedDefaultStatusCodes), responses.Len(), "Should have default error responses")
+
+	for _, statusCode := range expectedDefaultStatusCodes {
+		response := responses.GetOrZero(statusCode)
+		assert.NotNil(t, response, "Should have %s default error response", statusCode)
+		assert.NotEmpty(t, response.Description, "Default error response %s should have description", statusCode)
+	}
+}
+
+// TestMapErrorCodeToStatusAndDescription tests the error code to status code mapping.
+func TestGenerator_mapErrorCodeToStatusAndDescription(t *testing.T) {
+	generator := NewGenerator()
+
+	testCases := []struct {
+		errorCodeName        string
+		errorCodeDescription string
+		expectedStatus       string
+		expectedDescription  string
+	}{
+		{"BadRequest", "Bad request error", "400", "Bad request error"},
+		{"Unauthorized", "Unauthorized error", "401", "Unauthorized error"},
+		{"Forbidden", "Forbidden error", "403", "Forbidden error"},
+		{"NotFound", "Not found error", "404", "Not found error"},
+		{"Conflict", "Conflict error", "409", "Conflict error"},
+		{"UnprocessableEntity", "Validation error", "422", "Validation error"},
+		{"RateLimited", "Rate limited error", "429", "Rate limited error"},
+		{"Internal", "Internal error", "500", "Internal error"},
+		{"UnknownError", "Unknown error", "500", "Unknown error"}, // Default to 500
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.errorCodeName, func(t *testing.T) {
+			status, description := generator.mapErrorCodeToStatusAndDescription(tc.errorCodeName, tc.errorCodeDescription)
+			assert.Equal(t, tc.expectedStatus, status, "Status code should match for error code %s", tc.errorCodeName)
+			assert.Equal(t, tc.expectedDescription, description, "Description should match for error code %s", tc.errorCodeName)
+		})
+	}
+}
+
+// TestEndToEndErrorResponseGeneration tests complete OpenAPI generation with proper error responses.
+func TestEndToEndErrorResponseGeneration(t *testing.T) {
+	generator := NewGenerator()
+	
+	// Create a service and apply overlay to get ErrorCode enum
+	inputService := &specification.Service{
+		Name: "UserAPI",
+		Version: "1.0.0",
+		Resources: []specification.Resource{
+			{
+				Name:        "User",
+				Description: "User resource",
+				Operations:  []string{specification.OperationCreate, specification.OperationRead},
+				Fields: []specification.ResourceField{
+					{
+						Field: specification.Field{
+							Name:        "id",
+							Description: "User identifier",
+							Type:        specification.FieldTypeUUID,
+						},
+						Operations: []string{specification.OperationRead},
+					},
+					{
+						Field: specification.Field{
+							Name:        "email",
+							Description: "User email address",
+							Type:        specification.FieldTypeString,
+						},
+						Operations: []string{specification.OperationCreate, specification.OperationRead},
+					},
+				},
+			},
+		},
+	}
+	
+	// Apply overlay to generate default endpoints and error handling
+	service := specification.ApplyOverlay(inputService)
+	
+	// Generate OpenAPI document
+	document, err := generator.GenerateFromService(service)
+	assert.NoError(t, err, "Should generate OpenAPI document successfully")
+	assert.NotNil(t, document, "Generated document should not be nil")
+	
+	// Convert to JSON to inspect the structure
+	jsonBytes, err := generator.ToJSON(document)
+	assert.NoError(t, err, "Should convert document to JSON successfully")
+	
+	jsonString := string(jsonBytes)
+	
+	// Verify presence of ErrorCode enum
+	assert.Contains(t, jsonString, "ErrorCode", "Generated JSON should contain ErrorCode enum")
+	assert.Contains(t, jsonString, "BadRequest", "Generated JSON should contain BadRequest error code")
+	assert.Contains(t, jsonString, "UnprocessableEntity", "Generated JSON should contain UnprocessableEntity error code")
+	
+	// Verify presence of Error object
+	assert.Contains(t, jsonString, "Error", "Generated JSON should contain Error object")
+	
+	// Verify error responses are present in endpoints
+	assert.Contains(t, jsonString, "\"400\"", "Generated JSON should contain 400 error response")
+	assert.Contains(t, jsonString, "\"401\"", "Generated JSON should contain 401 error response")
+	assert.Contains(t, jsonString, "\"404\"", "Generated JSON should contain 404 error response")
+	
+	// Verify 422 is present for POST endpoints (with body params) but check structure
+	assert.Contains(t, jsonString, "\"422\"", "Generated JSON should contain 422 error response for endpoints with body params")
+	
+	// Verify success responses are also present
+	assert.Contains(t, jsonString, "\"200\"", "Generated JSON should contain 200 success response")
+	assert.Contains(t, jsonString, "\"201\"", "Generated JSON should contain 201 success response")
+	
+	t.Logf("Generated OpenAPI JSON:\n%s", jsonString)
 }
 
 // Helper function to create a string pointer
