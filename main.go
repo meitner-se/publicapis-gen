@@ -50,10 +50,19 @@ const (
 	suffixOpenAPI = "-openapi"
 )
 
+// Log levels
+const (
+	logLevelDebug = "debug"
+	logLevelInfo  = "info"
+	logLevelWarn  = "warn"
+	logLevelError = "error"
+	logLevelOff   = "off"
+)
+
 // Usage messages
 const (
 	usageDescription = "publicapis-gen - Generate API specifications and OpenAPI documents"
-	usageExample     = "\nExamples:\n  publicapis-gen -file=spec.yaml -mode=overlay\n  publicapis-gen -file=spec.json -mode=openapi\n  publicapis-gen -file=spec.yaml -mode=openapi -output=api-spec.yaml"
+	usageExample     = "\nExamples:\n  publicapis-gen -file=spec.yaml -mode=overlay\n  publicapis-gen -file=spec.json -mode=openapi\n  publicapis-gen -file=spec.yaml -mode=openapi -output=api-spec.yaml\n  publicapis-gen -file=spec.yaml -mode=openapi -log-level=info"
 )
 
 func main() {
@@ -68,10 +77,11 @@ func main() {
 func run(ctx context.Context) error {
 	// Parse command line flags
 	var (
-		fileFlag   = flag.String("file", "", "Path to input specification file (YAML or JSON)")
-		modeFlag   = flag.String("mode", "", "Operation mode: 'overlay' or 'openapi'")
-		outputFlag = flag.String("output", "", "Output file path (optional, defaults to input name with suffix)")
-		helpFlag   = flag.Bool("help", false, "Show help message")
+		fileFlag     = flag.String("file", "", "Path to input specification file (YAML or JSON)")
+		modeFlag     = flag.String("mode", "", "Operation mode: 'overlay' or 'openapi'")
+		outputFlag   = flag.String("output", "", "Output file path (optional, defaults to input name with suffix)")
+		logLevelFlag = flag.String("log-level", logLevelOff, "Log level: 'debug', 'info', 'warn', 'error', or 'off' (default: off)")
+		helpFlag     = flag.Bool("help", false, "Show help message")
 	)
 
 	// Set custom usage function
@@ -83,6 +93,11 @@ func run(ctx context.Context) error {
 	}
 
 	flag.Parse()
+
+	// Configure logging
+	if err := configureLogging(*logLevelFlag); err != nil {
+		return fmt.Errorf("invalid log level: %w", err)
+	}
 
 	// Show help if requested
 	if *helpFlag {
@@ -302,4 +317,36 @@ func generateOutputPath(inputFile, suffix string) string {
 	ext := filepath.Ext(inputFile)
 	base := strings.TrimSuffix(inputFile, ext)
 	return base + suffix + ext
+}
+
+// configureLogging configures the slog logger based on the specified log level.
+func configureLogging(logLevel string) error {
+	var level slog.Level
+
+	switch logLevel {
+	case logLevelDebug:
+		level = slog.LevelDebug
+	case logLevelInfo:
+		level = slog.LevelInfo
+	case logLevelWarn:
+		level = slog.LevelWarn
+	case logLevelError:
+		level = slog.LevelError
+	case logLevelOff:
+		// Set to a very high level to suppress all logging
+		level = slog.Level(1000)
+	default:
+		return fmt.Errorf("unsupported log level '%s', must be one of: %s, %s, %s, %s, %s",
+			logLevel, logLevelDebug, logLevelInfo, logLevelWarn, logLevelError, logLevelOff)
+	}
+
+	// Create a handler with the specified level
+	opts := &slog.HandlerOptions{
+		Level: level,
+	}
+	handler := slog.NewTextHandler(os.Stderr, opts)
+	logger := slog.New(handler)
+	slog.SetDefault(logger)
+
+	return nil
 }

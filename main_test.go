@@ -109,6 +109,22 @@ func Test_run(t *testing.T) {
 		assert.Contains(t, err.Error(), errorInvalidMode, "Error should mention invalid mode")
 	})
 
+	t.Run("invalid log level returns error", func(t *testing.T) {
+		// Reset flag package for this test
+		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+
+		// Arrange
+		os.Args = []string{"publicapis-gen", "-file=test.yaml", "-mode=overlay", "-log-level=invalid"}
+		ctx := context.Background()
+
+		// Act
+		err := run(ctx)
+
+		// Assert
+		require.Error(t, err, "run() should return an error for invalid log level")
+		assert.Contains(t, err.Error(), "invalid log level", "Error should mention invalid log level")
+	})
+
 	t.Run("nonexistent file returns error", func(t *testing.T) {
 		// Reset flag package for this test
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
@@ -248,6 +264,64 @@ func Test_generateOutputPath(t *testing.T) {
 
 			// Assert
 			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func Test_configureLogging(t *testing.T) {
+	testCases := []struct {
+		name        string
+		logLevel    string
+		expectError bool
+	}{
+		{
+			name:        "debug level",
+			logLevel:    logLevelDebug,
+			expectError: false,
+		},
+		{
+			name:        "info level",
+			logLevel:    logLevelInfo,
+			expectError: false,
+		},
+		{
+			name:        "warn level",
+			logLevel:    logLevelWarn,
+			expectError: false,
+		},
+		{
+			name:        "error level",
+			logLevel:    logLevelError,
+			expectError: false,
+		},
+		{
+			name:        "off level",
+			logLevel:    logLevelOff,
+			expectError: false,
+		},
+		{
+			name:        "invalid level returns error",
+			logLevel:    "invalid",
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Save original logger
+			originalLogger := slog.Default()
+			defer slog.SetDefault(originalLogger)
+
+			// Act
+			err := configureLogging(tc.logLevel)
+
+			// Assert
+			if tc.expectError {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "unsupported log level")
+			} else {
+				require.NoError(t, err)
+			}
 		})
 	}
 }
