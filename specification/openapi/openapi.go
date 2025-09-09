@@ -49,6 +49,11 @@ const (
 	successDescription     = "Successful response"
 )
 
+// Schema reference format constants
+const (
+	schemaReferencePrefix = "#/components/schemas/"
+)
+
 // Server description template
 const (
 	serverDescriptionTemplate = "%s server"
@@ -333,9 +338,16 @@ func (g *Generator) getTypeSchema(fieldType string, service *specification.Servi
 	default:
 		// Check if it's a custom object or enum
 		if service.HasObject(fieldType) || service.HasEnum(fieldType) {
-			// Create a reference schema
+			// Create a proper $ref schema reference
+			refString := schemaReferencePrefix + fieldType
+			proxy := base.CreateSchemaProxyRef(refString)
+			schema := proxy.Schema()
+			if schema != nil {
+				return schema
+			}
+			// Fallback to Title-based reference if proxy resolution fails
 			return &base.Schema{
-				Title: fieldType, // Temporary - proper $ref handling would need low-level API
+				Title: fieldType,
 			}
 		}
 		// Default to string if unknown type
@@ -489,9 +501,15 @@ func (g *Generator) createResponse(response specification.EndpointResponse, serv
 
 		var schema *base.Schema
 		if response.BodyObject != nil {
-			// Reference to existing schema
-			schema = &base.Schema{
-				Title: *response.BodyObject, // Temporary - proper $ref handling would need low-level API
+			// Create a proper $ref schema reference
+			refString := schemaReferencePrefix + *response.BodyObject
+			proxy := base.CreateSchemaProxyRef(refString)
+			schema = proxy.Schema()
+			if schema == nil {
+				// Fallback to Title-based reference if proxy resolution fails
+				schema = &base.Schema{
+					Title: *response.BodyObject,
+				}
 			}
 		} else if len(response.BodyFields) > 0 {
 			// Inline schema from body fields
@@ -524,8 +542,15 @@ func (g *Generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Resp
 	// Create error schema
 	var errorSchema *base.Schema
 	if service.HasObject(errorObjectName) {
-		errorSchema = &base.Schema{
-			Title: errorObjectName, // Temporary - proper $ref handling would need low-level API
+		// Create a proper $ref schema reference
+		refString := schemaReferencePrefix + errorObjectName
+		proxy := base.CreateSchemaProxyRef(refString)
+		errorSchema = proxy.Schema()
+		if errorSchema == nil {
+			// Fallback to Title-based reference if proxy resolution fails
+			errorSchema = &base.Schema{
+				Title: errorObjectName,
+			}
 		}
 	} else {
 		// Fallback generic error schema
