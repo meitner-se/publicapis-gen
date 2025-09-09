@@ -20,6 +20,18 @@ const (
 	errorInvalidDocument = "invalid document: document cannot be nil"
 )
 
+// HTTP Status Code constants
+const (
+	httpStatus400 = "400"
+	httpStatus401 = "401"
+	httpStatus403 = "403"
+	httpStatus404 = "404"
+	httpStatus409 = "409"
+	httpStatus422 = "422"
+	httpStatus429 = "429"
+	httpStatus500 = "500"
+)
+
 // Generator handles OpenAPI 3.1 specification generation from specification.Service.
 type Generator struct {
 	// Version specifies the OpenAPI version to generate (default: "3.1.0")
@@ -339,7 +351,7 @@ func (g *Generator) createOperation(endpoint specification.Endpoint, resource sp
 	responses.Set(strconv.Itoa(endpoint.Response.StatusCode), successResponse)
 
 	// Add error responses
-	g.addErrorResponses(responses, service)
+	g.addErrorResponses(responses, endpoint, service)
 
 	operation.Responses = &v3.Responses{
 		Codes: responses,
@@ -443,8 +455,8 @@ func (g *Generator) createResponse(response specification.EndpointResponse, serv
 	return openAPIResponse
 }
 
-// addErrorResponses adds common error responses using native types.
-func (g *Generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Response], service *specification.Service) {
+// addErrorResponses adds error responses based on errorCodes from the specification.
+func (g *Generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Response], endpoint specification.Endpoint, service *specification.Service) {
 	// Create error schema
 	var errorSchema *base.Schema
 	if service.HasObject("Error") {
@@ -470,33 +482,95 @@ func (g *Generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Resp
 	}
 	errorContent.Set("application/json", mediaType)
 
+	// Check if endpoint has body parameters
+	hasBodyParams := len(endpoint.Request.BodyParams) > 0
+
+	// Find ErrorCode enum in the service
+	var errorCodeEnum *specification.Enum
+	for i, enum := range service.Enums {
+		if enum.Name == "ErrorCode" {
+			errorCodeEnum = &service.Enums[i]
+			break
+		}
+	}
+
+	if errorCodeEnum == nil {
+		// Fallback to default error responses if ErrorCode enum not found
+		g.addDefaultErrorResponses(responses, errorContent)
+		return
+	}
+
+	// Generate responses for each error code
+	for _, enumValue := range errorCodeEnum.Values {
+		statusCode, description := g.mapErrorCodeToStatusAndDescription(enumValue.Name, enumValue.Description)
+
+		// Skip 422 UnprocessableEntity if endpoint has no body parameters
+		if statusCode == httpStatus422 && !hasBodyParams {
+			continue
+		}
+
+		errorResponse := &v3.Response{
+			Description: description,
+			Content:     errorContent,
+		}
+		responses.Set(statusCode, errorResponse)
+	}
+}
+
+// addDefaultErrorResponses adds fallback error responses when ErrorCode enum is not found.
+func (g *Generator) addDefaultErrorResponses(responses *orderedmap.Map[string, *v3.Response], errorContent *orderedmap.Map[string, *v3.MediaType]) {
 	// 400 Bad Request
 	badRequestResponse := &v3.Response{
 		Description: "Bad Request - The request was malformed or contained invalid parameters",
 		Content:     errorContent,
 	}
-	responses.Set("400", badRequestResponse)
+	responses.Set(httpStatus400, badRequestResponse)
 
 	// 401 Unauthorized
 	unauthorizedResponse := &v3.Response{
 		Description: "Unauthorized - The request is missing valid authentication credentials",
 		Content:     errorContent,
 	}
-	responses.Set("401", unauthorizedResponse)
+	responses.Set(httpStatus401, unauthorizedResponse)
 
 	// 404 Not Found
 	notFoundResponse := &v3.Response{
 		Description: "Not Found - The requested resource does not exist",
 		Content:     errorContent,
 	}
-	responses.Set("404", notFoundResponse)
+	responses.Set(httpStatus404, notFoundResponse)
 
 	// 500 Internal Server Error
 	internalErrorResponse := &v3.Response{
 		Description: "Internal Server Error - An unexpected server error occurred",
 		Content:     errorContent,
 	}
-	responses.Set("500", internalErrorResponse)
+	responses.Set(httpStatus500, internalErrorResponse)
+}
+
+// mapErrorCodeToStatusAndDescription maps error code names to HTTP status codes and descriptions.
+func (g *Generator) mapErrorCodeToStatusAndDescription(errorCodeName, errorCodeDescription string) (string, string) {
+	switch errorCodeName {
+	case "BadRequest":
+		return httpStatus400, errorCodeDescription
+	case "Unauthorized":
+		return httpStatus401, errorCodeDescription
+	case "Forbidden":
+		return httpStatus403, errorCodeDescription
+	case "NotFound":
+		return httpStatus404, errorCodeDescription
+	case "Conflict":
+		return httpStatus409, errorCodeDescription
+	case "UnprocessableEntity":
+		return httpStatus422, errorCodeDescription
+	case "RateLimited":
+		return httpStatus429, errorCodeDescription
+	case "Internal":
+		return httpStatus500, errorCodeDescription
+	default:
+		// Default to 500 for unknown error codes
+		return httpStatus500, errorCodeDescription
+	}
 }
 
 // ToYAML converts an OpenAPI document to YAML format.
