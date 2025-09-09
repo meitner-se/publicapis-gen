@@ -661,7 +661,7 @@ func addDefaultEnumsAndObjects(result *Service, input *Service) {
 
 	// Add default Meta object if it doesn't exist
 	if !metaObjectExists {
-		metaObject := CreateDefaultMeta()
+		metaObject := createDefaultMeta()
 		result.Objects = append(result.Objects, metaObject)
 	}
 }
@@ -678,7 +678,7 @@ func generateObjectsFromResources(result *Service, resources []Resource) {
 
 				// Add auto-columns to the object if not skipped
 				if !resource.ShouldSkipAutoColumns() {
-					autoColumns := CreateAutoColumnsWithMeta(resource.Name)
+					autoColumns := createAutoColumnsWithMeta(resource.Name)
 					fields = append(autoColumns, fields...)
 				}
 
@@ -799,10 +799,10 @@ func generateGetEndpoint(result *Service, resource Resource) {
 // generateListEndpoint generates a List endpoint for resources that have Read operations.
 func generateListEndpoint(result *Service, resource Resource) {
 	if resource.HasReadOperation() && !resource.HasEndpoint(listEndpointName) {
-		limitParam := CreateLimitParam()
-		offsetParam := CreateOffsetParam()
-		paginationField := CreatePaginationField()
-		dataField := CreateDataField(resource.Name)
+		limitParam := createLimitParam()
+		offsetParam := createOffsetParam()
+		paginationField := createPaginationField()
+		dataField := createDataField(resource.Name)
 		pluralResourceName := resource.GetPluralName()
 
 		listEndpoint := Endpoint{
@@ -822,15 +822,15 @@ func generateListEndpoint(result *Service, resource Resource) {
 // generateSearchEndpoint generates a Search endpoint for resources that have Read operations.
 func generateSearchEndpoint(result *Service, resource Resource) {
 	if resource.HasReadOperation() && !resource.HasEndpoint(searchEndpointName) {
-		limitParam := CreateLimitParam()
-		offsetParam := CreateOffsetParam()
+		limitParam := createLimitParam()
+		offsetParam := createOffsetParam()
 		filterParam := Field{
 			Name:        searchFilterParamName,
 			Description: searchFilterParamDesc,
 			Type:        resource.Name + filterSuffix,
 		}
-		paginationField := CreatePaginationField()
-		dataField := CreateDataField(resource.Name)
+		paginationField := createPaginationField()
+		dataField := createDataField(resource.Name)
 		pluralResourceName := resource.GetPluralName()
 
 		searchEndpoint := Endpoint{
@@ -1399,7 +1399,7 @@ func (e EndpointRequest) GetRequiredBodyParams(service *Service) []string {
 
 // GetFullPath returns the full path for the endpoint including the resource name.
 func (e Endpoint) GetFullPath(resourceName string) string {
-	return pathSeparator + ToKebabCase(resourceName) + e.Path
+	return pathSeparator + toKebabCase(resourceName) + e.Path
 }
 
 // Resource methods
@@ -1546,8 +1546,8 @@ func (o Object) GetField(name string) *Field {
 
 // Utility factory methods
 
-// CreateLimitParam creates a standard limit parameter for pagination.
-func CreateLimitParam() Field {
+// createLimitParam creates a standard limit parameter for pagination.
+func createLimitParam() Field {
 	return Field{
 		Name:        listLimitParamName,
 		Description: listLimitParamDesc,
@@ -1556,8 +1556,8 @@ func CreateLimitParam() Field {
 	}
 }
 
-// CreateOffsetParam creates a standard offset parameter for pagination.
-func CreateOffsetParam() Field {
+// createOffsetParam creates a standard offset parameter for pagination.
+func createOffsetParam() Field {
 	return Field{
 		Name:        listOffsetParamName,
 		Description: listOffsetParamDesc,
@@ -1566,8 +1566,8 @@ func CreateOffsetParam() Field {
 	}
 }
 
-// CreatePaginationField creates a standard pagination field for responses.
-func CreatePaginationField() Field {
+// createPaginationField creates a standard pagination field for responses.
+func createPaginationField() Field {
 	return Field{
 		Name:        paginationObjectName,
 		Description: "Pagination information",
@@ -1575,8 +1575,8 @@ func CreatePaginationField() Field {
 	}
 }
 
-// CreateDataField creates a standard data field for array responses.
-func CreateDataField(resourceName string) Field {
+// createDataField creates a standard data field for array responses.
+func createDataField(resourceName string) Field {
 	return Field{
 		Name:        "data",
 		Description: fmt.Sprintf("Array of %s objects", resourceName),
@@ -1585,8 +1585,8 @@ func CreateDataField(resourceName string) Field {
 	}
 }
 
-// CreateIDParam creates a standard ID parameter for path parameters.
-func CreateIDParam(description string) Field {
+// createIDParam creates a standard ID parameter for path parameters.
+func createIDParam(description string) Field {
 	return Field{
 		Name:        "id",
 		Description: description,
@@ -1594,8 +1594,8 @@ func CreateIDParam(description string) Field {
 	}
 }
 
-// CreateAutoColumnID creates a standard ID field for auto-columns.
-func CreateAutoColumnID(resourceName string) Field {
+// createAutoColumnID creates a standard ID field for auto-columns.
+func createAutoColumnID(resourceName string) Field {
 	return Field{
 		Name:        autoColumnIDName,
 		Description: fmt.Sprintf(autoColumnIDDescTemplate, resourceName),
@@ -1603,8 +1603,8 @@ func CreateAutoColumnID(resourceName string) Field {
 	}
 }
 
-// CreateAutoColumnCreatedAt creates a standard CreatedAt field for auto-columns.
-func CreateAutoColumnCreatedAt(resourceName string) Field {
+// createAutoColumnCreatedAt creates a standard CreatedAt field for auto-columns.
+func createAutoColumnCreatedAt(resourceName string) Field {
 	return Field{
 		Name:        autoColumnCreatedAtName,
 		Description: fmt.Sprintf(autoColumnCreatedAtTemplate, resourceName),
@@ -1612,8 +1612,8 @@ func CreateAutoColumnCreatedAt(resourceName string) Field {
 	}
 }
 
-// CreateAutoColumnCreatedBy creates a standard CreatedBy field for auto-columns.
-func CreateAutoColumnCreatedBy(resourceName string) Field {
+// createAutoColumnCreatedBy creates a standard CreatedBy field for auto-columns.
+func createAutoColumnCreatedBy(resourceName string) Field {
 	return Field{
 		Name:        autoColumnCreatedByName,
 		Description: fmt.Sprintf(autoColumnCreatedByTemplate, resourceName),
@@ -1622,8 +1622,8 @@ func CreateAutoColumnCreatedBy(resourceName string) Field {
 	}
 }
 
-// CreateAutoColumnUpdatedAt creates a standard UpdatedAt field for auto-columns.
-func CreateAutoColumnUpdatedAt(resourceName string) Field {
+// createAutoColumnUpdatedAt creates a standard UpdatedAt field for auto-columns.
+func createAutoColumnUpdatedAt(resourceName string) Field {
 	return Field{
 		Name:        autoColumnUpdatedAtName,
 		Description: fmt.Sprintf(autoColumnUpdatedAtTemplate, resourceName),
@@ -1631,8 +1631,8 @@ func CreateAutoColumnUpdatedAt(resourceName string) Field {
 	}
 }
 
-// CreateAutoColumnUpdatedBy creates a standard UpdatedBy field for auto-columns.
-func CreateAutoColumnUpdatedBy(resourceName string) Field {
+// createAutoColumnUpdatedBy creates a standard UpdatedBy field for auto-columns.
+func createAutoColumnUpdatedBy(resourceName string) Field {
 	return Field{
 		Name:        autoColumnUpdatedByName,
 		Description: fmt.Sprintf(autoColumnUpdatedByTemplate, resourceName),
@@ -1641,19 +1641,19 @@ func CreateAutoColumnUpdatedBy(resourceName string) Field {
 	}
 }
 
-// CreateAutoColumns creates all standard auto-column fields for resources.
-func CreateAutoColumns(resourceName string) []Field {
+// createAutoColumns creates all standard auto-column fields for resources.
+func createAutoColumns(resourceName string) []Field {
 	return []Field{
-		CreateAutoColumnID(resourceName),
-		CreateAutoColumnCreatedAt(resourceName),
-		CreateAutoColumnCreatedBy(resourceName),
-		CreateAutoColumnUpdatedAt(resourceName),
-		CreateAutoColumnUpdatedBy(resourceName),
+		createAutoColumnID(resourceName),
+		createAutoColumnCreatedAt(resourceName),
+		createAutoColumnCreatedBy(resourceName),
+		createAutoColumnUpdatedAt(resourceName),
+		createAutoColumnUpdatedBy(resourceName),
 	}
 }
 
-// CreateDefaultMeta creates a standard Meta object containing creation and update metadata fields.
-func CreateDefaultMeta() Object {
+// createDefaultMeta creates a standard Meta object containing creation and update metadata fields.
+func createDefaultMeta() Object {
 	return Object{
 		Name:        metaObjectName,
 		Description: metaObjectDescription,
@@ -1684,10 +1684,10 @@ func CreateDefaultMeta() Object {
 	}
 }
 
-// CreateAutoColumnsWithMeta creates auto-column fields using Meta object for metadata fields.
-func CreateAutoColumnsWithMeta(resourceName string) []Field {
+// createAutoColumnsWithMeta creates auto-column fields using Meta object for metadata fields.
+func createAutoColumnsWithMeta(resourceName string) []Field {
 	return []Field{
-		CreateAutoColumnID(resourceName),
+		createAutoColumnID(resourceName),
 		{
 			Name:        metaObjectName,
 			Description: fmt.Sprintf("Metadata information for the %s", resourceName),
@@ -1723,8 +1723,8 @@ func camelCase(s string) string {
 	return strmangle.CamelCase(s)
 }
 
-// ToKebabCase converts a string to kebab-case format.
-func ToKebabCase(s string) string {
+// toKebabCase converts a string to kebab-case format.
+func toKebabCase(s string) string {
 	// Handle empty string
 	if s == "" {
 		return s
@@ -1789,7 +1789,7 @@ func ValidateServiceWithPosition(data []byte, fileExtension string) error {
 				return fmt.Errorf("%s: JSON parsing error: %w", errorFileParse, err)
 			}
 		}
-		return ValidateService(&service)
+		return validateService(&service)
 	}
 
 	// Parse YAML into struct first
@@ -1805,10 +1805,10 @@ func ValidateServiceWithPosition(data []byte, fileExtension string) error {
 	}
 
 	// Create a position tracker to map validation errors to line numbers
-	positionTracker := NewPositionTracker(file)
+	positionTracker := newPositionTracker(file)
 
 	// Run validation and enhance errors with position information
-	if validationErr := ValidateService(&service); validationErr != nil {
+	if validationErr := validateService(&service); validationErr != nil {
 		enhancedErr := positionTracker.EnhanceError(validationErr, &service)
 		return enhancedErr
 	}
@@ -1821,8 +1821,8 @@ type PositionTracker struct {
 	file *ast.File
 }
 
-// NewPositionTracker creates a new position tracker from a parsed YAML file.
-func NewPositionTracker(file *ast.File) *PositionTracker {
+// newPositionTracker creates a new position tracker from a parsed YAML file.
+func newPositionTracker(file *ast.File) *PositionTracker {
 	return &PositionTracker{file: file}
 }
 
@@ -1944,18 +1944,18 @@ func (pt *PositionTracker) findFieldInAST(fieldName string, node ast.Node) *toke
 	return nil
 }
 
-// ValidateService validates the entire service specification against the defined rules.
-func ValidateService(service *Service) error {
+// validateService validates the entire service specification against the defined rules.
+func validateService(service *Service) error {
 	// Validate resources
 	for i, resource := range service.Resources {
-		if err := ValidateResource(service, &resource); err != nil {
+		if err := validateResource(service, &resource); err != nil {
 			return fmt.Errorf("resource %d (%s): %w", i, resource.Name, err)
 		}
 	}
 
 	// Validate objects
 	for i, object := range service.Objects {
-		if err := ValidateObject(service, &object); err != nil {
+		if err := validateObject(service, &object); err != nil {
 			return fmt.Errorf("object %d (%s): %w", i, object.Name, err)
 		}
 	}
@@ -1963,23 +1963,23 @@ func ValidateService(service *Service) error {
 	return nil
 }
 
-// ValidateResource validates a resource and its fields against the defined rules.
-func ValidateResource(service *Service, resource *Resource) error {
+// validateResource validates a resource and its fields against the defined rules.
+func validateResource(service *Service, resource *Resource) error {
 	// Validate operations
-	if err := ValidateOperations(resource.Operations); err != nil {
+	if err := validateOperations(resource.Operations); err != nil {
 		return fmt.Errorf("resource operations: %w", err)
 	}
 
 	// Validate resource fields
 	for i, field := range resource.Fields {
-		if err := ValidateResourceField(service, &field); err != nil {
+		if err := validateResourceField(service, &field); err != nil {
 			return fmt.Errorf("field %d (%s): %w", i, field.Name, err)
 		}
 	}
 
 	// Validate endpoints
 	for i, endpoint := range resource.Endpoints {
-		if err := ValidateEndpoint(service, &endpoint); err != nil {
+		if err := validateEndpoint(service, &endpoint); err != nil {
 			return fmt.Errorf("endpoint %d (%s): %w", i, endpoint.Name, err)
 		}
 	}
@@ -1987,11 +1987,11 @@ func ValidateResource(service *Service, resource *Resource) error {
 	return nil
 }
 
-// ValidateObject validates an object and its fields against the defined rules.
-func ValidateObject(service *Service, object *Object) error {
+// validateObject validates an object and its fields against the defined rules.
+func validateObject(service *Service, object *Object) error {
 	// Validate object fields
 	for i, field := range object.Fields {
-		if err := ValidateField(service, &field); err != nil {
+		if err := validateField(service, &field); err != nil {
 			return fmt.Errorf("field %d (%s): %w", i, field.Name, err)
 		}
 	}
@@ -1999,58 +1999,58 @@ func ValidateObject(service *Service, object *Object) error {
 	return nil
 }
 
-// ValidateResourceField validates a resource field against the defined rules.
-func ValidateResourceField(service *Service, field *ResourceField) error {
+// validateResourceField validates a resource field against the defined rules.
+func validateResourceField(service *Service, field *ResourceField) error {
 	// Validate operations
-	if err := ValidateOperations(field.Operations); err != nil {
+	if err := validateOperations(field.Operations); err != nil {
 		return fmt.Errorf("field operations: %w", err)
 	}
 
 	// Validate the embedded field
-	return ValidateField(service, &field.Field)
+	return validateField(service, &field.Field)
 }
 
-// ValidateField validates a field against the defined rules.
-func ValidateField(service *Service, field *Field) error {
+// validateField validates a field against the defined rules.
+func validateField(service *Service, field *Field) error {
 	// Validate field type
-	if err := ValidateFieldType(service, field.Type); err != nil {
+	if err := validateFieldType(service, field.Type); err != nil {
 		return fmt.Errorf("field type: %w", err)
 	}
 
 	// Validate modifiers
-	if err := ValidateModifiers(field.Modifiers); err != nil {
+	if err := validateModifiers(field.Modifiers); err != nil {
 		return fmt.Errorf("field modifiers: %w", err)
 	}
 
 	return nil
 }
 
-// ValidateEndpoint validates an endpoint against the defined rules.
-func ValidateEndpoint(service *Service, endpoint *Endpoint) error {
+// validateEndpoint validates an endpoint against the defined rules.
+func validateEndpoint(service *Service, endpoint *Endpoint) error {
 	// Validate request body params
 	for i, field := range endpoint.Request.BodyParams {
-		if err := ValidateField(service, &field); err != nil {
+		if err := validateField(service, &field); err != nil {
 			return fmt.Errorf("request body param %d (%s): %w", i, field.Name, err)
 		}
 	}
 
 	// Validate request query params
 	for i, field := range endpoint.Request.QueryParams {
-		if err := ValidateField(service, &field); err != nil {
+		if err := validateField(service, &field); err != nil {
 			return fmt.Errorf("request query param %d (%s): %w", i, field.Name, err)
 		}
 	}
 
 	// Validate request headers
 	for i, field := range endpoint.Request.Headers {
-		if err := ValidateField(service, &field); err != nil {
+		if err := validateField(service, &field); err != nil {
 			return fmt.Errorf("request header %d (%s): %w", i, field.Name, err)
 		}
 	}
 
 	// Validate response body fields
 	for i, field := range endpoint.Response.BodyFields {
-		if err := ValidateField(service, &field); err != nil {
+		if err := validateField(service, &field); err != nil {
 			return fmt.Errorf("response body field %d (%s): %w", i, field.Name, err)
 		}
 	}
@@ -2058,8 +2058,8 @@ func ValidateEndpoint(service *Service, endpoint *Endpoint) error {
 	return nil
 }
 
-// ValidateOperations validates that all operations are in PascalCase and are valid CRUD operations.
-func ValidateOperations(operations []string) error {
+// validateOperations validates that all operations are in PascalCase and are valid CRUD operations.
+func validateOperations(operations []string) error {
 	validOperations := []string{OperationCreate, OperationRead, OperationUpdate, OperationDelete}
 
 	for _, operation := range operations {
@@ -2071,8 +2071,8 @@ func ValidateOperations(operations []string) error {
 	return nil
 }
 
-// ValidateFieldType validates that the field type is either a valid primitive type, enum, or object.
-func ValidateFieldType(service *Service, fieldType string) error {
+// validateFieldType validates that the field type is either a valid primitive type, enum, or object.
+func validateFieldType(service *Service, fieldType string) error {
 	// Check if it's a primitive type
 	validPrimitiveTypes := []string{
 		FieldTypeUUID, FieldTypeDate, FieldTypeTimestamp,
@@ -2096,8 +2096,8 @@ func ValidateFieldType(service *Service, fieldType string) error {
 	return fmt.Errorf("%s: field type '%s' must be one of the primitive types %v, or a valid enum/object", errorInvalidFieldType, fieldType, validPrimitiveTypes)
 }
 
-// ValidateModifiers validates that all modifiers are in PascalCase and are valid modifiers.
-func ValidateModifiers(modifiers []string) error {
+// validateModifiers validates that all modifiers are in PascalCase and are valid modifiers.
+func validateModifiers(modifiers []string) error {
 	validModifiers := []string{ModifierNullable, ModifierArray}
 
 	for _, modifier := range modifiers {

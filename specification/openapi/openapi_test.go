@@ -15,7 +15,7 @@ import (
 
 // TestNewGenerator tests the creation of a new OpenAPI generator.
 func TestNewGenerator(t *testing.T) {
-	generator := NewGenerator()
+	generator := newGenerator()
 
 	assert.NotNil(t, generator, "Generator should not be nil")
 	assert.Equal(t, "3.1.0", generator.Version, "Generator version should be 3.1.0")
@@ -32,7 +32,7 @@ func TestNewGenerator(t *testing.T) {
 func TestGenerator_GenerateFromService(t *testing.T) {
 	// Test with nil service
 	t.Run("nil service returns error", func(t *testing.T) {
-		generator := NewGenerator()
+		generator := newGenerator()
 
 		document, err := generator.GenerateFromService(nil)
 
@@ -42,7 +42,7 @@ func TestGenerator_GenerateFromService(t *testing.T) {
 
 	// Test with valid service
 	t.Run("valid service generates document", func(t *testing.T) {
-		generator := NewGenerator()
+		generator := newGenerator()
 		service := &specification.Service{
 			Name: "TestService",
 		}
@@ -57,7 +57,7 @@ func TestGenerator_GenerateFromService(t *testing.T) {
 
 	// Test with complex service
 	t.Run("complex service with enums and objects", func(t *testing.T) {
-		generator := NewGenerator()
+		generator := newGenerator()
 		service := &specification.Service{
 			Name: "UserAPI",
 			Enums: []specification.Enum{
@@ -162,7 +162,7 @@ func TestGenerator_GenerateFromService(t *testing.T) {
 
 	// Test with service version and servers
 	t.Run("service with version and servers", func(t *testing.T) {
-		generator := NewGenerator()
+		generator := newGenerator()
 		service := &specification.Service{
 			Name:    "UserAPI",
 			Version: "2.0.0",
@@ -217,7 +217,7 @@ func TestGenerator_GenerateFromService(t *testing.T) {
 func TestGenerator_ToYAML(t *testing.T) {
 	// Test with nil document
 	t.Run("nil document returns error", func(t *testing.T) {
-		generator := NewGenerator()
+		generator := newGenerator()
 
 		yamlBytes, err := generator.ToYAML(nil)
 
@@ -227,7 +227,7 @@ func TestGenerator_ToYAML(t *testing.T) {
 
 	// Test with valid document
 	t.Run("valid document converts successfully", func(t *testing.T) {
-		generator := NewGenerator()
+		generator := newGenerator()
 		service := &specification.Service{
 			Name: "TestService",
 		}
@@ -248,7 +248,7 @@ func TestGenerator_ToYAML(t *testing.T) {
 func TestGenerator_ToJSON(t *testing.T) {
 	// Test with nil document
 	t.Run("nil document returns error", func(t *testing.T) {
-		generator := NewGenerator()
+		generator := newGenerator()
 
 		jsonBytes, err := generator.ToJSON(nil)
 
@@ -258,7 +258,7 @@ func TestGenerator_ToJSON(t *testing.T) {
 
 	// Test with valid document
 	t.Run("valid document converts successfully", func(t *testing.T) {
-		generator := NewGenerator()
+		generator := newGenerator()
 		service := &specification.Service{
 			Name: "TestService",
 		}
@@ -297,7 +297,7 @@ func TestGeneratorConfiguration(t *testing.T) {
 func TestGenerator_addErrorResponses(t *testing.T) {
 	// Test with ErrorCode enum
 	t.Run("with ErrorCode enum generates all responses", func(t *testing.T) {
-		generator := NewGenerator()
+		generator := newGenerator()
 
 		// Create service with ErrorCode enum (simulating ApplyOverlay result)
 		service := &specification.Service{
@@ -362,7 +362,7 @@ func TestGenerator_addErrorResponses(t *testing.T) {
 
 	// Test without body params
 	t.Run("without body params excludes 422", func(t *testing.T) {
-		generator := NewGenerator()
+		generator := newGenerator()
 
 		// Create service with ErrorCode enum
 		service := &specification.Service{
@@ -408,7 +408,7 @@ func TestGenerator_addErrorResponses(t *testing.T) {
 
 	// Test without ErrorCode enum
 	t.Run("without ErrorCode enum uses fallback responses", func(t *testing.T) {
-		generator := NewGenerator()
+		generator := newGenerator()
 
 		// Create service without ErrorCode enum
 		service := &specification.Service{
@@ -442,7 +442,7 @@ func TestGenerator_addErrorResponses(t *testing.T) {
 
 // TestMapErrorCodeToStatusAndDescription tests the error code to status code mapping.
 func TestGenerator_mapErrorCodeToStatusAndDescription(t *testing.T) {
-	generator := NewGenerator()
+	generator := newGenerator()
 
 	testCases := []struct {
 		errorCodeName        string
@@ -472,7 +472,7 @@ func TestGenerator_mapErrorCodeToStatusAndDescription(t *testing.T) {
 
 // TestEndToEndErrorResponseGeneration tests complete OpenAPI generation with proper error responses.
 func TestEndToEndErrorResponseGeneration(t *testing.T) {
-	generator := NewGenerator()
+	generator := newGenerator()
 
 	// Create a service and apply overlay to get ErrorCode enum
 	inputService := &specification.Service{
@@ -544,7 +544,7 @@ func TestEndToEndErrorResponseGeneration(t *testing.T) {
 
 // TestCamelCaseParametersInOpenAPI verifies that parameters use camelCase in OpenAPI output
 func TestCamelCaseParametersInOpenAPI(t *testing.T) {
-	generator := NewGenerator()
+	generator := newGenerator()
 	service := &specification.Service{
 		Name:    "TestAPI",
 		Version: "1.0.0",
@@ -723,7 +723,7 @@ func TestGenerateFromSpecificationToJSON(t *testing.T) {
 		assert.Nil(t, err, "Convenience method should not return error")
 
 		// Generate using multi-step process
-		generator := NewGenerator()
+		generator := newGenerator()
 		generator.Title = service.Name + " API"
 		generator.Description = "Generated API documentation"
 
