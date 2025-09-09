@@ -140,6 +140,53 @@ func Test_run(t *testing.T) {
 		require.Error(t, err, "run() should return an error for nonexistent file")
 		assert.Contains(t, err.Error(), errorInvalidFile, "Error should mention invalid file")
 	})
+
+	t.Run("complete YAML to OpenAPI JSON pipeline", func(t *testing.T) {
+		// Reset flag package for this test
+		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+
+		// Use test data files
+		inputSpecFile := "testdata/school-management-api.yaml"
+		expectedOutputFile := "testdata/school-management-api-expected.json"
+
+		// Create temporary output file
+		tmpOutputFile, err := os.CreateTemp("", "test-output-*.json")
+		require.NoError(t, err)
+		defer os.Remove(tmpOutputFile.Name())
+		tmpOutputFile.Close()
+
+		// Arrange command line arguments for OpenAPI generation
+		os.Args = []string{"publicapis-gen", "-file=" + inputSpecFile, "-mode=openapi", "-output=" + tmpOutputFile.Name()}
+		ctx := context.Background()
+
+		// Act - run the command
+		err = run(ctx)
+
+		// Assert - command should succeed
+		require.NoError(t, err, "run() should not return an error for valid YAML to OpenAPI conversion")
+
+		// Verify output file was created
+		_, err = os.Stat(tmpOutputFile.Name())
+		require.NoError(t, err, "Output OpenAPI JSON file should be created")
+
+		// Read the generated JSON content
+		actualOutputData, err := os.ReadFile(tmpOutputFile.Name())
+		require.NoError(t, err, "Should be able to read generated OpenAPI JSON file")
+
+		// Read the expected JSON content
+		expectedOutputData, err := os.ReadFile(expectedOutputFile)
+		require.NoError(t, err, "Should be able to read expected OpenAPI JSON file")
+
+		// Parse both JSON files to ensure they're valid
+		var actualJSON, expectedJSON map[string]interface{}
+		err = json.Unmarshal(actualOutputData, &actualJSON)
+		require.NoError(t, err, "Generated file should contain valid JSON")
+		err = json.Unmarshal(expectedOutputData, &expectedJSON)
+		require.NoError(t, err, "Expected file should contain valid JSON")
+
+		// Assert exact JSON match
+		assert.JSONEq(t, string(expectedOutputData), string(actualOutputData), "Generated OpenAPI JSON should exactly match expected output")
+	})
 }
 
 func Test_readSpecificationFile(t *testing.T) {
