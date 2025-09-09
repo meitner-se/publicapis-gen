@@ -185,7 +185,7 @@ func validateSpecFile(filename string) {
 func main() {
     // Validate multiple specification files
     files := []string{
-        "blog-api.yaml",
+        "api.yaml",
         "user-api.yaml", 
         "invalid-api.yaml",
     }
@@ -199,9 +199,9 @@ func main() {
 
 **Output with validation results:**
 ```
-✅ blog-api.yaml is valid!
+✅ api.yaml is valid!
 📊 Summary:
-   • Name: Blog API v1.0.0
+   • Name: My API v1.0.0
    • Enums: 1
    • Objects: 8
    • Resources: 1
@@ -310,7 +310,7 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 
 func main() {
     // Load specification and generate schemas
-    service, _ := specification.ParseServiceFromFile("blog-api.yaml")
+    service, _ := specification.ParseServiceFromFile("api.yaml")
     generator := schema.NewSchemaGenerator()
     
     // Setup routes with validation middleware
@@ -401,7 +401,7 @@ import (
 
 func generateRequestSchemas() {
     // Load expanded specification (includes generated endpoints)
-    service, err := specification.ParseServiceFromFile("blog-api.yaml") 
+    service, err := specification.ParseServiceFromFile("api.yaml") 
     if err != nil {
         log.Fatal(err)
     }
@@ -552,7 +552,7 @@ func main() {
 npm install -g ajv-cli
 
 # Validate a specification file
-ajv validate -s schemas/ServiceSchema.json -d blog-api.json
+ajv validate -s schemas/ServiceSchema.json -d api.json
 ```
 
 **Python validation script:**
@@ -579,7 +579,7 @@ def validate_api_spec(spec_file, schema_file):
         print(f"   Path: {' -> '.join(str(x) for x in e.path)}")
 
 # Validate specification
-validate_api_spec("blog-api.json", "schemas/ServiceSchema.json")
+validate_api_spec("api.json", "schemas/ServiceSchema.json")
 ```
 
 ## Integration with CI/CD

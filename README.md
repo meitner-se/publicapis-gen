@@ -103,7 +103,6 @@ Common errors and solutions:
 - [🔍 Advanced Filtering](docs/filtering.md) - Building complex search functionality
 - [📋 OpenAPI Generation](docs/openapi.md) - Generating OpenAPI 3.1 specs
 - [✅ JSON Schema Validation](docs/schema-validation.md) - Validating specifications
-- [📝 Examples](examples/) - Complete example projects
 
 ## Installation
 
