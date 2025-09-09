@@ -675,3 +675,65 @@ func TestCamelCaseParametersInOpenAPI(t *testing.T) {
 func stringPtr(s string) *string {
 	return &s
 }
+
+// ============================================================================
+// GenerateFromSpecificationToJSON Function Tests
+// ============================================================================
+
+// TestGenerateFromSpecificationToJSON tests the convenience method for generating JSON from a specification.
+func TestGenerateFromSpecificationToJSON(t *testing.T) {
+	// Test with nil service
+	t.Run("nil service returns error", func(t *testing.T) {
+		jsonData, err := GenerateFromSpecificationToJSON(nil)
+
+		assert.Nil(t, jsonData, "JSON data should be nil when service is nil")
+		assert.EqualError(t, err, "invalid service: service cannot be nil", "Should return invalid service error")
+	})
+
+	// Test with valid service
+	t.Run("valid service generates JSON", func(t *testing.T) {
+		service := &specification.Service{
+			Name:    "TestService",
+			Version: "1.0.0",
+		}
+
+		jsonData, err := GenerateFromSpecificationToJSON(service)
+
+		assert.Nil(t, err, "Should not return error for valid service")
+		assert.NotNil(t, jsonData, "JSON data should not be nil")
+		assert.Greater(t, len(jsonData), 0, "JSON data should not be empty")
+
+		// Verify it's valid JSON by checking basic structure
+		jsonString := string(jsonData)
+		assert.Contains(t, jsonString, "openapi", "Should contain OpenAPI version field")
+		assert.Contains(t, jsonString, "3.1.0", "Should contain OpenAPI 3.1.0 version")
+		assert.Contains(t, jsonString, "TestService API", "Should contain service name with API suffix")
+		assert.Contains(t, jsonString, "Generated API documentation", "Should contain default description")
+	})
+
+	// Test that it produces same result as the multi-step process
+	t.Run("produces same result as multi-step process", func(t *testing.T) {
+		service := &specification.Service{
+			Name:    "ComparisonService",
+			Version: "2.0.0",
+		}
+
+		// Generate using convenience method
+		convenienceJSON, err := GenerateFromSpecificationToJSON(service)
+		assert.Nil(t, err, "Convenience method should not return error")
+
+		// Generate using multi-step process
+		generator := NewGenerator()
+		generator.Title = service.Name + " API"
+		generator.Description = "Generated API documentation"
+
+		document, err := generator.GenerateFromService(service)
+		assert.Nil(t, err, "Multi-step method should not return error")
+
+		multiStepJSON, err := generator.ToJSON(document)
+		assert.Nil(t, err, "Multi-step ToJSON should not return error")
+
+		// Both methods should produce identical results
+		assert.Equal(t, multiStepJSON, convenienceJSON, "Both methods should produce identical JSON")
+	})
+}
