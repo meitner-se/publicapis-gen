@@ -345,12 +345,10 @@ func (g *Generator) getTypeSchema(fieldType string, service *specification.Servi
 
 // addResourceToPaths adds resource endpoints to paths using native v3 types.
 func (g *Generator) addResourceToPaths(resource specification.Resource, paths *orderedmap.Map[string, *v3.PathItem], service *specification.Service) {
-	basePath := "/" + specification.ToKebabCase(resource.Name)
-
 	// Group endpoints by path
 	pathGroups := make(map[string][]*specification.Endpoint)
 	for _, endpoint := range resource.Endpoints {
-		fullPath := basePath + endpoint.Path
+		fullPath := endpoint.GetFullPath(resource.Name)
 		pathGroups[fullPath] = append(pathGroups[fullPath], &endpoint)
 	}
 

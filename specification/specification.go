@@ -1658,12 +1658,26 @@ func ToKebabCase(s string) string {
 	normalized := strings.ReplaceAll(s, "_", "-")
 	normalized = strings.ReplaceAll(normalized, " ", "-")
 
-	// Convert PascalCase/camelCase to kebab-case by inserting hyphens before uppercase letters
+	// Convert PascalCase/camelCase to kebab-case
 	var result strings.Builder
-	for i, r := range normalized {
-		// Insert hyphen before uppercase letters (except first character and not after existing hyphens)
-		if i > 0 && r >= 'A' && r <= 'Z' && normalized[i-1] != '-' {
-			result.WriteByte('-')
+	runes := []rune(normalized)
+
+	for i, r := range runes {
+		// Insert hyphen before uppercase letters in these cases:
+		// 1. Before an uppercase letter that follows a lowercase letter or digit
+		// 2. Before the last uppercase letter in a sequence of uppercase letters if followed by lowercase
+		if i > 0 && r >= 'A' && r <= 'Z' && runes[i-1] != '-' {
+			prev := runes[i-1]
+
+			// Case 1: Previous character is lowercase or digit
+			if (prev >= 'a' && prev <= 'z') || (prev >= '0' && prev <= '9') {
+				result.WriteByte('-')
+			} else if prev >= 'A' && prev <= 'Z' {
+				// Case 2: Previous character is uppercase, check if current is followed by lowercase
+				if i+1 < len(runes) && runes[i+1] >= 'a' && runes[i+1] <= 'z' {
+					result.WriteByte('-')
+				}
+			}
 		}
 		result.WriteRune(r)
 	}
