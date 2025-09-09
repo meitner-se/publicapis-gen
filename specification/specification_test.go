@@ -1249,6 +1249,77 @@ func TestCreateAutoColumns(t *testing.T) {
 	})
 }
 
+func TestCreateDefaultMeta(t *testing.T) {
+	// Act
+	metaObject := CreateDefaultMeta()
+
+	// Assert
+	assert.Equal(t, metaObjectName, metaObject.Name, "Meta object should have correct name")
+	assert.Equal(t, metaObjectDescription, metaObject.Description, "Meta object should have correct description")
+	assert.Equal(t, 4, len(metaObject.Fields), "Meta object should have exactly 4 fields")
+
+	// Verify each field is correct
+	assert.Equal(t, autoColumnCreatedAtName, metaObject.Fields[0].Name, "First field should be CreatedAt")
+	assert.Equal(t, autoColumnCreatedByName, metaObject.Fields[1].Name, "Second field should be CreatedBy")
+	assert.Equal(t, autoColumnUpdatedAtName, metaObject.Fields[2].Name, "Third field should be UpdatedAt")
+	assert.Equal(t, autoColumnUpdatedByName, metaObject.Fields[3].Name, "Fourth field should be UpdatedBy")
+
+	// Verify types are correct
+	assert.Equal(t, FieldTypeTimestamp, metaObject.Fields[0].Type, "CreatedAt should be Timestamp type")
+	assert.Equal(t, FieldTypeUUID, metaObject.Fields[1].Type, "CreatedBy should be UUID type")
+	assert.Equal(t, FieldTypeTimestamp, metaObject.Fields[2].Type, "UpdatedAt should be Timestamp type")
+	assert.Equal(t, FieldTypeUUID, metaObject.Fields[3].Type, "UpdatedBy should be UUID type")
+
+	// Verify modifiers are correct
+	assert.Empty(t, metaObject.Fields[0].Modifiers, "CreatedAt should have no modifiers")
+	assert.Equal(t, []string{ModifierNullable}, metaObject.Fields[1].Modifiers, "CreatedBy should be nullable")
+	assert.Empty(t, metaObject.Fields[2].Modifiers, "UpdatedAt should have no modifiers")
+	assert.Equal(t, []string{ModifierNullable}, metaObject.Fields[3].Modifiers, "UpdatedBy should be nullable")
+
+	// Verify descriptions are generic (not resource-specific)
+	assert.Equal(t, "Timestamp when the resource was created", metaObject.Fields[0].Description, "CreatedAt should have generic description")
+	assert.Equal(t, "User who created the resource", metaObject.Fields[1].Description, "CreatedBy should have generic description")
+	assert.Equal(t, "Timestamp when the resource was last updated", metaObject.Fields[2].Description, "UpdatedAt should have generic description")
+	assert.Equal(t, "User who last updated the resource", metaObject.Fields[3].Description, "UpdatedBy should have generic description")
+
+	t.Run("consistency", func(t *testing.T) {
+		meta1 := CreateDefaultMeta()
+		meta2 := CreateDefaultMeta()
+
+		assert.Equal(t, meta1, meta2, "CreateDefaultMeta should return consistent results")
+	})
+}
+
+func TestCreateAutoColumnsWithMeta(t *testing.T) {
+	// Arrange
+	resourceName := "User"
+
+	// Act
+	autoColumns := CreateAutoColumnsWithMeta(resourceName)
+
+	// Assert
+	assert.Equal(t, 2, len(autoColumns), "Should return exactly 2 auto-columns (ID + Meta)")
+
+	// Verify ID field is correct
+	assert.Equal(t, autoColumnIDName, autoColumns[0].Name, "First auto-column should be ID")
+	assert.Equal(t, fmt.Sprintf(autoColumnIDDescTemplate, resourceName), autoColumns[0].Description, "ID description should use resource name")
+	assert.Equal(t, FieldTypeUUID, autoColumns[0].Type, "ID should be UUID type")
+	assert.Empty(t, autoColumns[0].Modifiers, "ID should have no modifiers")
+
+	// Verify Meta field is correct
+	assert.Equal(t, metaObjectName, autoColumns[1].Name, "Second auto-column should be Meta")
+	assert.Equal(t, fmt.Sprintf("Metadata information for the %s", resourceName), autoColumns[1].Description, "Meta description should use resource name")
+	assert.Equal(t, metaObjectName, autoColumns[1].Type, "Meta should reference Meta object type")
+	assert.Empty(t, autoColumns[1].Modifiers, "Meta should have no modifiers")
+
+	t.Run("consistency", func(t *testing.T) {
+		autoColumns1 := CreateAutoColumnsWithMeta(resourceName)
+		autoColumns2 := CreateAutoColumnsWithMeta(resourceName)
+
+		assert.Equal(t, autoColumns1, autoColumns2, "CreateAutoColumnsWithMeta should return consistent results")
+	})
+}
+
 // ============================================================================
 // Utility Function Tests
 // ============================================================================
@@ -1460,9 +1531,9 @@ func TestApplyOverlay(t *testing.T) {
 		require.NotNil(t, result)
 		assert.Equal(t, input.Name, result.Name)
 
-		// Should have default ErrorCode and ErrorFieldCode enums, Error, ErrorField, and Pagination objects
+		// Should have default ErrorCode and ErrorFieldCode enums, Error, ErrorField, Pagination, and Meta objects
 		assert.Equal(t, 2, len(result.Enums))   // ErrorCode and ErrorFieldCode enums
-		assert.Equal(t, 3, len(result.Objects)) // Error, ErrorField, and Pagination objects
+		assert.Equal(t, 4, len(result.Objects)) // Error, ErrorField, Pagination, and Meta objects
 		assert.Equal(t, 0, len(result.Resources))
 	})
 
@@ -1558,11 +1629,11 @@ func TestApplyOverlay(t *testing.T) {
 		assert.Equal(t, "User resource", usersObject.Description)
 
 		// Should have auto-columns plus the original field
-		expectedFieldCount := 6 // 5 auto-columns + 1 original field
+		expectedFieldCount := 3 // 2 auto-columns (ID + Meta) + 1 original field
 		assert.Equal(t, expectedFieldCount, len(usersObject.Fields), "Should have auto-columns plus original fields")
 
 		// Verify auto-columns are present in correct order
-		autoColumnFields := usersObject.Fields[:5] // First 5 should be auto-columns
+		autoColumnFields := usersObject.Fields[:2] // First 2 should be auto-columns
 
 		// Verify ID field
 		assert.Equal(t, autoColumnIDName, autoColumnFields[0].Name)
@@ -1570,32 +1641,14 @@ func TestApplyOverlay(t *testing.T) {
 		assert.Equal(t, FieldTypeUUID, autoColumnFields[0].Type)
 		assert.Empty(t, autoColumnFields[0].Modifiers)
 
-		// Verify CreatedAt field
-		assert.Equal(t, autoColumnCreatedAtName, autoColumnFields[1].Name)
-		assert.Equal(t, fmt.Sprintf(autoColumnCreatedAtTemplate, "Users"), autoColumnFields[1].Description)
-		assert.Equal(t, FieldTypeTimestamp, autoColumnFields[1].Type)
+		// Verify Meta field
+		assert.Equal(t, metaObjectName, autoColumnFields[1].Name)
+		assert.Equal(t, fmt.Sprintf("Metadata information for the %s", "Users"), autoColumnFields[1].Description)
+		assert.Equal(t, metaObjectName, autoColumnFields[1].Type)
 		assert.Empty(t, autoColumnFields[1].Modifiers)
 
-		// Verify CreatedBy field
-		assert.Equal(t, autoColumnCreatedByName, autoColumnFields[2].Name)
-		assert.Equal(t, fmt.Sprintf(autoColumnCreatedByTemplate, "Users"), autoColumnFields[2].Description)
-		assert.Equal(t, FieldTypeUUID, autoColumnFields[2].Type)
-		assert.Equal(t, []string{ModifierNullable}, autoColumnFields[2].Modifiers)
-
-		// Verify UpdatedAt field
-		assert.Equal(t, autoColumnUpdatedAtName, autoColumnFields[3].Name)
-		assert.Equal(t, fmt.Sprintf(autoColumnUpdatedAtTemplate, "Users"), autoColumnFields[3].Description)
-		assert.Equal(t, FieldTypeTimestamp, autoColumnFields[3].Type)
-		assert.Empty(t, autoColumnFields[3].Modifiers)
-
-		// Verify UpdatedBy field
-		assert.Equal(t, autoColumnUpdatedByName, autoColumnFields[4].Name)
-		assert.Equal(t, fmt.Sprintf(autoColumnUpdatedByTemplate, "Users"), autoColumnFields[4].Description)
-		assert.Equal(t, FieldTypeUUID, autoColumnFields[4].Type)
-		assert.Equal(t, []string{ModifierNullable}, autoColumnFields[4].Modifiers)
-
 		// Verify original field comes after auto-columns
-		originalField := usersObject.Fields[5]
+		originalField := usersObject.Fields[2]
 		assert.Equal(t, "name", originalField.Name)
 		assert.Equal(t, "User name", originalField.Description)
 		assert.Equal(t, FieldTypeString, originalField.Type)
@@ -2495,19 +2548,16 @@ func TestApplyOverlay_SkipAutoColumns(t *testing.T) {
 		require.NotNil(t, normalResourceObject, "Should have generated NormalResource object")
 
 		// Should have auto columns plus the original field
-		expectedFieldCount := 6 // 5 auto columns + 1 original field
+		expectedFieldCount := 3 // 2 auto columns (ID + Meta) + 1 original field
 		assert.Equal(t, expectedFieldCount, len(normalResourceObject.Fields), "Should have auto columns plus original fields")
 
 		// Verify auto columns are present
-		autoColumnFields := normalResourceObject.Fields[:5] // First 5 should be auto columns
+		autoColumnFields := normalResourceObject.Fields[:2] // First 2 should be auto columns
 		assert.Equal(t, autoColumnIDName, autoColumnFields[0].Name, "First field should be auto column ID")
-		assert.Equal(t, autoColumnCreatedAtName, autoColumnFields[1].Name, "Second field should be auto column CreatedAt")
-		assert.Equal(t, autoColumnCreatedByName, autoColumnFields[2].Name, "Third field should be auto column CreatedBy")
-		assert.Equal(t, autoColumnUpdatedAtName, autoColumnFields[3].Name, "Fourth field should be auto column UpdatedAt")
-		assert.Equal(t, autoColumnUpdatedByName, autoColumnFields[4].Name, "Fifth field should be auto column UpdatedBy")
+		assert.Equal(t, metaObjectName, autoColumnFields[1].Name, "Second field should be Meta object")
 
 		// Verify the custom field is last
-		assert.Equal(t, "customField", normalResourceObject.Fields[5].Name, "Custom field should be after auto columns")
+		assert.Equal(t, "customField", normalResourceObject.Fields[2].Name, "Custom field should be after auto columns")
 	})
 
 	t.Run("default behavior should include auto columns", func(t *testing.T) {
@@ -2548,7 +2598,7 @@ func TestApplyOverlay_SkipAutoColumns(t *testing.T) {
 		require.NotNil(t, defaultResourceObject, "Should have generated DefaultResource object")
 
 		// Should have auto columns by default
-		expectedFieldCount := 6 // 5 auto columns + 1 original field
+		expectedFieldCount := 3 // 2 auto columns (ID + Meta) + 1 original field
 		assert.Equal(t, expectedFieldCount, len(defaultResourceObject.Fields), "Should have auto columns by default")
 	})
 }
