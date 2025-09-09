@@ -13,6 +13,7 @@ import (
 	"github.com/goccy/go-yaml"
 	"github.com/meitner-se/publicapis-gen/specification"
 	"github.com/meitner-se/publicapis-gen/specification/openapi"
+	"github.com/meitner-se/publicapis-gen/specification/schema"
 )
 
 // Error messages and log keys
@@ -31,6 +32,7 @@ const (
 const (
 	modeOverlay = "overlay"
 	modeOpenAPI = "openapi"
+	modeSchema  = "schema"
 )
 
 // File extensions
@@ -44,6 +46,7 @@ const (
 const (
 	suffixOverlay = "-overlay"
 	suffixOpenAPI = "-openapi"
+	suffixSchema  = "-schema"
 )
 
 // Log levels
@@ -58,7 +61,7 @@ const (
 // Usage messages
 const (
 	usageDescription = "publicapis-gen - Generate API specifications and OpenAPI documents"
-	usageExample     = "\nExamples:\n  publicapis-gen -file=spec.yaml -mode=overlay\n  publicapis-gen -file=spec.json -mode=openapi\n  publicapis-gen -file=spec.yaml -mode=openapi -output=api-spec.json\n  publicapis-gen -file=spec.yaml -mode=openapi -log-level=info"
+	usageExample     = "\nExamples:\n  publicapis-gen -file=spec.yaml -mode=overlay\n  publicapis-gen -file=spec.json -mode=openapi\n  publicapis-gen -file=spec.yaml -mode=schema\n  publicapis-gen -file=spec.yaml -mode=openapi -output=api-spec.json\n  publicapis-gen -file=spec.yaml -mode=schema -output=schemas.json\n  publicapis-gen -file=spec.yaml -mode=openapi -log-level=info"
 )
 
 func main() {
@@ -74,7 +77,7 @@ func run(ctx context.Context) error {
 	// Parse command line flags
 	var (
 		fileFlag     = flag.String("file", "", "Path to input specification file (YAML or JSON)")
-		modeFlag     = flag.String("mode", "", "Operation mode: 'overlay' or 'openapi'")
+		modeFlag     = flag.String("mode", "", "Operation mode: 'overlay', 'openapi', or 'schema'")
 		outputFlag   = flag.String("output", "", "Output file path (optional, defaults to input name with suffix)")
 		logLevelFlag = flag.String("log-level", logLevelOff, "Log level: 'debug', 'info', 'warn', 'error', or 'off' (default: off)")
 		helpFlag     = flag.Bool("help", false, "Show help message")
@@ -113,8 +116,8 @@ func run(ctx context.Context) error {
 	}
 
 	// Validate mode
-	if *modeFlag != modeOverlay && *modeFlag != modeOpenAPI {
-		return fmt.Errorf("%s: mode must be '%s' or '%s'", errorInvalidMode, modeOverlay, modeOpenAPI)
+	if *modeFlag != modeOverlay && *modeFlag != modeOpenAPI && *modeFlag != modeSchema {
+		return fmt.Errorf("%s: mode must be '%s', '%s', or '%s'", errorInvalidMode, modeOverlay, modeOpenAPI, modeSchema)
 	}
 
 	// Read and parse input file
@@ -131,6 +134,8 @@ func run(ctx context.Context) error {
 		return generateOverlay(ctx, service, *fileFlag, *outputFlag)
 	case modeOpenAPI:
 		return generateOpenAPI(ctx, service, *fileFlag, *outputFlag)
+	case modeSchema:
+		return generateSchema(ctx, service, *fileFlag, *outputFlag)
 	default:
 		return fmt.Errorf("%s: unsupported mode '%s'", errorInvalidMode, *modeFlag)
 	}
@@ -189,6 +194,62 @@ func generateOpenAPI(ctx context.Context, service *specification.Service, inputF
 	return nil
 }
 
+// generateSchema generates JSON schemas from the specification.
+func generateSchema(ctx context.Context, service *specification.Service, inputFile, outputFile string) error {
+	slog.InfoContext(ctx, "Generating JSON schemas", logKeyMode, modeSchema)
+
+	// Create schema generator
+	generator := schema.NewSchemaGenerator()
+
+	// Generate all schemas
+	schemas, err := generator.GenerateAllSchemas()
+	if err != nil {
+		return fmt.Errorf("failed to generate schemas: %w", err)
+	}
+
+	// Convert all schemas to a combined JSON structure
+	schemaMap := make(map[string]interface{})
+	for name, schemaObj := range schemas {
+		// Convert each schema to JSON and then parse it back to interface{} for clean structure
+		jsonStr, err := generator.SchemaToJSON(schemaObj)
+		if err != nil {
+			return fmt.Errorf("failed to convert %s schema to JSON: %w", name, err)
+		}
+
+		var schemaData interface{}
+		if err := json.Unmarshal([]byte(jsonStr), &schemaData); err != nil {
+			return fmt.Errorf("failed to parse %s schema JSON: %w", name, err)
+		}
+
+		schemaMap[name] = schemaData
+	}
+
+	// Marshal the combined schema map to JSON with proper indentation
+	outputData, err := json.MarshalIndent(schemaMap, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal combined schemas to JSON: %w", err)
+	}
+
+	// Determine output file path - always use JSON for schemas
+	outputPath := outputFile
+	if outputPath == "" {
+		outputPath = generateSchemaOutputPath(inputFile)
+	} else {
+		// Ensure output path has .json extension
+		outputPath = ensureJSONExtension(outputPath)
+	}
+
+	// Write output file
+	if err := os.WriteFile(outputPath, outputData, 0644); err != nil {
+		return fmt.Errorf("%s: %w", errorFileWrite, err)
+	}
+
+	slog.InfoContext(ctx, "Successfully generated JSON schemas", logKeyFile, outputPath)
+	fmt.Printf("JSON schemas generated: %s\n", outputPath)
+
+	return nil
+}
+
 // writeSpecificationFile writes a specification to a file in the appropriate format.
 func writeSpecificationFile(ctx context.Context, service *specification.Service, outputPath string) error {
 	// Determine output format based on extension
@@ -238,6 +299,12 @@ func generateOutputPath(inputFile, suffix string) string {
 func generateOpenAPIOutputPath(inputFile string) string {
 	base := strings.TrimSuffix(inputFile, filepath.Ext(inputFile))
 	return base + suffixOpenAPI + extJSON
+}
+
+// generateSchemaOutputPath generates an output file path for JSON schema documents (always JSON).
+func generateSchemaOutputPath(inputFile string) string {
+	base := strings.TrimSuffix(inputFile, filepath.Ext(inputFile))
+	return base + suffixSchema + extJSON
 }
 
 // ensureJSONExtension ensures the output path has a .json extension.
