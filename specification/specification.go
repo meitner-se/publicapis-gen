@@ -254,10 +254,25 @@ const (
 	pathSeparator     = "/"
 )
 
+// ServiceServer represents a server in the API service.
+type ServiceServer struct {
+	// URL of the server
+	URL string `json:"url"`
+
+	// Description of the server
+	Description string `json:"description,omitempty"`
+}
+
 // Service is the definition of an API service.
 type Service struct {
 	// Name of the service
 	Name string `json:"name"`
+
+	// Version of the service
+	Version string `json:"version,omitempty"`
+
+	// Servers that are part of the service
+	Servers []ServiceServer `json:"servers,omitempty"`
 
 	// Enums that are used in the service
 	Enums []Enum `json:"enums"`
@@ -1341,14 +1356,14 @@ func (r Resource) GetCreateBodyParams() []Field {
 		if resourceField.HasCreateOperation() {
 			// Convert ResourceField to Field by copying the embedded Field
 			field := Field{
-				Name:        resourceField.Field.Name,
-				Description: resourceField.Field.Description,
-				Type:        resourceField.Field.Type,
-				Default:     resourceField.Field.Default,
-				Example:     resourceField.Field.Example,
-				Modifiers:   make([]string, len(resourceField.Field.Modifiers)),
+				Name:        resourceField.Name,
+				Description: resourceField.Description,
+				Type:        resourceField.Type,
+				Default:     resourceField.Default,
+				Example:     resourceField.Example,
+				Modifiers:   make([]string, len(resourceField.Modifiers)),
 			}
-			copy(field.Modifiers, resourceField.Field.Modifiers)
+			copy(field.Modifiers, resourceField.Modifiers)
 			bodyParams = append(bodyParams, field)
 		}
 	}
@@ -1362,14 +1377,14 @@ func (r Resource) GetUpdateBodyParams() []Field {
 		if resourceField.HasUpdateOperation() {
 			// Convert ResourceField to Field by copying the embedded Field
 			field := Field{
-				Name:        resourceField.Field.Name,
-				Description: resourceField.Field.Description,
-				Type:        resourceField.Field.Type,
-				Default:     resourceField.Field.Default,
-				Example:     resourceField.Field.Example,
-				Modifiers:   make([]string, len(resourceField.Field.Modifiers)),
+				Name:        resourceField.Name,
+				Description: resourceField.Description,
+				Type:        resourceField.Type,
+				Default:     resourceField.Default,
+				Example:     resourceField.Example,
+				Modifiers:   make([]string, len(resourceField.Modifiers)),
 			}
-			copy(field.Modifiers, resourceField.Field.Modifiers)
+			copy(field.Modifiers, resourceField.Modifiers)
 			bodyParams = append(bodyParams, field)
 		}
 	}
@@ -1383,14 +1398,14 @@ func (r Resource) GetReadableFields() []Field {
 		if resourceField.HasReadOperation() {
 			// Convert ResourceField to Field by copying the embedded Field
 			field := Field{
-				Name:        resourceField.Field.Name,
-				Description: resourceField.Field.Description,
-				Type:        resourceField.Field.Type,
-				Default:     resourceField.Field.Default,
-				Example:     resourceField.Field.Example,
-				Modifiers:   make([]string, len(resourceField.Field.Modifiers)),
+				Name:        resourceField.Name,
+				Description: resourceField.Description,
+				Type:        resourceField.Type,
+				Default:     resourceField.Default,
+				Example:     resourceField.Example,
+				Modifiers:   make([]string, len(resourceField.Modifiers)),
 			}
-			copy(field.Modifiers, resourceField.Field.Modifiers)
+			copy(field.Modifiers, resourceField.Modifiers)
 			readableFields = append(readableFields, field)
 		}
 	}
