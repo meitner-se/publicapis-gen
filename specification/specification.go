@@ -10,6 +10,9 @@ import (
 
 	"github.com/aarondl/strmangle"
 	"github.com/goccy/go-yaml"
+	"github.com/goccy/go-yaml/ast"
+	"github.com/goccy/go-yaml/parser"
+	"github.com/goccy/go-yaml/token"
 )
 
 // CRUD Operations
@@ -32,8 +35,8 @@ const (
 
 // Field Modifiers
 const (
-	ModifierNullable = "nullable"
-	ModifierArray    = "array"
+	ModifierNullable = "Nullable"
+	ModifierArray    = "Array"
 )
 
 // Filter suffixes
@@ -286,9 +289,20 @@ const (
 	errorUnsupportedFormat = "unsupported file format"
 	errorFileRead          = "failed to read file"
 	errorFileParse         = "failed to parse file"
-	extYAML                = ".yaml"
-	extYML                 = ".yml"
-	extJSON                = ".json"
+
+	// Validation error constants
+	errorInvalidOperation = "invalid operation"
+	errorInvalidFieldType = "invalid field type"
+	errorInvalidModifier  = "invalid modifier"
+	errorValidationFailed = "validation failed"
+	errorYAMLParsing      = "YAML parsing failed"
+)
+
+// File extension constants
+const (
+	extYAML = ".yaml"
+	extYML  = ".yml"
+	extJSON = ".json"
 )
 
 // ServiceServer represents a server in the API service.
@@ -1748,6 +1762,353 @@ func ToKebabCase(s string) string {
 	return strings.ToLower(result.String())
 }
 
+// Validation functions
+
+// ValidationError represents a validation error with position information.
+type ValidationError struct {
+	Message string
+	Line    int
+	Column  int
+	Path    string
+}
+
+func (e *ValidationError) Error() string {
+	if e.Line > 0 && e.Column > 0 {
+		return fmt.Sprintf("validation error at line %d, column %d (%s): %s", e.Line, e.Column, e.Path, e.Message)
+	}
+	return fmt.Sprintf("validation error (%s): %s", e.Path, e.Message)
+}
+
+// ValidateServiceWithPosition validates a service using YAML node position information.
+func ValidateServiceWithPosition(data []byte, fileExtension string) error {
+	if fileExtension != extYAML && fileExtension != extYML {
+		// For non-YAML files, fall back to regular validation
+		var service Service
+		if fileExtension == extJSON {
+			if err := json.Unmarshal(data, &service); err != nil {
+				return fmt.Errorf("%s: JSON parsing error: %w", errorFileParse, err)
+			}
+		}
+		return ValidateService(&service)
+	}
+
+	// Parse YAML into struct first
+	var service Service
+	if err := yaml.Unmarshal(data, &service); err != nil {
+		return fmt.Errorf("%s: YAML parsing error: %w", errorFileParse, err)
+	}
+
+	// Parse YAML into AST to get position information for errors
+	file, err := parser.ParseBytes(data, parser.ParseComments)
+	if err != nil {
+		return fmt.Errorf("%s: %w", errorYAMLParsing, err)
+	}
+
+	// Create a position tracker to map validation errors to line numbers
+	positionTracker := NewPositionTracker(file)
+
+	// Run validation and enhance errors with position information
+	if validationErr := ValidateService(&service); validationErr != nil {
+		enhancedErr := positionTracker.EnhanceError(validationErr, &service)
+		return enhancedErr
+	}
+
+	return nil
+}
+
+// PositionTracker helps map validation errors to line numbers in YAML.
+type PositionTracker struct {
+	file *ast.File
+}
+
+// NewPositionTracker creates a new position tracker from a parsed YAML file.
+func NewPositionTracker(file *ast.File) *PositionTracker {
+	return &PositionTracker{file: file}
+}
+
+// EnhanceError enhances a validation error with position information.
+func (pt *PositionTracker) EnhanceError(err error, service *Service) error {
+	if err == nil || pt.file == nil {
+		return err
+	}
+
+	// Try to extract meaningful error information and find corresponding YAML position
+	errorMsg := err.Error()
+
+	// Handle different error patterns
+	if strings.Contains(errorMsg, "invalid operation") {
+		return pt.findOperationError(errorMsg, service)
+	}
+	if strings.Contains(errorMsg, "invalid field type") {
+		return pt.findFieldTypeError(errorMsg, service)
+	}
+	if strings.Contains(errorMsg, "invalid modifier") {
+		return pt.findModifierError(errorMsg, service)
+	}
+
+	return err
+}
+
+// findOperationError tries to find line number for operation validation errors.
+func (pt *PositionTracker) findOperationError(errorMsg string, service *Service) error {
+	// Extract the invalid operation from the error message
+	// Error format: "resource 0 (Students): resource operations: invalid operation: operation 'create' must be one of: [Create Read Update Delete]"
+	if pos := pt.findInvalidValue("operations", errorMsg); pos != nil {
+		return &ValidationError{
+			Message: errorMsg,
+			Line:    pos.Line,
+			Column:  pos.Column,
+			Path:    "operations",
+		}
+	}
+	// If we couldn't find a position, still return the original error message
+	return fmt.Errorf("%s", errorMsg)
+}
+
+// findFieldTypeError tries to find line number for field type validation errors.
+func (pt *PositionTracker) findFieldTypeError(errorMsg string, service *Service) error {
+	// Extract the invalid type from error message
+	if pos := pt.findInvalidValue("type", errorMsg); pos != nil {
+		return &ValidationError{
+			Message: errorMsg,
+			Line:    pos.Line,
+			Column:  pos.Column,
+			Path:    "type",
+		}
+	}
+	return fmt.Errorf("%s", errorMsg)
+}
+
+// findModifierError tries to find line number for modifier validation errors.
+func (pt *PositionTracker) findModifierError(errorMsg string, service *Service) error {
+	// Extract the invalid modifier from error message
+	if pos := pt.findInvalidValue("modifiers", errorMsg); pos != nil {
+		return &ValidationError{
+			Message: errorMsg,
+			Line:    pos.Line,
+			Column:  pos.Column,
+			Path:    "modifiers",
+		}
+	}
+	return fmt.Errorf("%s", errorMsg)
+}
+
+// findInvalidValue searches for the first occurrence of a value in the YAML that might be invalid.
+func (pt *PositionTracker) findInvalidValue(fieldName string, errorMsg string) *token.Position {
+	// This is a simplified implementation that finds the first occurrence
+	// of specific field names in the YAML and returns their position
+	if len(pt.file.Docs) > 0 {
+		return pt.findFieldInAST(fieldName, pt.file.Docs[0].Body)
+	}
+	return nil
+}
+
+// findFieldInAST recursively searches for a field name in the AST.
+func (pt *PositionTracker) findFieldInAST(fieldName string, node ast.Node) *token.Position {
+	if node == nil {
+		return nil
+	}
+
+	nodeType := node.Type()
+	if nodeType.String() == "Mapping" {
+		if mappingNode, ok := node.(*ast.MappingNode); ok {
+			for _, mappingValue := range mappingNode.Values {
+				// Check if this is the field we're looking for
+				if keyNode := mappingValue.Key; keyNode != nil && keyNode.Type().String() == "String" {
+					if stringNode, ok := keyNode.(*ast.StringNode); ok {
+						keyValue := stringNode.GetToken().Value
+						if keyValue == fieldName {
+							// Return position of the key (where the field name is)
+							if token := stringNode.GetToken(); token != nil && token.Position != nil {
+								return token.Position
+							}
+						}
+					}
+				}
+				// Recursively search in the value
+				if pos := pt.findFieldInAST(fieldName, mappingValue.Value); pos != nil {
+					return pos
+				}
+			}
+		}
+	} else if nodeType.String() == "Sequence" {
+		if sequenceNode, ok := node.(*ast.SequenceNode); ok {
+			for _, entry := range sequenceNode.Values {
+				if pos := pt.findFieldInAST(fieldName, entry); pos != nil {
+					return pos
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// ValidateService validates the entire service specification against the defined rules.
+func ValidateService(service *Service) error {
+	// Validate resources
+	for i, resource := range service.Resources {
+		if err := ValidateResource(service, &resource); err != nil {
+			return fmt.Errorf("resource %d (%s): %w", i, resource.Name, err)
+		}
+	}
+
+	// Validate objects
+	for i, object := range service.Objects {
+		if err := ValidateObject(service, &object); err != nil {
+			return fmt.Errorf("object %d (%s): %w", i, object.Name, err)
+		}
+	}
+
+	return nil
+}
+
+// ValidateResource validates a resource and its fields against the defined rules.
+func ValidateResource(service *Service, resource *Resource) error {
+	// Validate operations
+	if err := ValidateOperations(resource.Operations); err != nil {
+		return fmt.Errorf("resource operations: %w", err)
+	}
+
+	// Validate resource fields
+	for i, field := range resource.Fields {
+		if err := ValidateResourceField(service, &field); err != nil {
+			return fmt.Errorf("field %d (%s): %w", i, field.Name, err)
+		}
+	}
+
+	// Validate endpoints
+	for i, endpoint := range resource.Endpoints {
+		if err := ValidateEndpoint(service, &endpoint); err != nil {
+			return fmt.Errorf("endpoint %d (%s): %w", i, endpoint.Name, err)
+		}
+	}
+
+	return nil
+}
+
+// ValidateObject validates an object and its fields against the defined rules.
+func ValidateObject(service *Service, object *Object) error {
+	// Validate object fields
+	for i, field := range object.Fields {
+		if err := ValidateField(service, &field); err != nil {
+			return fmt.Errorf("field %d (%s): %w", i, field.Name, err)
+		}
+	}
+
+	return nil
+}
+
+// ValidateResourceField validates a resource field against the defined rules.
+func ValidateResourceField(service *Service, field *ResourceField) error {
+	// Validate operations
+	if err := ValidateOperations(field.Operations); err != nil {
+		return fmt.Errorf("field operations: %w", err)
+	}
+
+	// Validate the embedded field
+	return ValidateField(service, &field.Field)
+}
+
+// ValidateField validates a field against the defined rules.
+func ValidateField(service *Service, field *Field) error {
+	// Validate field type
+	if err := ValidateFieldType(service, field.Type); err != nil {
+		return fmt.Errorf("field type: %w", err)
+	}
+
+	// Validate modifiers
+	if err := ValidateModifiers(field.Modifiers); err != nil {
+		return fmt.Errorf("field modifiers: %w", err)
+	}
+
+	return nil
+}
+
+// ValidateEndpoint validates an endpoint against the defined rules.
+func ValidateEndpoint(service *Service, endpoint *Endpoint) error {
+	// Validate request body params
+	for i, field := range endpoint.Request.BodyParams {
+		if err := ValidateField(service, &field); err != nil {
+			return fmt.Errorf("request body param %d (%s): %w", i, field.Name, err)
+		}
+	}
+
+	// Validate request query params
+	for i, field := range endpoint.Request.QueryParams {
+		if err := ValidateField(service, &field); err != nil {
+			return fmt.Errorf("request query param %d (%s): %w", i, field.Name, err)
+		}
+	}
+
+	// Validate request headers
+	for i, field := range endpoint.Request.Headers {
+		if err := ValidateField(service, &field); err != nil {
+			return fmt.Errorf("request header %d (%s): %w", i, field.Name, err)
+		}
+	}
+
+	// Validate response body fields
+	for i, field := range endpoint.Response.BodyFields {
+		if err := ValidateField(service, &field); err != nil {
+			return fmt.Errorf("response body field %d (%s): %w", i, field.Name, err)
+		}
+	}
+
+	return nil
+}
+
+// ValidateOperations validates that all operations are in PascalCase and are valid CRUD operations.
+func ValidateOperations(operations []string) error {
+	validOperations := []string{OperationCreate, OperationRead, OperationUpdate, OperationDelete}
+
+	for _, operation := range operations {
+		if !slices.Contains(validOperations, operation) {
+			return fmt.Errorf("%s: operation '%s' must be one of: %v", errorInvalidOperation, operation, validOperations)
+		}
+	}
+
+	return nil
+}
+
+// ValidateFieldType validates that the field type is either a valid primitive type, enum, or object.
+func ValidateFieldType(service *Service, fieldType string) error {
+	// Check if it's a primitive type
+	validPrimitiveTypes := []string{
+		FieldTypeUUID, FieldTypeDate, FieldTypeTimestamp,
+		FieldTypeString, FieldTypeInt, FieldTypeBool,
+	}
+
+	if slices.Contains(validPrimitiveTypes, fieldType) {
+		return nil
+	}
+
+	// Check if it's a valid enum
+	if service.HasEnum(fieldType) {
+		return nil
+	}
+
+	// Check if it's a valid object
+	if service.HasObject(fieldType) {
+		return nil
+	}
+
+	return fmt.Errorf("%s: field type '%s' must be one of the primitive types %v, or a valid enum/object", errorInvalidFieldType, fieldType, validPrimitiveTypes)
+}
+
+// ValidateModifiers validates that all modifiers are in PascalCase and are valid modifiers.
+func ValidateModifiers(modifiers []string) error {
+	validModifiers := []string{ModifierNullable, ModifierArray}
+
+	for _, modifier := range modifiers {
+		if !slices.Contains(validModifiers, modifier) {
+			return fmt.Errorf("%s: modifier '%s' must be one of: %v", errorInvalidModifier, modifier, validModifiers)
+		}
+	}
+
+	return nil
+}
+
 // Parsing functions
 
 // ParseServiceFromFile reads and parses a YAML or JSON specification file,
@@ -1813,6 +2174,12 @@ func ParseServiceFromYAML(data []byte) (*Service, error) {
 
 // parseServiceFromBytes is the internal parsing function without overlay application.
 func parseServiceFromBytes(data []byte, fileExtension string) (*Service, error) {
+	// Validate with position information first
+	if err := ValidateServiceWithPosition(data, fileExtension); err != nil {
+		return nil, fmt.Errorf("%s: %w", errorValidationFailed, err)
+	}
+
+	// If validation passed, parse normally
 	var service Service
 
 	switch fileExtension {
