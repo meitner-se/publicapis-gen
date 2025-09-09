@@ -1345,7 +1345,7 @@ func (e EndpointRequest) GetRequiredBodyParams(service *Service) []string {
 
 // GetFullPath returns the full path for the endpoint including the resource name.
 func (e Endpoint) GetFullPath(resourceName string) string {
-	return pathSeparator + toKebabCase(resourceName) + e.Path
+	return pathSeparator + ToKebabCase(resourceName) + e.Path
 }
 
 // Resource methods
@@ -1647,11 +1647,27 @@ func camelCase(s string) string {
 	return strmangle.CamelCase(s)
 }
 
-// toKebabCase converts a string to kebab-case format.
-func toKebabCase(s string) string {
-	// Convert to lowercase and replace spaces/underscores with hyphens
-	result := strings.ToLower(s)
-	result = strings.ReplaceAll(result, "_", "-")
-	result = strings.ReplaceAll(result, " ", "-")
-	return result
+// ToKebabCase converts a string to kebab-case format.
+func ToKebabCase(s string) string {
+	// Handle empty string
+	if s == "" {
+		return s
+	}
+
+	// First normalize spaces and underscores to hyphens, then handle PascalCase
+	normalized := strings.ReplaceAll(s, "_", "-")
+	normalized = strings.ReplaceAll(normalized, " ", "-")
+
+	// Convert PascalCase/camelCase to kebab-case by inserting hyphens before uppercase letters
+	var result strings.Builder
+	for i, r := range normalized {
+		// Insert hyphen before uppercase letters (except first character and not after existing hyphens)
+		if i > 0 && r >= 'A' && r <= 'Z' && normalized[i-1] != '-' {
+			result.WriteByte('-')
+		}
+		result.WriteRune(r)
+	}
+
+	// Convert to lowercase
+	return strings.ToLower(result.String())
 }
