@@ -173,6 +173,12 @@ const (
 	autoColumnUpdatedByTemplate = "User who last updated the %s"
 )
 
+// Meta object constants
+const (
+	metaObjectName        = "Meta"
+	metaObjectDescription = "Metadata fields containing creation and update information"
+)
+
 // HTTP Methods
 const (
 	httpMethodGet    = "GET"
@@ -480,14 +486,15 @@ func ApplyOverlay(input *Service) *Service {
 	return result
 }
 
-// addDefaultEnumsAndObjects adds the default error and pagination objects to the service if they don't already exist.
+// addDefaultEnumsAndObjects adds the default error, pagination, and meta objects to the service if they don't already exist.
 func addDefaultEnumsAndObjects(result *Service, input *Service) {
-	// Check if ErrorCode enum, Error object, ErrorFieldCode enum, ErrorField object, and Pagination object already exist
+	// Check if ErrorCode enum, Error object, ErrorFieldCode enum, ErrorField object, Pagination object, and Meta object already exist
 	errorCodeEnumExists := false
 	errorObjectExists := false
 	errorFieldCodeEnumExists := false
 	errorFieldObjectExists := false
 	paginationObjectExists := false
+	metaObjectExists := false
 	for _, enum := range input.Enums {
 		if enum.Name == errorCodeEnumName {
 			errorCodeEnumExists = true
@@ -505,6 +512,9 @@ func addDefaultEnumsAndObjects(result *Service, input *Service) {
 		}
 		if object.Name == paginationObjectName {
 			paginationObjectExists = true
+		}
+		if object.Name == metaObjectName {
+			metaObjectExists = true
 		}
 	}
 
@@ -610,6 +620,12 @@ func addDefaultEnumsAndObjects(result *Service, input *Service) {
 		}
 		result.Objects = append(result.Objects, paginationObject)
 	}
+
+	// Add default Meta object if it doesn't exist
+	if !metaObjectExists {
+		metaObject := CreateDefaultMeta()
+		result.Objects = append(result.Objects, metaObject)
+	}
 }
 
 // generateObjectsFromResources generates Objects from Resources that have Read operations.
@@ -624,7 +640,7 @@ func generateObjectsFromResources(result *Service, resources []Resource) {
 
 				// Add auto-columns to the object if not skipped
 				if !resource.ShouldSkipAutoColumns() {
-					autoColumns := CreateAutoColumns(resource.Name)
+					autoColumns := CreateAutoColumnsWithMeta(resource.Name)
 					fields = append(autoColumns, fields...)
 				}
 
@@ -1624,6 +1640,50 @@ func CreateAutoColumns(resourceName string) []Field {
 		CreateAutoColumnCreatedBy(resourceName),
 		CreateAutoColumnUpdatedAt(resourceName),
 		CreateAutoColumnUpdatedBy(resourceName),
+	}
+}
+
+// CreateDefaultMeta creates a standard Meta object containing creation and update metadata fields.
+func CreateDefaultMeta() Object {
+	return Object{
+		Name:        metaObjectName,
+		Description: metaObjectDescription,
+		Fields: []Field{
+			{
+				Name:        autoColumnCreatedAtName,
+				Description: "Timestamp when the resource was created",
+				Type:        FieldTypeTimestamp,
+			},
+			{
+				Name:        autoColumnCreatedByName,
+				Description: "User who created the resource",
+				Type:        FieldTypeUUID,
+				Modifiers:   []string{ModifierNullable},
+			},
+			{
+				Name:        autoColumnUpdatedAtName,
+				Description: "Timestamp when the resource was last updated",
+				Type:        FieldTypeTimestamp,
+			},
+			{
+				Name:        autoColumnUpdatedByName,
+				Description: "User who last updated the resource",
+				Type:        FieldTypeUUID,
+				Modifiers:   []string{ModifierNullable},
+			},
+		},
+	}
+}
+
+// CreateAutoColumnsWithMeta creates auto-column fields using Meta object for metadata fields.
+func CreateAutoColumnsWithMeta(resourceName string) []Field {
+	return []Field{
+		CreateAutoColumnID(resourceName),
+		{
+			Name:        metaObjectName,
+			Description: fmt.Sprintf("Metadata information for the %s", resourceName),
+			Type:        metaObjectName,
+		},
 	}
 }
 
