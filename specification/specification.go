@@ -185,7 +185,7 @@ const (
 // Meta object constants
 const (
 	metaObjectName        = "Meta"
-	metaObjectDescription = "Metadata fields containing creation and update information"
+	metaObjectDescription = "Meta contains information about the creation and modification of a resource for auditing purposes"
 )
 
 // HTTP Methods

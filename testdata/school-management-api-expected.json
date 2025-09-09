@@ -1575,7 +1575,7 @@
           "createdAt",
           "updatedAt"
         ],
-        "description": "Metadata fields containing creation and update information"
+        "description": "Meta contains information about the creation and modification of a resource for auditing purposes"
       },
       "Students": {
         "type": "object",
