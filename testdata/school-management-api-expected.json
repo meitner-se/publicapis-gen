@@ -12,6 +12,707 @@
     }
   ],
   "paths": {
+    "/students/_search": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Search Students",
+        "description": "Search for `Students` with filtering capabilities.",
+        "operationId": "Search",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of items to return (default: 50)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "The maximum number of items to return (default: 50)",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "The number of items to skip before starting to return results (default: 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "The number of items to skip before starting to return results (default: 0)",
+              "default": 0
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Request body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "filter": {
+                    "type": "string",
+                    "description": "Filter criteria to search for specific records"
+                  }
+                },
+                "required": [
+                  "filter"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "title": "Students"
+                      },
+                      "description": "Array of Students objects"
+                    },
+                    "pagination": {
+                      "title": "Pagination",
+                      "description": "Pagination information"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was malformed or contained invalid parameters. 400 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is missing valid authentication credentials. 401 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The request was well-formed but failed validation (e.g. invalid field format or constraints), 422 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "When the rate limit has been exceeded, 429 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Some serverside issue, 5xx status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/students/bulk-import": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Bulk Import Students",
+        "description": "Import multiple students from a CSV file or structured data",
+        "operationId": "BulkImport",
+        "parameters": [
+          {
+            "name": "validateOnly",
+            "in": "query",
+            "description": "Only validate data without importing",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Only validate data without importing",
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Request body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "students": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Array of student data to import"
+                  },
+                  "overwriteExisting": {
+                    "type": "boolean",
+                    "description": "Whether to overwrite existing student records",
+                    "default": false
+                  }
+                }
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "imported": {
+                      "type": "integer",
+                      "description": "Number of students successfully imported"
+                    },
+                    "failed": {
+                      "type": "integer",
+                      "description": "Number of students that failed to import"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "List of import error messages"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was malformed or contained invalid parameters. 400 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is missing valid authentication credentials. 401 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The request was well-formed but failed validation (e.g. invalid field format or constraints), 422 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "When the rate limit has been exceeded, 429 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Some serverside issue, 5xx status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/students/reports/generate": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Generate Student Report",
+        "description": "Generate a comprehensive report for students based on filters",
+        "operationId": "GenerateReport",
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "description": "Report format (pdf, excel, csv)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Report format (pdf, excel, csv)",
+              "default": "pdf"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Request body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "gradeLevel": {
+                    "title": "GradeLevel",
+                    "description": "Filter by specific grade level",
+                    "nullable": true
+                  },
+                  "status": {
+                    "title": "StudentStatus",
+                    "description": "Filter by student status",
+                    "nullable": true
+                  },
+                  "enrollmentDateFrom": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Filter students enrolled after this date",
+                    "nullable": true
+                  },
+                  "enrollmentDateTo": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Filter students enrolled before this date",
+                    "nullable": true
+                  },
+                  "includeInactive": {
+                    "type": "boolean",
+                    "description": "Include inactive students in report",
+                    "default": false
+                  }
+                }
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "202": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "reportId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "Unique identifier for the generated report"
+                    },
+                    "estimatedCompletionTime": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "When the report is expected to be ready"
+                    },
+                    "downloadUrl": {
+                      "type": "string",
+                      "description": "URL to download the report once ready",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was malformed or contained invalid parameters. 400 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is missing valid authentication credentials. 401 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The request was well-formed but failed validation (e.g. invalid field format or constraints), 422 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "When the rate limit has been exceeded, 429 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Some serverside issue, 5xx status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/students/advanced-search": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Advanced Student Search",
+        "description": "Search students with advanced filtering and sorting options",
+        "operationId": "AdvancedSearch",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of results to return",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "Maximum number of results to return",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of results to skip",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "Number of results to skip",
+              "default": 0
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "description": "Field to sort by",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Field to sort by",
+              "default": "lastName"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "description": "Sort order (asc, desc)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Sort order (asc, desc)",
+              "default": "asc"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Request body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nameQuery": {
+                    "type": "string",
+                    "description": "Search in first name and last name",
+                    "nullable": true
+                  },
+                  "gradeLevel": {
+                    "type": "array",
+                    "items": {
+                      "title": "GradeLevel"
+                    },
+                    "description": "Filter by one or more grade levels",
+                    "nullable": true
+                  },
+                  "status": {
+                    "type": "array",
+                    "items": {
+                      "title": "StudentStatus"
+                    },
+                    "description": "Filter by one or more statuses",
+                    "nullable": true
+                  },
+                  "enrollmentDateRange": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "description": "Date range filter [from, to]",
+                    "nullable": true
+                  },
+                  "hasGraduationDate": {
+                    "type": "boolean",
+                    "description": "Filter students with or without graduation date",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "students": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Array of matching students"
+                    },
+                    "totalCount": {
+                      "type": "integer",
+                      "description": "Total number of matching students"
+                    },
+                    "facets": {
+                      "type": "string",
+                      "description": "Search facets and counts"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was malformed or contained invalid parameters. 400 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is missing valid authentication credentials. 401 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The request was well-formed but failed validation (e.g. invalid field format or constraints), 422 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "When the rate limit has been exceeded, 429 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Some serverside issue, 5xx status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/students": {
       "get": {
         "tags": [
@@ -660,165 +1361,6 @@
           }
         }
       }
-    },
-    "/students/_search": {
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Search Students",
-        "description": "Search for `Students` with filtering capabilities.",
-        "operationId": "Search",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of items to return (default: 50)",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "description": "The maximum number of items to return (default: 50)",
-              "default": 50
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "The number of items to skip before starting to return results (default: 0)",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "description": "The number of items to skip before starting to return results (default: 0)",
-              "default": 0
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "Request body",
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "filter": {
-                    "type": "string",
-                    "description": "Filter criteria to search for specific records"
-                  }
-                },
-                "required": [
-                  "filter"
-                ]
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "title": "Students"
-                      },
-                      "description": "Array of Students objects"
-                    },
-                    "pagination": {
-                      "title": "Pagination",
-                      "description": "Pagination information"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The request was malformed or contained invalid parameters. 400 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Error"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "The request is missing valid authentication credentials. 401 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Error"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Error"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Error"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "The request was well-formed but failed validation (e.g. invalid field format or constraints), 422 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Error"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "When the rate limit has been exceeded, 429 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Error"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Some serverside issue, 5xx status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Error"
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -1113,6 +1655,84 @@
           }
         },
         "description": "Request error object for Address"
+      },
+      "StudentsBulkImportRequestError": {
+        "type": "object",
+        "properties": {
+          "students": {
+            "title": "ErrorField",
+            "description": "Array of student data to import",
+            "nullable": true
+          },
+          "overwriteExisting": {
+            "title": "ErrorField",
+            "description": "Whether to overwrite existing student records",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Students BulkImport endpoint"
+      },
+      "StudentsGenerateReportRequestError": {
+        "type": "object",
+        "properties": {
+          "gradeLevel": {
+            "title": "ErrorField",
+            "description": "Filter by specific grade level",
+            "nullable": true
+          },
+          "status": {
+            "title": "ErrorField",
+            "description": "Filter by student status",
+            "nullable": true
+          },
+          "enrollmentDateFrom": {
+            "title": "ErrorField",
+            "description": "Filter students enrolled after this date",
+            "nullable": true
+          },
+          "enrollmentDateTo": {
+            "title": "ErrorField",
+            "description": "Filter students enrolled before this date",
+            "nullable": true
+          },
+          "includeInactive": {
+            "title": "ErrorField",
+            "description": "Include inactive students in report",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Students GenerateReport endpoint"
+      },
+      "StudentsAdvancedSearchRequestError": {
+        "type": "object",
+        "properties": {
+          "nameQuery": {
+            "title": "ErrorField",
+            "description": "Search in first name and last name",
+            "nullable": true
+          },
+          "gradeLevel": {
+            "title": "ErrorField",
+            "description": "Filter by one or more grade levels",
+            "nullable": true
+          },
+          "status": {
+            "title": "ErrorField",
+            "description": "Filter by one or more statuses",
+            "nullable": true
+          },
+          "enrollmentDateRange": {
+            "title": "ErrorField",
+            "description": "Date range filter [from, to]",
+            "nullable": true
+          },
+          "hasGraduationDate": {
+            "title": "ErrorField",
+            "description": "Filter students with or without graduation date",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Students AdvancedSearch endpoint"
       },
       "StudentsCreateRequestError": {
         "type": "object",
