@@ -32,6 +32,72 @@ const (
 	httpStatus500 = "500"
 )
 
+// OpenAPI version constants
+const (
+	defaultOpenAPIVersion = "3.1.0"
+	defaultServiceVersion = "1.0.0"
+)
+
+// Content type constants
+const (
+	contentTypeJSON = "application/json"
+)
+
+// Standard response descriptions
+const (
+	requestBodyDescription = "Request body"
+	successDescription     = "Successful response"
+)
+
+// Server description template
+const (
+	serverDescriptionTemplate = "%s server"
+)
+
+// Error response descriptions
+const (
+	badRequestDescription    = "Bad Request - The request was malformed or contained invalid parameters"
+	unauthorizedDescription  = "Unauthorized - The request is missing valid authentication credentials"
+	notFoundDescription      = "Not Found - The requested resource does not exist"
+	internalErrorDescription = "Internal Server Error - An unexpected server error occurred"
+)
+
+// Error code names
+const (
+	errorCodeBadRequest          = "BadRequest"
+	errorCodeUnauthorized        = "Unauthorized"
+	errorCodeForbidden           = "Forbidden"
+	errorCodeNotFound            = "NotFound"
+	errorCodeConflict            = "Conflict"
+	errorCodeUnprocessableEntity = "UnprocessableEntity"
+	errorCodeRateLimited         = "RateLimited"
+	errorCodeInternal            = "Internal"
+)
+
+// Schema types
+const (
+	schemaTypeString  = "string"
+	schemaTypeInteger = "integer"
+	schemaTypeBoolean = "boolean"
+	schemaTypeArray   = "array"
+	schemaTypeObject  = "object"
+)
+
+// Schema formats
+const (
+	schemaFormatUUID     = "uuid"
+	schemaFormatDate     = "date"
+	schemaFormatDateTime = "date-time"
+)
+
+// Object and field names
+const (
+	errorObjectName   = "Error"
+	messageFieldName  = "message"
+	codeFieldName     = "code"
+	errorCodeEnumName = "ErrorCode"
+)
+
 // Generator handles OpenAPI 3.1 specification generation from specification.Service.
 type Generator struct {
 	// Version specifies the OpenAPI version to generate (default: "3.1.0")
@@ -50,7 +116,7 @@ type Generator struct {
 // NewGenerator creates a new OpenAPI generator with default settings.
 func NewGenerator() *Generator {
 	return &Generator{
-		Version: "3.1.0",
+		Version: defaultOpenAPIVersion,
 	}
 }
 
@@ -75,7 +141,7 @@ func (g *Generator) buildV3Document(service *specification.Service) *v3.Document
 	// Create Info section
 	version := service.Version
 	if version == "" {
-		version = "1.0.0" // Default version if not specified
+		version = defaultServiceVersion // Default version if not specified
 	}
 
 	info := &base.Info{
@@ -105,7 +171,7 @@ func (g *Generator) buildV3Document(service *specification.Service) *v3.Document
 		servers := []*v3.Server{
 			{
 				URL:         g.ServerURL,
-				Description: fmt.Sprintf("%s server", title),
+				Description: fmt.Sprintf(serverDescriptionTemplate, title),
 			},
 		}
 		document.Servers = servers
@@ -147,7 +213,7 @@ func (g *Generator) buildV3Document(service *specification.Service) *v3.Document
 // createEnumSchema creates a base.Schema for an enum using native types.
 func (g *Generator) createEnumSchema(enum specification.Enum) *base.Schema {
 	schema := &base.Schema{
-		Type:        []string{"string"},
+		Type:        []string{schemaTypeString},
 		Description: enum.Description,
 	}
 
@@ -168,7 +234,7 @@ func (g *Generator) createEnumSchema(enum specification.Enum) *base.Schema {
 // createObjectSchema creates a base.Schema for an object using native types.
 func (g *Generator) createObjectSchema(obj specification.Object, service *specification.Service) *base.Schema {
 	schema := &base.Schema{
-		Type:        []string{"object"},
+		Type:        []string{schemaTypeObject},
 		Description: obj.Description,
 		Properties:  orderedmap.New[string, *base.SchemaProxy](),
 	}
@@ -198,7 +264,7 @@ func (g *Generator) createFieldSchema(field specification.Field, service *specif
 	// Handle array modifier
 	if field.IsArray() {
 		schema = &base.Schema{
-			Type:        []string{"array"},
+			Type:        []string{schemaTypeArray},
 			Description: field.Description,
 		}
 
@@ -244,25 +310,25 @@ func (g *Generator) createFieldSchema(field specification.Field, service *specif
 func (g *Generator) getTypeSchema(fieldType string, service *specification.Service) *base.Schema {
 	switch fieldType {
 	case specification.FieldTypeString:
-		return &base.Schema{Type: []string{"string"}}
+		return &base.Schema{Type: []string{schemaTypeString}}
 	case specification.FieldTypeInt:
-		return &base.Schema{Type: []string{"integer"}}
+		return &base.Schema{Type: []string{schemaTypeInteger}}
 	case specification.FieldTypeBool:
-		return &base.Schema{Type: []string{"boolean"}}
+		return &base.Schema{Type: []string{schemaTypeBoolean}}
 	case specification.FieldTypeUUID:
 		return &base.Schema{
-			Type:   []string{"string"},
-			Format: "uuid",
+			Type:   []string{schemaTypeString},
+			Format: schemaFormatUUID,
 		}
 	case specification.FieldTypeDate:
 		return &base.Schema{
-			Type:   []string{"string"},
-			Format: "date",
+			Type:   []string{schemaTypeString},
+			Format: schemaFormatDate,
 		}
 	case specification.FieldTypeTimestamp:
 		return &base.Schema{
-			Type:   []string{"string"},
-			Format: "date-time",
+			Type:   []string{schemaTypeString},
+			Format: schemaFormatDateTime,
 		}
 	default:
 		// Check if it's a custom object or enum
@@ -273,7 +339,7 @@ func (g *Generator) getTypeSchema(fieldType string, service *specification.Servi
 			}
 		}
 		// Default to string if unknown type
-		return &base.Schema{Type: []string{"string"}}
+		return &base.Schema{Type: []string{schemaTypeString}}
 	}
 }
 
@@ -378,7 +444,7 @@ func (g *Generator) createParameter(field specification.Field, location string, 
 func (g *Generator) createRequestBody(bodyParams []specification.Field, service *specification.Service) *v3.RequestBody {
 	// Create schema from body parameters
 	schema := &base.Schema{
-		Type:       []string{"object"},
+		Type:       []string{schemaTypeObject},
 		Properties: orderedmap.New[string, *base.SchemaProxy](),
 	}
 
@@ -403,11 +469,11 @@ func (g *Generator) createRequestBody(bodyParams []specification.Field, service 
 	}
 
 	content := orderedmap.New[string, *v3.MediaType]()
-	content.Set("application/json", mediaType)
+	content.Set(contentTypeJSON, mediaType)
 
 	isRequired := len(requiredFields) > 0
 	return &v3.RequestBody{
-		Description: "Request body",
+		Description: requestBodyDescription,
 		Content:     content,
 		Required:    &isRequired,
 	}
@@ -416,7 +482,7 @@ func (g *Generator) createRequestBody(bodyParams []specification.Field, service 
 // createResponse creates a v3.Response from an endpoint response using native types.
 func (g *Generator) createResponse(response specification.EndpointResponse, service *specification.Service) *v3.Response {
 	openAPIResponse := &v3.Response{
-		Description: "Successful response",
+		Description: successDescription,
 	}
 
 	// Add response content if present
@@ -432,7 +498,7 @@ func (g *Generator) createResponse(response specification.EndpointResponse, serv
 		} else if len(response.BodyFields) > 0 {
 			// Inline schema from body fields
 			schema = &base.Schema{
-				Type:       []string{"object"},
+				Type:       []string{schemaTypeObject},
 				Properties: orderedmap.New[string, *base.SchemaProxy](),
 			}
 
@@ -447,7 +513,7 @@ func (g *Generator) createResponse(response specification.EndpointResponse, serv
 			mediaType := &v3.MediaType{
 				Schema: base.CreateSchemaProxy(schema),
 			}
-			content.Set("application/json", mediaType)
+			content.Set(contentTypeJSON, mediaType)
 			openAPIResponse.Content = content
 		}
 	}
@@ -459,28 +525,28 @@ func (g *Generator) createResponse(response specification.EndpointResponse, serv
 func (g *Generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Response], endpoint specification.Endpoint, service *specification.Service) {
 	// Create error schema
 	var errorSchema *base.Schema
-	if service.HasObject("Error") {
+	if service.HasObject(errorObjectName) {
 		errorSchema = &base.Schema{
-			Title: "Error", // Temporary - proper $ref handling would need low-level API
+			Title: errorObjectName, // Temporary - proper $ref handling would need low-level API
 		}
 	} else {
 		// Fallback generic error schema
 		errorSchema = &base.Schema{
-			Type:       []string{"object"},
+			Type:       []string{schemaTypeObject},
 			Properties: orderedmap.New[string, *base.SchemaProxy](),
 		}
-		messageSchema := &base.Schema{Type: []string{"string"}}
-		codeSchema := &base.Schema{Type: []string{"string"}}
-		errorSchema.Properties.Set("message", base.CreateSchemaProxy(messageSchema))
-		errorSchema.Properties.Set("code", base.CreateSchemaProxy(codeSchema))
-		errorSchema.Required = []string{"message", "code"}
+		messageSchema := &base.Schema{Type: []string{schemaTypeString}}
+		codeSchema := &base.Schema{Type: []string{schemaTypeString}}
+		errorSchema.Properties.Set(messageFieldName, base.CreateSchemaProxy(messageSchema))
+		errorSchema.Properties.Set(codeFieldName, base.CreateSchemaProxy(codeSchema))
+		errorSchema.Required = []string{messageFieldName, codeFieldName}
 	}
 
 	errorContent := orderedmap.New[string, *v3.MediaType]()
 	mediaType := &v3.MediaType{
 		Schema: base.CreateSchemaProxy(errorSchema),
 	}
-	errorContent.Set("application/json", mediaType)
+	errorContent.Set(contentTypeJSON, mediaType)
 
 	// Check if endpoint has body parameters
 	hasBodyParams := len(endpoint.Request.BodyParams) > 0
@@ -488,7 +554,7 @@ func (g *Generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Resp
 	// Find ErrorCode enum in the service
 	var errorCodeEnum *specification.Enum
 	for i, enum := range service.Enums {
-		if enum.Name == "ErrorCode" {
+		if enum.Name == errorCodeEnumName {
 			errorCodeEnum = &service.Enums[i]
 			break
 		}
@@ -521,28 +587,28 @@ func (g *Generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Resp
 func (g *Generator) addDefaultErrorResponses(responses *orderedmap.Map[string, *v3.Response], errorContent *orderedmap.Map[string, *v3.MediaType]) {
 	// 400 Bad Request
 	badRequestResponse := &v3.Response{
-		Description: "Bad Request - The request was malformed or contained invalid parameters",
+		Description: badRequestDescription,
 		Content:     errorContent,
 	}
 	responses.Set(httpStatus400, badRequestResponse)
 
 	// 401 Unauthorized
 	unauthorizedResponse := &v3.Response{
-		Description: "Unauthorized - The request is missing valid authentication credentials",
+		Description: unauthorizedDescription,
 		Content:     errorContent,
 	}
 	responses.Set(httpStatus401, unauthorizedResponse)
 
 	// 404 Not Found
 	notFoundResponse := &v3.Response{
-		Description: "Not Found - The requested resource does not exist",
+		Description: notFoundDescription,
 		Content:     errorContent,
 	}
 	responses.Set(httpStatus404, notFoundResponse)
 
 	// 500 Internal Server Error
 	internalErrorResponse := &v3.Response{
-		Description: "Internal Server Error - An unexpected server error occurred",
+		Description: internalErrorDescription,
 		Content:     errorContent,
 	}
 	responses.Set(httpStatus500, internalErrorResponse)
@@ -551,21 +617,21 @@ func (g *Generator) addDefaultErrorResponses(responses *orderedmap.Map[string, *
 // mapErrorCodeToStatusAndDescription maps error code names to HTTP status codes and descriptions.
 func (g *Generator) mapErrorCodeToStatusAndDescription(errorCodeName, errorCodeDescription string) (string, string) {
 	switch errorCodeName {
-	case "BadRequest":
+	case errorCodeBadRequest:
 		return httpStatus400, errorCodeDescription
-	case "Unauthorized":
+	case errorCodeUnauthorized:
 		return httpStatus401, errorCodeDescription
-	case "Forbidden":
+	case errorCodeForbidden:
 		return httpStatus403, errorCodeDescription
-	case "NotFound":
+	case errorCodeNotFound:
 		return httpStatus404, errorCodeDescription
-	case "Conflict":
+	case errorCodeConflict:
 		return httpStatus409, errorCodeDescription
-	case "UnprocessableEntity":
+	case errorCodeUnprocessableEntity:
 		return httpStatus422, errorCodeDescription
-	case "RateLimited":
+	case errorCodeRateLimited:
 		return httpStatus429, errorCodeDescription
-	case "Internal":
+	case errorCodeInternal:
 		return httpStatus500, errorCodeDescription
 	default:
 		// Default to 500 for unknown error codes
