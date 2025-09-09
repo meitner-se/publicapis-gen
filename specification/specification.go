@@ -161,6 +161,8 @@ const (
 	offsetFieldDescription      = "Number of items to skip from the beginning of the result set"
 	limitFieldName              = "Limit"
 	limitFieldDescription       = "Maximum number of items to return in the result set"
+	totalFieldName              = "Total"
+	totalFieldDescription       = "Total number of items available for pagination"
 )
 
 // Auto-column constants
@@ -631,6 +633,11 @@ func addDefaultEnumsAndObjects(result *Service, input *Service) {
 				{
 					Name:        limitFieldName,
 					Description: limitFieldDescription,
+					Type:        FieldTypeInt,
+				},
+				{
+					Name:        totalFieldName,
+					Description: totalFieldDescription,
 					Type:        FieldTypeInt,
 				},
 			},
