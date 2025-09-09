@@ -38,6 +38,12 @@ const (
 	defaultServiceVersion = "1.0.0"
 )
 
+// API generation constants
+const (
+	apiTitleSuffix        = " API"
+	defaultAPIDescription = "Generated API documentation"
+)
+
 // Content type constants
 const (
 	contentTypeJSON = "application/json"
@@ -680,4 +686,35 @@ func (g *Generator) ToJSON(document *v3.Document) ([]byte, error) {
 
 	// Use libopenapi's native RenderJSON method
 	return document.RenderJSON("  ")
+}
+
+// GenerateFromSpecificationToJSON is a convenience method that generates an OpenAPI document
+// from a specification.Service and returns it as JSON in a single call.
+// This method creates a generator with default settings, sets a standard title and description,
+// generates the OpenAPI document, and converts it to JSON format.
+func GenerateFromSpecificationToJSON(service *specification.Service) ([]byte, error) {
+	if service == nil {
+		return nil, errors.New(errorInvalidService)
+	}
+
+	// Create generator with default configuration
+	generator := NewGenerator()
+
+	// Set basic configuration based on service
+	generator.Title = service.Name + apiTitleSuffix
+	generator.Description = defaultAPIDescription
+
+	// Generate OpenAPI document
+	document, err := generator.GenerateFromService(service)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate OpenAPI document: %w", err)
+	}
+
+	// Convert to JSON
+	jsonBytes, err := generator.ToJSON(document)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert OpenAPI document to JSON: %w", err)
+	}
+
+	return jsonBytes, nil
 }

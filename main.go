@@ -163,21 +163,8 @@ func generateOverlay(ctx context.Context, service *specification.Service, inputF
 func generateOpenAPI(ctx context.Context, service *specification.Service, inputFile, outputFile string) error {
 	slog.InfoContext(ctx, "Generating OpenAPI document", logKeyMode, modeOpenAPI)
 
-	// Service already has overlays applied from parsing
-	// Create OpenAPI generator
-	generator := openapi.NewGenerator()
-
-	// Set basic configuration
-	generator.Title = service.Name + " API"
-	generator.Description = "Generated API documentation"
-
-	// Add server information if available
-	if len(service.Servers) > 0 {
-		// Server information is handled by the generator from the service
-	}
-
-	// Generate OpenAPI document
-	document, err := generator.GenerateFromService(service)
+	// Generate OpenAPI document as JSON in a single call
+	outputData, err := openapi.GenerateFromSpecificationToJSON(service)
 	if err != nil {
 		return fmt.Errorf("failed to generate OpenAPI document: %w", err)
 	}
@@ -189,12 +176,6 @@ func generateOpenAPI(ctx context.Context, service *specification.Service, inputF
 	} else {
 		// Ensure output path has .json extension
 		outputPath = ensureJSONExtension(outputPath)
-	}
-
-	// Always generate JSON output for OpenAPI
-	outputData, err := generator.ToJSON(document)
-	if err != nil {
-		return fmt.Errorf("failed to convert OpenAPI document to JSON: %w", err)
 	}
 
 	// Write output file
