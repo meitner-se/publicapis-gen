@@ -131,81 +131,8 @@ func (g *Generator) GenerateFromService(service *specification.Service) (*v3.Doc
 		return nil, errors.New(errorInvalidService)
 	}
 
-	// Auto-apply overlays if the service has resources but limited objects
-	// This ensures resource objects and overlay endpoints are generated
-	processedService := g.ensureOverlaysApplied(service)
-
 	// Build document using native libopenapi v3 types
-	return g.buildV3Document(processedService), nil
-}
-
-// ensureOverlaysApplied automatically applies overlays if the service has resources
-// but appears to lack the corresponding objects and endpoints that overlays would generate.
-func (g *Generator) ensureOverlaysApplied(service *specification.Service) *specification.Service {
-	// Check if overlays are likely already applied by looking for key indicators
-	hasResources := len(service.Resources) > 0
-	hasErrorCodeEnum := g.hasErrorCodeEnum(service)
-	hasResourceObjects := g.hasResourceObjects(service)
-
-	// If service has resources but lacks overlay-generated content, apply overlays
-	if hasResources && (!hasErrorCodeEnum || !hasResourceObjects) {
-		// Apply overlays to generate missing objects and endpoints
-		overlayedService := specification.ApplyOverlay(service)
-		if overlayedService != nil {
-			finalService := specification.ApplyFilterOverlay(overlayedService)
-			if finalService != nil {
-				return finalService
-			}
-		}
-		// If overlay application fails, return original service
-	}
-
-	// Return original service if no overlays needed or overlay application failed
-	return service
-}
-
-// hasErrorCodeEnum checks if the service has an ErrorCode enum (indicator of applied overlay).
-func (g *Generator) hasErrorCodeEnum(service *specification.Service) bool {
-	for _, enum := range service.Enums {
-		if enum.Name == errorCodeEnumName {
-			return true
-		}
-	}
-	return false
-}
-
-// hasResourceObjects checks if the service has objects that correspond to its resources.
-func (g *Generator) hasResourceObjects(service *specification.Service) bool {
-	if len(service.Resources) == 0 {
-		return true // No resources means no objects needed
-	}
-
-	// Check if we have objects for resources that have Read operations
-	for _, resource := range service.Resources {
-		hasReadOperation := false
-		for _, op := range resource.Operations {
-			if op == specification.OperationRead {
-				hasReadOperation = true
-				break
-			}
-		}
-
-		if hasReadOperation {
-			// Look for corresponding object
-			hasObject := false
-			for _, obj := range service.Objects {
-				if obj.Name == resource.Name {
-					hasObject = true
-					break
-				}
-			}
-			if !hasObject {
-				return false // Found a resource with Read operation but no corresponding object
-			}
-		}
-	}
-
-	return true // All resources with Read operations have corresponding objects
+	return g.buildV3Document(service), nil
 }
 
 // buildV3Document creates a v3.Document using native libopenapi types.

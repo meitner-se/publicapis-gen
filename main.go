@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -18,17 +17,14 @@ import (
 
 // Error messages and log keys
 const (
-	errorNotImplemented    = "not implemented"
-	errorFailedToRun       = "failed to run"
-	errorInvalidFile       = "invalid input file"
-	errorUnsupportedFormat = "unsupported file format"
-	errorInvalidMode       = "invalid operation mode"
-	errorFileRead          = "failed to read file"
-	errorFileParse         = "failed to parse file"
-	errorFileWrite         = "failed to write file"
-	logKeyError            = "error"
-	logKeyFile             = "file"
-	logKeyMode             = "mode"
+	errorNotImplemented = "not implemented"
+	errorFailedToRun    = "failed to run"
+	errorInvalidFile    = "invalid input file"
+	errorInvalidMode    = "invalid operation mode"
+	errorFileWrite      = "failed to write file"
+	logKeyError         = "error"
+	logKeyFile          = "file"
+	logKeyMode          = "mode"
 )
 
 // Operation modes
@@ -140,54 +136,18 @@ func run(ctx context.Context) error {
 	}
 }
 
-// readSpecificationFile reads and parses a YAML or JSON specification file.
+// readSpecificationFile reads and parses a YAML or JSON specification file
+// with overlays automatically applied.
 func readSpecificationFile(filePath string) (*specification.Service, error) {
-	// Check if file exists
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("%s: file does not exist: %s", errorInvalidFile, filePath)
-	}
-
-	// Read file contents
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", errorFileRead, err)
-	}
-
-	// Determine file format by extension
-	ext := strings.ToLower(filepath.Ext(filePath))
-	var service specification.Service
-
-	switch ext {
-	case extYAML, extYML:
-		if err := yaml.Unmarshal(data, &service); err != nil {
-			return nil, fmt.Errorf("%s: YAML parsing error: %w", errorFileParse, err)
-		}
-	case extJSON:
-		if err := json.Unmarshal(data, &service); err != nil {
-			return nil, fmt.Errorf("%s: JSON parsing error: %w", errorFileParse, err)
-		}
-	default:
-		return nil, fmt.Errorf("%s: file must have .yaml, .yml, or .json extension", errorUnsupportedFormat)
-	}
-
-	return &service, nil
+	return specification.ParseServiceFromFile(filePath)
 }
 
 // generateOverlay generates a specification with overlay applied.
 func generateOverlay(ctx context.Context, service *specification.Service, inputFile, outputFile string) error {
 	slog.InfoContext(ctx, "Generating specification with overlay", logKeyMode, modeOverlay)
 
-	// Apply overlay to the service
-	overlayedService := specification.ApplyOverlay(service)
-	if overlayedService == nil {
-		return errors.New("failed to apply overlay to specification")
-	}
-
-	// Apply filter overlay as well
-	finalService := specification.ApplyFilterOverlay(overlayedService)
-	if finalService == nil {
-		return errors.New("failed to apply filter overlay to specification")
-	}
+	// Service already has overlays applied from parsing
+	// This mode outputs the complete specification with overlays
 
 	// Determine output file path
 	outputPath := outputFile
@@ -196,39 +156,28 @@ func generateOverlay(ctx context.Context, service *specification.Service, inputF
 	}
 
 	// Write output file
-	return writeSpecificationFile(ctx, finalService, outputPath)
+	return writeSpecificationFile(ctx, service, outputPath)
 }
 
 // generateOpenAPI generates an OpenAPI document from the specification.
 func generateOpenAPI(ctx context.Context, service *specification.Service, inputFile, outputFile string) error {
 	slog.InfoContext(ctx, "Generating OpenAPI document", logKeyMode, modeOpenAPI)
 
-	// Apply overlay to the service first
-	overlayedService := specification.ApplyOverlay(service)
-	if overlayedService == nil {
-		return errors.New("failed to apply overlay to specification")
-	}
-
-	// Apply filter overlay as well
-	finalService := specification.ApplyFilterOverlay(overlayedService)
-	if finalService == nil {
-		return errors.New("failed to apply filter overlay to specification")
-	}
-
+	// Service already has overlays applied from parsing
 	// Create OpenAPI generator
 	generator := openapi.NewGenerator()
 
 	// Set basic configuration
-	generator.Title = finalService.Name + " API"
+	generator.Title = service.Name + " API"
 	generator.Description = "Generated API documentation"
 
 	// Add server information if available
-	if len(finalService.Servers) > 0 {
+	if len(service.Servers) > 0 {
 		// Server information is handled by the generator from the service
 	}
 
 	// Generate OpenAPI document
-	document, err := generator.GenerateFromService(finalService)
+	document, err := generator.GenerateFromService(service)
 	if err != nil {
 		return fmt.Errorf("failed to generate OpenAPI document: %w", err)
 	}
