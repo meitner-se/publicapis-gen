@@ -1303,18 +1303,19 @@ func TestToKebabCase(t *testing.T) {
 		input    string
 		expected string
 	}{
-		{"UserProfile", "userprofile"},
+		{"UserProfile", "user-profile"},
 		{"user_profile", "user-profile"},
 		{"User Profile", "user-profile"},
-		{"UserAPI", "userapi"},
+		{"UserAPI", "user-api"},
 		{"API_KEY", "api-key"},
 		{"simple", "simple"},
 		{"Multi Word String", "multi-word-string"},
+		{"StudentPlacement", "student-placement"},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.input, func(t *testing.T) {
-			result := toKebabCase(tc.input)
+			result := ToKebabCase(tc.input)
 			assert.Equal(t, tc.expected, result, "KebabCase conversion for '%s' should be '%s'", tc.input, tc.expected)
 		})
 	}
@@ -1337,8 +1338,8 @@ func TestToKebabCase(t *testing.T) {
 		}
 
 		for _, tc := range edgeCases {
-			t.Run("toKebabCase_"+tc.input, func(t *testing.T) {
-				result := toKebabCase(tc.input)
+			t.Run("ToKebabCase_"+tc.input, func(t *testing.T) {
+				result := ToKebabCase(tc.input)
 				assert.Equal(t, tc.expected, result, "ToKebabCase of '%s' should be '%s'", tc.input, tc.expected)
 			})
 		}
@@ -2166,6 +2167,12 @@ func TestEndpoint_GetFullPath(t *testing.T) {
 			resourceName: "Products",
 			endpointPath: "/_search",
 			expectedPath: "/products/_search",
+		},
+		{
+			name:         "PascalCase resource name converted to kebab-case",
+			resourceName: "StudentPlacement",
+			endpointPath: "/{id}",
+			expectedPath: "/student-placement/{id}",
 		},
 	}
 

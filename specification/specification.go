@@ -1345,7 +1345,7 @@ func (e EndpointRequest) GetRequiredBodyParams(service *Service) []string {
 
 // GetFullPath returns the full path for the endpoint including the resource name.
 func (e Endpoint) GetFullPath(resourceName string) string {
-	return pathSeparator + toKebabCase(resourceName) + e.Path
+	return pathSeparator + ToKebabCase(resourceName) + e.Path
 }
 
 // Resource methods
@@ -1647,11 +1647,41 @@ func camelCase(s string) string {
 	return strmangle.CamelCase(s)
 }
 
-// toKebabCase converts a string to kebab-case format.
-func toKebabCase(s string) string {
-	// Convert to lowercase and replace spaces/underscores with hyphens
-	result := strings.ToLower(s)
-	result = strings.ReplaceAll(result, "_", "-")
-	result = strings.ReplaceAll(result, " ", "-")
-	return result
+// ToKebabCase converts a string to kebab-case format.
+func ToKebabCase(s string) string {
+	// Handle empty string
+	if s == "" {
+		return s
+	}
+
+	// First normalize spaces and underscores to hyphens, then handle PascalCase
+	normalized := strings.ReplaceAll(s, "_", "-")
+	normalized = strings.ReplaceAll(normalized, " ", "-")
+
+	// Convert PascalCase/camelCase to kebab-case
+	var result strings.Builder
+	runes := []rune(normalized)
+
+	for i, r := range runes {
+		// Insert hyphen before uppercase letters in these cases:
+		// 1. Before an uppercase letter that follows a lowercase letter or digit
+		// 2. Before the last uppercase letter in a sequence of uppercase letters if followed by lowercase
+		if i > 0 && r >= 'A' && r <= 'Z' && runes[i-1] != '-' {
+			prev := runes[i-1]
+
+			// Case 1: Previous character is lowercase or digit
+			if (prev >= 'a' && prev <= 'z') || (prev >= '0' && prev <= '9') {
+				result.WriteByte('-')
+			} else if prev >= 'A' && prev <= 'Z' {
+				// Case 2: Previous character is uppercase, check if current is followed by lowercase
+				if i+1 < len(runes) && runes[i+1] >= 'a' && runes[i+1] <= 'z' {
+					result.WriteByte('-')
+				}
+			}
+		}
+		result.WriteRune(r)
+	}
+
+	// Convert to lowercase
+	return strings.ToLower(result.String())
 }
