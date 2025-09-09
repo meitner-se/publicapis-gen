@@ -341,7 +341,14 @@ func (g *Generator) getTypeSchema(fieldType string, service *specification.Servi
 			// Create a proper $ref schema reference
 			refString := schemaReferencePrefix + fieldType
 			proxy := base.CreateSchemaProxyRef(refString)
-			return proxy.Schema()
+			schema := proxy.Schema()
+			if schema != nil {
+				return schema
+			}
+			// Fallback to Title-based reference if proxy resolution fails
+			return &base.Schema{
+				Title: fieldType,
+			}
 		}
 		// Default to string if unknown type
 		return &base.Schema{Type: []string{schemaTypeString}}
@@ -498,6 +505,12 @@ func (g *Generator) createResponse(response specification.EndpointResponse, serv
 			refString := schemaReferencePrefix + *response.BodyObject
 			proxy := base.CreateSchemaProxyRef(refString)
 			schema = proxy.Schema()
+			if schema == nil {
+				// Fallback to Title-based reference if proxy resolution fails
+				schema = &base.Schema{
+					Title: *response.BodyObject,
+				}
+			}
 		} else if len(response.BodyFields) > 0 {
 			// Inline schema from body fields
 			schema = &base.Schema{
@@ -533,6 +546,12 @@ func (g *Generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Resp
 		refString := schemaReferencePrefix + errorObjectName
 		proxy := base.CreateSchemaProxyRef(refString)
 		errorSchema = proxy.Schema()
+		if errorSchema == nil {
+			// Fallback to Title-based reference if proxy resolution fails
+			errorSchema = &base.Schema{
+				Title: errorObjectName,
+			}
+		}
 	} else {
 		// Fallback generic error schema
 		errorSchema = &base.Schema{
