@@ -1082,6 +1082,142 @@ func TestCreateIDParam(t *testing.T) {
 	})
 }
 
+func TestCreateAutoColumnID(t *testing.T) {
+	// Act
+	idField := CreateAutoColumnID()
+
+	// Assert
+	assert.Equal(t, autoColumnIDName, idField.Name, "Auto-column ID should have correct name")
+	assert.Equal(t, autoColumnIDDescription, idField.Description, "Auto-column ID should have correct description")
+	assert.Equal(t, FieldTypeUUID, idField.Type, "Auto-column ID should have UUID type")
+	assert.Empty(t, idField.Modifiers, "Auto-column ID should have no modifiers")
+	assert.Empty(t, idField.Default, "Auto-column ID should have no default value")
+	assert.Empty(t, idField.Example, "Auto-column ID should have no example")
+
+	t.Run("consistency", func(t *testing.T) {
+		id1 := CreateAutoColumnID()
+		id2 := CreateAutoColumnID()
+
+		assert.Equal(t, id1, id2, "CreateAutoColumnID should return consistent results")
+	})
+}
+
+func TestCreateAutoColumnCreatedAt(t *testing.T) {
+	// Act
+	createdAtField := CreateAutoColumnCreatedAt()
+
+	// Assert
+	assert.Equal(t, autoColumnCreatedAtName, createdAtField.Name, "Auto-column CreatedAt should have correct name")
+	assert.Equal(t, autoColumnCreatedAtDesc, createdAtField.Description, "Auto-column CreatedAt should have correct description")
+	assert.Equal(t, FieldTypeTimestamp, createdAtField.Type, "Auto-column CreatedAt should have Timestamp type")
+	assert.Empty(t, createdAtField.Modifiers, "Auto-column CreatedAt should have no modifiers")
+	assert.Empty(t, createdAtField.Default, "Auto-column CreatedAt should have no default value")
+	assert.Empty(t, createdAtField.Example, "Auto-column CreatedAt should have no example")
+
+	t.Run("consistency", func(t *testing.T) {
+		createdAt1 := CreateAutoColumnCreatedAt()
+		createdAt2 := CreateAutoColumnCreatedAt()
+
+		assert.Equal(t, createdAt1, createdAt2, "CreateAutoColumnCreatedAt should return consistent results")
+	})
+}
+
+func TestCreateAutoColumnCreatedBy(t *testing.T) {
+	// Act
+	createdByField := CreateAutoColumnCreatedBy()
+
+	// Assert
+	assert.Equal(t, autoColumnCreatedByName, createdByField.Name, "Auto-column CreatedBy should have correct name")
+	assert.Equal(t, autoColumnCreatedByDesc, createdByField.Description, "Auto-column CreatedBy should have correct description")
+	assert.Equal(t, FieldTypeUUID, createdByField.Type, "Auto-column CreatedBy should have UUID type")
+	assert.Equal(t, []string{ModifierNullable}, createdByField.Modifiers, "Auto-column CreatedBy should have nullable modifier")
+	assert.Empty(t, createdByField.Default, "Auto-column CreatedBy should have no default value")
+	assert.Empty(t, createdByField.Example, "Auto-column CreatedBy should have no example")
+
+	t.Run("consistency", func(t *testing.T) {
+		createdBy1 := CreateAutoColumnCreatedBy()
+		createdBy2 := CreateAutoColumnCreatedBy()
+
+		assert.Equal(t, createdBy1, createdBy2, "CreateAutoColumnCreatedBy should return consistent results")
+	})
+}
+
+func TestCreateAutoColumnUpdatedAt(t *testing.T) {
+	// Act
+	updatedAtField := CreateAutoColumnUpdatedAt()
+
+	// Assert
+	assert.Equal(t, autoColumnUpdatedAtName, updatedAtField.Name, "Auto-column UpdatedAt should have correct name")
+	assert.Equal(t, autoColumnUpdatedAtDesc, updatedAtField.Description, "Auto-column UpdatedAt should have correct description")
+	assert.Equal(t, FieldTypeTimestamp, updatedAtField.Type, "Auto-column UpdatedAt should have Timestamp type")
+	assert.Empty(t, updatedAtField.Modifiers, "Auto-column UpdatedAt should have no modifiers")
+	assert.Empty(t, updatedAtField.Default, "Auto-column UpdatedAt should have no default value")
+	assert.Empty(t, updatedAtField.Example, "Auto-column UpdatedAt should have no example")
+
+	t.Run("consistency", func(t *testing.T) {
+		updatedAt1 := CreateAutoColumnUpdatedAt()
+		updatedAt2 := CreateAutoColumnUpdatedAt()
+
+		assert.Equal(t, updatedAt1, updatedAt2, "CreateAutoColumnUpdatedAt should return consistent results")
+	})
+}
+
+func TestCreateAutoColumnUpdatedBy(t *testing.T) {
+	// Act
+	updatedByField := CreateAutoColumnUpdatedBy()
+
+	// Assert
+	assert.Equal(t, autoColumnUpdatedByName, updatedByField.Name, "Auto-column UpdatedBy should have correct name")
+	assert.Equal(t, autoColumnUpdatedByDesc, updatedByField.Description, "Auto-column UpdatedBy should have correct description")
+	assert.Equal(t, FieldTypeUUID, updatedByField.Type, "Auto-column UpdatedBy should have UUID type")
+	assert.Equal(t, []string{ModifierNullable}, updatedByField.Modifiers, "Auto-column UpdatedBy should have nullable modifier")
+	assert.Empty(t, updatedByField.Default, "Auto-column UpdatedBy should have no default value")
+	assert.Empty(t, updatedByField.Example, "Auto-column UpdatedBy should have no example")
+
+	t.Run("consistency", func(t *testing.T) {
+		updatedBy1 := CreateAutoColumnUpdatedBy()
+		updatedBy2 := CreateAutoColumnUpdatedBy()
+
+		assert.Equal(t, updatedBy1, updatedBy2, "CreateAutoColumnUpdatedBy should return consistent results")
+	})
+}
+
+func TestCreateAutoColumns(t *testing.T) {
+	// Act
+	autoColumns := CreateAutoColumns()
+
+	// Assert
+	assert.Equal(t, 5, len(autoColumns), "Should return exactly 5 auto-columns")
+
+	// Verify each field is correct
+	assert.Equal(t, autoColumnIDName, autoColumns[0].Name, "First auto-column should be ID")
+	assert.Equal(t, autoColumnCreatedAtName, autoColumns[1].Name, "Second auto-column should be CreatedAt")
+	assert.Equal(t, autoColumnCreatedByName, autoColumns[2].Name, "Third auto-column should be CreatedBy")
+	assert.Equal(t, autoColumnUpdatedAtName, autoColumns[3].Name, "Fourth auto-column should be UpdatedAt")
+	assert.Equal(t, autoColumnUpdatedByName, autoColumns[4].Name, "Fifth auto-column should be UpdatedBy")
+
+	// Verify types are correct
+	assert.Equal(t, FieldTypeUUID, autoColumns[0].Type, "ID should be UUID type")
+	assert.Equal(t, FieldTypeTimestamp, autoColumns[1].Type, "CreatedAt should be Timestamp type")
+	assert.Equal(t, FieldTypeUUID, autoColumns[2].Type, "CreatedBy should be UUID type")
+	assert.Equal(t, FieldTypeTimestamp, autoColumns[3].Type, "UpdatedAt should be Timestamp type")
+	assert.Equal(t, FieldTypeUUID, autoColumns[4].Type, "UpdatedBy should be UUID type")
+
+	// Verify modifiers are correct
+	assert.Empty(t, autoColumns[0].Modifiers, "ID should have no modifiers")
+	assert.Empty(t, autoColumns[1].Modifiers, "CreatedAt should have no modifiers")
+	assert.Equal(t, []string{ModifierNullable}, autoColumns[2].Modifiers, "CreatedBy should be nullable")
+	assert.Empty(t, autoColumns[3].Modifiers, "UpdatedAt should have no modifiers")
+	assert.Equal(t, []string{ModifierNullable}, autoColumns[4].Modifiers, "UpdatedBy should be nullable")
+
+	t.Run("consistency", func(t *testing.T) {
+		autoColumns1 := CreateAutoColumns()
+		autoColumns2 := CreateAutoColumns()
+
+		assert.Equal(t, autoColumns1, autoColumns2, "CreateAutoColumns should return consistent results")
+	})
+}
+
 // ============================================================================
 // Utility Function Tests
 // ============================================================================
@@ -1347,6 +1483,90 @@ func TestApplyOverlay(t *testing.T) {
 
 		// Should have additional objects generated
 		assert.Greater(t, len(result.Objects), len(input.Objects), "Should have generated additional objects")
+	})
+
+	t.Run("auto-columns are added to generated objects", func(t *testing.T) {
+		input := &Service{
+			Name:    "TestService",
+			Enums:   []Enum{},
+			Objects: []Object{},
+			Resources: []Resource{
+				{
+					Name:        "Users",
+					Description: "User resource",
+					Operations:  []string{OperationRead},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "name",
+								Type:        FieldTypeString,
+								Description: "User name",
+							},
+							Operations: []string{OperationRead},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Find the generated Users object
+		var usersObject *Object
+		for i := range result.Objects {
+			if result.Objects[i].Name == "Users" {
+				usersObject = &result.Objects[i]
+				break
+			}
+		}
+
+		require.NotNil(t, usersObject, "Should have generated Users object")
+		assert.Equal(t, "Users", usersObject.Name)
+		assert.Equal(t, "User resource", usersObject.Description)
+
+		// Should have auto-columns plus the original field
+		expectedFieldCount := 6 // 5 auto-columns + 1 original field
+		assert.Equal(t, expectedFieldCount, len(usersObject.Fields), "Should have auto-columns plus original fields")
+
+		// Verify auto-columns are present in correct order
+		autoColumnFields := usersObject.Fields[:5] // First 5 should be auto-columns
+
+		// Verify ID field
+		assert.Equal(t, autoColumnIDName, autoColumnFields[0].Name)
+		assert.Equal(t, autoColumnIDDescription, autoColumnFields[0].Description)
+		assert.Equal(t, FieldTypeUUID, autoColumnFields[0].Type)
+		assert.Empty(t, autoColumnFields[0].Modifiers)
+
+		// Verify CreatedAt field
+		assert.Equal(t, autoColumnCreatedAtName, autoColumnFields[1].Name)
+		assert.Equal(t, autoColumnCreatedAtDesc, autoColumnFields[1].Description)
+		assert.Equal(t, FieldTypeTimestamp, autoColumnFields[1].Type)
+		assert.Empty(t, autoColumnFields[1].Modifiers)
+
+		// Verify CreatedBy field
+		assert.Equal(t, autoColumnCreatedByName, autoColumnFields[2].Name)
+		assert.Equal(t, autoColumnCreatedByDesc, autoColumnFields[2].Description)
+		assert.Equal(t, FieldTypeUUID, autoColumnFields[2].Type)
+		assert.Equal(t, []string{ModifierNullable}, autoColumnFields[2].Modifiers)
+
+		// Verify UpdatedAt field
+		assert.Equal(t, autoColumnUpdatedAtName, autoColumnFields[3].Name)
+		assert.Equal(t, autoColumnUpdatedAtDesc, autoColumnFields[3].Description)
+		assert.Equal(t, FieldTypeTimestamp, autoColumnFields[3].Type)
+		assert.Empty(t, autoColumnFields[3].Modifiers)
+
+		// Verify UpdatedBy field
+		assert.Equal(t, autoColumnUpdatedByName, autoColumnFields[4].Name)
+		assert.Equal(t, autoColumnUpdatedByDesc, autoColumnFields[4].Description)
+		assert.Equal(t, FieldTypeUUID, autoColumnFields[4].Type)
+		assert.Equal(t, []string{ModifierNullable}, autoColumnFields[4].Modifiers)
+
+		// Verify original field comes after auto-columns
+		originalField := usersObject.Fields[5]
+		assert.Equal(t, "name", originalField.Name)
+		assert.Equal(t, "User name", originalField.Description)
+		assert.Equal(t, FieldTypeString, originalField.Type)
 	})
 }
 
