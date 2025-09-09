@@ -159,6 +159,20 @@ const (
 	limitFieldDescription       = "Maximum number of items to return in the result set"
 )
 
+// Auto-column constants
+const (
+	autoColumnIDName        = "ID"
+	autoColumnIDDescription = "Unique identifier for the resource"
+	autoColumnCreatedAtName = "CreatedAt"
+	autoColumnCreatedAtDesc = "Timestamp when the resource was created"
+	autoColumnCreatedByName = "CreatedBy"
+	autoColumnCreatedByDesc = "User who created the resource"
+	autoColumnUpdatedAtName = "UpdatedAt"
+	autoColumnUpdatedAtDesc = "Timestamp when the resource was last updated"
+	autoColumnUpdatedByName = "UpdatedBy"
+	autoColumnUpdatedByDesc = "User who last updated the resource"
+)
+
 // HTTP Methods
 const (
 	httpMethodGet    = "GET"
@@ -602,11 +616,18 @@ func generateObjectsFromResources(result *Service, resources []Resource) {
 		if resource.HasReadOperation() {
 			// Check if an object with this name already exists
 			if !result.HasObject(resource.Name) {
+				// Get readable fields from the resource
+				fields := resource.GetReadableFields()
+
+				// Add auto-columns to the object
+				autoColumns := CreateAutoColumns()
+				fields = append(autoColumns, fields...)
+
 				// Create a new Object based on the Resource
 				newObject := Object{
 					Name:        resource.Name,
 					Description: resource.Description,
-					Fields:      resource.GetReadableFields(),
+					Fields:      fields,
 				}
 
 				// Add the new object to the result
@@ -1528,6 +1549,64 @@ func CreateIDParam(description string) Field {
 		Name:        "id",
 		Description: description,
 		Type:        FieldTypeUUID,
+	}
+}
+
+// CreateAutoColumnID creates a standard ID field for auto-columns.
+func CreateAutoColumnID() Field {
+	return Field{
+		Name:        autoColumnIDName,
+		Description: autoColumnIDDescription,
+		Type:        FieldTypeUUID,
+	}
+}
+
+// CreateAutoColumnCreatedAt creates a standard CreatedAt field for auto-columns.
+func CreateAutoColumnCreatedAt() Field {
+	return Field{
+		Name:        autoColumnCreatedAtName,
+		Description: autoColumnCreatedAtDesc,
+		Type:        FieldTypeTimestamp,
+	}
+}
+
+// CreateAutoColumnCreatedBy creates a standard CreatedBy field for auto-columns.
+func CreateAutoColumnCreatedBy() Field {
+	return Field{
+		Name:        autoColumnCreatedByName,
+		Description: autoColumnCreatedByDesc,
+		Type:        FieldTypeUUID,
+		Modifiers:   []string{ModifierNullable},
+	}
+}
+
+// CreateAutoColumnUpdatedAt creates a standard UpdatedAt field for auto-columns.
+func CreateAutoColumnUpdatedAt() Field {
+	return Field{
+		Name:        autoColumnUpdatedAtName,
+		Description: autoColumnUpdatedAtDesc,
+		Type:        FieldTypeTimestamp,
+	}
+}
+
+// CreateAutoColumnUpdatedBy creates a standard UpdatedBy field for auto-columns.
+func CreateAutoColumnUpdatedBy() Field {
+	return Field{
+		Name:        autoColumnUpdatedByName,
+		Description: autoColumnUpdatedByDesc,
+		Type:        FieldTypeUUID,
+		Modifiers:   []string{ModifierNullable},
+	}
+}
+
+// CreateAutoColumns creates all standard auto-column fields for resources.
+func CreateAutoColumns() []Field {
+	return []Field{
+		CreateAutoColumnID(),
+		CreateAutoColumnCreatedAt(),
+		CreateAutoColumnCreatedBy(),
+		CreateAutoColumnUpdatedAt(),
+		CreateAutoColumnUpdatedBy(),
 	}
 }
 
