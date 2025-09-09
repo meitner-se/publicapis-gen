@@ -229,6 +229,58 @@ func TestGenerateFromServiceWithComplexService(t *testing.T) {
 	assert.Contains(t, jsonString, "/user", "JSON should contain user path")
 }
 
+// TestGenerateFromServiceWithVersionAndServers tests that version and servers are taken from service.
+func TestGenerateFromServiceWithVersionAndServers(t *testing.T) {
+	generator := NewGenerator()
+	service := &specification.Service{
+		Name:    "UserAPI",
+		Version: "2.0.0",
+		Servers: []specification.ServiceServer{
+			{
+				URL:         "https://api.example.com",
+				Description: "Production server",
+			},
+			{
+				URL:         "https://staging-api.example.com",
+				Description: "Staging server",
+			},
+		},
+		Objects: []specification.Object{
+			{
+				Name:        "User",
+				Description: "User object",
+				Fields: []specification.Field{
+					{
+						Name:        "email",
+						Description: "User email",
+						Type:        specification.FieldTypeString,
+						Modifiers:   []string{specification.ModifierNullable},
+					},
+				},
+			},
+		},
+	}
+
+	document, err := generator.GenerateFromService(service)
+
+	assert.NoError(t, err, "Should generate document successfully")
+	assert.NotNil(t, document, "Document should not be nil")
+	assert.Equal(t, "2.0.0", document.Info.Version, "Document version should come from service")
+	assert.Equal(t, 2, len(document.Servers), "Document should have 2 servers from service")
+	assert.Equal(t, "https://api.example.com", document.Servers[0].URL, "First server URL should match service")
+	assert.Equal(t, "Production server", document.Servers[0].Description, "First server description should match service")
+	assert.Equal(t, "https://staging-api.example.com", document.Servers[1].URL, "Second server URL should match service")
+	assert.Equal(t, "Staging server", document.Servers[1].Description, "Second server description should match service")
+
+	// Test JSON output
+	jsonBytes, err := generator.ToJSON(document)
+	assert.NoError(t, err, "Should convert document to JSON successfully")
+	jsonString := string(jsonBytes)
+	assert.Contains(t, jsonString, "2.0.0", "JSON should contain service version")
+	assert.Contains(t, jsonString, "https://api.example.com", "JSON should contain first server URL")
+	assert.Contains(t, jsonString, "https://staging-api.example.com", "JSON should contain second server URL")
+}
+
 // Helper function to create a string pointer
 func stringPtr(s string) *string {
 	return &s

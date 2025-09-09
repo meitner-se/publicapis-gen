@@ -61,10 +61,15 @@ func (g *Generator) buildV3Document(service *specification.Service) *v3.Document
 	}
 
 	// Create Info section
+	version := service.Version
+	if version == "" {
+		version = "1.0.0" // Default version if not specified
+	}
+
 	info := &base.Info{
 		Title:       title,
 		Description: g.Description,
-		Version:     "1.0.0",
+		Version:     version,
 	}
 
 	// Create Document
@@ -73,8 +78,18 @@ func (g *Generator) buildV3Document(service *specification.Service) *v3.Document
 		Info:    info,
 	}
 
-	// Add servers if specified
-	if g.ServerURL != "" {
+	// Add servers from service specification
+	if len(service.Servers) > 0 {
+		servers := make([]*v3.Server, len(service.Servers))
+		for i, server := range service.Servers {
+			servers[i] = &v3.Server{
+				URL:         server.URL,
+				Description: server.Description,
+			}
+		}
+		document.Servers = servers
+	} else if g.ServerURL != "" {
+		// Fallback to generator's ServerURL for backwards compatibility
 		servers := []*v3.Server{
 			{
 				URL:         g.ServerURL,
@@ -187,10 +202,9 @@ func (g *Generator) createFieldSchema(field specification.Field, service *specif
 
 	// Handle nullable modifier
 	if field.IsNullable() {
-		// In OpenAPI 3.1, we use type array with null
-		if schema.Type != nil && len(schema.Type) > 0 {
-			schema.Type = append(schema.Type, "null")
-		}
+		// Use the Nullable field instead of appending "null" to type array
+		nullable := true
+		schema.Nullable = &nullable
 	}
 
 	// Add default value if present

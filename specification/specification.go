@@ -254,10 +254,25 @@ const (
 	pathSeparator     = "/"
 )
 
+// ServiceServer represents a server in the API service.
+type ServiceServer struct {
+	// URL of the server
+	URL string `json:"url"`
+
+	// Description of the server
+	Description string `json:"description,omitempty"`
+}
+
 // Service is the definition of an API service.
 type Service struct {
 	// Name of the service
 	Name string `json:"name"`
+
+	// Version of the service
+	Version string `json:"version,omitempty"`
+
+	// Servers that are part of the service
+	Servers []ServiceServer `json:"servers,omitempty"`
 
 	// Enums that are used in the service
 	Enums []Enum `json:"enums"`
