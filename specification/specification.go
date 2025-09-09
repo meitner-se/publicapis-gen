@@ -1,11 +1,15 @@
 package specification
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 
 	"github.com/aarondl/strmangle"
+	"github.com/goccy/go-yaml"
 )
 
 // CRUD Operations
@@ -274,6 +278,17 @@ const (
 	pathSeparator     = "/"
 )
 
+// File parsing constants
+const (
+	errorInvalidFile       = "invalid input file"
+	errorUnsupportedFormat = "unsupported file format"
+	errorFileRead          = "failed to read file"
+	errorFileParse         = "failed to parse file"
+	extYAML                = ".yaml"
+	extYML                 = ".yml"
+	extJSON                = ".json"
+)
+
 // ServiceServer represents a server in the API service.
 type ServiceServer struct {
 	// URL of the server
@@ -464,8 +479,10 @@ func ApplyOverlay(input *Service) *Service {
 	// Create a deep copy of the input service
 	result := &Service{
 		Name:      input.Name,
-		Enums:     make([]Enum, 0, len(input.Enums)+2),     // +2 for ErrorCode and ErrorFieldCode enums
-		Objects:   make([]Object, 0, len(input.Objects)+3), // +3 for Error, ErrorField, and Pagination objects
+		Version:   input.Version,
+		Servers:   append([]ServiceServer{}, input.Servers...), // Copy servers slice
+		Enums:     make([]Enum, 0, len(input.Enums)+2),         // +2 for ErrorCode and ErrorFieldCode enums
+		Objects:   make([]Object, 0, len(input.Objects)+3),     // +3 for Error, ErrorField, and Pagination objects
 		Resources: make([]Resource, len(input.Resources)),
 	}
 
@@ -1065,6 +1082,8 @@ func ApplyFilterOverlay(input *Service) *Service {
 	// Create a deep copy of the input service
 	result := &Service{
 		Name:      input.Name,
+		Version:   input.Version,
+		Servers:   append([]ServiceServer{}, input.Servers...), // Copy servers slice
 		Enums:     make([]Enum, len(input.Enums)),
 		Objects:   make([]Object, 0, len(input.Objects)*7), // Estimate for filter objects
 		Resources: make([]Resource, len(input.Resources)),
@@ -1751,4 +1770,107 @@ func ToKebabCase(s string) string {
 
 	// Convert to lowercase
 	return strings.ToLower(result.String())
+}
+
+// Parsing functions
+
+// ParseServiceFromFile reads and parses a YAML or JSON specification file,
+// automatically applying overlays to ensure complete specification.
+func ParseServiceFromFile(filePath string) (*Service, error) {
+	// Check if file exists
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("%s: file does not exist: %s", errorInvalidFile, filePath)
+	}
+
+	// Read file contents
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", errorFileRead, err)
+	}
+
+	// Parse based on file extension
+	ext := strings.ToLower(filepath.Ext(filePath))
+	service, err := parseServiceFromBytes(data, ext)
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply overlays to ensure complete specification
+	return applyDefaultOverlays(service), nil
+}
+
+// ParseServiceFromBytes parses a service from byte data and file extension,
+// automatically applying overlays to ensure complete specification.
+func ParseServiceFromBytes(data []byte, fileExtension string) (*Service, error) {
+	service, err := parseServiceFromBytes(data, fileExtension)
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply overlays to ensure complete specification
+	return applyDefaultOverlays(service), nil
+}
+
+// ParseServiceFromJSON parses a service from JSON data,
+// automatically applying overlays to ensure complete specification.
+func ParseServiceFromJSON(data []byte) (*Service, error) {
+	service, err := parseServiceFromBytes(data, extJSON)
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply overlays to ensure complete specification
+	return applyDefaultOverlays(service), nil
+}
+
+// ParseServiceFromYAML parses a service from YAML data,
+// automatically applying overlays to ensure complete specification.
+func ParseServiceFromYAML(data []byte) (*Service, error) {
+	service, err := parseServiceFromBytes(data, extYAML)
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply overlays to ensure complete specification
+	return applyDefaultOverlays(service), nil
+}
+
+// parseServiceFromBytes is the internal parsing function without overlay application.
+func parseServiceFromBytes(data []byte, fileExtension string) (*Service, error) {
+	var service Service
+
+	switch fileExtension {
+	case extYAML, extYML:
+		if err := yaml.Unmarshal(data, &service); err != nil {
+			return nil, fmt.Errorf("%s: YAML parsing error: %w", errorFileParse, err)
+		}
+	case extJSON:
+		if err := json.Unmarshal(data, &service); err != nil {
+			return nil, fmt.Errorf("%s: JSON parsing error: %w", errorFileParse, err)
+		}
+	default:
+		return nil, fmt.Errorf("%s: file must have .yaml, .yml, or .json extension", errorUnsupportedFormat)
+	}
+
+	return &service, nil
+}
+
+// applyDefaultOverlays applies the standard overlays to a service to ensure
+// resource objects and CRUD endpoints are generated.
+func applyDefaultOverlays(service *Service) *Service {
+	// Apply overlay to generate resource objects and standard endpoints
+	overlayedService := ApplyOverlay(service)
+	if overlayedService == nil {
+		// If overlay application fails, return original service
+		return service
+	}
+
+	// Apply filter overlay to generate filter objects
+	finalService := ApplyFilterOverlay(overlayedService)
+	if finalService == nil {
+		// If filter overlay application fails, return overlayed service
+		return overlayedService
+	}
+
+	return finalService
 }

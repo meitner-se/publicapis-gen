@@ -226,7 +226,7 @@ func Test_readSpecificationFile(t *testing.T) {
 		// Assert
 		require.Error(t, err)
 		assert.Nil(t, service)
-		assert.Contains(t, err.Error(), errorUnsupportedFormat)
+		assert.Contains(t, err.Error(), "unsupported file format")
 	})
 }
 

@@ -2785,3 +2785,224 @@ func TestApplyFilterOverlay_NestedObjects(t *testing.T) {
 		}
 	})
 }
+
+// ============================================================================
+// Specification Parsing Function Tests
+// ============================================================================
+
+// TestParseServiceFromYAML tests the ParseServiceFromYAML function.
+func TestParseServiceFromYAML(t *testing.T) {
+	// Test with valid YAML that has resources
+	t.Run("valid YAML with resources applies overlays", func(t *testing.T) {
+		yamlData := `
+name: "UserAPI"
+version: "1.0.0"
+enums:
+  - name: "Status"
+    description: "User status"
+    values:
+      - name: "Active"
+        description: "Active status"
+resources:
+  - name: "User"
+    description: "User resource"
+    operations: ["Create", "Read"]
+    fields:
+      - name: "email"
+        description: "User email"
+        type: "String"
+        operations: ["Create", "Read"]
+`
+
+		service, err := ParseServiceFromYAML([]byte(yamlData))
+		assert.NoError(t, err, "Should parse YAML successfully")
+		assert.NotNil(t, service, "Service should not be nil")
+
+		// Verify original content is preserved
+		assert.Equal(t, "UserAPI", service.Name, "Service name should match")
+		assert.Equal(t, "1.0.0", service.Version, "Service version should match")
+		assert.Equal(t, 1, len(service.Resources), "Should have 1 resource")
+		assert.Equal(t, "User", service.Resources[0].Name, "Resource name should match")
+
+		// Verify overlays were applied - should have ErrorCode enum
+		hasErrorCode := false
+		for _, enum := range service.Enums {
+			if enum.Name == "ErrorCode" {
+				hasErrorCode = true
+				break
+			}
+		}
+		assert.True(t, hasErrorCode, "Should have ErrorCode enum from overlay")
+
+		// Verify overlays were applied - should have User object
+		hasUserObject := false
+		for _, obj := range service.Objects {
+			if obj.Name == "User" {
+				hasUserObject = true
+				break
+			}
+		}
+		assert.True(t, hasUserObject, "Should have User object from overlay")
+
+		// Verify overlays were applied - should have CRUD endpoints
+		user := service.Resources[0]
+		hasCreateEndpoint := false
+		hasGetEndpoint := false
+		hasListEndpoint := false
+		for _, endpoint := range user.Endpoints {
+			switch endpoint.Name {
+			case "Create":
+				hasCreateEndpoint = true
+			case "Get":
+				hasGetEndpoint = true
+			case "List":
+				hasListEndpoint = true
+			}
+		}
+		assert.True(t, hasCreateEndpoint, "Should have Create endpoint from overlay")
+		assert.True(t, hasGetEndpoint, "Should have Get endpoint from overlay")
+		assert.True(t, hasListEndpoint, "Should have List endpoint from overlay")
+	})
+
+	// Test with invalid YAML
+	t.Run("invalid YAML returns error", func(t *testing.T) {
+		invalidYaml := `
+		invalid: [yaml structure
+		missing: quotes and
+		malformed
+		`
+
+		service, err := ParseServiceFromYAML([]byte(invalidYaml))
+
+		assert.Nil(t, service, "Service should be nil for invalid YAML")
+		assert.Error(t, err, "Should return error for invalid YAML")
+		assert.Contains(t, err.Error(), "YAML parsing error", "Error should mention YAML parsing")
+	})
+}
+
+// TestParseServiceFromJSON tests the ParseServiceFromJSON function.
+func TestParseServiceFromJSON(t *testing.T) {
+	// Test with valid JSON that has resources
+	t.Run("valid JSON with resources applies overlays", func(t *testing.T) {
+		jsonData := `{
+			"name": "UserAPI",
+			"version": "1.0.0",
+			"enums": [
+				{
+					"name": "Status",
+					"description": "User status",
+					"values": [
+						{"name": "Active", "description": "Active status"}
+					]
+				}
+			],
+			"resources": [
+				{
+					"name": "User",
+					"description": "User resource",
+					"operations": ["Create", "Read"],
+					"fields": [
+						{
+							"name": "email",
+							"description": "User email",
+							"type": "String",
+							"operations": ["Create", "Read"]
+						}
+					]
+				}
+			]
+		}`
+
+		service, err := ParseServiceFromJSON([]byte(jsonData))
+		assert.NoError(t, err, "Should parse JSON successfully")
+		assert.NotNil(t, service, "Service should not be nil")
+
+		// Verify original content is preserved
+		assert.Equal(t, "UserAPI", service.Name, "Service name should match")
+		assert.Equal(t, "1.0.0", service.Version, "Service version should match")
+		assert.Equal(t, 1, len(service.Resources), "Should have 1 resource")
+
+		// Verify overlays were applied - should have ErrorCode enum
+		hasErrorCode := false
+		for _, enum := range service.Enums {
+			if enum.Name == "ErrorCode" {
+				hasErrorCode = true
+				break
+			}
+		}
+		assert.True(t, hasErrorCode, "Should have ErrorCode enum from overlay")
+
+		// Verify overlays were applied - should have User object
+		hasUserObject := false
+		for _, obj := range service.Objects {
+			if obj.Name == "User" {
+				hasUserObject = true
+				break
+			}
+		}
+		assert.True(t, hasUserObject, "Should have User object from overlay")
+	})
+
+	// Test with invalid JSON
+	t.Run("invalid JSON returns error", func(t *testing.T) {
+		invalidJson := `{
+			"name": "Test"
+			"invalid": json structure
+		}`
+
+		service, err := ParseServiceFromJSON([]byte(invalidJson))
+
+		assert.Nil(t, service, "Service should be nil for invalid JSON")
+		assert.Error(t, err, "Should return error for invalid JSON")
+		assert.Contains(t, err.Error(), "JSON parsing error", "Error should mention JSON parsing")
+	})
+}
+
+// TestParseServiceFromBytes tests the ParseServiceFromBytes function.
+func TestParseServiceFromBytes(t *testing.T) {
+	// Test with YAML extension
+	t.Run("YAML extension parses correctly", func(t *testing.T) {
+		yamlData := `
+name: "TestService"
+resources:
+  - name: "User"
+    operations: ["Read"]
+    fields: []
+`
+
+		service, err := ParseServiceFromBytes([]byte(yamlData), ".yaml")
+		assert.NoError(t, err, "Should parse YAML bytes successfully")
+		assert.NotNil(t, service, "Service should not be nil")
+		assert.Equal(t, "TestService", service.Name, "Service name should match")
+
+		// Verify overlays were applied
+		hasUserObject := false
+		for _, obj := range service.Objects {
+			if obj.Name == "User" {
+				hasUserObject = true
+				break
+			}
+		}
+		assert.True(t, hasUserObject, "Should have User object from overlay")
+	})
+
+	// Test with JSON extension
+	t.Run("JSON extension parses correctly", func(t *testing.T) {
+		jsonData := `{"name": "TestService", "resources": [{"name": "User", "operations": ["Read"], "fields": []}]}`
+
+		service, err := ParseServiceFromBytes([]byte(jsonData), ".json")
+		assert.NoError(t, err, "Should parse JSON bytes successfully")
+		assert.NotNil(t, service, "Service should not be nil")
+		assert.Equal(t, "TestService", service.Name, "Service name should match")
+
+		// Verify overlays were applied
+		hasUserObject := false
+		for _, obj := range service.Objects {
+			if obj.Name == "User" {
+				hasUserObject = true
+				break
+			}
+		}
+		assert.True(t, hasUserObject, "Should have User object from overlay")
+	})
+}
