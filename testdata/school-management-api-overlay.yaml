@@ -203,29 +203,6 @@ objects:
     type: ErrorField
     modifiers:
     - Nullable
-- name: AddressRequestError
-  description: Request error object for Address
-  fields:
-  - name: street
-    description: Street address
-    type: ErrorField
-    modifiers:
-    - Nullable
-  - name: city
-    description: City
-    type: ErrorField
-    modifiers:
-    - Nullable
-  - name: state
-    description: State or province
-    type: ErrorField
-    modifiers:
-    - Nullable
-  - name: zipCode
-    description: ZIP or postal code
-    type: ErrorField
-    modifiers:
-    - Nullable
 - name: StudentRequestError
   description: Request error object for Student
   fields:
@@ -251,6 +228,29 @@ objects:
     - Nullable
   - name: gradeLevel
     description: Current grade level
+    type: ErrorField
+    modifiers:
+    - Nullable
+- name: AddressRequestError
+  description: Request error object for Address
+  fields:
+  - name: street
+    description: Street address
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: city
+    description: City
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: state
+    description: State or province
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: zipCode
+    description: ZIP or postal code
     type: ErrorField
     modifiers:
     - Nullable
