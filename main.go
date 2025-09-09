@@ -62,7 +62,7 @@ const (
 // Usage messages
 const (
 	usageDescription = "publicapis-gen - Generate API specifications and OpenAPI documents"
-	usageExample     = "\nExamples:\n  publicapis-gen -file=spec.yaml -mode=overlay\n  publicapis-gen -file=spec.json -mode=openapi\n  publicapis-gen -file=spec.yaml -mode=openapi -output=api-spec.yaml\n  publicapis-gen -file=spec.yaml -mode=openapi -log-level=info"
+	usageExample     = "\nExamples:\n  publicapis-gen -file=spec.yaml -mode=overlay\n  publicapis-gen -file=spec.json -mode=openapi\n  publicapis-gen -file=spec.yaml -mode=openapi -output=api-spec.json\n  publicapis-gen -file=spec.yaml -mode=openapi -log-level=info"
 )
 
 func main() {
@@ -233,34 +233,19 @@ func generateOpenAPI(ctx context.Context, service *specification.Service, inputF
 		return fmt.Errorf("failed to generate OpenAPI document: %w", err)
 	}
 
-	// Determine output file path
+	// Determine output file path - always use JSON for OpenAPI
 	outputPath := outputFile
 	if outputPath == "" {
-		outputPath = generateOutputPath(inputFile, suffixOpenAPI)
+		outputPath = generateOpenAPIOutputPath(inputFile)
+	} else {
+		// Ensure output path has .json extension
+		outputPath = ensureJSONExtension(outputPath)
 	}
 
-	// Determine output format based on extension
-	ext := strings.ToLower(filepath.Ext(outputPath))
-	var outputData []byte
-
-	switch ext {
-	case extYAML, extYML:
-		outputData, err = generator.ToYAML(document)
-		if err != nil {
-			return fmt.Errorf("failed to convert OpenAPI document to YAML: %w", err)
-		}
-	case extJSON:
-		outputData, err = generator.ToJSON(document)
-		if err != nil {
-			return fmt.Errorf("failed to convert OpenAPI document to JSON: %w", err)
-		}
-	default:
-		// Default to YAML if extension is not recognized
-		outputPath = strings.TrimSuffix(outputPath, filepath.Ext(outputPath)) + extYAML
-		outputData, err = generator.ToYAML(document)
-		if err != nil {
-			return fmt.Errorf("failed to convert OpenAPI document to YAML: %w", err)
-		}
+	// Always generate JSON output for OpenAPI
+	outputData, err := generator.ToJSON(document)
+	if err != nil {
+		return fmt.Errorf("failed to convert OpenAPI document to JSON: %w", err)
 	}
 
 	// Write output file
@@ -317,6 +302,22 @@ func generateOutputPath(inputFile, suffix string) string {
 	ext := filepath.Ext(inputFile)
 	base := strings.TrimSuffix(inputFile, ext)
 	return base + suffix + ext
+}
+
+// generateOpenAPIOutputPath generates an output file path for OpenAPI documents (always JSON).
+func generateOpenAPIOutputPath(inputFile string) string {
+	base := strings.TrimSuffix(inputFile, filepath.Ext(inputFile))
+	return base + suffixOpenAPI + extJSON
+}
+
+// ensureJSONExtension ensures the output path has a .json extension.
+func ensureJSONExtension(outputPath string) string {
+	ext := strings.ToLower(filepath.Ext(outputPath))
+	if ext != extJSON {
+		base := strings.TrimSuffix(outputPath, filepath.Ext(outputPath))
+		return base + extJSON
+	}
+	return outputPath
 }
 
 // configureLogging configures the slog logger based on the specified log level.

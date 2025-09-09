@@ -244,10 +244,10 @@ func Test_generateOutputPath(t *testing.T) {
 			expected:  "spec-overlay.yaml",
 		},
 		{
-			name:      "JSON file with OpenAPI suffix",
+			name:      "JSON file with overlay suffix",
 			inputFile: "api.json",
-			suffix:    suffixOpenAPI,
-			expected:  "api-openapi.json",
+			suffix:    suffixOverlay,
+			expected:  "api-overlay.json",
 		},
 		{
 			name:      "File with path and overlay suffix",
@@ -261,6 +261,99 @@ func Test_generateOutputPath(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Act
 			result := generateOutputPath(tc.inputFile, tc.suffix)
+
+			// Assert
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func Test_generateOpenAPIOutputPath(t *testing.T) {
+	testCases := []struct {
+		name      string
+		inputFile string
+		expected  string
+	}{
+		{
+			name:      "YAML file generates JSON OpenAPI",
+			inputFile: "spec.yaml",
+			expected:  "spec-openapi.json",
+		},
+		{
+			name:      "JSON file generates JSON OpenAPI",
+			inputFile: "api.json",
+			expected:  "api-openapi.json",
+		},
+		{
+			name:      "File with path generates JSON OpenAPI",
+			inputFile: "/path/to/spec.yml",
+			expected:  "/path/to/spec-openapi.json",
+		},
+		{
+			name:      "File without extension generates JSON OpenAPI",
+			inputFile: "spec",
+			expected:  "spec-openapi.json",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Act
+			result := generateOpenAPIOutputPath(tc.inputFile)
+
+			// Assert
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func Test_ensureJSONExtension(t *testing.T) {
+	testCases := []struct {
+		name       string
+		outputPath string
+		expected   string
+	}{
+		{
+			name:       "JSON extension unchanged",
+			outputPath: "api-spec.json",
+			expected:   "api-spec.json",
+		},
+		{
+			name:       "YAML extension changed to JSON",
+			outputPath: "api-spec.yaml",
+			expected:   "api-spec.json",
+		},
+		{
+			name:       "YML extension changed to JSON",
+			outputPath: "api-spec.yml",
+			expected:   "api-spec.json",
+		},
+		{
+			name:       "No extension gets JSON extension",
+			outputPath: "api-spec",
+			expected:   "api-spec.json",
+		},
+		{
+			name:       "Other extension changed to JSON",
+			outputPath: "api-spec.xml",
+			expected:   "api-spec.json",
+		},
+		{
+			name:       "Path with JSON extension unchanged",
+			outputPath: "/path/to/api-spec.json",
+			expected:   "/path/to/api-spec.json",
+		},
+		{
+			name:       "Path with YAML extension changed to JSON",
+			outputPath: "/path/to/api-spec.yaml",
+			expected:   "/path/to/api-spec.json",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Act
+			result := ensureJSONExtension(tc.outputPath)
 
 			// Assert
 			assert.Equal(t, tc.expected, result)
