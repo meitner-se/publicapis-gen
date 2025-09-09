@@ -128,7 +128,7 @@ objects:
     description: Total number of items available for pagination
     type: Int
 - name: Meta
-  description: Metadata fields containing creation and update information
+  description: Meta contains information about the creation and modification of a resource for auditing purposes
   fields:
   - name: CreatedAt
     description: Timestamp when the resource was created
