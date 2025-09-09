@@ -35,7 +35,7 @@ objects:
       - name: "phone"
         type: "String"
         description: "Phone number"
-        modifiers: ["nullable"]
+        modifiers: ["Nullable"]
 
   - name: "Address"
     description: "Physical address information"  
@@ -52,6 +52,25 @@ objects:
       - name: "zipCode"
         type: "String" 
         description: "ZIP or postal code"
+
+  - name: "Student"
+    description: "Student information"
+    fields:
+      - name: "firstName"
+        type: "String"
+        description: "Student's first name"
+      - name: "lastName"
+        type: "String"
+        description: "Student's last name"
+      - name: "studentId"
+        type: "String"
+        description: "School-assigned student ID"
+      - name: "status"
+        type: "StudentStatus"
+        description: "Current status of the student"
+      - name: "gradeLevel"
+        type: "GradeLevel"
+        description: "Current grade level"
 
 resources:
   - name: "Students"
@@ -90,7 +109,7 @@ resources:
       - name: "address"
         type: "Address"
         description: "Student home address"
-        modifiers: ["nullable"]
+        modifiers: ["Nullable"]
         operations: ["Create", "Read", "Update"]
       - name: "enrollmentDate"
         type: "Date"
@@ -99,7 +118,7 @@ resources:
       - name: "graduationDate"
         type: "Date"
         description: "Expected or actual graduation date"
-        modifiers: ["nullable"]
+        modifiers: ["Nullable"]
         operations: ["Read", "Update"]
     endpoints:
       - name: "BulkImport"
@@ -121,7 +140,7 @@ resources:
           body_params:
             - name: "students"
               type: "Student"
-              modifiers: ["array"]
+              modifiers: ["Array"]
               description: "Array of student data to import"
             - name: "overwriteExisting"
               type: "Bool"
@@ -139,7 +158,7 @@ resources:
               description: "Number of students that failed to import"
             - name: "errors"
               type: "String"
-              modifiers: ["array"]
+              modifiers: ["Array"]
               description: "List of import error messages"
 
       - name: "GenerateReport"
@@ -157,19 +176,19 @@ resources:
           body_params:
             - name: "gradeLevel"
               type: "GradeLevel"
-              modifiers: ["nullable"]
+              modifiers: ["Nullable"]
               description: "Filter by specific grade level"
             - name: "status"
               type: "StudentStatus"
-              modifiers: ["nullable"]
+              modifiers: ["Nullable"]
               description: "Filter by student status"
             - name: "enrollmentDateFrom"
               type: "Date"
-              modifiers: ["nullable"]
+              modifiers: ["Nullable"]
               description: "Filter students enrolled after this date"
             - name: "enrollmentDateTo"
               type: "Date"
-              modifiers: ["nullable"]
+              modifiers: ["Nullable"]
               description: "Filter students enrolled before this date"
             - name: "includeInactive"
               type: "Bool"
@@ -187,7 +206,7 @@ resources:
               description: "When the report is expected to be ready"
             - name: "downloadUrl"
               type: "String"
-              modifiers: ["nullable"]
+              modifiers: ["Nullable"]
               description: "URL to download the report once ready"
 
       - name: "AdvancedSearch"
@@ -217,23 +236,23 @@ resources:
           body_params:
             - name: "nameQuery"
               type: "String"
-              modifiers: ["nullable"]
+              modifiers: ["Nullable"]
               description: "Search in first name and last name"
             - name: "gradeLevel"
               type: "GradeLevel"
-              modifiers: ["nullable", "array"]
+              modifiers: ["Nullable", "Array"]
               description: "Filter by one or more grade levels"
             - name: "status"
               type: "StudentStatus"
-              modifiers: ["nullable", "array"]
+              modifiers: ["Nullable", "Array"]
               description: "Filter by one or more statuses"
             - name: "enrollmentDateRange"
               type: "Date"
-              modifiers: ["nullable", "array"]
+              modifiers: ["Nullable", "Array"]
               description: "Date range filter [from, to]"
             - name: "hasGraduationDate"
               type: "Bool"
-              modifiers: ["nullable"]
+              modifiers: ["Nullable"]
               description: "Filter students with or without graduation date"
         response:
           content_type: "application/json"
@@ -241,7 +260,7 @@ resources:
           body_fields:
             - name: "students"
               type: "Student"
-              modifiers: ["array"]
+              modifiers: ["Array"]
               description: "Array of matching students"
             - name: "totalCount"
               type: "Int"

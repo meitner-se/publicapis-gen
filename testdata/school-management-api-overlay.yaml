@@ -1,0 +1,1277 @@
+name: School Management API
+version: 1.0.0
+servers:
+- url: https://api.school.example.com/v1
+  description: Production server for School Management API
+enums:
+- name: StudentStatus
+  description: Status of a student in the system
+  values:
+  - name: Active
+    description: Student is actively enrolled
+  - name: Inactive
+    description: Student is not currently enrolled
+  - name: Graduated
+    description: Student has graduated
+- name: GradeLevel
+  description: Grade levels in the school
+  values:
+  - name: Elementary
+    description: Elementary school level
+  - name: Middle
+    description: Middle school level
+  - name: High
+    description: High school level
+- name: ErrorCode
+  description: Standard error codes used in API responses
+  values:
+  - name: BadRequest
+    description: The request was malformed or contained invalid parameters. 400 status code
+  - name: Unauthorized
+    description: The request is missing valid authentication credentials. 401 status code
+  - name: Forbidden
+    description: Request is authenticated, but the user is not allowed to perform the operation. 403 status code
+  - name: NotFound
+    description: The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code
+  - name: Conflict
+    description: The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code
+  - name: UnprocessableEntity
+    description: The request was well-formed but failed validation (e.g. invalid field format or constraints), 422 status code
+  - name: RateLimited
+    description: When the rate limit has been exceeded, 429 status code
+  - name: Internal
+    description: Some serverside issue, 5xx status code
+- name: ErrorFieldCode
+  description: Error codes for field-level validation errors
+  values:
+  - name: AlreadyExists
+    description: The field value already exists and violates a unique constraint (e.g., duplicate email address or username)
+  - name: Required
+    description: The field is required but is missing or empty in the request
+  - name: NotFound
+    description: A referenced resource or relation does not exist (e.g., foreign key constraint violation)
+  - name: InvalidValue
+    description: The field contains an invalid value (e.g., invalid enum value, malformed data, or value out of allowed range)
+objects:
+- name: Contact
+  description: Contact information
+  fields:
+  - name: email
+    description: Email address
+    type: String
+  - name: phone
+    description: Phone number
+    type: String
+    modifiers:
+    - Nullable
+- name: Address
+  description: Physical address information
+  fields:
+  - name: street
+    description: Street address
+    type: String
+  - name: city
+    description: City
+    type: String
+  - name: state
+    description: State or province
+    type: String
+  - name: zipCode
+    description: ZIP or postal code
+    type: String
+- name: Student
+  description: Student information
+  fields:
+  - name: firstName
+    description: Student's first name
+    type: String
+  - name: lastName
+    description: Student's last name
+    type: String
+  - name: studentId
+    description: School-assigned student ID
+    type: String
+  - name: status
+    description: Current status of the student
+    type: StudentStatus
+  - name: gradeLevel
+    description: Current grade level
+    type: GradeLevel
+- name: Error
+  description: Standard error response object containing error code and message
+  fields:
+  - name: Code
+    description: The specific error code indicating the type of error
+    type: ErrorCode
+  - name: Message
+    description: Human-readable error message providing additional details
+    type: String
+- name: ErrorField
+  description: Field-specific error information containing error code and message for validation errors
+  fields:
+  - name: Code
+    description: The specific error code indicating the type of field validation error
+    type: ErrorFieldCode
+  - name: Message
+    description: Human-readable error message providing details about the field validation error
+    type: String
+- name: Pagination
+  description: Pagination parameters for controlling result sets in list operations
+  fields:
+  - name: Offset
+    description: Number of items to skip from the beginning of the result set
+    type: Int
+  - name: Limit
+    description: Maximum number of items to return in the result set
+    type: Int
+  - name: Total
+    description: Total number of items available for pagination
+    type: Int
+- name: Meta
+  description: Metadata fields containing creation and update information
+  fields:
+  - name: CreatedAt
+    description: Timestamp when the resource was created
+    type: Timestamp
+  - name: CreatedBy
+    description: User who created the resource
+    type: UUID
+    modifiers:
+    - Nullable
+  - name: UpdatedAt
+    description: Timestamp when the resource was last updated
+    type: Timestamp
+  - name: UpdatedBy
+    description: User who last updated the resource
+    type: UUID
+    modifiers:
+    - Nullable
+- name: Students
+  description: Student management resource
+  fields:
+  - name: ID
+    description: Unique identifier for the Students
+    type: UUID
+  - name: Meta
+    description: Metadata information for the Students
+    type: Meta
+  - name: id
+    description: Unique student identifier
+    type: UUID
+  - name: firstName
+    description: Student's first name
+    type: String
+  - name: lastName
+    description: Student's last name
+    type: String
+  - name: studentId
+    description: School-assigned student ID
+    type: String
+  - name: status
+    description: Current status of the student
+    type: StudentStatus
+    default: Active
+  - name: gradeLevel
+    description: Current grade level
+    type: GradeLevel
+  - name: contact
+    description: Student contact information
+    type: Contact
+  - name: address
+    description: Student home address
+    type: Address
+    modifiers:
+    - Nullable
+  - name: enrollmentDate
+    description: Date when student was enrolled
+    type: Date
+  - name: graduationDate
+    description: Expected or actual graduation date
+    type: Date
+    modifiers:
+    - Nullable
+- name: ContactRequestError
+  description: Request error object for Contact
+  fields:
+  - name: email
+    description: Email address
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: phone
+    description: Phone number
+    type: ErrorField
+    modifiers:
+    - Nullable
+- name: AddressRequestError
+  description: Request error object for Address
+  fields:
+  - name: street
+    description: Street address
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: city
+    description: City
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: state
+    description: State or province
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: zipCode
+    description: ZIP or postal code
+    type: ErrorField
+    modifiers:
+    - Nullable
+- name: StudentRequestError
+  description: Request error object for Student
+  fields:
+  - name: firstName
+    description: Student's first name
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: lastName
+    description: Student's last name
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: studentId
+    description: School-assigned student ID
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: status
+    description: Current status of the student
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: gradeLevel
+    description: Current grade level
+    type: ErrorField
+    modifiers:
+    - Nullable
+- name: StudentsBulkImportRequestError
+  description: Request error object for Students BulkImport endpoint
+  fields:
+  - name: students
+    description: Array of student data to import
+    type: StudentRequestError
+    modifiers:
+    - Nullable
+  - name: overwriteExisting
+    description: Whether to overwrite existing student records
+    type: ErrorField
+    modifiers:
+    - Nullable
+- name: StudentsGenerateReportRequestError
+  description: Request error object for Students GenerateReport endpoint
+  fields:
+  - name: gradeLevel
+    description: Filter by specific grade level
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: status
+    description: Filter by student status
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: enrollmentDateFrom
+    description: Filter students enrolled after this date
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: enrollmentDateTo
+    description: Filter students enrolled before this date
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: includeInactive
+    description: Include inactive students in report
+    type: ErrorField
+    modifiers:
+    - Nullable
+- name: StudentsAdvancedSearchRequestError
+  description: Request error object for Students AdvancedSearch endpoint
+  fields:
+  - name: nameQuery
+    description: Search in first name and last name
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: gradeLevel
+    description: Filter by one or more grade levels
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: status
+    description: Filter by one or more statuses
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: enrollmentDateRange
+    description: Date range filter [from, to]
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: hasGraduationDate
+    description: Filter students with or without graduation date
+    type: ErrorField
+    modifiers:
+    - Nullable
+- name: StudentsCreateRequestError
+  description: Request error object for Students Create endpoint
+  fields:
+  - name: firstName
+    description: Student's first name
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: lastName
+    description: Student's last name
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: studentId
+    description: School-assigned student ID
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: status
+    description: Current status of the student
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: gradeLevel
+    description: Current grade level
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: contact
+    description: Student contact information
+    type: ContactRequestError
+    modifiers:
+    - Nullable
+  - name: address
+    description: Student home address
+    type: AddressRequestError
+    modifiers:
+    - Nullable
+  - name: enrollmentDate
+    description: Date when student was enrolled
+    type: ErrorField
+    modifiers:
+    - Nullable
+- name: StudentsUpdateRequestError
+  description: Request error object for Students Update endpoint
+  fields:
+  - name: firstName
+    description: Student's first name
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: lastName
+    description: Student's last name
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: status
+    description: Current status of the student
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: gradeLevel
+    description: Current grade level
+    type: ErrorField
+    modifiers:
+    - Nullable
+  - name: contact
+    description: Student contact information
+    type: ContactRequestError
+    modifiers:
+    - Nullable
+  - name: address
+    description: Student home address
+    type: AddressRequestError
+    modifiers:
+    - Nullable
+  - name: graduationDate
+    description: Expected or actual graduation date
+    type: ErrorField
+    modifiers:
+    - Nullable
+- name: StudentsSearchRequestError
+  description: Request error object for Students Search endpoint
+  fields:
+  - name: Filter
+    description: Filter criteria to search for specific records
+    type: StudentsFilterRequestError
+    modifiers:
+    - Nullable
+- name: ContactFilter
+  description: Filter object for Contact
+  fields:
+  - name: Equals
+    description: Equality filters for Contact
+    type: ContactFilterEquals
+    modifiers:
+    - Nullable
+  - name: NotEquals
+    description: Inequality filters for Contact
+    type: ContactFilterEquals
+    modifiers:
+    - Nullable
+  - name: GreaterThan
+    description: Greater than filters for Contact
+    type: ContactFilterRange
+    modifiers:
+    - Nullable
+  - name: SmallerThan
+    description: Smaller than filters for Contact
+    type: ContactFilterRange
+    modifiers:
+    - Nullable
+  - name: GreaterOrEqual
+    description: Greater than or equal filters for Contact
+    type: ContactFilterRange
+    modifiers:
+    - Nullable
+  - name: SmallerOrEqual
+    description: Smaller than or equal filters for Contact
+    type: ContactFilterRange
+    modifiers:
+    - Nullable
+  - name: Contains
+    description: Contains filters for Contact
+    type: ContactFilterContains
+    modifiers:
+    - Nullable
+  - name: NotContains
+    description: Not contains filters for Contact
+    type: ContactFilterContains
+    modifiers:
+    - Nullable
+  - name: Like
+    description: LIKE filters for Contact
+    type: ContactFilterLike
+    modifiers:
+    - Nullable
+  - name: NotLike
+    description: NOT LIKE filters for Contact
+    type: ContactFilterLike
+    modifiers:
+    - Nullable
+  - name: "Null"
+    description: Null filters for Contact
+    type: ContactFilterNull
+    modifiers:
+    - Nullable
+  - name: NotNull
+    description: Not null filters for Contact
+    type: ContactFilterNull
+    modifiers:
+    - Nullable
+  - name: OrCondition
+    description: OrCondition decides if this filter is within an OR-condition or AND-condition
+    type: Bool
+  - name: NestedFilters
+    description: NestedFilters of the Contact, useful for more complex filters
+    type: ContactFilter
+    modifiers:
+    - Array
+- name: ContactFilterEquals
+  description: Equality/Inequality filter fields for Contact
+  fields:
+  - name: email
+    description: Email address
+    type: String
+    modifiers:
+    - Nullable
+  - name: phone
+    description: Phone number
+    type: String
+    modifiers:
+    - Nullable
+- name: ContactFilterRange
+  description: Range filter fields for Contact
+  fields: []
+- name: ContactFilterContains
+  description: Contains filter fields for Contact
+  fields:
+  - name: email
+    description: Email address
+    type: String
+    modifiers:
+    - Array
+  - name: phone
+    description: Phone number
+    type: String
+    modifiers:
+    - Array
+- name: ContactFilterLike
+  description: LIKE filter fields for Contact
+  fields:
+  - name: email
+    description: Email address
+    type: String
+    modifiers:
+    - Nullable
+  - name: phone
+    description: Phone number
+    type: String
+    modifiers:
+    - Nullable
+- name: ContactFilterNull
+  description: Null filter fields for Contact
+  fields:
+  - name: phone
+    description: Phone number
+    type: Bool
+    modifiers:
+    - Nullable
+- name: AddressFilter
+  description: Filter object for Address
+  fields:
+  - name: Equals
+    description: Equality filters for Address
+    type: AddressFilterEquals
+    modifiers:
+    - Nullable
+  - name: NotEquals
+    description: Inequality filters for Address
+    type: AddressFilterEquals
+    modifiers:
+    - Nullable
+  - name: GreaterThan
+    description: Greater than filters for Address
+    type: AddressFilterRange
+    modifiers:
+    - Nullable
+  - name: SmallerThan
+    description: Smaller than filters for Address
+    type: AddressFilterRange
+    modifiers:
+    - Nullable
+  - name: GreaterOrEqual
+    description: Greater than or equal filters for Address
+    type: AddressFilterRange
+    modifiers:
+    - Nullable
+  - name: SmallerOrEqual
+    description: Smaller than or equal filters for Address
+    type: AddressFilterRange
+    modifiers:
+    - Nullable
+  - name: Contains
+    description: Contains filters for Address
+    type: AddressFilterContains
+    modifiers:
+    - Nullable
+  - name: NotContains
+    description: Not contains filters for Address
+    type: AddressFilterContains
+    modifiers:
+    - Nullable
+  - name: Like
+    description: LIKE filters for Address
+    type: AddressFilterLike
+    modifiers:
+    - Nullable
+  - name: NotLike
+    description: NOT LIKE filters for Address
+    type: AddressFilterLike
+    modifiers:
+    - Nullable
+  - name: "Null"
+    description: Null filters for Address
+    type: AddressFilterNull
+    modifiers:
+    - Nullable
+  - name: NotNull
+    description: Not null filters for Address
+    type: AddressFilterNull
+    modifiers:
+    - Nullable
+  - name: OrCondition
+    description: OrCondition decides if this filter is within an OR-condition or AND-condition
+    type: Bool
+  - name: NestedFilters
+    description: NestedFilters of the Address, useful for more complex filters
+    type: AddressFilter
+    modifiers:
+    - Array
+- name: AddressFilterEquals
+  description: Equality/Inequality filter fields for Address
+  fields:
+  - name: street
+    description: Street address
+    type: String
+    modifiers:
+    - Nullable
+  - name: city
+    description: City
+    type: String
+    modifiers:
+    - Nullable
+  - name: state
+    description: State or province
+    type: String
+    modifiers:
+    - Nullable
+  - name: zipCode
+    description: ZIP or postal code
+    type: String
+    modifiers:
+    - Nullable
+- name: AddressFilterRange
+  description: Range filter fields for Address
+  fields: []
+- name: AddressFilterContains
+  description: Contains filter fields for Address
+  fields:
+  - name: street
+    description: Street address
+    type: String
+    modifiers:
+    - Array
+  - name: city
+    description: City
+    type: String
+    modifiers:
+    - Array
+  - name: state
+    description: State or province
+    type: String
+    modifiers:
+    - Array
+  - name: zipCode
+    description: ZIP or postal code
+    type: String
+    modifiers:
+    - Array
+- name: AddressFilterLike
+  description: LIKE filter fields for Address
+  fields:
+  - name: street
+    description: Street address
+    type: String
+    modifiers:
+    - Nullable
+  - name: city
+    description: City
+    type: String
+    modifiers:
+    - Nullable
+  - name: state
+    description: State or province
+    type: String
+    modifiers:
+    - Nullable
+  - name: zipCode
+    description: ZIP or postal code
+    type: String
+    modifiers:
+    - Nullable
+- name: AddressFilterNull
+  description: Null filter fields for Address
+  fields: []
+- name: StudentFilter
+  description: Filter object for Student
+  fields:
+  - name: Equals
+    description: Equality filters for Student
+    type: StudentFilterEquals
+    modifiers:
+    - Nullable
+  - name: NotEquals
+    description: Inequality filters for Student
+    type: StudentFilterEquals
+    modifiers:
+    - Nullable
+  - name: GreaterThan
+    description: Greater than filters for Student
+    type: StudentFilterRange
+    modifiers:
+    - Nullable
+  - name: SmallerThan
+    description: Smaller than filters for Student
+    type: StudentFilterRange
+    modifiers:
+    - Nullable
+  - name: GreaterOrEqual
+    description: Greater than or equal filters for Student
+    type: StudentFilterRange
+    modifiers:
+    - Nullable
+  - name: SmallerOrEqual
+    description: Smaller than or equal filters for Student
+    type: StudentFilterRange
+    modifiers:
+    - Nullable
+  - name: Contains
+    description: Contains filters for Student
+    type: StudentFilterContains
+    modifiers:
+    - Nullable
+  - name: NotContains
+    description: Not contains filters for Student
+    type: StudentFilterContains
+    modifiers:
+    - Nullable
+  - name: Like
+    description: LIKE filters for Student
+    type: StudentFilterLike
+    modifiers:
+    - Nullable
+  - name: NotLike
+    description: NOT LIKE filters for Student
+    type: StudentFilterLike
+    modifiers:
+    - Nullable
+  - name: "Null"
+    description: Null filters for Student
+    type: StudentFilterNull
+    modifiers:
+    - Nullable
+  - name: NotNull
+    description: Not null filters for Student
+    type: StudentFilterNull
+    modifiers:
+    - Nullable
+  - name: OrCondition
+    description: OrCondition decides if this filter is within an OR-condition or AND-condition
+    type: Bool
+  - name: NestedFilters
+    description: NestedFilters of the Student, useful for more complex filters
+    type: StudentFilter
+    modifiers:
+    - Array
+- name: StudentFilterEquals
+  description: Equality/Inequality filter fields for Student
+  fields:
+  - name: firstName
+    description: Student's first name
+    type: String
+    modifiers:
+    - Nullable
+  - name: lastName
+    description: Student's last name
+    type: String
+    modifiers:
+    - Nullable
+  - name: studentId
+    description: School-assigned student ID
+    type: String
+    modifiers:
+    - Nullable
+  - name: status
+    description: Current status of the student
+    type: StudentStatus
+    modifiers:
+    - Nullable
+  - name: gradeLevel
+    description: Current grade level
+    type: GradeLevel
+    modifiers:
+    - Nullable
+- name: StudentFilterRange
+  description: Range filter fields for Student
+  fields: []
+- name: StudentFilterContains
+  description: Contains filter fields for Student
+  fields:
+  - name: firstName
+    description: Student's first name
+    type: String
+    modifiers:
+    - Array
+  - name: lastName
+    description: Student's last name
+    type: String
+    modifiers:
+    - Array
+  - name: studentId
+    description: School-assigned student ID
+    type: String
+    modifiers:
+    - Array
+  - name: status
+    description: Current status of the student
+    type: StudentStatus
+    modifiers:
+    - Array
+  - name: gradeLevel
+    description: Current grade level
+    type: GradeLevel
+    modifiers:
+    - Array
+- name: StudentFilterLike
+  description: LIKE filter fields for Student
+  fields:
+  - name: firstName
+    description: Student's first name
+    type: String
+    modifiers:
+    - Nullable
+  - name: lastName
+    description: Student's last name
+    type: String
+    modifiers:
+    - Nullable
+  - name: studentId
+    description: School-assigned student ID
+    type: String
+    modifiers:
+    - Nullable
+- name: StudentFilterNull
+  description: Null filter fields for Student
+  fields: []
+resources:
+- name: Students
+  description: Student management resource
+  operations:
+  - Create
+  - Read
+  - Update
+  - Delete
+  fields:
+  - name: id
+    description: Unique student identifier
+    type: UUID
+    operations:
+    - Read
+  - name: firstName
+    description: Student's first name
+    type: String
+    operations:
+    - Create
+    - Read
+    - Update
+  - name: lastName
+    description: Student's last name
+    type: String
+    operations:
+    - Create
+    - Read
+    - Update
+  - name: studentId
+    description: School-assigned student ID
+    type: String
+    operations:
+    - Create
+    - Read
+  - name: status
+    description: Current status of the student
+    type: StudentStatus
+    default: Active
+    operations:
+    - Create
+    - Read
+    - Update
+  - name: gradeLevel
+    description: Current grade level
+    type: GradeLevel
+    operations:
+    - Create
+    - Read
+    - Update
+  - name: contact
+    description: Student contact information
+    type: Contact
+    operations:
+    - Create
+    - Read
+    - Update
+  - name: address
+    description: Student home address
+    type: Address
+    modifiers:
+    - Nullable
+    operations:
+    - Create
+    - Read
+    - Update
+  - name: enrollmentDate
+    description: Date when student was enrolled
+    type: Date
+    operations:
+    - Create
+    - Read
+  - name: graduationDate
+    description: Expected or actual graduation date
+    type: Date
+    modifiers:
+    - Nullable
+    operations:
+    - Read
+    - Update
+  endpoints:
+  - name: BulkImport
+    title: Bulk Import Students
+    description: Import multiple students from a CSV file or structured data
+    method: POST
+    path: /bulk-import
+    request:
+      content_type: application/json
+      headers:
+      - name: Authorization
+        description: Bearer token for authentication
+        type: String
+      path_params: []
+      query_params:
+      - name: validateOnly
+        description: Only validate data without importing
+        type: Bool
+        default: "false"
+      body_params:
+      - name: students
+        description: Array of student data to import
+        type: Student
+        modifiers:
+        - Array
+      - name: overwriteExisting
+        description: Whether to overwrite existing student records
+        type: Bool
+        default: "false"
+    response:
+      content_type: application/json
+      status_code: 200
+      headers: []
+      body_fields:
+      - name: imported
+        description: Number of students successfully imported
+        type: Int
+      - name: failed
+        description: Number of students that failed to import
+        type: Int
+      - name: errors
+        description: List of import error messages
+        type: String
+        modifiers:
+        - Array
+  - name: GenerateReport
+    title: Generate Student Report
+    description: Generate a comprehensive report for students based on filters
+    method: POST
+    path: /reports/generate
+    request:
+      content_type: application/json
+      headers: []
+      path_params: []
+      query_params:
+      - name: format
+        description: Report format (pdf, excel, csv)
+        type: String
+        default: pdf
+      body_params:
+      - name: gradeLevel
+        description: Filter by specific grade level
+        type: GradeLevel
+        modifiers:
+        - Nullable
+      - name: status
+        description: Filter by student status
+        type: StudentStatus
+        modifiers:
+        - Nullable
+      - name: enrollmentDateFrom
+        description: Filter students enrolled after this date
+        type: Date
+        modifiers:
+        - Nullable
+      - name: enrollmentDateTo
+        description: Filter students enrolled before this date
+        type: Date
+        modifiers:
+        - Nullable
+      - name: includeInactive
+        description: Include inactive students in report
+        type: Bool
+        default: "false"
+    response:
+      content_type: application/json
+      status_code: 202
+      headers: []
+      body_fields:
+      - name: reportId
+        description: Unique identifier for the generated report
+        type: UUID
+      - name: estimatedCompletionTime
+        description: When the report is expected to be ready
+        type: Timestamp
+      - name: downloadUrl
+        description: URL to download the report once ready
+        type: String
+        modifiers:
+        - Nullable
+  - name: AdvancedSearch
+    title: Advanced Student Search
+    description: Search students with advanced filtering and sorting options
+    method: POST
+    path: /advanced-search
+    request:
+      content_type: application/json
+      headers: []
+      path_params: []
+      query_params:
+      - name: limit
+        description: Maximum number of results to return
+        type: Int
+        default: "50"
+      - name: offset
+        description: Number of results to skip
+        type: Int
+        default: "0"
+      - name: sortBy
+        description: Field to sort by
+        type: String
+        default: lastName
+      - name: sortOrder
+        description: Sort order (asc, desc)
+        type: String
+        default: asc
+      body_params:
+      - name: nameQuery
+        description: Search in first name and last name
+        type: String
+        modifiers:
+        - Nullable
+      - name: gradeLevel
+        description: Filter by one or more grade levels
+        type: GradeLevel
+        modifiers:
+        - Nullable
+        - Array
+      - name: status
+        description: Filter by one or more statuses
+        type: StudentStatus
+        modifiers:
+        - Nullable
+        - Array
+      - name: enrollmentDateRange
+        description: Date range filter [from, to]
+        type: Date
+        modifiers:
+        - Nullable
+        - Array
+      - name: hasGraduationDate
+        description: Filter students with or without graduation date
+        type: Bool
+        modifiers:
+        - Nullable
+    response:
+      content_type: application/json
+      status_code: 200
+      headers: []
+      body_fields:
+      - name: students
+        description: Array of matching students
+        type: Student
+        modifiers:
+        - Array
+      - name: totalCount
+        description: Total number of matching students
+        type: Int
+      - name: facets
+        description: Search facets and counts
+        type: String
+  - name: Create
+    title: Create Students
+    description: Create a new Students
+    method: POST
+    path: ""
+    request:
+      content_type: application/json
+      headers: []
+      path_params: []
+      query_params: []
+      body_params:
+      - name: firstName
+        description: Student's first name
+        type: String
+      - name: lastName
+        description: Student's last name
+        type: String
+      - name: studentId
+        description: School-assigned student ID
+        type: String
+      - name: status
+        description: Current status of the student
+        type: StudentStatus
+        default: Active
+      - name: gradeLevel
+        description: Current grade level
+        type: GradeLevel
+      - name: contact
+        description: Student contact information
+        type: Contact
+      - name: address
+        description: Student home address
+        type: Address
+        modifiers:
+        - Nullable
+      - name: enrollmentDate
+        description: Date when student was enrolled
+        type: Date
+    response:
+      content_type: application/json
+      status_code: 201
+      headers: []
+      body_fields: []
+      body_object: Students
+  - name: Update
+    title: Update Students
+    description: Update a Students
+    method: PATCH
+    path: /{id}
+    request:
+      content_type: application/json
+      headers: []
+      path_params:
+      - name: id
+        description: The unique identifier of the Students to update
+        type: UUID
+      query_params: []
+      body_params:
+      - name: firstName
+        description: Student's first name
+        type: String
+      - name: lastName
+        description: Student's last name
+        type: String
+      - name: status
+        description: Current status of the student
+        type: StudentStatus
+        default: Active
+      - name: gradeLevel
+        description: Current grade level
+        type: GradeLevel
+      - name: contact
+        description: Student contact information
+        type: Contact
+      - name: address
+        description: Student home address
+        type: Address
+        modifiers:
+        - Nullable
+      - name: graduationDate
+        description: Expected or actual graduation date
+        type: Date
+        modifiers:
+        - Nullable
+    response:
+      content_type: application/json
+      status_code: 200
+      headers: []
+      body_fields: []
+      body_object: Students
+  - name: Delete
+    title: Delete Students
+    description: Delete a Students
+    method: DELETE
+    path: /{id}
+    request:
+      content_type: application/json
+      headers: []
+      path_params:
+      - name: id
+        description: The unique identifier of the Students to delete
+        type: UUID
+      query_params: []
+      body_params: []
+    response:
+      content_type: application/json
+      status_code: 204
+      headers: []
+      body_fields: []
+  - name: Get
+    title: Retrieve an existing Students
+    description: Retrieves the `Students` with the given ID.
+    method: GET
+    path: /{id}
+    request:
+      content_type: application/json
+      headers: []
+      path_params:
+      - name: id
+        description: The unique identifier of the Students to retrieve
+        type: UUID
+      query_params: []
+      body_params: []
+    response:
+      content_type: application/json
+      status_code: 200
+      headers: []
+      body_fields: []
+      body_object: Students
+  - name: List
+    title: List all Students
+    description: Returns a paginated list of all `Students` in your organization.
+    method: GET
+    path: ""
+    request:
+      content_type: application/json
+      headers: []
+      path_params: []
+      query_params:
+      - name: limit
+        description: "The maximum number of items to return (default: 50)"
+        type: Int
+        default: "50"
+      - name: offset
+        description: "The number of items to skip before starting to return results (default: 0)"
+        type: Int
+        default: "0"
+      body_params: []
+    response:
+      content_type: application/json
+      status_code: 200
+      headers: []
+      body_fields:
+      - name: data
+        description: Array of Students objects
+        type: Students
+        modifiers:
+        - Array
+      - name: Pagination
+        description: Pagination information
+        type: Pagination
+  - name: Search
+    title: Search Students
+    description: Search for `Students` with filtering capabilities.
+    method: POST
+    path: /_search
+    request:
+      content_type: application/json
+      headers: []
+      path_params: []
+      query_params:
+      - name: limit
+        description: "The maximum number of items to return (default: 50)"
+        type: Int
+        default: "50"
+      - name: offset
+        description: "The number of items to skip before starting to return results (default: 0)"
+        type: Int
+        default: "0"
+      body_params:
+      - name: Filter
+        description: Filter criteria to search for specific records
+        type: StudentsFilter
+    response:
+      content_type: application/json
+      status_code: 200
+      headers: []
+      body_fields:
+      - name: data
+        description: Array of Students objects
+        type: Students
+        modifiers:
+        - Array
+      - name: Pagination
+        description: Pagination information
+        type: Pagination

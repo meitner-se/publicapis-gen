@@ -32,8 +32,8 @@ const (
 
 // Field Modifiers
 const (
-	ModifierNullable = "nullable"
-	ModifierArray    = "array"
+	ModifierNullable = "Nullable"
+	ModifierArray    = "Array"
 )
 
 // Filter suffixes
@@ -286,9 +286,19 @@ const (
 	errorUnsupportedFormat = "unsupported file format"
 	errorFileRead          = "failed to read file"
 	errorFileParse         = "failed to parse file"
-	extYAML                = ".yaml"
-	extYML                 = ".yml"
-	extJSON                = ".json"
+
+	// Validation error constants
+	errorInvalidOperation = "invalid operation"
+	errorInvalidFieldType = "invalid field type"
+	errorInvalidModifier  = "invalid modifier"
+	errorValidationFailed = "validation failed"
+)
+
+// File extension constants
+const (
+	extYAML = ".yaml"
+	extYML  = ".yml"
+	extJSON = ".json"
 )
 
 // ServiceServer represents a server in the API service.
@@ -1748,6 +1758,173 @@ func ToKebabCase(s string) string {
 	return strings.ToLower(result.String())
 }
 
+// Validation functions
+
+// ValidateService validates the entire service specification against the defined rules.
+func ValidateService(service *Service) error {
+	// Validate resources
+	for i, resource := range service.Resources {
+		if err := ValidateResource(service, &resource); err != nil {
+			return fmt.Errorf("resource %d (%s): %w", i, resource.Name, err)
+		}
+	}
+
+	// Validate objects
+	for i, object := range service.Objects {
+		if err := ValidateObject(service, &object); err != nil {
+			return fmt.Errorf("object %d (%s): %w", i, object.Name, err)
+		}
+	}
+
+	return nil
+}
+
+// ValidateResource validates a resource and its fields against the defined rules.
+func ValidateResource(service *Service, resource *Resource) error {
+	// Validate operations
+	if err := ValidateOperations(resource.Operations); err != nil {
+		return fmt.Errorf("resource operations: %w", err)
+	}
+
+	// Validate resource fields
+	for i, field := range resource.Fields {
+		if err := ValidateResourceField(service, &field); err != nil {
+			return fmt.Errorf("field %d (%s): %w", i, field.Name, err)
+		}
+	}
+
+	// Validate endpoints
+	for i, endpoint := range resource.Endpoints {
+		if err := ValidateEndpoint(service, &endpoint); err != nil {
+			return fmt.Errorf("endpoint %d (%s): %w", i, endpoint.Name, err)
+		}
+	}
+
+	return nil
+}
+
+// ValidateObject validates an object and its fields against the defined rules.
+func ValidateObject(service *Service, object *Object) error {
+	// Validate object fields
+	for i, field := range object.Fields {
+		if err := ValidateField(service, &field); err != nil {
+			return fmt.Errorf("field %d (%s): %w", i, field.Name, err)
+		}
+	}
+
+	return nil
+}
+
+// ValidateResourceField validates a resource field against the defined rules.
+func ValidateResourceField(service *Service, field *ResourceField) error {
+	// Validate operations
+	if err := ValidateOperations(field.Operations); err != nil {
+		return fmt.Errorf("field operations: %w", err)
+	}
+
+	// Validate the embedded field
+	return ValidateField(service, &field.Field)
+}
+
+// ValidateField validates a field against the defined rules.
+func ValidateField(service *Service, field *Field) error {
+	// Validate field type
+	if err := ValidateFieldType(service, field.Type); err != nil {
+		return fmt.Errorf("field type: %w", err)
+	}
+
+	// Validate modifiers
+	if err := ValidateModifiers(field.Modifiers); err != nil {
+		return fmt.Errorf("field modifiers: %w", err)
+	}
+
+	return nil
+}
+
+// ValidateEndpoint validates an endpoint against the defined rules.
+func ValidateEndpoint(service *Service, endpoint *Endpoint) error {
+	// Validate request body params
+	for i, field := range endpoint.Request.BodyParams {
+		if err := ValidateField(service, &field); err != nil {
+			return fmt.Errorf("request body param %d (%s): %w", i, field.Name, err)
+		}
+	}
+
+	// Validate request query params
+	for i, field := range endpoint.Request.QueryParams {
+		if err := ValidateField(service, &field); err != nil {
+			return fmt.Errorf("request query param %d (%s): %w", i, field.Name, err)
+		}
+	}
+
+	// Validate request headers
+	for i, field := range endpoint.Request.Headers {
+		if err := ValidateField(service, &field); err != nil {
+			return fmt.Errorf("request header %d (%s): %w", i, field.Name, err)
+		}
+	}
+
+	// Validate response body fields
+	for i, field := range endpoint.Response.BodyFields {
+		if err := ValidateField(service, &field); err != nil {
+			return fmt.Errorf("response body field %d (%s): %w", i, field.Name, err)
+		}
+	}
+
+	return nil
+}
+
+// ValidateOperations validates that all operations are in PascalCase and are valid CRUD operations.
+func ValidateOperations(operations []string) error {
+	validOperations := []string{OperationCreate, OperationRead, OperationUpdate, OperationDelete}
+
+	for _, operation := range operations {
+		if !slices.Contains(validOperations, operation) {
+			return fmt.Errorf("%s: operation '%s' must be one of: %v", errorInvalidOperation, operation, validOperations)
+		}
+	}
+
+	return nil
+}
+
+// ValidateFieldType validates that the field type is either a valid primitive type, enum, or object.
+func ValidateFieldType(service *Service, fieldType string) error {
+	// Check if it's a primitive type
+	validPrimitiveTypes := []string{
+		FieldTypeUUID, FieldTypeDate, FieldTypeTimestamp,
+		FieldTypeString, FieldTypeInt, FieldTypeBool,
+	}
+
+	if slices.Contains(validPrimitiveTypes, fieldType) {
+		return nil
+	}
+
+	// Check if it's a valid enum
+	if service.HasEnum(fieldType) {
+		return nil
+	}
+
+	// Check if it's a valid object
+	if service.HasObject(fieldType) {
+		return nil
+	}
+
+	return fmt.Errorf("%s: field type '%s' must be one of the primitive types %v, or a valid enum/object", errorInvalidFieldType, fieldType, validPrimitiveTypes)
+}
+
+// ValidateModifiers validates that all modifiers are in PascalCase and are valid modifiers.
+func ValidateModifiers(modifiers []string) error {
+	validModifiers := []string{ModifierNullable, ModifierArray}
+
+	for _, modifier := range modifiers {
+		if !slices.Contains(validModifiers, modifier) {
+			return fmt.Errorf("%s: modifier '%s' must be one of: %v", errorInvalidModifier, modifier, validModifiers)
+		}
+	}
+
+	return nil
+}
+
 // Parsing functions
 
 // ParseServiceFromFile reads and parses a YAML or JSON specification file,
@@ -1826,6 +2003,11 @@ func parseServiceFromBytes(data []byte, fileExtension string) (*Service, error) 
 		}
 	default:
 		return nil, fmt.Errorf("%s: file must have .yaml, .yml, or .json extension", errorUnsupportedFormat)
+	}
+
+	// Validate the parsed service
+	if err := ValidateService(&service); err != nil {
+		return nil, fmt.Errorf("%s: %w", errorValidationFailed, err)
 	}
 
 	return &service, nil
