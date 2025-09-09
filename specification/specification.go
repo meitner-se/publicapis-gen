@@ -1897,7 +1897,7 @@ func (pt *PositionTracker) findModifierError(errorMsg string, service *Service) 
 func (pt *PositionTracker) findInvalidValue(fieldName string, errorMsg string) *token.Position {
 	// This is a simplified implementation that finds the first occurrence
 	// of specific field names in the YAML and returns their position
-	if pt.file.Docs != nil && len(pt.file.Docs) > 0 {
+	if len(pt.file.Docs) > 0 {
 		return pt.findFieldInAST(fieldName, pt.file.Docs[0].Body)
 	}
 	return nil
@@ -1938,30 +1938,6 @@ func (pt *PositionTracker) findFieldInAST(fieldName string, node ast.Node) *toke
 					return pos
 				}
 			}
-		}
-	}
-
-	return nil
-}
-
-// getNodePosition gets the position of a node.
-func (pt *PositionTracker) getNodePosition(node ast.Node) *token.Position {
-	if node == nil {
-		return nil
-	}
-
-	switch n := node.(type) {
-	case *ast.StringNode:
-		if token := n.GetToken(); token != nil {
-			return token.Position
-		}
-	case *ast.MappingNode:
-		if token := n.GetToken(); token != nil {
-			return token.Position
-		}
-	case *ast.SequenceNode:
-		if token := n.GetToken(); token != nil {
-			return token.Position
 		}
 	}
 
