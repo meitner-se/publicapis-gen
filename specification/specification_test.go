@@ -1654,7 +1654,37 @@ func TestApplyFilterOverlay(t *testing.T) {
 					},
 				},
 			},
-			Resources: []Resource{},
+			Resources: []Resource{
+				{
+					Name:        "Users",
+					Description: "User management",
+					Operations:  []string{OperationCreate},
+					Fields:      []ResourceField{},
+					Endpoints: []Endpoint{
+						{
+							Name:        "Create",
+							Title:       "Create User",
+							Description: "Create a new user",
+							Method:      "POST",
+							Path:        "",
+							Request: EndpointRequest{
+								ContentType: contentTypeJSON,
+								BodyParams: []Field{
+									{
+										Name:        "person",
+										Type:        "Person",
+										Description: "Person data",
+									},
+								},
+							},
+							Response: EndpointResponse{
+								ContentType: contentTypeJSON,
+								StatusCode:  201,
+							},
+						},
+					},
+				},
+			},
 		}
 
 		result := ApplyFilterOverlay(input)
@@ -1676,6 +1706,151 @@ func TestApplyFilterOverlay(t *testing.T) {
 		assert.Equal(t, "Filter object for Person", mainFilter.Description)
 		assert.Greater(t, len(mainFilter.Fields), 0, "Filter should have fields")
 	})
+
+	t.Run("should not generate filters for response-only objects", func(t *testing.T) {
+		// Create a service with objects only used in responses (Error, Pagination)
+		input := &Service{
+			Name:  "TestService",
+			Enums: []Enum{},
+			Objects: []Object{
+				{
+					Name:        errorObjectName,
+					Description: "Error response object",
+					Fields: []Field{
+						{
+							Name:        "Code",
+							Type:        FieldTypeString,
+							Description: "Error code",
+						},
+						{
+							Name:        "Message",
+							Type:        FieldTypeString,
+							Description: "Error message",
+						},
+					},
+				},
+				{
+					Name:        paginationObjectName,
+					Description: "Pagination object",
+					Fields: []Field{
+						{
+							Name:        "Offset",
+							Type:        FieldTypeInt,
+							Description: "Offset value",
+						},
+						{
+							Name:        "Limit",
+							Type:        FieldTypeInt,
+							Description: "Limit value",
+						},
+					},
+				},
+				{
+					Name:        "User",
+					Description: "User object",
+					Fields: []Field{
+						{
+							Name:        "Name",
+							Type:        FieldTypeString,
+							Description: "User name",
+						},
+					},
+				},
+			},
+			Resources: []Resource{
+				{
+					Name:        "Users",
+					Description: "User management",
+					Operations:  []string{OperationCreate, OperationRead},
+					Fields:      []ResourceField{},
+					Endpoints: []Endpoint{
+						{
+							Name:        "Create",
+							Title:       "Create User",
+							Description: "Create a new user",
+							Method:      "POST",
+							Path:        "",
+							Request: EndpointRequest{
+								ContentType: contentTypeJSON,
+								BodyParams: []Field{
+									{
+										Name:        "user",
+										Type:        "User",
+										Description: "User data",
+									},
+								},
+							},
+							Response: EndpointResponse{
+								ContentType: contentTypeJSON,
+								StatusCode:  201,
+								BodyObject:  stringPtr("User"),
+							},
+						},
+						{
+							Name:        "List",
+							Title:       "List Users",
+							Description: "List all users",
+							Method:      "GET",
+							Path:        "",
+							Request: EndpointRequest{
+								ContentType: contentTypeJSON,
+							},
+							Response: EndpointResponse{
+								ContentType: contentTypeJSON,
+								StatusCode:  200,
+								BodyFields: []Field{
+									{
+										Name:        "data",
+										Type:        "User",
+										Description: "Users array",
+										Modifiers:   []string{ModifierArray},
+									},
+									{
+										Name:        "pagination",
+										Type:        paginationObjectName,
+										Description: "Pagination info",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyFilterOverlay(input)
+		require.NotNil(t, result)
+
+		// Should have generated filters for User (used in body params) but not for Error or Pagination (response-only)
+		hasUserFilter := false
+		hasErrorFilter := false
+		hasPaginationFilter := false
+
+		for _, obj := range result.Objects {
+			if obj.Name == "UserFilter" {
+				hasUserFilter = true
+			}
+			if obj.Name == "ErrorFilter" {
+				hasErrorFilter = true
+			}
+			if obj.Name == "PaginationFilter" {
+				hasPaginationFilter = true
+			}
+		}
+
+		assert.True(t, hasUserFilter, "Should have generated UserFilter (User is used in request body)")
+		assert.False(t, hasErrorFilter, "Should NOT have generated ErrorFilter (Error is only used in responses)")
+		assert.False(t, hasPaginationFilter, "Should NOT have generated PaginationFilter (Pagination is only used in responses)")
+	})
+}
+
+// ============================================================================
+// Test Helper Functions
+// ============================================================================
+
+// stringPtr returns a pointer to a string value
+func stringPtr(s string) *string {
+	return &s
 }
 
 // ============================================================================
@@ -2491,7 +2666,37 @@ func TestApplyFilterOverlay_NestedObjects(t *testing.T) {
 					},
 				},
 			},
-			Resources: []Resource{},
+			Resources: []Resource{
+				{
+					Name:        "People",
+					Description: "People management",
+					Operations:  []string{OperationCreate},
+					Fields:      []ResourceField{},
+					Endpoints: []Endpoint{
+						{
+							Name:        "Create",
+							Title:       "Create Person",
+							Description: "Create a new person",
+							Method:      "POST",
+							Path:        "",
+							Request: EndpointRequest{
+								ContentType: contentTypeJSON,
+								BodyParams: []Field{
+									{
+										Name:        "person",
+										Type:        "Person",
+										Description: "Person data",
+									},
+								},
+							},
+							Response: EndpointResponse{
+								ContentType: contentTypeJSON,
+								StatusCode:  201,
+							},
+						},
+					},
+				},
+			},
 		}
 
 		result := ApplyFilterOverlay(input)

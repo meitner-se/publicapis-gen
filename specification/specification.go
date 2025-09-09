@@ -1063,8 +1063,15 @@ func ApplyFilterOverlay(input *Service) *Service {
 	// Copy resources
 	copy(result.Resources, input.Resources)
 
-	// Generate Filter objects from existing Objects
+	// Collect types used in request body parameters
+	usedTypes := collectTypesUsedInBodyParams(result)
+
+	// Generate Filter objects only for Objects used in request body parameters
 	for _, obj := range input.Objects {
+		// Skip objects that are not used in request body parameters
+		if !usedTypes[obj.Name] {
+			continue
+		}
 		// Generate main filter object
 		mainFilter := Object{
 			Name:        obj.Name + filterSuffix,
