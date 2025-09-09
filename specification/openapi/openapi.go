@@ -243,10 +243,10 @@ func (g *Generator) createObjectSchema(obj specification.Object, service *specif
 	for _, field := range obj.Fields {
 		fieldSchema := g.createFieldSchema(field, service)
 		proxy := base.CreateSchemaProxy(fieldSchema)
-		schema.Properties.Set(field.Name, proxy)
+		schema.Properties.Set(field.TagJSON(), proxy)
 
 		if field.IsRequired(service) {
-			requiredFields = append(requiredFields, field.Name)
+			requiredFields = append(requiredFields, field.TagJSON())
 		}
 	}
 
@@ -428,7 +428,7 @@ func (g *Generator) createOperation(endpoint specification.Endpoint, resource sp
 func (g *Generator) createParameter(field specification.Field, location string, service *specification.Service) *v3.Parameter {
 	isRequired := field.IsRequired(service)
 	param := &v3.Parameter{
-		Name:        field.Name,
+		Name:        field.TagJSON(),
 		In:          location,
 		Description: field.Description,
 		Required:    &isRequired,
@@ -450,10 +450,10 @@ func (g *Generator) createRequestBody(bodyParams []specification.Field, service 
 	for _, field := range bodyParams {
 		fieldSchema := g.createFieldSchema(field, service)
 		proxy := base.CreateSchemaProxy(fieldSchema)
-		schema.Properties.Set(field.Name, proxy)
+		schema.Properties.Set(field.TagJSON(), proxy)
 
 		if field.IsRequired(service) {
-			requiredFields = append(requiredFields, field.Name)
+			requiredFields = append(requiredFields, field.TagJSON())
 		}
 	}
 
@@ -503,7 +503,7 @@ func (g *Generator) createResponse(response specification.EndpointResponse, serv
 			for _, field := range response.BodyFields {
 				fieldSchema := g.createFieldSchema(field, service)
 				proxy := base.CreateSchemaProxy(fieldSchema)
-				schema.Properties.Set(field.Name, proxy)
+				schema.Properties.Set(field.TagJSON(), proxy)
 			}
 		}
 

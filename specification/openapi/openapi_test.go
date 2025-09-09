@@ -542,6 +542,135 @@ func TestEndToEndErrorResponseGeneration(t *testing.T) {
 	t.Logf("Generated OpenAPI JSON:\n%s", jsonString)
 }
 
+// TestCamelCaseParametersInOpenAPI verifies that parameters use camelCase in OpenAPI output
+func TestCamelCaseParametersInOpenAPI(t *testing.T) {
+	generator := NewGenerator()
+	service := &specification.Service{
+		Name:    "TestAPI",
+		Version: "1.0.0",
+		Resources: []specification.Resource{
+			{
+				Name:        "User",
+				Description: "User resource for testing camelCase",
+				Operations:  []string{specification.OperationCreate, specification.OperationRead},
+				Endpoints: []specification.Endpoint{
+					{
+						Name:        "GetUser",
+						Title:       "Get User",
+						Description: "Get user with parameters",
+						Method:      "GET",
+						Path:        "/{user_id}",
+						Request: specification.EndpointRequest{
+							PathParams: []specification.Field{
+								{
+									Name:        "user_id",
+									Description: "User identifier",
+									Type:        specification.FieldTypeUUID,
+								},
+							},
+							QueryParams: []specification.Field{
+								{
+									Name:        "include_details",
+									Description: "Include user details",
+									Type:        specification.FieldTypeBool,
+								},
+								{
+									Name:        "created_at_filter",
+									Description: "Filter by creation date",
+									Type:        specification.FieldTypeDate,
+								},
+							},
+						},
+						Response: specification.EndpointResponse{
+							ContentType: "application/json",
+							StatusCode:  200,
+							BodyFields: []specification.Field{
+								{
+									Name:        "user_name",
+									Description: "Name of the user",
+									Type:        specification.FieldTypeString,
+								},
+								{
+									Name:        "created_at",
+									Description: "Creation timestamp",
+									Type:        specification.FieldTypeTimestamp,
+								},
+							},
+						},
+					},
+					{
+						Name:        "CreateUser",
+						Title:       "Create User",
+						Description: "Create new user",
+						Method:      "POST",
+						Path:        "",
+						Request: specification.EndpointRequest{
+							ContentType: "application/json",
+							BodyParams: []specification.Field{
+								{
+									Name:        "user_email",
+									Description: "User email address",
+									Type:        specification.FieldTypeString,
+								},
+								{
+									Name:        "first_name",
+									Description: "User first name",
+									Type:        specification.FieldTypeString,
+								},
+							},
+						},
+						Response: specification.EndpointResponse{
+							ContentType: "application/json",
+							StatusCode:  201,
+							BodyFields: []specification.Field{
+								{
+									Name:        "user_id",
+									Description: "Created user ID",
+									Type:        specification.FieldTypeUUID,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	document, err := generator.GenerateFromService(service)
+
+	assert.NoError(t, err, "Should generate document successfully")
+	assert.NotNil(t, document, "Document should not be nil")
+
+	// Generate JSON to check the actual parameter names
+	jsonBytes, err := generator.ToJSON(document)
+	assert.NoError(t, err, "Should convert to JSON successfully")
+	jsonString := string(jsonBytes)
+
+	// Verify path parameters are in camelCase
+	assert.Contains(t, jsonString, "\"userID\"", "Path parameter should be camelCase: userID")
+	assert.NotContains(t, jsonString, "\"user_id\"", "Path parameter should not contain underscores: user_id")
+
+	// Verify query parameters are in camelCase
+	assert.Contains(t, jsonString, "\"includeDetails\"", "Query parameter should be camelCase: includeDetails")
+	assert.Contains(t, jsonString, "\"createdAtFilter\"", "Query parameter should be camelCase: createdAtFilter")
+	assert.NotContains(t, jsonString, "\"include_details\"", "Query parameter should not contain underscores: include_details")
+	assert.NotContains(t, jsonString, "\"created_at_filter\"", "Query parameter should not contain underscores: created_at_filter")
+
+	// Verify request body properties are in camelCase
+	assert.Contains(t, jsonString, "\"userEmail\"", "Request body property should be camelCase: userEmail")
+	assert.Contains(t, jsonString, "\"firstName\"", "Request body property should be camelCase: firstName")
+	assert.NotContains(t, jsonString, "\"user_email\"", "Request body property should not contain underscores: user_email")
+	assert.NotContains(t, jsonString, "\"first_name\"", "Request body property should not contain underscores: first_name")
+
+	// Verify response body properties are in camelCase
+	assert.Contains(t, jsonString, "\"userName\"", "Response body property should be camelCase: userName")
+	assert.Contains(t, jsonString, "\"createdAt\"", "Response body property should be camelCase: createdAt")
+	assert.NotContains(t, jsonString, "\"user_name\"", "Response body property should not contain underscores: user_name")
+	assert.NotContains(t, jsonString, "\"created_at\"", "Response body property should not contain underscores: created_at")
+
+	t.Logf("Generated OpenAPI JSON for camelCase verification:\n%s", jsonString)
+}
+
 // Helper function to create a string pointer
 func stringPtr(s string) *string {
 	return &s
