@@ -2,6 +2,7 @@ package specification
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/goccy/go-yaml"
@@ -1083,108 +1084,131 @@ func TestCreateIDParam(t *testing.T) {
 }
 
 func TestCreateAutoColumnID(t *testing.T) {
+	// Arrange
+	resourceName := "User"
+	expectedDescription := fmt.Sprintf(autoColumnIDDescTemplate, resourceName)
+
 	// Act
-	idField := CreateAutoColumnID()
+	idField := CreateAutoColumnID(resourceName)
 
 	// Assert
 	assert.Equal(t, autoColumnIDName, idField.Name, "Auto-column ID should have correct name")
-	assert.Equal(t, autoColumnIDDescription, idField.Description, "Auto-column ID should have correct description")
+	assert.Equal(t, expectedDescription, idField.Description, "Auto-column ID should have correct description")
 	assert.Equal(t, FieldTypeUUID, idField.Type, "Auto-column ID should have UUID type")
 	assert.Empty(t, idField.Modifiers, "Auto-column ID should have no modifiers")
 	assert.Empty(t, idField.Default, "Auto-column ID should have no default value")
 	assert.Empty(t, idField.Example, "Auto-column ID should have no example")
 
 	t.Run("consistency", func(t *testing.T) {
-		id1 := CreateAutoColumnID()
-		id2 := CreateAutoColumnID()
+		id1 := CreateAutoColumnID(resourceName)
+		id2 := CreateAutoColumnID(resourceName)
 
 		assert.Equal(t, id1, id2, "CreateAutoColumnID should return consistent results")
 	})
 }
 
 func TestCreateAutoColumnCreatedAt(t *testing.T) {
+	// Arrange
+	resourceName := "User"
+	expectedDescription := fmt.Sprintf(autoColumnCreatedAtTemplate, resourceName)
+
 	// Act
-	createdAtField := CreateAutoColumnCreatedAt()
+	createdAtField := CreateAutoColumnCreatedAt(resourceName)
 
 	// Assert
 	assert.Equal(t, autoColumnCreatedAtName, createdAtField.Name, "Auto-column CreatedAt should have correct name")
-	assert.Equal(t, autoColumnCreatedAtDesc, createdAtField.Description, "Auto-column CreatedAt should have correct description")
+	assert.Equal(t, expectedDescription, createdAtField.Description, "Auto-column CreatedAt should have correct description")
 	assert.Equal(t, FieldTypeTimestamp, createdAtField.Type, "Auto-column CreatedAt should have Timestamp type")
 	assert.Empty(t, createdAtField.Modifiers, "Auto-column CreatedAt should have no modifiers")
 	assert.Empty(t, createdAtField.Default, "Auto-column CreatedAt should have no default value")
 	assert.Empty(t, createdAtField.Example, "Auto-column CreatedAt should have no example")
 
 	t.Run("consistency", func(t *testing.T) {
-		createdAt1 := CreateAutoColumnCreatedAt()
-		createdAt2 := CreateAutoColumnCreatedAt()
+		createdAt1 := CreateAutoColumnCreatedAt(resourceName)
+		createdAt2 := CreateAutoColumnCreatedAt(resourceName)
 
 		assert.Equal(t, createdAt1, createdAt2, "CreateAutoColumnCreatedAt should return consistent results")
 	})
 }
 
 func TestCreateAutoColumnCreatedBy(t *testing.T) {
+	// Arrange
+	resourceName := "User"
+	expectedDescription := fmt.Sprintf(autoColumnCreatedByTemplate, resourceName)
+
 	// Act
-	createdByField := CreateAutoColumnCreatedBy()
+	createdByField := CreateAutoColumnCreatedBy(resourceName)
 
 	// Assert
 	assert.Equal(t, autoColumnCreatedByName, createdByField.Name, "Auto-column CreatedBy should have correct name")
-	assert.Equal(t, autoColumnCreatedByDesc, createdByField.Description, "Auto-column CreatedBy should have correct description")
+	assert.Equal(t, expectedDescription, createdByField.Description, "Auto-column CreatedBy should have correct description")
 	assert.Equal(t, FieldTypeUUID, createdByField.Type, "Auto-column CreatedBy should have UUID type")
 	assert.Equal(t, []string{ModifierNullable}, createdByField.Modifiers, "Auto-column CreatedBy should have nullable modifier")
 	assert.Empty(t, createdByField.Default, "Auto-column CreatedBy should have no default value")
 	assert.Empty(t, createdByField.Example, "Auto-column CreatedBy should have no example")
 
 	t.Run("consistency", func(t *testing.T) {
-		createdBy1 := CreateAutoColumnCreatedBy()
-		createdBy2 := CreateAutoColumnCreatedBy()
+		createdBy1 := CreateAutoColumnCreatedBy(resourceName)
+		createdBy2 := CreateAutoColumnCreatedBy(resourceName)
 
 		assert.Equal(t, createdBy1, createdBy2, "CreateAutoColumnCreatedBy should return consistent results")
 	})
 }
 
 func TestCreateAutoColumnUpdatedAt(t *testing.T) {
+	// Arrange
+	resourceName := "User"
+	expectedDescription := fmt.Sprintf(autoColumnUpdatedAtTemplate, resourceName)
+
 	// Act
-	updatedAtField := CreateAutoColumnUpdatedAt()
+	updatedAtField := CreateAutoColumnUpdatedAt(resourceName)
 
 	// Assert
 	assert.Equal(t, autoColumnUpdatedAtName, updatedAtField.Name, "Auto-column UpdatedAt should have correct name")
-	assert.Equal(t, autoColumnUpdatedAtDesc, updatedAtField.Description, "Auto-column UpdatedAt should have correct description")
+	assert.Equal(t, expectedDescription, updatedAtField.Description, "Auto-column UpdatedAt should have correct description")
 	assert.Equal(t, FieldTypeTimestamp, updatedAtField.Type, "Auto-column UpdatedAt should have Timestamp type")
 	assert.Empty(t, updatedAtField.Modifiers, "Auto-column UpdatedAt should have no modifiers")
 	assert.Empty(t, updatedAtField.Default, "Auto-column UpdatedAt should have no default value")
 	assert.Empty(t, updatedAtField.Example, "Auto-column UpdatedAt should have no example")
 
 	t.Run("consistency", func(t *testing.T) {
-		updatedAt1 := CreateAutoColumnUpdatedAt()
-		updatedAt2 := CreateAutoColumnUpdatedAt()
+		updatedAt1 := CreateAutoColumnUpdatedAt(resourceName)
+		updatedAt2 := CreateAutoColumnUpdatedAt(resourceName)
 
 		assert.Equal(t, updatedAt1, updatedAt2, "CreateAutoColumnUpdatedAt should return consistent results")
 	})
 }
 
 func TestCreateAutoColumnUpdatedBy(t *testing.T) {
+	// Arrange
+	resourceName := "User"
+	expectedDescription := fmt.Sprintf(autoColumnUpdatedByTemplate, resourceName)
+
 	// Act
-	updatedByField := CreateAutoColumnUpdatedBy()
+	updatedByField := CreateAutoColumnUpdatedBy(resourceName)
 
 	// Assert
 	assert.Equal(t, autoColumnUpdatedByName, updatedByField.Name, "Auto-column UpdatedBy should have correct name")
-	assert.Equal(t, autoColumnUpdatedByDesc, updatedByField.Description, "Auto-column UpdatedBy should have correct description")
+	assert.Equal(t, expectedDescription, updatedByField.Description, "Auto-column UpdatedBy should have correct description")
 	assert.Equal(t, FieldTypeUUID, updatedByField.Type, "Auto-column UpdatedBy should have UUID type")
 	assert.Equal(t, []string{ModifierNullable}, updatedByField.Modifiers, "Auto-column UpdatedBy should have nullable modifier")
 	assert.Empty(t, updatedByField.Default, "Auto-column UpdatedBy should have no default value")
 	assert.Empty(t, updatedByField.Example, "Auto-column UpdatedBy should have no example")
 
 	t.Run("consistency", func(t *testing.T) {
-		updatedBy1 := CreateAutoColumnUpdatedBy()
-		updatedBy2 := CreateAutoColumnUpdatedBy()
+		updatedBy1 := CreateAutoColumnUpdatedBy(resourceName)
+		updatedBy2 := CreateAutoColumnUpdatedBy(resourceName)
 
 		assert.Equal(t, updatedBy1, updatedBy2, "CreateAutoColumnUpdatedBy should return consistent results")
 	})
 }
 
 func TestCreateAutoColumns(t *testing.T) {
+	// Arrange
+	resourceName := "User"
+
 	// Act
-	autoColumns := CreateAutoColumns()
+	autoColumns := CreateAutoColumns(resourceName)
 
 	// Assert
 	assert.Equal(t, 5, len(autoColumns), "Should return exactly 5 auto-columns")
@@ -1210,9 +1234,16 @@ func TestCreateAutoColumns(t *testing.T) {
 	assert.Empty(t, autoColumns[3].Modifiers, "UpdatedAt should have no modifiers")
 	assert.Equal(t, []string{ModifierNullable}, autoColumns[4].Modifiers, "UpdatedBy should be nullable")
 
+	// Verify descriptions use resource name
+	assert.Equal(t, fmt.Sprintf(autoColumnIDDescTemplate, resourceName), autoColumns[0].Description, "ID description should use resource name")
+	assert.Equal(t, fmt.Sprintf(autoColumnCreatedAtTemplate, resourceName), autoColumns[1].Description, "CreatedAt description should use resource name")
+	assert.Equal(t, fmt.Sprintf(autoColumnCreatedByTemplate, resourceName), autoColumns[2].Description, "CreatedBy description should use resource name")
+	assert.Equal(t, fmt.Sprintf(autoColumnUpdatedAtTemplate, resourceName), autoColumns[3].Description, "UpdatedAt description should use resource name")
+	assert.Equal(t, fmt.Sprintf(autoColumnUpdatedByTemplate, resourceName), autoColumns[4].Description, "UpdatedBy description should use resource name")
+
 	t.Run("consistency", func(t *testing.T) {
-		autoColumns1 := CreateAutoColumns()
-		autoColumns2 := CreateAutoColumns()
+		autoColumns1 := CreateAutoColumns(resourceName)
+		autoColumns2 := CreateAutoColumns(resourceName)
 
 		assert.Equal(t, autoColumns1, autoColumns2, "CreateAutoColumns should return consistent results")
 	})
@@ -1534,31 +1565,31 @@ func TestApplyOverlay(t *testing.T) {
 
 		// Verify ID field
 		assert.Equal(t, autoColumnIDName, autoColumnFields[0].Name)
-		assert.Equal(t, autoColumnIDDescription, autoColumnFields[0].Description)
+		assert.Equal(t, fmt.Sprintf(autoColumnIDDescTemplate, "Users"), autoColumnFields[0].Description)
 		assert.Equal(t, FieldTypeUUID, autoColumnFields[0].Type)
 		assert.Empty(t, autoColumnFields[0].Modifiers)
 
 		// Verify CreatedAt field
 		assert.Equal(t, autoColumnCreatedAtName, autoColumnFields[1].Name)
-		assert.Equal(t, autoColumnCreatedAtDesc, autoColumnFields[1].Description)
+		assert.Equal(t, fmt.Sprintf(autoColumnCreatedAtTemplate, "Users"), autoColumnFields[1].Description)
 		assert.Equal(t, FieldTypeTimestamp, autoColumnFields[1].Type)
 		assert.Empty(t, autoColumnFields[1].Modifiers)
 
 		// Verify CreatedBy field
 		assert.Equal(t, autoColumnCreatedByName, autoColumnFields[2].Name)
-		assert.Equal(t, autoColumnCreatedByDesc, autoColumnFields[2].Description)
+		assert.Equal(t, fmt.Sprintf(autoColumnCreatedByTemplate, "Users"), autoColumnFields[2].Description)
 		assert.Equal(t, FieldTypeUUID, autoColumnFields[2].Type)
 		assert.Equal(t, []string{ModifierNullable}, autoColumnFields[2].Modifiers)
 
 		// Verify UpdatedAt field
 		assert.Equal(t, autoColumnUpdatedAtName, autoColumnFields[3].Name)
-		assert.Equal(t, autoColumnUpdatedAtDesc, autoColumnFields[3].Description)
+		assert.Equal(t, fmt.Sprintf(autoColumnUpdatedAtTemplate, "Users"), autoColumnFields[3].Description)
 		assert.Equal(t, FieldTypeTimestamp, autoColumnFields[3].Type)
 		assert.Empty(t, autoColumnFields[3].Modifiers)
 
 		// Verify UpdatedBy field
 		assert.Equal(t, autoColumnUpdatedByName, autoColumnFields[4].Name)
-		assert.Equal(t, autoColumnUpdatedByDesc, autoColumnFields[4].Description)
+		assert.Equal(t, fmt.Sprintf(autoColumnUpdatedByTemplate, "Users"), autoColumnFields[4].Description)
 		assert.Equal(t, FieldTypeUUID, autoColumnFields[4].Type)
 		assert.Equal(t, []string{ModifierNullable}, autoColumnFields[4].Modifiers)
 

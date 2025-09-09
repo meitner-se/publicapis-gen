@@ -161,16 +161,16 @@ const (
 
 // Auto-column constants
 const (
-	autoColumnIDName        = "ID"
-	autoColumnIDDescription = "Unique identifier for the resource"
-	autoColumnCreatedAtName = "CreatedAt"
-	autoColumnCreatedAtDesc = "Timestamp when the resource was created"
-	autoColumnCreatedByName = "CreatedBy"
-	autoColumnCreatedByDesc = "User who created the resource"
-	autoColumnUpdatedAtName = "UpdatedAt"
-	autoColumnUpdatedAtDesc = "Timestamp when the resource was last updated"
-	autoColumnUpdatedByName = "UpdatedBy"
-	autoColumnUpdatedByDesc = "User who last updated the resource"
+	autoColumnIDName            = "ID"
+	autoColumnIDDescTemplate    = "Unique identifier for the %s"
+	autoColumnCreatedAtName     = "CreatedAt"
+	autoColumnCreatedAtTemplate = "Timestamp when the %s was created"
+	autoColumnCreatedByName     = "CreatedBy"
+	autoColumnCreatedByTemplate = "User who created the %s"
+	autoColumnUpdatedAtName     = "UpdatedAt"
+	autoColumnUpdatedAtTemplate = "Timestamp when the %s was last updated"
+	autoColumnUpdatedByName     = "UpdatedBy"
+	autoColumnUpdatedByTemplate = "User who last updated the %s"
 )
 
 // HTTP Methods
@@ -204,7 +204,7 @@ const (
 	updateEndpointDescPrefix  = "Update a "
 	updateResponseStatusCode  = 200
 	updateIDParamName         = "id"
-	updateIDParamDescription  = "The unique identifier of the resource to update"
+	updateIDParamDescTemplate = "The unique identifier of the %s to update"
 )
 
 // Delete Endpoint Constants
@@ -215,7 +215,7 @@ const (
 	deleteEndpointDescPrefix  = "Delete a "
 	deleteResponseStatusCode  = 204
 	deleteIDParamName         = "id"
-	deleteIDParamDescription  = "The unique identifier of the resource to delete"
+	deleteIDParamDescTemplate = "The unique identifier of the %s to delete"
 )
 
 // Get Endpoint Constants
@@ -624,7 +624,7 @@ func generateObjectsFromResources(result *Service, resources []Resource) {
 
 				// Add auto-columns to the object if not skipped
 				if !resource.ShouldSkipAutoColumns() {
-					autoColumns := CreateAutoColumns()
+					autoColumns := CreateAutoColumns(resource.Name)
 					fields = append(autoColumns, fields...)
 				}
 
@@ -679,7 +679,7 @@ func generateUpdateEndpoint(result *Service, resource Resource) {
 		bodyParams := resource.GetUpdateBodyParams()
 		idParam := Field{
 			Name:        updateIDParamName,
-			Description: updateIDParamDescription,
+			Description: fmt.Sprintf(updateIDParamDescTemplate, resource.Name),
 			Type:        FieldTypeUUID,
 		}
 		resourceName := resource.Name
@@ -702,7 +702,7 @@ func generateDeleteEndpoint(result *Service, resource Resource) {
 	if resource.HasDeleteOperation() && !resource.HasEndpoint(deleteEndpointName) {
 		idParam := Field{
 			Name:        deleteIDParamName,
-			Description: deleteIDParamDescription,
+			Description: fmt.Sprintf(deleteIDParamDescTemplate, resource.Name),
 			Type:        FieldTypeUUID,
 		}
 		deleteEndpoint := Endpoint{
@@ -1563,60 +1563,60 @@ func CreateIDParam(description string) Field {
 }
 
 // CreateAutoColumnID creates a standard ID field for auto-columns.
-func CreateAutoColumnID() Field {
+func CreateAutoColumnID(resourceName string) Field {
 	return Field{
 		Name:        autoColumnIDName,
-		Description: autoColumnIDDescription,
+		Description: fmt.Sprintf(autoColumnIDDescTemplate, resourceName),
 		Type:        FieldTypeUUID,
 	}
 }
 
 // CreateAutoColumnCreatedAt creates a standard CreatedAt field for auto-columns.
-func CreateAutoColumnCreatedAt() Field {
+func CreateAutoColumnCreatedAt(resourceName string) Field {
 	return Field{
 		Name:        autoColumnCreatedAtName,
-		Description: autoColumnCreatedAtDesc,
+		Description: fmt.Sprintf(autoColumnCreatedAtTemplate, resourceName),
 		Type:        FieldTypeTimestamp,
 	}
 }
 
 // CreateAutoColumnCreatedBy creates a standard CreatedBy field for auto-columns.
-func CreateAutoColumnCreatedBy() Field {
+func CreateAutoColumnCreatedBy(resourceName string) Field {
 	return Field{
 		Name:        autoColumnCreatedByName,
-		Description: autoColumnCreatedByDesc,
+		Description: fmt.Sprintf(autoColumnCreatedByTemplate, resourceName),
 		Type:        FieldTypeUUID,
 		Modifiers:   []string{ModifierNullable},
 	}
 }
 
 // CreateAutoColumnUpdatedAt creates a standard UpdatedAt field for auto-columns.
-func CreateAutoColumnUpdatedAt() Field {
+func CreateAutoColumnUpdatedAt(resourceName string) Field {
 	return Field{
 		Name:        autoColumnUpdatedAtName,
-		Description: autoColumnUpdatedAtDesc,
+		Description: fmt.Sprintf(autoColumnUpdatedAtTemplate, resourceName),
 		Type:        FieldTypeTimestamp,
 	}
 }
 
 // CreateAutoColumnUpdatedBy creates a standard UpdatedBy field for auto-columns.
-func CreateAutoColumnUpdatedBy() Field {
+func CreateAutoColumnUpdatedBy(resourceName string) Field {
 	return Field{
 		Name:        autoColumnUpdatedByName,
-		Description: autoColumnUpdatedByDesc,
+		Description: fmt.Sprintf(autoColumnUpdatedByTemplate, resourceName),
 		Type:        FieldTypeUUID,
 		Modifiers:   []string{ModifierNullable},
 	}
 }
 
 // CreateAutoColumns creates all standard auto-column fields for resources.
-func CreateAutoColumns() []Field {
+func CreateAutoColumns(resourceName string) []Field {
 	return []Field{
-		CreateAutoColumnID(),
-		CreateAutoColumnCreatedAt(),
-		CreateAutoColumnCreatedBy(),
-		CreateAutoColumnUpdatedAt(),
-		CreateAutoColumnUpdatedBy(),
+		CreateAutoColumnID(resourceName),
+		CreateAutoColumnCreatedAt(resourceName),
+		CreateAutoColumnCreatedBy(resourceName),
+		CreateAutoColumnUpdatedAt(resourceName),
+		CreateAutoColumnUpdatedBy(resourceName),
 	}
 }
 
