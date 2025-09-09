@@ -464,10 +464,10 @@ func TestGenerator_mapErrorCodeToStatusAndDescription(t *testing.T) {
 // TestEndToEndErrorResponseGeneration tests complete OpenAPI generation with proper error responses.
 func TestEndToEndErrorResponseGeneration(t *testing.T) {
 	generator := NewGenerator()
-	
+
 	// Create a service and apply overlay to get ErrorCode enum
 	inputService := &specification.Service{
-		Name: "UserAPI",
+		Name:    "UserAPI",
 		Version: "1.0.0",
 		Resources: []specification.Resource{
 			{
@@ -495,41 +495,41 @@ func TestEndToEndErrorResponseGeneration(t *testing.T) {
 			},
 		},
 	}
-	
+
 	// Apply overlay to generate default endpoints and error handling
 	service := specification.ApplyOverlay(inputService)
-	
+
 	// Generate OpenAPI document
 	document, err := generator.GenerateFromService(service)
 	assert.NoError(t, err, "Should generate OpenAPI document successfully")
 	assert.NotNil(t, document, "Generated document should not be nil")
-	
+
 	// Convert to JSON to inspect the structure
 	jsonBytes, err := generator.ToJSON(document)
 	assert.NoError(t, err, "Should convert document to JSON successfully")
-	
+
 	jsonString := string(jsonBytes)
-	
+
 	// Verify presence of ErrorCode enum
 	assert.Contains(t, jsonString, "ErrorCode", "Generated JSON should contain ErrorCode enum")
 	assert.Contains(t, jsonString, "BadRequest", "Generated JSON should contain BadRequest error code")
 	assert.Contains(t, jsonString, "UnprocessableEntity", "Generated JSON should contain UnprocessableEntity error code")
-	
+
 	// Verify presence of Error object
 	assert.Contains(t, jsonString, "Error", "Generated JSON should contain Error object")
-	
+
 	// Verify error responses are present in endpoints
 	assert.Contains(t, jsonString, "\"400\"", "Generated JSON should contain 400 error response")
 	assert.Contains(t, jsonString, "\"401\"", "Generated JSON should contain 401 error response")
 	assert.Contains(t, jsonString, "\"404\"", "Generated JSON should contain 404 error response")
-	
+
 	// Verify 422 is present for POST endpoints (with body params) but check structure
 	assert.Contains(t, jsonString, "\"422\"", "Generated JSON should contain 422 error response for endpoints with body params")
-	
+
 	// Verify success responses are also present
 	assert.Contains(t, jsonString, "\"200\"", "Generated JSON should contain 200 success response")
 	assert.Contains(t, jsonString, "\"201\"", "Generated JSON should contain 201 success response")
-	
+
 	t.Logf("Generated OpenAPI JSON:\n%s", jsonString)
 }
 
