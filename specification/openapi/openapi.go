@@ -113,6 +113,16 @@ const (
 	speakeasyRetryConnectionErrors = true
 )
 
+// Speakeasy pagination configuration constants
+const (
+	speakeasyPaginationExtension = "x-speakeasy-pagination"
+	speakeasyPaginationStrategy  = "offsetLimit"
+	speakeasyOffsetParamName     = "offset"
+	speakeasyLimitParamName      = "limit"
+	speakeasyTotalFieldPath      = "pagination.total"
+	speakeasyDataFieldName       = "data"
+)
+
 // Object and field names
 const (
 	errorObjectName   = "Error"
@@ -207,6 +217,85 @@ func (g *Generator) addSpeakeasyRetryExtension(document *v3.Document) {
 
 	// Add the extension to the document
 	document.Extensions.Set(speakeasyRetriesExtension, retryNode)
+}
+
+// addSpeakeasyPaginationExtension adds Speakeasy pagination configuration extension to an operation.
+func (g *Generator) addSpeakeasyPaginationExtension(operation *v3.Operation) {
+	// Initialize extensions map if it doesn't exist
+	if operation.Extensions == nil {
+		operation.Extensions = orderedmap.New[string, *yaml.Node]()
+	}
+
+	// Convert the pagination configuration to a YAML node
+	paginationNode := &yaml.Node{
+		Kind: yaml.MappingNode,
+	}
+
+	// Create nodes for the pagination configuration
+	strategyKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "strategy"}
+	strategyValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyPaginationStrategy}
+
+	offsetParamKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "offsetParam"}
+	offsetParamValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyOffsetParamName}
+
+	limitParamKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "limitParam"}
+	limitParamValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyLimitParamName}
+
+	totalFieldKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "totalField"}
+	totalFieldValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyTotalFieldPath}
+
+	dataFieldKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "dataField"}
+	dataFieldValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyDataFieldName}
+
+	// Assemble the main pagination configuration node
+	paginationNode.Content = []*yaml.Node{
+		strategyKeyNode, strategyValueNode,
+		offsetParamKeyNode, offsetParamValueNode,
+		limitParamKeyNode, limitParamValueNode,
+		totalFieldKeyNode, totalFieldValueNode,
+		dataFieldKeyNode, dataFieldValueNode,
+	}
+
+	// Add the extension to the operation
+	operation.Extensions.Set(speakeasyPaginationExtension, paginationNode)
+}
+
+// isPaginatedOperation determines if an endpoint represents a paginated operation
+// by checking for the presence of limit/offset query parameters and data/pagination response fields.
+func (g *Generator) isPaginatedOperation(endpoint specification.Endpoint) bool {
+	hasLimitParam := false
+	hasOffsetParam := false
+
+	// Check query parameters for limit and offset
+	for _, param := range endpoint.Request.QueryParams {
+		if param.Name == speakeasyLimitParamName {
+			hasLimitParam = true
+		}
+		if param.Name == speakeasyOffsetParamName {
+			hasOffsetParam = true
+		}
+	}
+
+	// Must have both limit and offset parameters
+	if !hasLimitParam || !hasOffsetParam {
+		return false
+	}
+
+	hasDataField := false
+	hasPaginationField := false
+
+	// Check response body fields for data and pagination
+	for _, field := range endpoint.Response.BodyFields {
+		if field.Name == speakeasyDataFieldName {
+			hasDataField = true
+		}
+		if field.Name == "Pagination" || field.Name == "pagination" {
+			hasPaginationField = true
+		}
+	}
+
+	// Must have both data and pagination fields in response
+	return hasDataField && hasPaginationField
 }
 
 // buildV3Document creates a v3.Document using native libopenapi types.
@@ -508,6 +597,11 @@ func (g *Generator) createOperation(endpoint specification.Endpoint, resource sp
 
 	operation.Responses = &v3.Responses{
 		Codes: responses,
+	}
+
+	// Add Speakeasy pagination extension if this is a paginated operation
+	if g.isPaginatedOperation(endpoint) {
+		g.addSpeakeasyPaginationExtension(operation)
 	}
 
 	return operation
