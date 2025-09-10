@@ -54,11 +54,6 @@ const (
 	defaultRetryConnectionErrors = true
 )
 
-// Default timeout configuration values
-const (
-	defaultTimeoutMs = 30000 // 30 seconds in milliseconds
-)
-
 // Filter suffixes
 const (
 	filterSuffix         = "Filter"
