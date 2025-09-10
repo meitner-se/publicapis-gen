@@ -874,8 +874,8 @@ func generateGetEndpoint(result *Service, resource Resource) {
 // generateListEndpoint generates a List endpoint for resources that have Read operations.
 func generateListEndpoint(result *Service, resource Resource) {
 	if resource.HasReadOperation() && !resource.HasEndpoint(listEndpointName) {
-		limitParam := createLimitParam()
-		offsetParam := createOffsetParam()
+		limitParam := createLimitParamForResource(resource)
+		offsetParam := createOffsetParamForResource(resource)
 		paginationField := createPaginationField()
 		dataField := createDataField(resource.Name)
 		pluralResourceName := resource.GetPluralName()
@@ -897,8 +897,8 @@ func generateListEndpoint(result *Service, resource Resource) {
 // generateSearchEndpoint generates a Search endpoint for resources that have Read operations.
 func generateSearchEndpoint(result *Service, resource Resource) {
 	if resource.HasReadOperation() && !resource.HasEndpoint(searchEndpointName) {
-		limitParam := createLimitParam()
-		offsetParam := createOffsetParam()
+		limitParam := createLimitParamForResource(resource)
+		offsetParam := createOffsetParamForResource(resource)
 		filterParam := Field{
 			Name:        searchFilterParamName,
 			Description: searchFilterParamDesc,
@@ -1634,11 +1634,35 @@ func createLimitParam() Field {
 	}
 }
 
+// createLimitParamForResource creates a limit parameter with resource-specific description.
+func createLimitParamForResource(resource Resource) Field {
+	pluralResourceName := resource.GetPluralName()
+	resourceSpecificDescription := fmt.Sprintf("The maximum number of %s to return (default: 50)", pluralResourceName)
+	return Field{
+		Name:        listLimitParamName,
+		Description: resourceSpecificDescription,
+		Type:        FieldTypeInt,
+		Default:     listLimitDefaultValue,
+	}
+}
+
 // createOffsetParam creates a standard offset parameter for pagination.
 func createOffsetParam() Field {
 	return Field{
 		Name:        listOffsetParamName,
 		Description: listOffsetParamDesc,
+		Type:        FieldTypeInt,
+		Default:     listOffsetDefaultValue,
+	}
+}
+
+// createOffsetParamForResource creates an offset parameter with resource-specific description.
+func createOffsetParamForResource(resource Resource) Field {
+	pluralResourceName := resource.GetPluralName()
+	resourceSpecificDescription := fmt.Sprintf("The number of %s to skip before starting to return results (default: 0)", pluralResourceName)
+	return Field{
+		Name:        listOffsetParamName,
+		Description: resourceSpecificDescription,
 		Type:        FieldTypeInt,
 		Default:     listOffsetDefaultValue,
 	}
