@@ -853,67 +853,6 @@ func (g *Generator) createComponentRequestBody(bodyParams []specification.Field,
 	}
 }
 
-// createRequestBody creates a v3.RequestBody from body parameters using native types.
-func (g *Generator) createRequestBody(bodyParams []specification.Field, service *specification.Service) *v3.RequestBody {
-	var schema *base.Schema
-	var isRequired bool
-
-	// If there's only one body parameter and it references a component schema,
-	// use the component schema directly instead of wrapping it in an object
-	if len(bodyParams) == 1 {
-		field := bodyParams[0]
-		if service.HasObject(field.Type) || service.HasEnum(field.Type) {
-			// Create a direct reference to the component schema using allOf
-			refString := schemaReferencePrefix + field.Type
-			refProxy := base.CreateSchemaProxyRef(refString)
-			schema = &base.Schema{
-				AllOf:       []*base.SchemaProxy{refProxy},
-				Description: field.Description,
-			}
-			isRequired = field.IsRequired(service)
-		}
-	}
-
-	// If we didn't create a direct reference schema, fall back to the object wrapper approach
-	if schema == nil {
-		schema = &base.Schema{
-			Type:       []string{schemaTypeObject},
-			Properties: orderedmap.New[string, *base.SchemaProxy](),
-		}
-
-		requiredFields := []string{}
-		for _, field := range bodyParams {
-			fieldSchema := g.createFieldSchema(field, service)
-			proxy := base.CreateSchemaProxy(fieldSchema)
-			schema.Properties.Set(field.TagJSON(), proxy)
-
-			if field.IsRequired(service) {
-				requiredFields = append(requiredFields, field.TagJSON())
-			}
-		}
-
-		if len(requiredFields) > 0 {
-			schema.Required = requiredFields
-		}
-
-		isRequired = len(requiredFields) > 0
-	}
-
-	// Create media type
-	mediaType := &v3.MediaType{
-		Schema: base.CreateSchemaProxy(schema),
-	}
-
-	content := orderedmap.New[string, *v3.MediaType]()
-	content.Set(contentTypeJSON, mediaType)
-
-	return &v3.RequestBody{
-		Description: requestBodyDescription,
-		Content:     content,
-		Required:    &isRequired,
-	}
-}
-
 // addResponseBodiesToComponents extracts response bodies from all endpoints and adds them to the components section.
 func (g *Generator) addResponseBodiesToComponents(components *v3.Components, service *specification.Service) {
 	// Track unique response bodies to avoid duplicates
@@ -1281,11 +1220,11 @@ func (g *Generator) createRequestBodyReference(resourceName, endpointName string
 	// with a $ref YAML node to create a reference that serializes properly
 	requestBodyName := g.createRequestBodyName(resourceName, endpointName)
 	refString := requestBodyReferencePrefix + requestBodyName
-	
+
 	// Create an extension map with a $ref node
 	extensions := orderedmap.New[string, *yaml.Node]()
 	extensions.Set("$ref", &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: refString})
-	
+
 	// Return a request body that serializes as a reference
 	return &v3.RequestBody{
 		Extensions: extensions,
