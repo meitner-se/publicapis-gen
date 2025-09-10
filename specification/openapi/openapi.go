@@ -106,6 +106,12 @@ const (
 	speakeasyRetriesExtension = "x-speakeasy-retries"
 )
 
+// Speakeasy timeout configuration constants
+const (
+	speakeasyTimeoutExtension = "x-speakeasy-timeout"
+	defaultTimeoutMs          = 30000 // 30 seconds in milliseconds
+)
+
 // Retry configuration field names
 const (
 	retryFieldStrategy              = "strategy"
@@ -234,6 +240,23 @@ func (g *Generator) addSpeakeasyRetryExtension(document *v3.Document, service *s
 	document.Extensions.Set(speakeasyRetriesExtension, retryNode)
 }
 
+// addSpeakeasyTimeoutExtension adds Speakeasy timeout configuration extension to the OpenAPI document.
+func (g *Generator) addSpeakeasyTimeoutExtension(document *v3.Document) {
+	// Initialize extensions map if it doesn't exist
+	if document.Extensions == nil {
+		document.Extensions = orderedmap.New[string, *yaml.Node]()
+	}
+
+	// Create a YAML node for the timeout value (in milliseconds)
+	timeoutNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Value: strconv.Itoa(defaultTimeoutMs),
+	}
+
+	// Add the extension to the document
+	document.Extensions.Set(speakeasyTimeoutExtension, timeoutNode)
+}
+
 // addSpeakeasyPaginationExtension adds Speakeasy pagination configuration extension to an operation.
 func (g *Generator) addSpeakeasyPaginationExtension(operation *v3.Operation) {
 	// Initialize extensions map if it doesn't exist
@@ -341,6 +364,9 @@ func (g *Generator) buildV3Document(service *specification.Service) *v3.Document
 
 	// Add Speakeasy retry configuration as extension
 	g.addSpeakeasyRetryExtension(document, service)
+
+	// Add Speakeasy timeout configuration as extension
+	g.addSpeakeasyTimeoutExtension(document)
 
 	// Add servers from service specification
 	if len(service.Servers) > 0 {
