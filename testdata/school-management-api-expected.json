@@ -2421,5 +2421,6 @@
       "5XX"
     ],
     "retryConnectionErrors": true
-  }
+  },
+  "x-speakeasy-timeout": 30000
 }

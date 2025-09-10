@@ -758,6 +758,28 @@ func TestSpeakeasyRetryExtensionWithCustomConfiguration(t *testing.T) {
 	assert.Contains(t, jsonString, "\"429\"", "Should contain 429 status code")
 }
 
+// TestSpeakeasyTimeoutExtension verifies that default Speakeasy timeout configuration is added to generated OpenAPI documents.
+func TestSpeakeasyTimeoutExtension(t *testing.T) {
+	generator := newGenerator()
+	service := &specification.Service{
+		Name:    "TestAPI",
+		Version: "1.0.0",
+	}
+
+	document, err := generator.GenerateFromService(service)
+	assert.NoError(t, err, "Should generate document successfully")
+	assert.NotNil(t, document, "Document should not be nil")
+
+	// Convert to JSON to verify the extension
+	jsonBytes, err := generator.ToJSON(document)
+	assert.NoError(t, err, "Should convert to JSON successfully")
+	jsonString := string(jsonBytes)
+
+	// Verify the Speakeasy timeout extension is present
+	assert.Contains(t, jsonString, "\"x-speakeasy-timeout\"", "Should contain x-speakeasy-timeout extension")
+	assert.Contains(t, jsonString, "\"x-speakeasy-timeout\": 30000", "Should contain default timeout value of 30000 milliseconds")
+}
+
 // TestSpeakeasyPaginationExtension verifies that Speakeasy pagination configuration is added to paginated operations.
 func TestSpeakeasyPaginationExtension(t *testing.T) {
 	generator := newGenerator()
