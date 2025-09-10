@@ -241,16 +241,22 @@ func (g *Generator) addSpeakeasyRetryExtension(document *v3.Document, service *s
 }
 
 // addSpeakeasyTimeoutExtension adds Speakeasy timeout configuration extension to the OpenAPI document.
-func (g *Generator) addSpeakeasyTimeoutExtension(document *v3.Document) {
+func (g *Generator) addSpeakeasyTimeoutExtension(document *v3.Document, service *specification.Service) {
 	// Initialize extensions map if it doesn't exist
 	if document.Extensions == nil {
 		document.Extensions = orderedmap.New[string, *yaml.Node]()
 	}
 
+	// Determine timeout value from service configuration or use default
+	timeoutMs := defaultTimeoutMs
+	if service.Timeout != nil && service.Timeout.Timeout > 0 {
+		timeoutMs = service.Timeout.Timeout
+	}
+
 	// Create a YAML node for the timeout value (in milliseconds)
 	timeoutNode := &yaml.Node{
 		Kind:  yaml.ScalarNode,
-		Value: strconv.Itoa(defaultTimeoutMs),
+		Value: strconv.Itoa(timeoutMs),
 	}
 
 	// Add the extension to the document
@@ -366,7 +372,7 @@ func (g *Generator) buildV3Document(service *specification.Service) *v3.Document
 	g.addSpeakeasyRetryExtension(document, service)
 
 	// Add Speakeasy timeout configuration as extension
-	g.addSpeakeasyTimeoutExtension(document)
+	g.addSpeakeasyTimeoutExtension(document, service)
 
 	// Add servers from service specification
 	if len(service.Servers) > 0 {

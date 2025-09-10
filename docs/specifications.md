@@ -148,6 +148,64 @@ resources:
 
 **Note:** If no retry configuration is provided, the system uses sensible defaults shown above.
 
+## Configure timeout behavior
+
+APIs need timeout mechanisms to prevent requests from hanging indefinitely. You can configure timeout behavior directly in your specification:
+
+### Basic timeout configuration
+
+```yaml
+name: "Efficient API"
+version: "1.0.0"
+
+# Configure timeout behavior for the entire API
+timeout:
+  timeout: 45000  # Request timeout in milliseconds (45 seconds)
+
+resources:
+  - name: "Users"
+    description: "User management with custom timeout"
+    operations: ["Create", "Read", "Update", "Delete"]
+    fields:
+      - field:
+          name: "email"
+          type: "String"
+          description: "User email address"
+        operations: ["Create", "Read", "Update"]
+```
+
+### Advanced timeout configuration
+
+You can customize timeout values for different API scenarios:
+
+```yaml
+name: "High Performance API"
+version: "1.0.0"
+
+# Custom timeout configuration for performance-critical scenarios
+timeout:
+  timeout: 15000  # Fast response requirement (15 seconds)
+
+resources:
+  - name: "RealTimeData"
+    description: "Real-time data processing"
+    operations: ["Create", "Read"]
+    fields:
+      - field:
+          name: "data"
+          type: "String"
+          description: "Real-time data payload"
+        operations: ["Create", "Read"]
+```
+
+### Timeout configuration reference
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `timeout` | int | 30000 | Request timeout in milliseconds |
+
+**Note:** If no timeout configuration is provided, the system uses a default timeout of 30 seconds (30000 milliseconds).
+
 ## Validate specifications
 
 ### Task: Check specification correctness
