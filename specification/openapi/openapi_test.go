@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/meitner-se/publicapis-gen/specification"
@@ -712,6 +713,201 @@ func TestSpeakeasyRetryExtension(t *testing.T) {
 	assert.Contains(t, jsonString, "\"maxElapsedTime\": 3600000", "Max elapsed time should be 3600000ms")
 	assert.Contains(t, jsonString, "\"exponent\": 1.5", "Exponent should be 1.5")
 	assert.Contains(t, jsonString, "\"retryConnectionErrors\": true", "Retry connection errors should be true")
+}
+
+// TestSpeakeasyPaginationExtension verifies that Speakeasy pagination configuration is added to paginated operations.
+func TestSpeakeasyPaginationExtension(t *testing.T) {
+	generator := newGenerator()
+	service := &specification.Service{
+		Name:    "TestAPI",
+		Version: "1.0.0",
+		Resources: []specification.Resource{
+			{
+				Name:        "User",
+				Description: "User resource for testing pagination",
+				Operations:  []string{specification.OperationRead},
+				Fields: []specification.ResourceField{
+					{
+						Field: specification.Field{
+							Name:        "id",
+							Description: "User identifier",
+							Type:        specification.FieldTypeUUID,
+						},
+						Operations: []string{specification.OperationRead},
+					},
+					{
+						Field: specification.Field{
+							Name:        "email",
+							Description: "User email address",
+							Type:        specification.FieldTypeString,
+						},
+						Operations: []string{specification.OperationRead},
+					},
+				},
+				Endpoints: []specification.Endpoint{
+					{
+						Name:        "List",
+						Title:       "List Users",
+						Description: "Get a paginated list of users",
+						Method:      "GET",
+						Path:        "",
+						Request: specification.EndpointRequest{
+							ContentType: "application/json",
+							QueryParams: []specification.Field{
+								{
+									Name:        "limit",
+									Description: "Maximum number of items to return",
+									Type:        specification.FieldTypeInt,
+									Default:     "50",
+								},
+								{
+									Name:        "offset",
+									Description: "Number of items to skip",
+									Type:        specification.FieldTypeInt,
+									Default:     "0",
+								},
+							},
+						},
+						Response: specification.EndpointResponse{
+							ContentType: "application/json",
+							StatusCode:  200,
+							BodyFields: []specification.Field{
+								{
+									Name:        "data",
+									Description: "Array of User objects",
+									Type:        "User",
+									Modifiers:   []string{specification.ModifierArray},
+								},
+								{
+									Name:        "pagination",
+									Description: "Pagination information",
+									Type:        "Pagination",
+								},
+							},
+						},
+					},
+					{
+						Name:        "Search",
+						Title:       "Search Users",
+						Description: "Search for users with pagination",
+						Method:      "POST",
+						Path:        "/_search",
+						Request: specification.EndpointRequest{
+							ContentType: "application/json",
+							QueryParams: []specification.Field{
+								{
+									Name:        "limit",
+									Description: "Maximum number of items to return",
+									Type:        specification.FieldTypeInt,
+									Default:     "50",
+								},
+								{
+									Name:        "offset",
+									Description: "Number of items to skip",
+									Type:        specification.FieldTypeInt,
+									Default:     "0",
+								},
+							},
+							BodyParams: []specification.Field{
+								{
+									Name:        "filter",
+									Description: "Search filter",
+									Type:        specification.FieldTypeString,
+								},
+							},
+						},
+						Response: specification.EndpointResponse{
+							ContentType: "application/json",
+							StatusCode:  200,
+							BodyFields: []specification.Field{
+								{
+									Name:        "data",
+									Description: "Array of User objects",
+									Type:        "User",
+									Modifiers:   []string{specification.ModifierArray},
+								},
+								{
+									Name:        "pagination",
+									Description: "Pagination information",
+									Type:        "Pagination",
+								},
+							},
+						},
+					},
+					{
+						Name:        "GetUser",
+						Title:       "Get User",
+						Description: "Get a single user (non-paginated)",
+						Method:      "GET",
+						Path:        "/{id}",
+						Request: specification.EndpointRequest{
+							ContentType: "application/json",
+							PathParams: []specification.Field{
+								{
+									Name:        "id",
+									Description: "User identifier",
+									Type:        specification.FieldTypeUUID,
+								},
+							},
+						},
+						Response: specification.EndpointResponse{
+							ContentType: "application/json",
+							StatusCode:  200,
+							BodyFields: []specification.Field{
+								{
+									Name:        "id",
+									Description: "User identifier",
+									Type:        specification.FieldTypeUUID,
+								},
+								{
+									Name:        "email",
+									Description: "User email",
+									Type:        specification.FieldTypeString,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	document, err := generator.GenerateFromService(service)
+	assert.NoError(t, err, "Should generate document successfully")
+	assert.NotNil(t, document, "Document should not be nil")
+
+	// Convert to JSON to verify the extension
+	jsonBytes, err := generator.ToJSON(document)
+	assert.NoError(t, err, "Should convert to JSON successfully")
+	jsonString := string(jsonBytes)
+
+	// Verify that the Speakeasy pagination extension is present in paginated operations
+	assert.Contains(t, jsonString, "\"x-speakeasy-pagination\"", "Should contain x-speakeasy-pagination extension")
+	assert.Contains(t, jsonString, "\"strategy\": \"offsetLimit\"", "Should contain offsetLimit strategy")
+	assert.Contains(t, jsonString, "\"offsetParam\": \"offset\"", "Should contain offset parameter name")
+	assert.Contains(t, jsonString, "\"limitParam\": \"limit\"", "Should contain limit parameter name")
+	assert.Contains(t, jsonString, "\"totalField\": \"pagination.total\"", "Should contain total field path")
+	assert.Contains(t, jsonString, "\"dataField\": \"data\"", "Should contain data field name")
+
+	// Count the occurrences of the pagination extension - should appear twice (List and Search operations)
+	paginationExtensionCount := countSubstring(jsonString, "\"x-speakeasy-pagination\"")
+	assert.Equal(t, 2, paginationExtensionCount, "Should have x-speakeasy-pagination extension in exactly 2 operations (List and Search)")
+
+	t.Logf("Generated OpenAPI JSON for pagination extension verification:\n%s", jsonString)
+}
+
+// countSubstring counts the number of non-overlapping occurrences of substr in s.
+func countSubstring(s, substr string) int {
+	count := 0
+	for {
+		index := strings.Index(s, substr)
+		if index == -1 {
+			break
+		}
+		count++
+		s = s[index+len(substr):]
+	}
+	return count
 }
 
 // ============================================================================
