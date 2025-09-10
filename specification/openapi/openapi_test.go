@@ -1675,7 +1675,7 @@ func TestRequestBodiesComponentsSection(t *testing.T) {
 	// assert.Contains(t, jsonString, "\"$ref\": \"#/components/requestBodies/UserCreateRequestBody\"", "POST /user operation should reference UserCreateRequestBody")
 	// assert.Contains(t, jsonString, "\"$ref\": \"#/components/requestBodies/UserUpdateRequestBody\"", "PATCH /user/{id} operation should reference UserUpdateRequestBody")
 	// assert.Contains(t, jsonString, "\"$ref\": \"#/components/requestBodies/ProductCreateRequestBody\"", "POST /product operation should reference ProductCreateRequestBody")
-	
+
 	// For now, verify that operations still have inline request bodies
 	assert.Contains(t, jsonString, "\"requestBody\"", "Operations should have request bodies")
 	assert.Contains(t, jsonString, "\"description\": \"Request body\"", "Request bodies should have description")
