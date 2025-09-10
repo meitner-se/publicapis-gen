@@ -1556,3 +1556,160 @@ func TestGenerator_GenerateFromService_IncludesTags(t *testing.T) {
 		assert.Nil(t, document.Tags, "Document should have no tags when no resources")
 	})
 }
+
+// ============================================================================
+// Contact Details Tests
+// ============================================================================
+
+// TestGenerator_GenerateFromService_ContactDetails tests that contact details are included in the OpenAPI document.
+func TestGenerator_GenerateFromService_ContactDetails(t *testing.T) {
+	// Test with full contact details
+	t.Run("service with full contact details includes all contact info", func(t *testing.T) {
+		generator := newGenerator()
+		service := &specification.Service{
+			Name:    "Test API",
+			Version: "1.0.0",
+			Contact: &specification.ServiceContact{
+				Name:  "API Support Team",
+				URL:   "https://example.com/support",
+				Email: "support@example.com",
+			},
+		}
+
+		document, err := generator.GenerateFromService(service)
+		assert.NoError(t, err, "Should generate document successfully")
+		assert.NotNil(t, document, "Document should not be nil")
+		assert.NotNil(t, document.Info, "Document Info should not be nil")
+		assert.NotNil(t, document.Info.Contact, "Document Info Contact should not be nil")
+
+		// Check contact details
+		assert.Equal(t, "API Support Team", document.Info.Contact.Name, "Contact name should match service contact")
+		assert.Equal(t, "https://example.com/support", document.Info.Contact.URL, "Contact URL should match service contact")
+		assert.Equal(t, "support@example.com", document.Info.Contact.Email, "Contact email should match service contact")
+
+		// Generate JSON to verify structure
+		jsonBytes, err := generator.ToJSON(document)
+		assert.NoError(t, err, "Should convert to JSON successfully")
+		jsonString := string(jsonBytes)
+
+		assert.Contains(t, jsonString, "\"contact\"", "JSON should contain contact field")
+		assert.Contains(t, jsonString, "\"name\": \"API Support Team\"", "JSON should contain contact name")
+		assert.Contains(t, jsonString, "\"url\": \"https://example.com/support\"", "JSON should contain contact URL")
+		assert.Contains(t, jsonString, "\"email\": \"support@example.com\"", "JSON should contain contact email")
+	})
+
+	// Test with partial contact details
+	t.Run("service with partial contact details includes only provided fields", func(t *testing.T) {
+		generator := newGenerator()
+		service := &specification.Service{
+			Name:    "Partial Contact API",
+			Version: "1.0.0",
+			Contact: &specification.ServiceContact{
+				Name:  "Support",
+				Email: "help@example.com",
+				// URL intentionally omitted
+			},
+		}
+
+		document, err := generator.GenerateFromService(service)
+		assert.NoError(t, err, "Should generate document successfully")
+		assert.NotNil(t, document, "Document should not be nil")
+		assert.NotNil(t, document.Info.Contact, "Document Info Contact should not be nil")
+
+		// Check provided contact details
+		assert.Equal(t, "Support", document.Info.Contact.Name, "Contact name should match service contact")
+		assert.Equal(t, "help@example.com", document.Info.Contact.Email, "Contact email should match service contact")
+		assert.Equal(t, "", document.Info.Contact.URL, "Contact URL should be empty when not provided")
+
+		// Generate JSON to verify structure
+		jsonBytes, err := generator.ToJSON(document)
+		assert.NoError(t, err, "Should convert to JSON successfully")
+		jsonString := string(jsonBytes)
+
+		assert.Contains(t, jsonString, "\"contact\"", "JSON should contain contact field")
+		assert.Contains(t, jsonString, "\"name\": \"Support\"", "JSON should contain contact name")
+		assert.Contains(t, jsonString, "\"email\": \"help@example.com\"", "JSON should contain contact email")
+		assert.NotContains(t, jsonString, "\"url\":", "JSON should not contain URL field when empty")
+	})
+
+	// Test with only email
+	t.Run("service with only email contact includes email only", func(t *testing.T) {
+		generator := newGenerator()
+		service := &specification.Service{
+			Name:    "Email Only API",
+			Version: "1.0.0",
+			Contact: &specification.ServiceContact{
+				Email: "contact@example.com",
+				// Name and URL intentionally omitted
+			},
+		}
+
+		document, err := generator.GenerateFromService(service)
+		assert.NoError(t, err, "Should generate document successfully")
+		assert.NotNil(t, document, "Document should not be nil")
+		assert.NotNil(t, document.Info.Contact, "Document Info Contact should not be nil")
+
+		// Check contact details
+		assert.Equal(t, "", document.Info.Contact.Name, "Contact name should be empty when not provided")
+		assert.Equal(t, "", document.Info.Contact.URL, "Contact URL should be empty when not provided")
+		assert.Equal(t, "contact@example.com", document.Info.Contact.Email, "Contact email should match service contact")
+
+		// Generate JSON to verify structure
+		jsonBytes, err := generator.ToJSON(document)
+		assert.NoError(t, err, "Should convert to JSON successfully")
+		jsonString := string(jsonBytes)
+
+		assert.Contains(t, jsonString, "\"contact\"", "JSON should contain contact field")
+		assert.Contains(t, jsonString, "\"email\": \"contact@example.com\"", "JSON should contain contact email")
+		assert.NotContains(t, jsonString, "\"name\":", "JSON should not contain name field when empty")
+		assert.NotContains(t, jsonString, "\"url\":", "JSON should not contain URL field when empty")
+	})
+
+	// Test without contact details
+	t.Run("service without contact details has no contact info", func(t *testing.T) {
+		generator := newGenerator()
+		service := &specification.Service{
+			Name:    "No Contact API",
+			Version: "1.0.0",
+			// Contact intentionally omitted
+		}
+
+		document, err := generator.GenerateFromService(service)
+		assert.NoError(t, err, "Should generate document successfully")
+		assert.NotNil(t, document, "Document should not be nil")
+		assert.NotNil(t, document.Info, "Document Info should not be nil")
+		assert.Nil(t, document.Info.Contact, "Document Info Contact should be nil when not provided")
+
+		// Generate JSON to verify structure
+		jsonBytes, err := generator.ToJSON(document)
+		assert.NoError(t, err, "Should convert to JSON successfully")
+		jsonString := string(jsonBytes)
+
+		assert.NotContains(t, jsonString, "\"contact\"", "JSON should not contain contact field when not provided")
+	})
+
+	// Test with empty contact details (all fields empty)
+	t.Run("service with empty contact details has no contact info", func(t *testing.T) {
+		generator := newGenerator()
+		service := &specification.Service{
+			Name:    "Empty Contact API",
+			Version: "1.0.0",
+			Contact: &specification.ServiceContact{
+				// All fields intentionally empty
+			},
+		}
+
+		document, err := generator.GenerateFromService(service)
+		assert.NoError(t, err, "Should generate document successfully")
+		assert.NotNil(t, document, "Document should not be nil")
+		assert.NotNil(t, document.Info, "Document Info should not be nil")
+		assert.Nil(t, document.Info.Contact, "Document Info Contact should be nil when all fields are empty")
+
+		// Generate JSON to verify structure
+		jsonBytes, err := generator.ToJSON(document)
+		assert.NoError(t, err, "Should convert to JSON successfully")
+		jsonString := string(jsonBytes)
+
+		assert.NotContains(t, jsonString, "\"contact\"", "JSON should not contain contact field when all fields are empty")
+	})
+}

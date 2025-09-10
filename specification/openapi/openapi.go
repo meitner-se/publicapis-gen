@@ -362,6 +362,24 @@ func (g *Generator) buildV3Document(service *specification.Service) *v3.Document
 		Version:     version,
 	}
 
+	// Add contact information if available in the service
+	if service.Contact != nil {
+		contact := &base.Contact{}
+		if service.Contact.Name != "" {
+			contact.Name = service.Contact.Name
+		}
+		if service.Contact.URL != "" {
+			contact.URL = service.Contact.URL
+		}
+		if service.Contact.Email != "" {
+			contact.Email = service.Contact.Email
+		}
+		// Only set contact if at least one field is provided
+		if service.Contact.Name != "" || service.Contact.URL != "" || service.Contact.Email != "" {
+			info.Contact = contact
+		}
+	}
+
 	// Create Document
 	document := &v3.Document{
 		Version: g.Version,
