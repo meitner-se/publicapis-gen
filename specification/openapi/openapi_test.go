@@ -676,6 +676,44 @@ func stringPtr(s string) *string {
 	return &s
 }
 
+// TestSpeakeasyRetryExtension verifies that Speakeasy retry configuration is added to generated OpenAPI documents.
+func TestSpeakeasyRetryExtension(t *testing.T) {
+	generator := newGenerator()
+	service := &specification.Service{
+		Name:    "TestAPI",
+		Version: "1.0.0",
+	}
+
+	document, err := generator.GenerateFromService(service)
+	assert.NoError(t, err, "Should generate document successfully")
+	assert.NotNil(t, document, "Document should not be nil")
+
+	// Convert to JSON to verify the extension
+	jsonBytes, err := generator.ToJSON(document)
+	assert.NoError(t, err, "Should convert to JSON successfully")
+	jsonString := string(jsonBytes)
+
+	// Verify the Speakeasy retry extension is present
+	assert.Contains(t, jsonString, "\"x-speakeasy-retries\"", "Should contain x-speakeasy-retries extension")
+	assert.Contains(t, jsonString, "\"strategy\"", "Should contain strategy field")
+	assert.Contains(t, jsonString, "\"backoff\"", "Should contain backoff configuration")
+	assert.Contains(t, jsonString, "\"initialInterval\"", "Should contain initialInterval")
+	assert.Contains(t, jsonString, "\"maxInterval\"", "Should contain maxInterval")
+	assert.Contains(t, jsonString, "\"maxElapsedTime\"", "Should contain maxElapsedTime")
+	assert.Contains(t, jsonString, "\"exponent\"", "Should contain exponent")
+	assert.Contains(t, jsonString, "\"statusCodes\"", "Should contain statusCodes")
+	assert.Contains(t, jsonString, "\"5XX\"", "Should contain 5XX status code for retries")
+	assert.Contains(t, jsonString, "\"retryConnectionErrors\"", "Should contain retryConnectionErrors")
+
+	// Verify specific values match the hardcoded configuration
+	assert.Contains(t, jsonString, "\"strategy\": \"backoff\"", "Strategy should be backoff")
+	assert.Contains(t, jsonString, "\"initialInterval\": 500", "Initial interval should be 500ms")
+	assert.Contains(t, jsonString, "\"maxInterval\": 60000", "Max interval should be 60000ms")
+	assert.Contains(t, jsonString, "\"maxElapsedTime\": 3600000", "Max elapsed time should be 3600000ms")
+	assert.Contains(t, jsonString, "\"exponent\": 1.5", "Exponent should be 1.5")
+	assert.Contains(t, jsonString, "\"retryConnectionErrors\": true", "Retry connection errors should be true")
+}
+
 // ============================================================================
 // GenerateFromSpecificationToJSON Function Tests
 // ============================================================================
