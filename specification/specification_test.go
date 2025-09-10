@@ -1336,6 +1336,7 @@ func TestCamelCase(t *testing.T) {
 		{"user_id", "userID"},
 		{"api_key", "apiKey"},
 		{"username", "username"},
+		{"ID", "id"}, // Special case: ID should become id, not iD
 	}
 
 	for _, tc := range testCases {

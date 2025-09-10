@@ -1580,11 +1580,6 @@
       "Students": {
         "type": "object",
         "properties": {
-          "iD": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Unique identifier for the Students"
-          },
           "meta": {
             "title": "Meta",
             "description": "Metadata information for the Students"
@@ -1637,7 +1632,7 @@
           }
         },
         "required": [
-          "iD",
+          "id",
           "id",
           "firstName",
           "lastName",

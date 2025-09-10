@@ -1719,7 +1719,11 @@ func getComment(tabs string, description string, name string) string {
 }
 
 // camelCase converts a string to camelCase format.
+// Special case: "ID" becomes "id" instead of "iD"
 func camelCase(s string) string {
+	if s == "ID" {
+		return "id"
+	}
 	return strmangle.CamelCase(s)
 }
 
