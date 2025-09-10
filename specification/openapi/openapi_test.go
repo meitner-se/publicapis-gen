@@ -1200,3 +1200,70 @@ func TestGenerateFromSpecificationToJSON(t *testing.T) {
 		assert.Equal(t, multiStepJSON, convenienceJSON, "Both methods should produce identical JSON")
 	})
 }
+
+func TestSchemaReferences(t *testing.T) {
+	generator := newGenerator()
+	service := &specification.Service{
+		Name: "TestAPI",
+		Objects: []specification.Object{
+			{
+				Name:        "SchoolFilter",
+				Description: "Filter criteria for schools",
+				Fields: []specification.Field{
+					{
+						Name:        "name",
+						Description: "School name filter",
+						Type:        specification.FieldTypeString,
+					},
+				},
+			},
+		},
+		Resources: []specification.Resource{
+			{
+				Name:        "School",
+				Description: "School resource",
+				Operations:  []string{specification.OperationCreate},
+				Endpoints: []specification.Endpoint{
+					{
+						Name:        "Search",
+						Title:       "Search Schools",
+						Description: "Search for schools using filters",
+						Method:      "POST",
+						Path:        "/_search",
+						Request: specification.EndpointRequest{
+							BodyParams: []specification.Field{
+								{
+									Name:        "filter",
+									Description: "The query to search for",
+									Type:        "SchoolFilter",
+								},
+							},
+						},
+						Response: specification.EndpointResponse{StatusCode: 200, ContentType: "application/json"},
+					},
+				},
+			},
+		},
+	}
+
+	document, err := generator.GenerateFromService(service)
+	assert.NoError(t, err, "Should generate document successfully")
+	assert.NotNil(t, document, "Document should not be nil")
+
+	// Convert to JSON to check schema references
+	jsonBytes, err := generator.ToJSON(document)
+	assert.NoError(t, err, "Should convert to JSON successfully")
+	jsonString := string(jsonBytes)
+
+	// Verify that the filter field uses allOf with $ref structure
+	assert.Contains(t, jsonString, "\"allOf\"", "Schema should contain allOf for references")
+	assert.Contains(t, jsonString, "\"$ref\": \"#/components/schemas/SchoolFilter\"", "Schema should contain proper $ref")
+
+	// Verify that SchoolFilter is defined in components
+	assert.Contains(t, jsonString, "\"SchoolFilter\"", "Components should contain SchoolFilter schema")
+
+	// Should NOT contain inline type definitions for referenced schemas
+	assert.NotContains(t, jsonString, "\"type\": \"string\",\n              \"description\": \"The query to search for\"", "Should not have inline string type for referenced schema")
+
+	t.Logf("Generated JSON:\n%s", jsonString)
+}
