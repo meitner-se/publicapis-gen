@@ -57,7 +57,8 @@ const (
 
 // Schema reference format constants
 const (
-	schemaReferencePrefix = "#/components/schemas/"
+	schemaReferencePrefix       = "#/components/schemas/"
+	responseBodyReferencePrefix = "#/components/responses/"
 )
 
 // Server description template
@@ -136,11 +137,13 @@ const (
 
 // Object and field names
 const (
-	errorObjectName   = "Error"
-	messageFieldName  = "message"
-	codeFieldName     = "code"
-	errorCodeEnumName = "ErrorCode"
-	requestBodySuffix = "RequestBody"
+	errorObjectName        = "Error"
+	messageFieldName       = "message"
+	codeFieldName          = "code"
+	errorCodeEnumName      = "ErrorCode"
+	requestBodySuffix      = "RequestBody"
+	responseBodySuffix     = "ResponseBody"
+	errorResponseBodyPrefix = "Error"
 )
 
 // Generator handles OpenAPI 3.1 specification generation from specification.Service.
@@ -418,6 +421,7 @@ func (g *Generator) buildV3Document(service *specification.Service) *v3.Document
 	components := &v3.Components{
 		Schemas:       orderedmap.New[string, *base.SchemaProxy](),
 		RequestBodies: orderedmap.New[string, *v3.RequestBody](),
+		Responses:     orderedmap.New[string, *v3.Response](),
 	}
 
 	// Add enums to components
@@ -436,6 +440,9 @@ func (g *Generator) buildV3Document(service *specification.Service) *v3.Document
 
 	// Add request bodies to components
 	g.addRequestBodiesToComponents(components, service)
+
+	// Add response bodies to components
+	g.addResponseBodiesToComponents(components, service)
 
 	document.Components = components
 
@@ -676,7 +683,7 @@ func (g *Generator) createOperation(endpoint specification.Endpoint, resource sp
 	responses := orderedmap.New[string, *v3.Response]()
 
 	// Success response
-	successResponse := g.createResponse(endpoint.Response, service)
+	successResponse := g.createResponseReference(endpoint.Response, resource.Name, endpoint.Name, service)
 	responses.Set(strconv.Itoa(endpoint.Response.StatusCode), successResponse)
 
 	// Add error responses
@@ -857,6 +864,137 @@ func (g *Generator) createRequestBody(bodyParams []specification.Field, service 
 	}
 }
 
+// addResponseBodiesToComponents extracts response bodies from all endpoints and adds them to the components section.
+func (g *Generator) addResponseBodiesToComponents(components *v3.Components, service *specification.Service) {
+	// Track unique response bodies to avoid duplicates
+	responseBodyMap := make(map[string]*v3.Response)
+
+	// Iterate through all resources and endpoints to collect response bodies
+	for _, resource := range service.Resources {
+		for _, endpoint := range resource.Endpoints {
+			// Add success response body if it has content
+			if endpoint.Response.BodyObject != nil || len(endpoint.Response.BodyFields) > 0 {
+				responseBodyName := g.createResponseBodyName(resource.Name, endpoint.Name, endpoint.Response.StatusCode)
+
+				// Only add if we haven't seen this response body before
+				if _, exists := responseBodyMap[responseBodyName]; !exists {
+					responseBody := g.createComponentResponse(endpoint.Response, service)
+					responseBodyMap[responseBodyName] = responseBody
+					components.Responses.Set(responseBodyName, responseBody)
+				}
+			}
+		}
+	}
+
+	// Add common error response bodies
+	g.addErrorResponseBodiesToComponents(components, service)
+}
+
+// createResponseBodyName creates a systematic name for response bodies.
+func (g *Generator) createResponseBodyName(resourceName, endpointName string, statusCode int) string {
+	return resourceName + endpointName + strconv.Itoa(statusCode) + responseBodySuffix
+}
+
+// createComponentResponse creates a v3.Response for the components section.
+func (g *Generator) createComponentResponse(response specification.EndpointResponse, service *specification.Service) *v3.Response {
+	componentResponse := &v3.Response{
+		Description: response.Description,
+	}
+
+	// Add response content if present
+	if response.BodyObject != nil || len(response.BodyFields) > 0 {
+		content := orderedmap.New[string, *v3.MediaType]()
+
+		var schema *base.Schema
+		if response.BodyObject != nil {
+			// Create a proper $ref schema reference using allOf
+			refString := schemaReferencePrefix + *response.BodyObject
+			refProxy := base.CreateSchemaProxyRef(refString)
+			schema = &base.Schema{
+				AllOf: []*base.SchemaProxy{refProxy},
+			}
+		} else if len(response.BodyFields) > 0 {
+			// Inline schema from body fields
+			schema = &base.Schema{
+				Type:       []string{schemaTypeObject},
+				Properties: orderedmap.New[string, *base.SchemaProxy](),
+			}
+
+			for _, field := range response.BodyFields {
+				fieldSchema := g.createFieldSchema(field, service)
+				proxy := base.CreateSchemaProxy(fieldSchema)
+				schema.Properties.Set(field.TagJSON(), proxy)
+			}
+		}
+
+		if schema != nil {
+			mediaType := &v3.MediaType{
+				Schema: base.CreateSchemaProxy(schema),
+			}
+			content.Set(contentTypeJSON, mediaType)
+			componentResponse.Content = content
+		}
+	}
+
+	return componentResponse
+}
+
+// createResponseReference creates a v3.Response that references a component response body.
+// TODO: Implement proper response references once we determine the correct libopenapi approach
+func (g *Generator) createResponseReference(response specification.EndpointResponse, resourceName, endpointName string, service *specification.Service) *v3.Response {
+	// For now, create inline responses while we populate the components section
+	// This ensures the components/responses section is populated for future reference implementation
+	return g.createResponse(response, service)
+}
+
+// addErrorResponseBodiesToComponents adds common error response bodies to the components section.
+func (g *Generator) addErrorResponseBodiesToComponents(components *v3.Components, service *specification.Service) {
+	// Create error schema
+	var errorSchema *base.Schema
+	if service.HasObject(errorObjectName) {
+		// Create a proper $ref schema reference using allOf
+		refString := schemaReferencePrefix + errorObjectName
+		refProxy := base.CreateSchemaProxyRef(refString)
+		errorSchema = &base.Schema{
+			AllOf: []*base.SchemaProxy{refProxy},
+		}
+	} else {
+		// Fallback generic error schema
+		errorSchema = &base.Schema{
+			Type:       []string{schemaTypeObject},
+			Properties: orderedmap.New[string, *base.SchemaProxy](),
+		}
+		messageSchema := &base.Schema{Type: []string{schemaTypeString}}
+		codeSchema := &base.Schema{Type: []string{schemaTypeString}}
+		errorSchema.Properties.Set(messageFieldName, base.CreateSchemaProxy(messageSchema))
+		errorSchema.Properties.Set(codeFieldName, base.CreateSchemaProxy(codeSchema))
+		errorSchema.Required = []string{messageFieldName, codeFieldName}
+	}
+
+	errorContent := orderedmap.New[string, *v3.MediaType]()
+	mediaType := &v3.MediaType{
+		Schema: base.CreateSchemaProxy(errorSchema),
+	}
+	errorContent.Set(contentTypeJSON, mediaType)
+
+	// Define common error responses
+	errorResponses := map[string]string{
+		badRequestDescription:    httpStatus400,
+		unauthorizedDescription:  httpStatus401,
+		notFoundDescription:      httpStatus404,
+		internalErrorDescription: httpStatus500,
+	}
+
+	for description, statusCode := range errorResponses {
+		responseBodyName := errorResponseBodyPrefix + statusCode + responseBodySuffix
+		errorResponse := &v3.Response{
+			Description: description,
+			Content:     errorContent,
+		}
+		components.Responses.Set(responseBodyName, errorResponse)
+	}
+}
+
 // createResponse creates a v3.Response from an endpoint response using native types.
 func (g *Generator) createResponse(response specification.EndpointResponse, service *specification.Service) *v3.Response {
 	openAPIResponse := &v3.Response{
@@ -903,7 +1041,25 @@ func (g *Generator) createResponse(response specification.EndpointResponse, serv
 
 // addErrorResponses adds error responses based on errorCodes from the specification.
 func (g *Generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Response], endpoint specification.Endpoint, service *specification.Service) {
-	// Create error schema
+	// Check if endpoint has body parameters
+	hasBodyParams := len(endpoint.Request.BodyParams) > 0
+
+	// Find ErrorCode enum in the service
+	var errorCodeEnum *specification.Enum
+	for i, enum := range service.Enums {
+		if enum.Name == errorCodeEnumName {
+			errorCodeEnum = &service.Enums[i]
+			break
+		}
+	}
+
+	if errorCodeEnum == nil {
+		// Fallback to default error responses if ErrorCode enum not found
+		g.addDefaultErrorResponseReferences(responses)
+		return
+	}
+
+	// Create error schema for inline responses (components are still populated for future use)
 	var errorSchema *base.Schema
 	if service.HasObject(errorObjectName) {
 		// Create a proper $ref schema reference using allOf
@@ -931,24 +1087,6 @@ func (g *Generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Resp
 	}
 	errorContent.Set(contentTypeJSON, mediaType)
 
-	// Check if endpoint has body parameters
-	hasBodyParams := len(endpoint.Request.BodyParams) > 0
-
-	// Find ErrorCode enum in the service
-	var errorCodeEnum *specification.Enum
-	for i, enum := range service.Enums {
-		if enum.Name == errorCodeEnumName {
-			errorCodeEnum = &service.Enums[i]
-			break
-		}
-	}
-
-	if errorCodeEnum == nil {
-		// Fallback to default error responses if ErrorCode enum not found
-		g.addDefaultErrorResponses(responses, errorContent)
-		return
-	}
-
 	// Generate responses for each error code
 	for _, enumValue := range errorCodeEnum.Values {
 		statusCode, description := g.mapErrorCodeToStatusAndDescription(enumValue.Name, enumValue.Description)
@@ -958,6 +1096,7 @@ func (g *Generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Resp
 			continue
 		}
 
+		// Create inline error response (components are still populated for future reference use)
 		errorResponse := &v3.Response{
 			Description: description,
 			Content:     errorContent,
@@ -966,35 +1105,42 @@ func (g *Generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Resp
 	}
 }
 
-// addDefaultErrorResponses adds fallback error responses when ErrorCode enum is not found.
-func (g *Generator) addDefaultErrorResponses(responses *orderedmap.Map[string, *v3.Response], errorContent *orderedmap.Map[string, *v3.MediaType]) {
-	// 400 Bad Request
-	badRequestResponse := &v3.Response{
-		Description: badRequestDescription,
-		Content:     errorContent,
+// addDefaultErrorResponseReferences adds fallback error response references when ErrorCode enum is not found.
+// TODO: Update to use actual references once we determine the correct libopenapi approach
+func (g *Generator) addDefaultErrorResponseReferences(responses *orderedmap.Map[string, *v3.Response]) {
+	// Create fallback generic error schema for inline responses
+	errorSchema := &base.Schema{
+		Type:       []string{schemaTypeObject},
+		Properties: orderedmap.New[string, *base.SchemaProxy](),
 	}
-	responses.Set(httpStatus400, badRequestResponse)
+	messageSchema := &base.Schema{Type: []string{schemaTypeString}}
+	codeSchema := &base.Schema{Type: []string{schemaTypeString}}
+	errorSchema.Properties.Set(messageFieldName, base.CreateSchemaProxy(messageSchema))
+	errorSchema.Properties.Set(codeFieldName, base.CreateSchemaProxy(codeSchema))
+	errorSchema.Required = []string{messageFieldName, codeFieldName}
 
-	// 401 Unauthorized
-	unauthorizedResponse := &v3.Response{
-		Description: unauthorizedDescription,
-		Content:     errorContent,
+	errorContent := orderedmap.New[string, *v3.MediaType]()
+	mediaType := &v3.MediaType{
+		Schema: base.CreateSchemaProxy(errorSchema),
 	}
-	responses.Set(httpStatus401, unauthorizedResponse)
+	errorContent.Set(contentTypeJSON, mediaType)
 
-	// 404 Not Found
-	notFoundResponse := &v3.Response{
-		Description: notFoundDescription,
-		Content:     errorContent,
+	// Define default error status codes and descriptions
+	defaultErrors := map[string]string{
+		httpStatus400: badRequestDescription,
+		httpStatus401: unauthorizedDescription,
+		httpStatus404: notFoundDescription,
+		httpStatus500: internalErrorDescription,
 	}
-	responses.Set(httpStatus404, notFoundResponse)
 
-	// 500 Internal Server Error
-	internalErrorResponse := &v3.Response{
-		Description: internalErrorDescription,
-		Content:     errorContent,
+	for statusCode, description := range defaultErrors {
+		// Create inline error response (components are still populated for future reference use)
+		errorResponse := &v3.Response{
+			Description: description,
+			Content:     errorContent,
+		}
+		responses.Set(statusCode, errorResponse)
 	}
-	responses.Set(httpStatus500, internalErrorResponse)
 }
 
 // mapErrorCodeToStatusAndDescription maps error code names to HTTP status codes and descriptions.
