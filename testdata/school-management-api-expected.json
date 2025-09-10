@@ -28,7 +28,6 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "description": "The maximum number of Students to return (default: 50)",
               "default": 50
             }
           },
@@ -39,7 +38,6 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "description": "The number of Students to skip before starting to return results (default: 0)",
               "default": 0
             }
           }
@@ -408,8 +406,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid",
-              "description": "The unique identifier of the Students to retrieve"
+              "format": "uuid"
             }
           }
         ],
@@ -543,8 +540,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid",
-              "description": "The unique identifier of the Students to delete"
+              "format": "uuid"
             }
           }
         ],
@@ -667,8 +663,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid",
-              "description": "The unique identifier of the Students to update"
+              "format": "uuid"
             }
           }
         ],
@@ -884,7 +879,6 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "description": "The maximum number of Students to return (default: 50)",
               "default": 50
             }
           },
@@ -895,7 +889,6 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "description": "The number of Students to skip before starting to return results (default: 0)",
               "default": 0
             }
           }
@@ -1090,7 +1083,6 @@
             "required": false,
             "schema": {
               "type": "boolean",
-              "description": "Only validate data without importing",
               "default": false
             }
           }
@@ -1283,7 +1275,6 @@
             "required": false,
             "schema": {
               "type": "string",
-              "description": "Report format (pdf, excel, csv)",
               "default": "pdf"
             }
           }
@@ -1495,7 +1486,6 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "description": "Maximum number of results to return",
               "default": 50
             }
           },
@@ -1506,7 +1496,6 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "description": "Number of results to skip",
               "default": 0
             }
           },
@@ -1517,7 +1506,6 @@
             "required": false,
             "schema": {
               "type": "string",
-              "description": "Field to sort by",
               "default": "lastName"
             }
           },
@@ -1528,7 +1516,6 @@
             "required": false,
             "schema": {
               "type": "string",
-              "description": "Sort order (asc, desc)",
               "default": "asc"
             }
           }
@@ -3318,34 +3305,6 @@
           }
         }
       },
-      "Error404ResponseBody": {
-        "description": "Not Found - The requested resource does not exist",
-        "content": {
-          "application/json": {
-            "schema": {
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Error"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "Error500ResponseBody": {
-        "description": "Internal Server Error - An unexpected server error occurred",
-        "content": {
-          "application/json": {
-            "schema": {
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Error"
-                }
-              ]
-            }
-          }
-        }
-      },
       "Error400ResponseBody": {
         "description": "Bad Request - The request was malformed or contained invalid parameters",
         "content": {
@@ -3362,6 +3321,34 @@
       },
       "Error401ResponseBody": {
         "description": "Unauthorized - The request is missing valid authentication credentials",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Error"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Error404ResponseBody": {
+        "description": "Not Found - The requested resource does not exist",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Error"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Error500ResponseBody": {
+        "description": "Internal Server Error - An unexpected server error occurred",
         "content": {
           "application/json": {
             "schema": {

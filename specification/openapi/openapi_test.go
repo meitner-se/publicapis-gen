@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -2005,4 +2006,145 @@ func TestGenerator_GenerateFromService_ContactDetails(t *testing.T) {
 
 		assert.NotContains(t, jsonString, "\"contact\"", "JSON should not contain contact field when all fields are empty")
 	})
+}
+
+// TestParameterDescriptionNotDuplicated verifies that parameter descriptions are not duplicated in schema objects
+func TestParameterDescriptionNotDuplicated(t *testing.T) {
+	generator := newGenerator()
+	service := &specification.Service{
+		Name:    "TestAPI",
+		Version: "1.0.0",
+		Resources: []specification.Resource{
+			{
+				Name:        "School",
+				Description: "School resource for testing parameter descriptions",
+				Operations:  []string{specification.OperationRead},
+				Endpoints: []specification.Endpoint{
+					{
+						Name:        "ListSchools",
+						Title:       "List Schools",
+						Description: "List schools with pagination",
+						Method:      "GET",
+						Path:        "",
+						Request: specification.EndpointRequest{
+							QueryParams: []specification.Field{
+								{
+									Name:        "limit",
+									Description: "The maximum number of Schools to return (default: 50)",
+									Type:        specification.FieldTypeInt,
+									Default:     "50",
+								},
+								{
+									Name:        "offset",
+									Description: "The number of Schools to skip for pagination",
+									Type:        specification.FieldTypeInt,
+									Default:     "0",
+								},
+								{
+									Name:        "include_archived",
+									Description: "Include archived schools in results",
+									Type:        specification.FieldTypeBool,
+									Default:     "false",
+								},
+							},
+						},
+						Response: specification.EndpointResponse{
+							ContentType: "application/json",
+							StatusCode:  200,
+							BodyFields: []specification.Field{
+								{
+									Name:        "schools",
+									Description: "List of schools",
+									Type:        specification.FieldTypeString,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	document, err := generator.GenerateFromService(service)
+	assert.NoError(t, err, "Should generate document successfully")
+	assert.NotNil(t, document, "Document should not be nil")
+
+	// Generate JSON to inspect parameter structure
+	jsonBytes, err := generator.ToJSON(document)
+	assert.NoError(t, err, "Should convert to JSON successfully")
+	jsonString := string(jsonBytes)
+
+	// Parse the JSON to verify structure programmatically
+	var apiSpec map[string]interface{}
+	err = json.Unmarshal(jsonBytes, &apiSpec)
+	assert.NoError(t, err, "Should parse generated JSON successfully")
+
+	// Navigate to the parameters section
+	paths, ok := apiSpec["paths"].(map[string]interface{})
+	assert.True(t, ok, "Should have paths object")
+
+	schoolPath, ok := paths["/school"].(map[string]interface{})
+	assert.True(t, ok, "Should have /school path")
+
+	getOp, ok := schoolPath["get"].(map[string]interface{})
+	assert.True(t, ok, "Should have GET operation")
+
+	parameters, ok := getOp["parameters"].([]interface{})
+	assert.True(t, ok, "Should have parameters array")
+	assert.Len(t, parameters, 3, "Should have exactly 3 parameters")
+
+	// Check each parameter
+	for i, param := range parameters {
+		paramObj, ok := param.(map[string]interface{})
+		assert.True(t, ok, "Parameter should be an object")
+
+		// Verify parameter has description
+		description, ok := paramObj["description"].(string)
+		assert.True(t, ok, "Parameter should have description field")
+		assert.NotEmpty(t, description, "Parameter description should not be empty")
+
+		// Verify schema exists
+		schema, ok := paramObj["schema"].(map[string]interface{})
+		assert.True(t, ok, "Parameter should have schema object")
+
+		// CRITICAL: Verify schema does NOT have description
+		schemaDescription, hasDescription := schema["description"]
+		assert.False(t, hasDescription, "Parameter schema should not have description field to avoid duplication (parameter %d: %s)", i, paramObj["name"])
+		assert.Nil(t, schemaDescription, "Parameter schema description should be nil to avoid duplication (parameter %d: %s)", i, paramObj["name"])
+
+		// Verify schema has the expected type and default value
+		schemaType, ok := schema["type"].(string)
+		assert.True(t, ok, "Parameter schema should have type field")
+
+		paramName := paramObj["name"].(string)
+		switch paramName {
+		case "limit", "offset":
+			assert.Equal(t, "integer", schemaType, "Integer parameters should have integer type")
+			defaultValue, ok := schema["default"]
+			assert.True(t, ok, "Integer parameters should have default value")
+			assert.NotNil(t, defaultValue, "Default value should not be nil")
+		case "includeArchived":
+			assert.Equal(t, "boolean", schemaType, "Boolean parameters should have boolean type")
+			defaultValue, ok := schema["default"]
+			assert.True(t, ok, "Boolean parameter should have default value")
+			assert.NotNil(t, defaultValue, "Default value should not be nil")
+		}
+	}
+
+	// Log the generated JSON for manual inspection
+	t.Logf("Generated OpenAPI JSON for parameter description verification:\n%s", jsonString)
+
+	// Verify that the JSON structure looks correct (no duplicate descriptions in the raw JSON)
+	assert.Contains(t, jsonString, "The maximum number of Schools to return (default: 50)", "Should contain parameter description")
+	assert.Contains(t, jsonString, "The number of Schools to skip for pagination", "Should contain parameter description")
+	assert.Contains(t, jsonString, "Include archived schools in results", "Should contain parameter description")
+
+	// Count occurrences of descriptions to ensure no duplication
+	limitDescCount := strings.Count(jsonString, "The maximum number of Schools to return (default: 50)")
+	offsetDescCount := strings.Count(jsonString, "The number of Schools to skip for pagination")
+	archivedDescCount := strings.Count(jsonString, "Include archived schools in results")
+
+	assert.Equal(t, 1, limitDescCount, "Limit description should appear exactly once")
+	assert.Equal(t, 1, offsetDescCount, "Offset description should appear exactly once")
+	assert.Equal(t, 1, archivedDescCount, "Archived description should appear exactly once")
 }

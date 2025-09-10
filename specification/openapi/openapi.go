@@ -574,6 +574,55 @@ func (g *Generator) createFieldSchema(field specification.Field, service *specif
 	return schema
 }
 
+// createParameterSchema creates a base.Schema for a field used in parameters, without description to avoid duplication.
+func (g *Generator) createParameterSchema(field specification.Field, service *specification.Service) *base.Schema {
+	var schema *base.Schema
+
+	// Handle array modifier
+	if field.IsArray() {
+		schema = &base.Schema{
+			Type: []string{schemaTypeArray},
+			// Note: No description here to avoid duplication with parameter description
+		}
+
+		itemSchema := g.getTypeSchema(field.Type, service)
+		schema.Items = &base.DynamicValue[*base.SchemaProxy, bool]{
+			N: 0, // Single schema (not boolean)
+			A: base.CreateSchemaProxy(itemSchema),
+		}
+	} else {
+		schema = g.getTypeSchema(field.Type, service)
+		// Note: No description set here to avoid duplication with parameter description
+	}
+
+	// Handle nullable modifier
+	if field.IsNullable() {
+		// Use the Nullable field instead of appending "null" to type array
+		nullable := true
+		schema.Nullable = &nullable
+	}
+
+	// Add default value if present
+	if field.Default != "" {
+		defaultNode := &yaml.Node{
+			Kind:  yaml.ScalarNode,
+			Value: field.Default,
+		}
+		schema.Default = defaultNode
+	}
+
+	// Add example if present
+	if field.Example != "" {
+		exampleNode := &yaml.Node{
+			Kind:  yaml.ScalarNode,
+			Value: field.Example,
+		}
+		schema.Examples = []*yaml.Node{exampleNode}
+	}
+
+	return schema
+}
+
 // getTypeSchema returns a base.Schema for the given field type.
 func (g *Generator) getTypeSchema(fieldType string, service *specification.Service) *base.Schema {
 	switch fieldType {
@@ -709,7 +758,7 @@ func (g *Generator) createParameter(field specification.Field, location string, 
 		In:          location,
 		Description: field.Description,
 		Required:    &isRequired,
-		Schema:      base.CreateSchemaProxy(g.createFieldSchema(field, service)),
+		Schema:      base.CreateSchemaProxy(g.createParameterSchema(field, service)),
 	}
 
 	return param
