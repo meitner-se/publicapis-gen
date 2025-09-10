@@ -883,24 +883,11 @@ func generateSearchEndpoint(result *Service, resource Resource) {
 	if resource.HasReadOperation() && !resource.HasEndpoint(searchEndpointName) {
 		limitParam := createLimitParam()
 		offsetParam := createOffsetParam()
-
-		// Create filter parameter - use resource filter type if object exists, otherwise use string
-		var filterParam Field
-		if result.HasObject(resource.Name) {
-			filterParam = Field{
-				Name:        searchFilterParamName,
-				Description: searchFilterParamDesc,
-				Type:        resource.Name + filterSuffix,
-			}
-		} else {
-			// Fallback to generic string filter when no object exists for the resource
-			filterParam = Field{
-				Name:        searchFilterParamName,
-				Description: searchFilterParamDesc,
-				Type:        FieldTypeString,
-			}
+		filterParam := Field{
+			Name:        searchFilterParamName,
+			Description: searchFilterParamDesc,
+			Type:        resource.Name + filterSuffix,
 		}
-
 		paginationField := createPaginationField()
 		dataField := createDataField(resource.Name)
 		pluralResourceName := resource.GetPluralName()
