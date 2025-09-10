@@ -917,7 +917,7 @@ func countSubstring(s, substr string) int {
 // TestOperationIdPrefixing verifies that operationIds are prefixed with resource names to avoid duplicates.
 func TestOperationIdPrefixing(t *testing.T) {
 	generator := newGenerator()
-	
+
 	// Create a service with multiple resources having the same endpoint names
 	service := &specification.Service{
 		Name:    "MultiResourceAPI",
@@ -976,7 +976,7 @@ func TestOperationIdPrefixing(t *testing.T) {
 					},
 					{
 						Name:        "Create",
-						Title:       "Create Product", 
+						Title:       "Create Product",
 						Description: "Create a new product",
 						Method:      "POST",
 						Path:        "",
@@ -1013,7 +1013,7 @@ func TestOperationIdPrefixing(t *testing.T) {
 
 	// Count the number of unique operationIds to ensure no duplicates
 	userGetCount := countSubstring(jsonString, "\"operationId\": \"UserGet\"")
-	userCreateCount := countSubstring(jsonString, "\"operationId\": \"UserCreate\"") 
+	userCreateCount := countSubstring(jsonString, "\"operationId\": \"UserCreate\"")
 	productGetCount := countSubstring(jsonString, "\"operationId\": \"ProductGet\"")
 	productCreateCount := countSubstring(jsonString, "\"operationId\": \"ProductCreate\"")
 
