@@ -11,6 +11,12 @@
       "description": "Production server for School Management API"
     }
   ],
+  "tags": [
+    {
+      "name": "Students",
+      "description": "Student management resource"
+    }
+  ],
   "paths": {
     "/students/reports/generate": {
       "post": {
