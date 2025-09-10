@@ -137,12 +137,12 @@ const (
 
 // Object and field names
 const (
-	errorObjectName        = "Error"
-	messageFieldName       = "message"
-	codeFieldName          = "code"
-	errorCodeEnumName      = "ErrorCode"
-	requestBodySuffix      = "RequestBody"
-	responseBodySuffix     = "ResponseBody"
+	errorObjectName         = "Error"
+	messageFieldName        = "message"
+	codeFieldName           = "code"
+	errorCodeEnumName       = "ErrorCode"
+	requestBodySuffix       = "RequestBody"
+	responseBodySuffix      = "ResponseBody"
 	errorResponseBodyPrefix = "Error"
 )
 
