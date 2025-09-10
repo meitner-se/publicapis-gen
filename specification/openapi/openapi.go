@@ -551,16 +551,13 @@ func (g *Generator) getTypeSchema(fieldType string, service *specification.Servi
 	default:
 		// Check if it's a custom object or enum
 		if service.HasObject(fieldType) || service.HasEnum(fieldType) {
-			// Create a proper $ref schema reference
+			// Create a proper $ref schema reference using allOf
 			refString := schemaReferencePrefix + fieldType
-			proxy := base.CreateSchemaProxyRef(refString)
-			schema := proxy.Schema()
-			if schema != nil {
-				return schema
-			}
-			// Fallback to Title-based reference if proxy resolution fails
+			refProxy := base.CreateSchemaProxyRef(refString)
+
+			// Return a schema with AllOf that contains the reference
 			return &base.Schema{
-				Title: fieldType,
+				AllOf: []*base.SchemaProxy{refProxy},
 			}
 		}
 		// Default to string if unknown type
@@ -670,25 +667,48 @@ func (g *Generator) createParameter(field specification.Field, location string, 
 
 // createRequestBody creates a v3.RequestBody from body parameters using native types.
 func (g *Generator) createRequestBody(bodyParams []specification.Field, service *specification.Service) *v3.RequestBody {
-	// Create schema from body parameters
-	schema := &base.Schema{
-		Type:       []string{schemaTypeObject},
-		Properties: orderedmap.New[string, *base.SchemaProxy](),
-	}
+	var schema *base.Schema
+	var isRequired bool
 
-	requiredFields := []string{}
-	for _, field := range bodyParams {
-		fieldSchema := g.createFieldSchema(field, service)
-		proxy := base.CreateSchemaProxy(fieldSchema)
-		schema.Properties.Set(field.TagJSON(), proxy)
-
-		if field.IsRequired(service) {
-			requiredFields = append(requiredFields, field.TagJSON())
+	// If there's only one body parameter and it references a component schema,
+	// use the component schema directly instead of wrapping it in an object
+	if len(bodyParams) == 1 {
+		field := bodyParams[0]
+		if service.HasObject(field.Type) || service.HasEnum(field.Type) {
+			// Create a direct reference to the component schema using allOf
+			refString := schemaReferencePrefix + field.Type
+			refProxy := base.CreateSchemaProxyRef(refString)
+			schema = &base.Schema{
+				AllOf:       []*base.SchemaProxy{refProxy},
+				Description: field.Description,
+			}
+			isRequired = field.IsRequired(service)
 		}
 	}
 
-	if len(requiredFields) > 0 {
-		schema.Required = requiredFields
+	// If we didn't create a direct reference schema, fall back to the object wrapper approach
+	if schema == nil {
+		schema = &base.Schema{
+			Type:       []string{schemaTypeObject},
+			Properties: orderedmap.New[string, *base.SchemaProxy](),
+		}
+
+		requiredFields := []string{}
+		for _, field := range bodyParams {
+			fieldSchema := g.createFieldSchema(field, service)
+			proxy := base.CreateSchemaProxy(fieldSchema)
+			schema.Properties.Set(field.TagJSON(), proxy)
+
+			if field.IsRequired(service) {
+				requiredFields = append(requiredFields, field.TagJSON())
+			}
+		}
+
+		if len(requiredFields) > 0 {
+			schema.Required = requiredFields
+		}
+
+		isRequired = len(requiredFields) > 0
 	}
 
 	// Create media type
@@ -699,7 +719,6 @@ func (g *Generator) createRequestBody(bodyParams []specification.Field, service 
 	content := orderedmap.New[string, *v3.MediaType]()
 	content.Set(contentTypeJSON, mediaType)
 
-	isRequired := len(requiredFields) > 0
 	return &v3.RequestBody{
 		Description: requestBodyDescription,
 		Content:     content,
@@ -719,15 +738,11 @@ func (g *Generator) createResponse(response specification.EndpointResponse, serv
 
 		var schema *base.Schema
 		if response.BodyObject != nil {
-			// Create a proper $ref schema reference
+			// Create a proper $ref schema reference using allOf
 			refString := schemaReferencePrefix + *response.BodyObject
-			proxy := base.CreateSchemaProxyRef(refString)
-			schema = proxy.Schema()
-			if schema == nil {
-				// Fallback to Title-based reference if proxy resolution fails
-				schema = &base.Schema{
-					Title: *response.BodyObject,
-				}
+			refProxy := base.CreateSchemaProxyRef(refString)
+			schema = &base.Schema{
+				AllOf: []*base.SchemaProxy{refProxy},
 			}
 		} else if len(response.BodyFields) > 0 {
 			// Inline schema from body fields
@@ -760,15 +775,11 @@ func (g *Generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Resp
 	// Create error schema
 	var errorSchema *base.Schema
 	if service.HasObject(errorObjectName) {
-		// Create a proper $ref schema reference
+		// Create a proper $ref schema reference using allOf
 		refString := schemaReferencePrefix + errorObjectName
-		proxy := base.CreateSchemaProxyRef(refString)
-		errorSchema = proxy.Schema()
-		if errorSchema == nil {
-			// Fallback to Title-based reference if proxy resolution fails
-			errorSchema = &base.Schema{
-				Title: errorObjectName,
-			}
+		refProxy := base.CreateSchemaProxyRef(refString)
+		errorSchema = &base.Schema{
+			AllOf: []*base.SchemaProxy{refProxy},
 		}
 	} else {
 		// Fallback generic error schema

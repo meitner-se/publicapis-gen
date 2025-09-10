@@ -49,12 +49,20 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "title": "Users"
+                        "allOf": [
+                          {
+                            "$ref": "#/components/schemas/Users"
+                          }
+                        ]
                       },
                       "description": "Array of Users objects"
                     },
                     "pagination": {
-                      "title": "Pagination",
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/Pagination"
+                        }
+                      ],
                       "description": "Pagination information"
                     }
                   }
@@ -67,7 +75,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -77,7 +89,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -87,7 +103,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -97,7 +117,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -107,7 +131,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -117,7 +145,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -127,7 +159,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -180,7 +216,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Users"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Users"
+                    }
+                  ]
                 }
               }
             }
@@ -190,7 +230,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -200,7 +244,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -210,7 +258,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -220,7 +272,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -230,7 +286,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -240,7 +300,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -250,7 +314,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -260,7 +328,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -295,7 +367,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Users"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Users"
+                    }
+                  ]
                 }
               }
             }
@@ -305,7 +381,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -315,7 +395,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -325,7 +409,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -335,7 +423,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -345,7 +437,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -355,7 +451,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -365,7 +465,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -401,7 +505,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -411,7 +519,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -421,7 +533,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -431,7 +547,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -441,7 +561,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -451,7 +575,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -461,7 +589,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -519,7 +651,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Users"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Users"
+                    }
+                  ]
                 }
               }
             }
@@ -529,7 +665,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -539,7 +679,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -549,7 +693,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -559,7 +707,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -569,7 +721,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -579,7 +735,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -589,7 +749,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -599,7 +763,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -670,12 +838,20 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "title": "Users"
+                        "allOf": [
+                          {
+                            "$ref": "#/components/schemas/Users"
+                          }
+                        ]
                       },
                       "description": "Array of Users objects"
                     },
                     "pagination": {
-                      "title": "Pagination",
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/Pagination"
+                        }
+                      ],
                       "description": "Pagination information"
                     }
                   }
@@ -688,7 +864,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -698,7 +878,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -708,7 +892,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -718,7 +906,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -728,7 +920,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -738,7 +934,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -748,7 +948,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -758,7 +962,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "title": "Error"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
                 }
               }
             }
@@ -804,7 +1012,11 @@
         "type": "object",
         "properties": {
           "code": {
-            "title": "ErrorCode",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorCode"
+              }
+            ],
             "description": "The specific error code indicating the type of error"
           },
           "message": {
@@ -822,7 +1034,11 @@
         "type": "object",
         "properties": {
           "code": {
-            "title": "ErrorFieldCode",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorFieldCode"
+              }
+            ],
             "description": "The specific error code indicating the type of field validation error"
           },
           "message": {
@@ -900,7 +1116,11 @@
             "description": "Unique identifier for the Users"
           },
           "meta": {
-            "title": "Meta",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Meta"
+              }
+            ],
             "description": "Metadata information for the Users"
           },
           "email": {
@@ -923,12 +1143,20 @@
         "type": "object",
         "properties": {
           "email": {
-            "title": "ErrorField",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
             "description": "User email address",
             "nullable": true
           },
           "name": {
-            "title": "ErrorField",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
             "description": "User display name",
             "nullable": true
           }
@@ -939,12 +1167,20 @@
         "type": "object",
         "properties": {
           "email": {
-            "title": "ErrorField",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
             "description": "User email address",
             "nullable": true
           },
           "name": {
-            "title": "ErrorField",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
             "description": "User display name",
             "nullable": true
           }
