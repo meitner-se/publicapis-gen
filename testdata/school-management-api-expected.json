@@ -12,6 +12,862 @@
     }
   ],
   "paths": {
+    "/students": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "List all Students",
+        "description": "Returns a paginated list of all `Students` in your organization.",
+        "operationId": "StudentsList",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of Students to return (default: 50)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "The maximum number of Students to return (default: 50)",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "The number of Students to skip before starting to return results (default: 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "The number of Students to skip before starting to return results (default: 0)",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the list of Students",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "allOf": [
+                          {
+                            "$ref": "#/components/schemas/Students"
+                          }
+                        ]
+                      },
+                      "description": "Array of Students objects"
+                    },
+                    "pagination": {
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/Pagination"
+                        }
+                      ],
+                      "description": "Pagination information"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was malformed or contained invalid parameters. 400 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is missing valid authentication credentials. 401 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "When the rate limit has been exceeded, 429 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Some serverside issue, 5xx status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "x-speakeasy-pagination": {
+          "strategy": "offsetLimit",
+          "offsetParam": "offset",
+          "limitParam": "limit",
+          "totalField": "pagination.total",
+          "dataField": "data"
+        }
+      },
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Create Students",
+        "description": "Create a new Students",
+        "operationId": "StudentsCreate",
+        "parameters": [],
+        "requestBody": {
+          "description": "Request body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": {
+                    "type": "string",
+                    "description": "Student's first name"
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "description": "Student's last name"
+                  },
+                  "studentId": {
+                    "type": "string",
+                    "description": "School-assigned student ID"
+                  },
+                  "status": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/StudentStatus"
+                      }
+                    ],
+                    "description": "Current status of the student",
+                    "default": "Active"
+                  },
+                  "gradeLevel": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/GradeLevel"
+                      }
+                    ],
+                    "description": "Current grade level"
+                  },
+                  "contact": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Contact"
+                      }
+                    ],
+                    "description": "Student contact information"
+                  },
+                  "address": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Address"
+                      }
+                    ],
+                    "description": "Student home address",
+                    "nullable": true
+                  },
+                  "enrollmentDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Date when student was enrolled"
+                  }
+                },
+                "required": [
+                  "firstName",
+                  "lastName",
+                  "studentId",
+                  "gradeLevel",
+                  "enrollmentDate"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created the Students",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Students"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was malformed or contained invalid parameters. 400 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is missing valid authentication credentials. 401 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The request was well-formed but failed validation (e.g. invalid field format or constraints), 422 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "When the rate limit has been exceeded, 429 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Some serverside issue, 5xx status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/students/{id}": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Retrieve an existing Students",
+        "description": "Retrieves the `Students` with the given ID.",
+        "operationId": "StudentsGet",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Students to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The unique identifier of the Students to retrieve"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the Students",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Students"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was malformed or contained invalid parameters. 400 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is missing valid authentication credentials. 401 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "When the rate limit has been exceeded, 429 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Some serverside issue, 5xx status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Delete Students",
+        "description": "Delete a Students",
+        "operationId": "StudentsDelete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Students to delete",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The unique identifier of the Students to delete"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successfully deleted the Students"
+          },
+          "400": {
+            "description": "The request was malformed or contained invalid parameters. 400 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is missing valid authentication credentials. 401 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "When the rate limit has been exceeded, 429 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Some serverside issue, 5xx status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Update Students",
+        "description": "Update a Students",
+        "operationId": "StudentsUpdate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Students to update",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The unique identifier of the Students to update"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Request body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": {
+                    "type": "string",
+                    "description": "Student's first name"
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "description": "Student's last name"
+                  },
+                  "status": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/StudentStatus"
+                      }
+                    ],
+                    "description": "Current status of the student",
+                    "default": "Active"
+                  },
+                  "gradeLevel": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/GradeLevel"
+                      }
+                    ],
+                    "description": "Current grade level"
+                  },
+                  "contact": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Contact"
+                      }
+                    ],
+                    "description": "Student contact information"
+                  },
+                  "address": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Address"
+                      }
+                    ],
+                    "description": "Student home address",
+                    "nullable": true
+                  },
+                  "graduationDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Expected or actual graduation date",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "firstName",
+                  "lastName",
+                  "gradeLevel"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated the Students",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Students"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was malformed or contained invalid parameters. 400 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is missing valid authentication credentials. 401 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The request was well-formed but failed validation (e.g. invalid field format or constraints), 422 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "When the rate limit has been exceeded, 429 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Some serverside issue, 5xx status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/students/_search": {
       "post": {
         "tags": [
@@ -879,862 +1735,6 @@
           }
         }
       }
-    },
-    "/students": {
-      "get": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "List all Students",
-        "description": "Returns a paginated list of all `Students` in your organization.",
-        "operationId": "StudentsList",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of Students to return (default: 50)",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "description": "The maximum number of Students to return (default: 50)",
-              "default": 50
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "The number of Students to skip before starting to return results (default: 0)",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "description": "The number of Students to skip before starting to return results (default: 0)",
-              "default": 0
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved the list of Students",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "allOf": [
-                          {
-                            "$ref": "#/components/schemas/Students"
-                          }
-                        ]
-                      },
-                      "description": "Array of Students objects"
-                    },
-                    "pagination": {
-                      "allOf": [
-                        {
-                          "$ref": "#/components/schemas/Pagination"
-                        }
-                      ],
-                      "description": "Pagination information"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The request was malformed or contained invalid parameters. 400 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "The request is missing valid authentication credentials. 401 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "When the rate limit has been exceeded, 429 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Some serverside issue, 5xx status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        "x-speakeasy-pagination": {
-          "strategy": "offsetLimit",
-          "offsetParam": "offset",
-          "limitParam": "limit",
-          "totalField": "pagination.total",
-          "dataField": "data"
-        }
-      },
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Create Students",
-        "description": "Create a new Students",
-        "operationId": "StudentsCreate",
-        "parameters": [],
-        "requestBody": {
-          "description": "Request body",
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "firstName": {
-                    "type": "string",
-                    "description": "Student's first name"
-                  },
-                  "lastName": {
-                    "type": "string",
-                    "description": "Student's last name"
-                  },
-                  "studentId": {
-                    "type": "string",
-                    "description": "School-assigned student ID"
-                  },
-                  "status": {
-                    "allOf": [
-                      {
-                        "$ref": "#/components/schemas/StudentStatus"
-                      }
-                    ],
-                    "description": "Current status of the student",
-                    "default": "Active"
-                  },
-                  "gradeLevel": {
-                    "allOf": [
-                      {
-                        "$ref": "#/components/schemas/GradeLevel"
-                      }
-                    ],
-                    "description": "Current grade level"
-                  },
-                  "contact": {
-                    "allOf": [
-                      {
-                        "$ref": "#/components/schemas/Contact"
-                      }
-                    ],
-                    "description": "Student contact information"
-                  },
-                  "address": {
-                    "allOf": [
-                      {
-                        "$ref": "#/components/schemas/Address"
-                      }
-                    ],
-                    "description": "Student home address",
-                    "nullable": true
-                  },
-                  "enrollmentDate": {
-                    "type": "string",
-                    "format": "date",
-                    "description": "Date when student was enrolled"
-                  }
-                },
-                "required": [
-                  "firstName",
-                  "lastName",
-                  "studentId",
-                  "gradeLevel",
-                  "enrollmentDate"
-                ]
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Successfully created the Students",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Students"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The request was malformed or contained invalid parameters. 400 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "The request is missing valid authentication credentials. 401 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "The request was well-formed but failed validation (e.g. invalid field format or constraints), 422 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "When the rate limit has been exceeded, 429 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Some serverside issue, 5xx status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/students/{id}": {
-      "get": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Retrieve an existing Students",
-        "description": "Retrieves the `Students` with the given ID.",
-        "operationId": "StudentsGet",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "The unique identifier of the Students to retrieve",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "description": "The unique identifier of the Students to retrieve"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved the Students",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Students"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The request was malformed or contained invalid parameters. 400 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "The request is missing valid authentication credentials. 401 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "When the rate limit has been exceeded, 429 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Some serverside issue, 5xx status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Delete Students",
-        "description": "Delete a Students",
-        "operationId": "StudentsDelete",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "The unique identifier of the Students to delete",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "description": "The unique identifier of the Students to delete"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successfully deleted the Students"
-          },
-          "400": {
-            "description": "The request was malformed or contained invalid parameters. 400 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "The request is missing valid authentication credentials. 401 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "When the rate limit has been exceeded, 429 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Some serverside issue, 5xx status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Update Students",
-        "description": "Update a Students",
-        "operationId": "StudentsUpdate",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "The unique identifier of the Students to update",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "description": "The unique identifier of the Students to update"
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "Request body",
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "firstName": {
-                    "type": "string",
-                    "description": "Student's first name"
-                  },
-                  "lastName": {
-                    "type": "string",
-                    "description": "Student's last name"
-                  },
-                  "status": {
-                    "allOf": [
-                      {
-                        "$ref": "#/components/schemas/StudentStatus"
-                      }
-                    ],
-                    "description": "Current status of the student",
-                    "default": "Active"
-                  },
-                  "gradeLevel": {
-                    "allOf": [
-                      {
-                        "$ref": "#/components/schemas/GradeLevel"
-                      }
-                    ],
-                    "description": "Current grade level"
-                  },
-                  "contact": {
-                    "allOf": [
-                      {
-                        "$ref": "#/components/schemas/Contact"
-                      }
-                    ],
-                    "description": "Student contact information"
-                  },
-                  "address": {
-                    "allOf": [
-                      {
-                        "$ref": "#/components/schemas/Address"
-                      }
-                    ],
-                    "description": "Student home address",
-                    "nullable": true
-                  },
-                  "graduationDate": {
-                    "type": "string",
-                    "format": "date",
-                    "description": "Expected or actual graduation date",
-                    "nullable": true
-                  }
-                },
-                "required": [
-                  "firstName",
-                  "lastName",
-                  "gradeLevel"
-                ]
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successfully updated the Students",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Students"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The request was malformed or contained invalid parameters. 400 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "The request is missing valid authentication credentials. 401 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "The request was well-formed but failed validation (e.g. invalid field format or constraints), 422 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "When the rate limit has been exceeded, 429 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Some serverside issue, 5xx status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -2052,30 +2052,6 @@
         ],
         "description": "Student management resource"
       },
-      "ContactRequestError": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Email address",
-            "nullable": true
-          },
-          "phone": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Phone number",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Contact"
-      },
       "StudentRequestError": {
         "type": "object",
         "properties": {
@@ -2126,6 +2102,30 @@
           }
         },
         "description": "Request error object for Student"
+      },
+      "ContactRequestError": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Email address",
+            "nullable": true
+          },
+          "phone": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Phone number",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Contact"
       },
       "AddressRequestError": {
         "type": "object",
@@ -3126,6 +3126,253 @@
       "StudentFilterNull": {
         "type": "object",
         "description": "Null filter fields for Student"
+      }
+    },
+    "responses": {
+      "StudentsBulkImport200ResponseBody": {
+        "description": "Successfully imported students",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "imported": {
+                  "type": "integer",
+                  "description": "Number of students successfully imported"
+                },
+                "failed": {
+                  "type": "integer",
+                  "description": "Number of students that failed to import"
+                },
+                "errors": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "List of import error messages"
+                }
+              }
+            }
+          }
+        }
+      },
+      "StudentsGenerateReport202ResponseBody": {
+        "description": "Successfully queued report generation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "reportId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Unique identifier for the generated report"
+                },
+                "estimatedCompletionTime": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the report is expected to be ready"
+                },
+                "downloadUrl": {
+                  "type": "string",
+                  "description": "URL to download the report once ready",
+                  "nullable": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "StudentsAdvancedSearch200ResponseBody": {
+        "description": "Successfully performed advanced search",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "students": {
+                  "type": "array",
+                  "items": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Student"
+                      }
+                    ]
+                  },
+                  "description": "Array of matching students"
+                },
+                "totalCount": {
+                  "type": "integer",
+                  "description": "Total number of matching students"
+                },
+                "facets": {
+                  "type": "string",
+                  "description": "Search facets and counts"
+                }
+              }
+            }
+          }
+        }
+      },
+      "StudentsCreate201ResponseBody": {
+        "description": "Successfully created the Students",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Students"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "StudentsUpdate200ResponseBody": {
+        "description": "Successfully updated the Students",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Students"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "StudentsGet200ResponseBody": {
+        "description": "Successfully retrieved the Students",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Students"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "StudentsList200ResponseBody": {
+        "description": "Successfully retrieved the list of Students",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Students"
+                      }
+                    ]
+                  },
+                  "description": "Array of Students objects"
+                },
+                "pagination": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  ],
+                  "description": "Pagination information"
+                }
+              }
+            }
+          }
+        }
+      },
+      "StudentsSearch200ResponseBody": {
+        "description": "Successfully searched for Students",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Students"
+                      }
+                    ]
+                  },
+                  "description": "Array of Students objects"
+                },
+                "pagination": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  ],
+                  "description": "Pagination information"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error404ResponseBody": {
+        "description": "Not Found - The requested resource does not exist",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Error"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Error500ResponseBody": {
+        "description": "Internal Server Error - An unexpected server error occurred",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Error"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Error400ResponseBody": {
+        "description": "Bad Request - The request was malformed or contained invalid parameters",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Error"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Error401ResponseBody": {
+        "description": "Unauthorized - The request is missing valid authentication credentials",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Error"
+                }
+              ]
+            }
+          }
+        }
       }
     },
     "requestBodies": {
