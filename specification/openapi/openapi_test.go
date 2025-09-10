@@ -914,6 +914,117 @@ func countSubstring(s, substr string) int {
 // GenerateFromSpecificationToJSON Function Tests
 // ============================================================================
 
+// TestOperationIdPrefixing verifies that operationIds are prefixed with resource names to avoid duplicates.
+func TestOperationIdPrefixing(t *testing.T) {
+	generator := newGenerator()
+
+	// Create a service with multiple resources having the same endpoint names
+	service := &specification.Service{
+		Name:    "MultiResourceAPI",
+		Version: "1.0.0",
+		Resources: []specification.Resource{
+			{
+				Name:        "User",
+				Description: "User resource",
+				Operations:  []string{specification.OperationCreate, specification.OperationRead},
+				Endpoints: []specification.Endpoint{
+					{
+						Name:        "Get",
+						Title:       "Get User",
+						Description: "Get a user by ID",
+						Method:      "GET",
+						Path:        "/{id}",
+						Request: specification.EndpointRequest{
+							PathParams: []specification.Field{
+								{Name: "id", Type: specification.FieldTypeUUID, Description: "User ID"},
+							},
+						},
+						Response: specification.EndpointResponse{StatusCode: 200, ContentType: "application/json"},
+					},
+					{
+						Name:        "Create",
+						Title:       "Create User",
+						Description: "Create a new user",
+						Method:      "POST",
+						Path:        "",
+						Request: specification.EndpointRequest{
+							BodyParams: []specification.Field{
+								{Name: "email", Type: specification.FieldTypeString, Description: "User email"},
+							},
+						},
+						Response: specification.EndpointResponse{StatusCode: 201, ContentType: "application/json"},
+					},
+				},
+			},
+			{
+				Name:        "Product",
+				Description: "Product resource",
+				Operations:  []string{specification.OperationCreate, specification.OperationRead},
+				Endpoints: []specification.Endpoint{
+					{
+						Name:        "Get",
+						Title:       "Get Product",
+						Description: "Get a product by ID",
+						Method:      "GET",
+						Path:        "/{id}",
+						Request: specification.EndpointRequest{
+							PathParams: []specification.Field{
+								{Name: "id", Type: specification.FieldTypeUUID, Description: "Product ID"},
+							},
+						},
+						Response: specification.EndpointResponse{StatusCode: 200, ContentType: "application/json"},
+					},
+					{
+						Name:        "Create",
+						Title:       "Create Product",
+						Description: "Create a new product",
+						Method:      "POST",
+						Path:        "",
+						Request: specification.EndpointRequest{
+							BodyParams: []specification.Field{
+								{Name: "name", Type: specification.FieldTypeString, Description: "Product name"},
+							},
+						},
+						Response: specification.EndpointResponse{StatusCode: 201, ContentType: "application/json"},
+					},
+				},
+			},
+		},
+	}
+
+	document, err := generator.GenerateFromService(service)
+	assert.NoError(t, err, "Should generate document successfully")
+	assert.NotNil(t, document, "Document should not be nil")
+
+	// Convert to JSON to check operationIds
+	jsonBytes, err := generator.ToJSON(document)
+	assert.NoError(t, err, "Should convert to JSON successfully")
+	jsonString := string(jsonBytes)
+
+	// Verify that operationIds are prefixed with resource names
+	assert.Contains(t, jsonString, "\"operationId\": \"UserGet\"", "User Get operation should have prefixed operationId")
+	assert.Contains(t, jsonString, "\"operationId\": \"UserCreate\"", "User Create operation should have prefixed operationId")
+	assert.Contains(t, jsonString, "\"operationId\": \"ProductGet\"", "Product Get operation should have prefixed operationId")
+	assert.Contains(t, jsonString, "\"operationId\": \"ProductCreate\"", "Product Create operation should have prefixed operationId")
+
+	// Verify that the old unprefixed operationIds are not present
+	assert.NotContains(t, jsonString, "\"operationId\": \"Get\"", "Should not contain unprefixed Get operationId")
+	assert.NotContains(t, jsonString, "\"operationId\": \"Create\"", "Should not contain unprefixed Create operationId")
+
+	// Count the number of unique operationIds to ensure no duplicates
+	userGetCount := countSubstring(jsonString, "\"operationId\": \"UserGet\"")
+	userCreateCount := countSubstring(jsonString, "\"operationId\": \"UserCreate\"")
+	productGetCount := countSubstring(jsonString, "\"operationId\": \"ProductGet\"")
+	productCreateCount := countSubstring(jsonString, "\"operationId\": \"ProductCreate\"")
+
+	assert.Equal(t, 1, userGetCount, "Should have exactly one UserGet operationId")
+	assert.Equal(t, 1, userCreateCount, "Should have exactly one UserCreate operationId")
+	assert.Equal(t, 1, productGetCount, "Should have exactly one ProductGet operationId")
+	assert.Equal(t, 1, productCreateCount, "Should have exactly one ProductCreate operationId")
+
+	t.Logf("Generated OpenAPI JSON with prefixed operationIds:\n%s", jsonString)
+}
+
 // TestGenerateFromSpecificationToJSON tests the convenience method for generating JSON from a specification.
 func TestGenerateFromSpecificationToJSON(t *testing.T) {
 	// Test with nil service

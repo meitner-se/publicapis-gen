@@ -559,7 +559,7 @@ func (g *Generator) addResourceToPaths(resource specification.Resource, paths *o
 // createOperation creates a v3.Operation from an endpoint using native types.
 func (g *Generator) createOperation(endpoint specification.Endpoint, resource specification.Resource, service *specification.Service) *v3.Operation {
 	operation := &v3.Operation{
-		OperationId: endpoint.Name,
+		OperationId: resource.Name + endpoint.Name,
 		Summary:     endpoint.Title,
 		Description: endpoint.Description,
 		Tags:        []string{resource.Name},
