@@ -251,18 +251,13 @@ func (g *Generator) createObjectSchema(obj specification.Object, service *specif
 	}
 
 	requiredFields := []string{}
-	requiredFieldsMap := make(map[string]bool) // Track unique required fields
 	for _, field := range obj.Fields {
 		fieldSchema := g.createFieldSchema(field, service)
 		proxy := base.CreateSchemaProxy(fieldSchema)
 		schema.Properties.Set(field.TagJSON(), proxy)
 
 		if field.IsRequired(service) {
-			jsonTag := field.TagJSON()
-			if !requiredFieldsMap[jsonTag] {
-				requiredFieldsMap[jsonTag] = true
-				requiredFields = append(requiredFields, jsonTag)
-			}
+			requiredFields = append(requiredFields, field.TagJSON())
 		}
 	}
 
@@ -470,18 +465,13 @@ func (g *Generator) createRequestBody(bodyParams []specification.Field, service 
 	}
 
 	requiredFields := []string{}
-	requiredFieldsMap := make(map[string]bool) // Track unique required fields
 	for _, field := range bodyParams {
 		fieldSchema := g.createFieldSchema(field, service)
 		proxy := base.CreateSchemaProxy(fieldSchema)
 		schema.Properties.Set(field.TagJSON(), proxy)
 
 		if field.IsRequired(service) {
-			jsonTag := field.TagJSON()
-			if !requiredFieldsMap[jsonTag] {
-				requiredFieldsMap[jsonTag] = true
-				requiredFields = append(requiredFields, jsonTag)
-			}
+			requiredFields = append(requiredFields, field.TagJSON())
 		}
 	}
 

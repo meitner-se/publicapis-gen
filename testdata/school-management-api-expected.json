@@ -1633,6 +1633,7 @@
         },
         "required": [
           "id",
+          "id",
           "firstName",
           "lastName",
           "studentId",
