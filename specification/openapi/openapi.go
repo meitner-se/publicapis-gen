@@ -140,6 +140,7 @@ const (
 	messageFieldName  = "message"
 	codeFieldName     = "code"
 	errorCodeEnumName = "ErrorCode"
+	requestBodySuffix = "RequestBody"
 )
 
 // Generator handles OpenAPI 3.1 specification generation from specification.Service.
@@ -415,7 +416,8 @@ func (g *Generator) buildV3Document(service *specification.Service) *v3.Document
 
 	// Create Components
 	components := &v3.Components{
-		Schemas: orderedmap.New[string, *base.SchemaProxy](),
+		Schemas:       orderedmap.New[string, *base.SchemaProxy](),
+		RequestBodies: orderedmap.New[string, *v3.RequestBody](),
 	}
 
 	// Add enums to components
@@ -431,6 +433,9 @@ func (g *Generator) buildV3Document(service *specification.Service) *v3.Document
 		proxy := base.CreateSchemaProxy(schema)
 		components.Schemas.Set(obj.Name, proxy)
 	}
+
+	// Add request bodies to components
+	g.addRequestBodiesToComponents(components, service)
 
 	document.Components = components
 
@@ -662,7 +667,7 @@ func (g *Generator) createOperation(endpoint specification.Endpoint, resource sp
 
 	operation.Parameters = parameters
 
-	// Request body
+	// Request body - for now, use inline until we implement proper references
 	if len(endpoint.Request.BodyParams) > 0 {
 		operation.RequestBody = g.createRequestBody(endpoint.Request.BodyParams, service)
 	}
@@ -701,6 +706,94 @@ func (g *Generator) createParameter(field specification.Field, location string, 
 	}
 
 	return param
+}
+
+// addRequestBodiesToComponents extracts request bodies from all endpoints and adds them to the components section.
+func (g *Generator) addRequestBodiesToComponents(components *v3.Components, service *specification.Service) {
+	// Track unique request bodies to avoid duplicates
+	requestBodyMap := make(map[string]*v3.RequestBody)
+
+	// Iterate through all resources and endpoints to collect request bodies
+	for _, resource := range service.Resources {
+		for _, endpoint := range resource.Endpoints {
+			if len(endpoint.Request.BodyParams) > 0 {
+				requestBodyName := g.createRequestBodyName(resource.Name, endpoint.Name)
+
+				// Only add if we haven't seen this request body before
+				if _, exists := requestBodyMap[requestBodyName]; !exists {
+					requestBody := g.createComponentRequestBody(endpoint.Request.BodyParams, service)
+					requestBodyMap[requestBodyName] = requestBody
+					components.RequestBodies.Set(requestBodyName, requestBody)
+				}
+			}
+		}
+	}
+}
+
+// createRequestBodyName creates a systematic name for request bodies.
+func (g *Generator) createRequestBodyName(resourceName, endpointName string) string {
+	return resourceName + endpointName + requestBodySuffix
+}
+
+// createComponentRequestBody creates a v3.RequestBody for the components section.
+func (g *Generator) createComponentRequestBody(bodyParams []specification.Field, service *specification.Service) *v3.RequestBody {
+	var schema *base.Schema
+	var isRequired bool
+
+	// If there's only one body parameter and it references a component schema,
+	// use the component schema directly instead of wrapping it in an object
+	if len(bodyParams) == 1 {
+		field := bodyParams[0]
+		if service.HasObject(field.Type) || service.HasEnum(field.Type) {
+			// Create a direct reference to the component schema using allOf
+			refString := schemaReferencePrefix + field.Type
+			refProxy := base.CreateSchemaProxyRef(refString)
+			schema = &base.Schema{
+				AllOf:       []*base.SchemaProxy{refProxy},
+				Description: field.Description,
+			}
+			isRequired = field.IsRequired(service)
+		}
+	}
+
+	// If we didn't create a direct reference schema, fall back to the object wrapper approach
+	if schema == nil {
+		schema = &base.Schema{
+			Type:       []string{schemaTypeObject},
+			Properties: orderedmap.New[string, *base.SchemaProxy](),
+		}
+
+		requiredFields := []string{}
+		for _, field := range bodyParams {
+			fieldSchema := g.createFieldSchema(field, service)
+			proxy := base.CreateSchemaProxy(fieldSchema)
+			schema.Properties.Set(field.TagJSON(), proxy)
+
+			if field.IsRequired(service) {
+				requiredFields = append(requiredFields, field.TagJSON())
+			}
+		}
+
+		if len(requiredFields) > 0 {
+			schema.Required = requiredFields
+		}
+
+		isRequired = len(requiredFields) > 0
+	}
+
+	// Create media type
+	mediaType := &v3.MediaType{
+		Schema: base.CreateSchemaProxy(schema),
+	}
+
+	content := orderedmap.New[string, *v3.MediaType]()
+	content.Set(contentTypeJSON, mediaType)
+
+	return &v3.RequestBody{
+		Description: requestBodyDescription,
+		Content:     content,
+		Required:    &isRequired,
+	}
 }
 
 // createRequestBody creates a v3.RequestBody from body parameters using native types.
