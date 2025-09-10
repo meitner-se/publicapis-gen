@@ -977,21 +977,24 @@ func (g *Generator) addErrorResponseBodiesToComponents(components *v3.Components
 	}
 	errorContent.Set(contentTypeJSON, mediaType)
 
-	// Define common error responses
-	errorResponses := map[string]string{
-		badRequestDescription:    httpStatus400,
-		unauthorizedDescription:  httpStatus401,
-		notFoundDescription:      httpStatus404,
-		internalErrorDescription: httpStatus500,
+	// Define common error responses in deterministic order
+	errorResponses := []struct {
+		description string
+		statusCode  string
+	}{
+		{badRequestDescription, httpStatus400},
+		{unauthorizedDescription, httpStatus401},
+		{notFoundDescription, httpStatus404},
+		{internalErrorDescription, httpStatus500},
 	}
 
-	for description, statusCode := range errorResponses {
-		responseBodyName := errorResponseBodyPrefix + statusCode + responseBodySuffix
-		errorResponse := &v3.Response{
-			Description: description,
+	for _, errorResponse := range errorResponses {
+		responseBodyName := errorResponseBodyPrefix + errorResponse.statusCode + responseBodySuffix
+		response := &v3.Response{
+			Description: errorResponse.description,
 			Content:     errorContent,
 		}
-		components.Responses.Set(responseBodyName, errorResponse)
+		components.Responses.Set(responseBodyName, response)
 	}
 }
 
@@ -1125,21 +1128,24 @@ func (g *Generator) addDefaultErrorResponseReferences(responses *orderedmap.Map[
 	}
 	errorContent.Set(contentTypeJSON, mediaType)
 
-	// Define default error status codes and descriptions
-	defaultErrors := map[string]string{
-		httpStatus400: badRequestDescription,
-		httpStatus401: unauthorizedDescription,
-		httpStatus404: notFoundDescription,
-		httpStatus500: internalErrorDescription,
+	// Define default error status codes and descriptions in deterministic order
+	defaultErrors := []struct {
+		statusCode  string
+		description string
+	}{
+		{httpStatus400, badRequestDescription},
+		{httpStatus401, unauthorizedDescription},
+		{httpStatus404, notFoundDescription},
+		{httpStatus500, internalErrorDescription},
 	}
 
-	for statusCode, description := range defaultErrors {
+	for _, defaultError := range defaultErrors {
 		// Create inline error response (components are still populated for future reference use)
 		errorResponse := &v3.Response{
-			Description: description,
+			Description: defaultError.description,
 			Content:     errorContent,
 		}
-		responses.Set(statusCode, errorResponse)
+		responses.Set(defaultError.statusCode, errorResponse)
 	}
 }
 
