@@ -70,6 +70,84 @@ resources:
         operations: ["Create", "Read", "Update"]
 ```
 
+## Configure retry behavior
+
+APIs often need retry mechanisms for handling transient failures. You can configure retry behavior directly in your specification:
+
+### Basic retry configuration
+
+```yaml
+name: "Resilient API"
+version: "1.0.0"
+
+# Configure retry behavior for the entire API
+retry:
+  strategy: "backoff"
+  backoff:
+    initial_interval: 500      # Initial delay in milliseconds
+    max_interval: 60000        # Maximum delay between retries
+    max_elapsed_time: 3600000  # Total timeout in milliseconds
+    exponent: 1.5              # Backoff multiplier
+  status_codes: ["5XX"]        # HTTP status codes to retry on
+  retry_connection_errors: true # Whether to retry connection errors
+
+resources:
+  - name: "Users"
+    description: "User management with built-in retry support"
+    operations: ["Create", "Read", "Update", "Delete"]
+    fields:
+      - field:
+          name: "email"
+          type: "String"
+          description: "User email address"
+        operations: ["Create", "Read", "Update"]
+```
+
+### Advanced retry configuration
+
+You can customize retry behavior for different scenarios:
+
+```yaml
+name: "High Availability API"
+version: "1.0.0"
+
+# Custom retry configuration for high-traffic scenarios
+retry:
+  strategy: "backoff"
+  backoff:
+    initial_interval: 1000     # Start with 1 second delay
+    max_interval: 30000        # Cap at 30 seconds
+    max_elapsed_time: 1800000  # Total timeout of 30 minutes
+    exponent: 2.0              # Exponential backoff
+  status_codes: ["5XX", "429"] # Retry on server errors and rate limits
+  retry_connection_errors: false # Don't retry connection errors
+
+resources:
+  - name: "Orders"
+    description: "Critical order processing"
+    operations: ["Create", "Read", "Update"]
+    fields:
+      - field:
+          name: "amount"
+          type: "Int"
+          description: "Order amount"
+        operations: ["Create", "Read"]
+```
+
+### Retry configuration reference
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `strategy` | string | "backoff" | Retry strategy (currently only "backoff" supported) |
+| `backoff.initial_interval` | int | 500 | Initial delay between retries in milliseconds |
+| `backoff.max_interval` | int | 60000 | Maximum delay between retries in milliseconds |
+| `backoff.max_elapsed_time` | int | 3600000 | Maximum total time for all retry attempts |
+| `backoff.exponent` | float | 1.5 | Multiplier for exponential backoff |
+| `status_codes` | array | ["5XX"] | HTTP status codes that should trigger retries |
+| `retry_connection_errors` | boolean | true | Whether to retry on connection errors |
+
+**Note:** If no retry configuration is provided, the system uses sensible defaults shown above.
+
 ## Validate specifications
 
 ### Task: Check specification correctness

@@ -677,12 +677,13 @@ func stringPtr(s string) *string {
 	return &s
 }
 
-// TestSpeakeasyRetryExtension verifies that Speakeasy retry configuration is added to generated OpenAPI documents.
+// TestSpeakeasyRetryExtension verifies that default Speakeasy retry configuration is added to generated OpenAPI documents.
 func TestSpeakeasyRetryExtension(t *testing.T) {
 	generator := newGenerator()
 	service := &specification.Service{
 		Name:    "TestAPI",
 		Version: "1.0.0",
+		// No retry configuration specified, should use defaults
 	}
 
 	document, err := generator.GenerateFromService(service)
@@ -706,13 +707,55 @@ func TestSpeakeasyRetryExtension(t *testing.T) {
 	assert.Contains(t, jsonString, "\"5XX\"", "Should contain 5XX status code for retries")
 	assert.Contains(t, jsonString, "\"retryConnectionErrors\"", "Should contain retryConnectionErrors")
 
-	// Verify specific values match the hardcoded configuration
+	// Verify specific values match the default configuration
 	assert.Contains(t, jsonString, "\"strategy\": \"backoff\"", "Strategy should be backoff")
 	assert.Contains(t, jsonString, "\"initialInterval\": 500", "Initial interval should be 500ms")
 	assert.Contains(t, jsonString, "\"maxInterval\": 60000", "Max interval should be 60000ms")
 	assert.Contains(t, jsonString, "\"maxElapsedTime\": 3600000", "Max elapsed time should be 3600000ms")
 	assert.Contains(t, jsonString, "\"exponent\": 1.5", "Exponent should be 1.5")
 	assert.Contains(t, jsonString, "\"retryConnectionErrors\": true", "Retry connection errors should be true")
+}
+
+// TestSpeakeasyRetryExtensionWithCustomConfiguration verifies that custom retry configuration from specification is used.
+func TestSpeakeasyRetryExtensionWithCustomConfiguration(t *testing.T) {
+	generator := newGenerator()
+	service := &specification.Service{
+		Name:    "TestAPI",
+		Version: "1.0.0",
+		Retry: &specification.RetryConfiguration{
+			Strategy: "backoff",
+			Backoff: specification.RetryBackoffConfiguration{
+				InitialInterval: 1000,
+				MaxInterval:     30000,
+				MaxElapsedTime:  1800000,
+				Exponent:        2.0,
+			},
+			StatusCodes:           []string{"5XX", "429"},
+			RetryConnectionErrors: false,
+		},
+	}
+
+	document, err := generator.GenerateFromService(service)
+	assert.NoError(t, err, "Should generate document successfully")
+	assert.NotNil(t, document, "Document should not be nil")
+
+	// Convert to JSON to verify the extension
+	jsonBytes, err := generator.ToJSON(document)
+	assert.NoError(t, err, "Should convert to JSON successfully")
+	jsonString := string(jsonBytes)
+
+	// Verify the Speakeasy retry extension is present with custom values
+	assert.Contains(t, jsonString, "\"x-speakeasy-retries\"", "Should contain x-speakeasy-retries extension")
+	assert.Contains(t, jsonString, "\"strategy\": \"backoff\"", "Strategy should be backoff")
+	assert.Contains(t, jsonString, "\"initialInterval\": 1000", "Initial interval should be custom value 1000ms")
+	assert.Contains(t, jsonString, "\"maxInterval\": 30000", "Max interval should be custom value 30000ms")
+	assert.Contains(t, jsonString, "\"maxElapsedTime\": 1800000", "Max elapsed time should be custom value 1800000ms")
+	assert.Contains(t, jsonString, "\"exponent\": 2", "Exponent should be custom value 2.0")
+	assert.Contains(t, jsonString, "\"retryConnectionErrors\": false", "Retry connection errors should be custom value false")
+
+	// Verify custom status codes
+	assert.Contains(t, jsonString, "\"5XX\"", "Should contain 5XX status code")
+	assert.Contains(t, jsonString, "\"429\"", "Should contain 429 status code")
 }
 
 // TestSpeakeasyPaginationExtension verifies that Speakeasy pagination configuration is added to paginated operations.
