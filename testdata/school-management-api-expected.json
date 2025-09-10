@@ -19,7 +19,7 @@
         ],
         "summary": "Bulk Import Students",
         "description": "Import multiple students from a CSV file or structured data",
-        "operationId": "BulkImport",
+        "operationId": "StudentsBulkImport",
         "parameters": [
           {
             "name": "validateOnly",
@@ -176,7 +176,7 @@
         ],
         "summary": "Generate Student Report",
         "description": "Generate a comprehensive report for students based on filters",
-        "operationId": "GenerateReport",
+        "operationId": "StudentsGenerateReport",
         "parameters": [
           {
             "name": "format",
@@ -348,7 +348,7 @@
         ],
         "summary": "Advanced Student Search",
         "description": "Search students with advanced filtering and sorting options",
-        "operationId": "AdvancedSearch",
+        "operationId": "StudentsAdvancedSearch",
         "parameters": [
           {
             "name": "limit",
@@ -561,7 +561,7 @@
         ],
         "summary": "List all Students",
         "description": "Returns a paginated list of all `Students` in your organization.",
-        "operationId": "List",
+        "operationId": "StudentsList",
         "parameters": [
           {
             "name": "limit",
@@ -695,7 +695,7 @@
         ],
         "summary": "Create Students",
         "description": "Create a new Students",
-        "operationId": "Create",
+        "operationId": "StudentsCreate",
         "parameters": [],
         "requestBody": {
           "description": "Request body",
@@ -853,7 +853,7 @@
         ],
         "summary": "Retrieve an existing Students",
         "description": "Retrieves the `Students` with the given ID.",
-        "operationId": "Get",
+        "operationId": "StudentsGet",
         "parameters": [
           {
             "name": "id",
@@ -956,7 +956,7 @@
         ],
         "summary": "Delete Students",
         "description": "Delete a Students",
-        "operationId": "Delete",
+        "operationId": "StudentsDelete",
         "parameters": [
           {
             "name": "id",
@@ -1052,7 +1052,7 @@
         ],
         "summary": "Update Students",
         "description": "Update a Students",
-        "operationId": "Update",
+        "operationId": "StudentsUpdate",
         "parameters": [
           {
             "name": "id",
@@ -1217,7 +1217,7 @@
         ],
         "summary": "Search Students",
         "description": "Search for `Students` with filtering capabilities.",
-        "operationId": "Search",
+        "operationId": "StudentsSearch",
         "parameters": [
           {
             "name": "limit",
