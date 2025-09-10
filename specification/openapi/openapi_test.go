@@ -1410,3 +1410,149 @@ func TestRequestBodyMultipleParams(t *testing.T) {
 
 	t.Logf("Generated multiple params request body:\n%s", jsonString)
 }
+
+// ============================================================================
+// Tags Tests
+// ============================================================================
+
+// TestGenerator_createTagsFromResources tests the creation of tags array from service resources.
+func TestGenerator_createTagsFromResources(t *testing.T) {
+	generator := newGenerator()
+
+	// Test with empty resources
+	t.Run("empty resources returns nil", func(t *testing.T) {
+		service := &specification.Service{
+			Name:      "TestService",
+			Resources: []specification.Resource{},
+		}
+
+		tags := generator.createTagsFromResources(service)
+		assert.Nil(t, tags, "Empty resources should return nil tags array")
+	})
+
+	// Test with single resource
+	t.Run("single resource creates one tag", func(t *testing.T) {
+		service := &specification.Service{
+			Name: "TestService",
+			Resources: []specification.Resource{
+				{
+					Name:        "Users",
+					Description: "User management operations",
+				},
+			},
+		}
+
+		tags := generator.createTagsFromResources(service)
+		assert.NotNil(t, tags, "Tags should not be nil with resources")
+		assert.Equal(t, 1, len(tags), "Should create one tag for one resource")
+		assert.Equal(t, "Users", tags[0].Name, "Tag name should match resource name")
+		assert.Equal(t, "User management operations", tags[0].Description, "Tag description should match resource description")
+	})
+
+	// Test with multiple resources
+	t.Run("multiple resources create multiple tags", func(t *testing.T) {
+		service := &specification.Service{
+			Name: "TestService",
+			Resources: []specification.Resource{
+				{
+					Name:        "Users",
+					Description: "User management operations",
+				},
+				{
+					Name:        "Groups",
+					Description: "Group management operations",
+				},
+				{
+					Name:        "Organizations",
+					Description: "Organization management operations",
+				},
+			},
+		}
+
+		tags := generator.createTagsFromResources(service)
+		assert.NotNil(t, tags, "Tags should not be nil with resources")
+		assert.Equal(t, 3, len(tags), "Should create three tags for three resources")
+
+		// Check first tag
+		assert.Equal(t, "Users", tags[0].Name, "First tag name should match first resource name")
+		assert.Equal(t, "User management operations", tags[0].Description, "First tag description should match first resource description")
+
+		// Check second tag
+		assert.Equal(t, "Groups", tags[1].Name, "Second tag name should match second resource name")
+		assert.Equal(t, "Group management operations", tags[1].Description, "Second tag description should match second resource description")
+
+		// Check third tag
+		assert.Equal(t, "Organizations", tags[2].Name, "Third tag name should match third resource name")
+		assert.Equal(t, "Organization management operations", tags[2].Description, "Third tag description should match third resource description")
+	})
+
+	// Test with resource without description
+	t.Run("resource without description creates tag with empty description", func(t *testing.T) {
+		service := &specification.Service{
+			Name: "TestService",
+			Resources: []specification.Resource{
+				{
+					Name: "Products",
+					// No Description field
+				},
+			},
+		}
+
+		tags := generator.createTagsFromResources(service)
+		assert.NotNil(t, tags, "Tags should not be nil with resources")
+		assert.Equal(t, 1, len(tags), "Should create one tag for one resource")
+		assert.Equal(t, "Products", tags[0].Name, "Tag name should match resource name")
+		assert.Equal(t, "", tags[0].Description, "Tag description should be empty when resource has no description")
+	})
+}
+
+// TestGenerator_GenerateFromService_IncludesTags tests that generated documents include tags from resources.
+func TestGenerator_GenerateFromService_IncludesTags(t *testing.T) {
+	generator := newGenerator()
+
+	// Test that generated document includes tags
+	t.Run("generated document includes tags from resources", func(t *testing.T) {
+		service := &specification.Service{
+			Name: "Directory API",
+			Resources: []specification.Resource{
+				{
+					Name:        "Users",
+					Description: "User management operations",
+				},
+				{
+					Name:        "Groups",
+					Description: "Group management operations",
+				},
+			},
+		}
+
+		document, err := generator.GenerateFromService(service)
+		assert.NoError(t, err, "Should not return error for valid service")
+		assert.NotNil(t, document, "Document should not be nil")
+
+		// Check that tags are included
+		assert.NotNil(t, document.Tags, "Document should include tags")
+		assert.Equal(t, 2, len(document.Tags), "Document should have two tags")
+
+		// Check first tag
+		assert.Equal(t, "Users", document.Tags[0].Name, "First tag should be Users")
+		assert.Equal(t, "User management operations", document.Tags[0].Description, "First tag description should match")
+
+		// Check second tag
+		assert.Equal(t, "Groups", document.Tags[1].Name, "Second tag should be Groups")
+		assert.Equal(t, "Group management operations", document.Tags[1].Description, "Second tag description should match")
+	})
+
+	// Test that empty resources creates no tags
+	t.Run("service with no resources has no tags", func(t *testing.T) {
+		service := &specification.Service{
+			Name:      "Empty API",
+			Resources: []specification.Resource{},
+		}
+
+		document, err := generator.GenerateFromService(service)
+		assert.NoError(t, err, "Should not return error for valid service")
+		assert.NotNil(t, document, "Document should not be nil")
+		assert.Nil(t, document.Tags, "Document should have no tags when no resources")
+	})
+}

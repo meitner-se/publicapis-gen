@@ -425,7 +425,27 @@ func (g *Generator) buildV3Document(service *specification.Service) *v3.Document
 		PathItems: paths,
 	}
 
+	// Create tags from resources
+	document.Tags = g.createTagsFromResources(service)
+
 	return document
+}
+
+// createTagsFromResources creates a tags array from service resources for top-level document organization.
+func (g *Generator) createTagsFromResources(service *specification.Service) []*base.Tag {
+	if len(service.Resources) == 0 {
+		return nil
+	}
+
+	tags := make([]*base.Tag, len(service.Resources))
+	for i, resource := range service.Resources {
+		tags[i] = &base.Tag{
+			Name:        resource.Name,
+			Description: resource.Description,
+		}
+	}
+
+	return tags
 }
 
 // createEnumSchema creates a base.Schema for an enum using native types.
