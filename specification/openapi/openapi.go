@@ -57,8 +57,7 @@ const (
 
 // Schema reference format constants
 const (
-	schemaReferencePrefix      = "#/components/schemas/"
-	requestBodyReferencePrefix = "#/components/requestBodies/"
+	schemaReferencePrefix = "#/components/schemas/"
 )
 
 // Server description template
@@ -734,15 +733,6 @@ func (g *Generator) addRequestBodiesToComponents(components *v3.Components, serv
 // createRequestBodyName creates a systematic name for request bodies.
 func (g *Generator) createRequestBodyName(resourceName, endpointName string) string {
 	return resourceName + endpointName + requestBodySuffix
-}
-
-// createRequestBodyReference creates a reference to a request body in the components section.
-// For now, we'll return nil and handle references at the serialization level
-// TODO: Implement proper request body references when libopenapi supports them
-func (g *Generator) createRequestBodyReference(resourceName, endpointName string) *v3.RequestBody {
-	// For now, return the inline request body as a fallback
-	// This maintains backwards compatibility while we work on the reference implementation
-	return nil
 }
 
 // createComponentRequestBody creates a v3.RequestBody for the components section.
