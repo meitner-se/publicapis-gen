@@ -12,6 +12,17 @@ servers:
   - url: "https://api.petstore.com/v2"
     description: "Production server"
 
+# Configure retry behavior for generated OpenAPI
+retry:
+  strategy: "backoff"
+  backoff:
+    initial_interval: 1000
+    max_interval: 30000
+    max_elapsed_time: 1800000
+    exponent: 2.0
+  status_codes: ["5XX", "429"]
+  retry_connection_errors: false
+
 enums:
   - name: "PetStatus"
     description: "Pet availability status"
@@ -317,7 +328,58 @@ paths:
                       $ref: '#/components/schemas/Pets'
                   Pagination:
                     $ref: '#/components/schemas/Pagination'
+
+# Retry configuration from specification becomes Speakeasy extension
+x-speakeasy-retries:
+  strategy: backoff
+  backoff:
+    initialInterval: 1000
+    maxInterval: 30000
+    maxElapsedTime: 1800000
+    exponent: 2.0
+  statusCodes: ["5XX", "429"]
+  retryConnectionErrors: false
 ```
+
+## Retry Configuration in OpenAPI
+
+The retry configuration defined in your specification is automatically converted into Speakeasy extensions in the generated OpenAPI document. This enables SDK generators to create client libraries with built-in retry functionality.
+
+### How retry configuration works
+
+1. **Specification**: Define retry behavior in your YAML specification
+2. **Generation**: OpenAPI generator converts it to `x-speakeasy-retries` extension
+3. **SDK**: SDK generators use this extension to implement retry logic
+
+### Retry configuration mapping
+
+| Specification Field | OpenAPI Extension Field | Description |
+|---------------------|------------------------|-------------|
+| `retry.strategy` | `strategy` | Retry strategy (currently "backoff") |
+| `retry.backoff.initial_interval` | `backoff.initialInterval` | Initial delay in milliseconds |
+| `retry.backoff.max_interval` | `backoff.maxInterval` | Maximum delay between retries |
+| `retry.backoff.max_elapsed_time` | `backoff.maxElapsedTime` | Total timeout for retry attempts |
+| `retry.backoff.exponent` | `backoff.exponent` | Exponential backoff multiplier |
+| `retry.status_codes` | `statusCodes` | HTTP status codes that trigger retries |
+| `retry.retry_connection_errors` | `retryConnectionErrors` | Whether to retry connection errors |
+
+### Default retry behavior
+
+If you don't specify a retry configuration in your specification, the generated OpenAPI will include sensible defaults:
+
+```yaml
+x-speakeasy-retries:
+  strategy: backoff
+  backoff:
+    initialInterval: 500      # 500ms initial delay
+    maxInterval: 60000        # 60 second maximum
+    maxElapsedTime: 3600000   # 1 hour total timeout
+    exponent: 1.5             # Gradual exponential backoff
+  statusCodes: ["5XX"]        # Retry server errors
+  retryConnectionErrors: true # Retry connection issues
+```
+
+This ensures your generated SDKs have robust retry capabilities even if you don't explicitly configure them.
 
 ## Customize OpenAPI generation
 

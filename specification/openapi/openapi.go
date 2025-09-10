@@ -103,14 +103,19 @@ const (
 
 // Speakeasy retry configuration constants
 const (
-	speakeasyRetriesExtension      = "x-speakeasy-retries"
-	speakeasyRetryStrategy         = "backoff"
-	speakeasyRetryInitialInterval  = 500
-	speakeasyRetryMaxInterval      = 60000
-	speakeasyRetryMaxElapsedTime   = 3600000
-	speakeasyRetryExponent         = 1.5
-	speakeasyRetryStatusCodes      = "5XX"
-	speakeasyRetryConnectionErrors = true
+	speakeasyRetriesExtension = "x-speakeasy-retries"
+)
+
+// Retry configuration field names
+const (
+	retryFieldStrategy              = "strategy"
+	retryFieldBackoff               = "backoff"
+	retryFieldInitialInterval       = "initialInterval"
+	retryFieldMaxInterval           = "maxInterval"
+	retryFieldMaxElapsedTime        = "maxElapsedTime"
+	retryFieldExponent              = "exponent"
+	retryFieldStatusCodes           = "statusCodes"
+	retryFieldRetryConnectionErrors = "retryConnectionErrors"
 )
 
 // Speakeasy pagination configuration constants
@@ -164,11 +169,14 @@ func (g *Generator) GenerateFromService(service *specification.Service) (*v3.Doc
 }
 
 // addSpeakeasyRetryExtension adds Speakeasy retry configuration extension to the OpenAPI document.
-func (g *Generator) addSpeakeasyRetryExtension(document *v3.Document) {
+func (g *Generator) addSpeakeasyRetryExtension(document *v3.Document, service *specification.Service) {
 	// Initialize extensions map if it doesn't exist
 	if document.Extensions == nil {
 		document.Extensions = orderedmap.New[string, *yaml.Node]()
 	}
+
+	// Get retry configuration from service with defaults applied
+	retryConfig := service.GetRetryConfigurationWithDefaults()
 
 	// Convert the retry configuration to a YAML node
 	retryNode := &yaml.Node{
@@ -176,21 +184,21 @@ func (g *Generator) addSpeakeasyRetryExtension(document *v3.Document) {
 	}
 
 	// Create nodes for the retry configuration
-	strategyKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "strategy"}
-	strategyValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyRetryStrategy}
+	strategyKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: retryFieldStrategy}
+	strategyValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: retryConfig.Strategy}
 
-	backoffKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "backoff"}
+	backoffKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: retryFieldBackoff}
 	backoffValueNode := &yaml.Node{Kind: yaml.MappingNode}
 
 	// Backoff sub-nodes
-	initialIntervalKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "initialInterval"}
-	initialIntervalValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "500"}
-	maxIntervalKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "maxInterval"}
-	maxIntervalValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "60000"}
-	maxElapsedTimeKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "maxElapsedTime"}
-	maxElapsedTimeValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "3600000"}
-	exponentKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "exponent"}
-	exponentValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "1.5"}
+	initialIntervalKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: retryFieldInitialInterval}
+	initialIntervalValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: strconv.Itoa(retryConfig.Backoff.InitialInterval)}
+	maxIntervalKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: retryFieldMaxInterval}
+	maxIntervalValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: strconv.Itoa(retryConfig.Backoff.MaxInterval)}
+	maxElapsedTimeKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: retryFieldMaxElapsedTime}
+	maxElapsedTimeValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: strconv.Itoa(retryConfig.Backoff.MaxElapsedTime)}
+	exponentKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: retryFieldExponent}
+	exponentValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: fmt.Sprintf("%g", retryConfig.Backoff.Exponent)}
 
 	backoffValueNode.Content = []*yaml.Node{
 		initialIntervalKeyNode, initialIntervalValueNode,
@@ -199,13 +207,20 @@ func (g *Generator) addSpeakeasyRetryExtension(document *v3.Document) {
 		exponentKeyNode, exponentValueNode,
 	}
 
-	statusCodesKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "statusCodes"}
+	statusCodesKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: retryFieldStatusCodes}
 	statusCodesValueNode := &yaml.Node{Kind: yaml.SequenceNode}
-	statusCode5xxNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyRetryStatusCodes}
-	statusCodesValueNode.Content = []*yaml.Node{statusCode5xxNode}
+	statusCodesNodes := make([]*yaml.Node, len(retryConfig.StatusCodes))
+	for i, statusCode := range retryConfig.StatusCodes {
+		statusCodesNodes[i] = &yaml.Node{
+			Kind:  yaml.ScalarNode,
+			Value: statusCode,
+			Tag:   "!!str", // Ensure this is treated as a string
+		}
+	}
+	statusCodesValueNode.Content = statusCodesNodes
 
-	connectionErrorsKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "retryConnectionErrors"}
-	connectionErrorsValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "true"}
+	connectionErrorsKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: retryFieldRetryConnectionErrors}
+	connectionErrorsValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: strconv.FormatBool(retryConfig.RetryConnectionErrors)}
 
 	// Assemble the main retry configuration node
 	retryNode.Content = []*yaml.Node{
@@ -325,7 +340,7 @@ func (g *Generator) buildV3Document(service *specification.Service) *v3.Document
 	}
 
 	// Add Speakeasy retry configuration as extension
-	g.addSpeakeasyRetryExtension(document)
+	g.addSpeakeasyRetryExtension(document, service)
 
 	// Add servers from service specification
 	if len(service.Servers) > 0 {

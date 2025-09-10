@@ -39,6 +39,21 @@ const (
 	ModifierArray    = "Array"
 )
 
+// Retry Strategies
+const (
+	RetryStrategyBackoff = "backoff"
+)
+
+// Default retry configuration values
+const (
+	defaultRetryInitialInterval  = 500
+	defaultRetryMaxInterval      = 60000
+	defaultRetryMaxElapsedTime   = 3600000
+	defaultRetryExponent         = 1.5
+	defaultRetryStatusCodes      = "5XX"
+	defaultRetryConnectionErrors = true
+)
+
 // Filter suffixes
 const (
 	filterSuffix         = "Filter"
@@ -314,6 +329,36 @@ type ServiceServer struct {
 	Description string `json:"description,omitempty"`
 }
 
+// RetryBackoffConfiguration defines the backoff behavior for retry attempts.
+type RetryBackoffConfiguration struct {
+	// InitialInterval is the initial interval between retries in milliseconds
+	InitialInterval int `json:"initial_interval"`
+
+	// MaxInterval is the maximum interval between retries in milliseconds
+	MaxInterval int `json:"max_interval"`
+
+	// MaxElapsedTime is the maximum total time for retry attempts in milliseconds
+	MaxElapsedTime int `json:"max_elapsed_time"`
+
+	// Exponent is the multiplier for exponential backoff
+	Exponent float64 `json:"exponent"`
+}
+
+// RetryConfiguration defines the retry behavior for API calls.
+type RetryConfiguration struct {
+	// Strategy defines the retry strategy (e.g., "backoff")
+	Strategy string `json:"strategy"`
+
+	// Backoff configuration for exponential backoff strategy
+	Backoff RetryBackoffConfiguration `json:"backoff"`
+
+	// StatusCodes defines which HTTP status codes should trigger retries (e.g., "5XX")
+	StatusCodes []string `json:"status_codes"`
+
+	// RetryConnectionErrors indicates whether to retry on connection errors
+	RetryConnectionErrors bool `json:"retry_connection_errors"`
+}
+
 // Service is the definition of an API service.
 type Service struct {
 	// Name of the service
@@ -324,6 +369,9 @@ type Service struct {
 
 	// Servers that are part of the service
 	Servers []ServiceServer `json:"servers,omitempty"`
+
+	// Retry configuration for the service
+	Retry *RetryConfiguration `json:"retry,omitempty"`
 
 	// Enums that are used in the service
 	Enums []Enum `json:"enums"`
@@ -1950,6 +1998,13 @@ func (pt *PositionTracker) findFieldInAST(fieldName string, node ast.Node) *toke
 
 // validateService validates the entire service specification against the defined rules.
 func validateService(service *Service) error {
+	// Validate retry configuration
+	if service.Retry != nil {
+		if err := validateRetryConfiguration(service.Retry); err != nil {
+			return fmt.Errorf("retry configuration: %w", err)
+		}
+	}
+
 	// Validate resources
 	for i, resource := range service.Resources {
 		if err := validateResource(service, &resource); err != nil {
@@ -2060,6 +2115,87 @@ func validateEndpoint(service *Service, endpoint *Endpoint) error {
 	}
 
 	return nil
+}
+
+// validateRetryConfiguration validates a retry configuration against the defined rules.
+func validateRetryConfiguration(retry *RetryConfiguration) error {
+	if retry == nil {
+		return nil
+	}
+
+	// Validate strategy
+	if retry.Strategy != "" && retry.Strategy != RetryStrategyBackoff {
+		return fmt.Errorf("retry strategy '%s' must be 'backoff'", retry.Strategy)
+	}
+
+	// Validate backoff configuration
+	if retry.Backoff.InitialInterval < 0 {
+		return fmt.Errorf("retry backoff initial interval must be non-negative, got: %d", retry.Backoff.InitialInterval)
+	}
+
+	if retry.Backoff.MaxInterval < 0 {
+		return fmt.Errorf("retry backoff max interval must be non-negative, got: %d", retry.Backoff.MaxInterval)
+	}
+
+	if retry.Backoff.MaxElapsedTime < 0 {
+		return fmt.Errorf("retry backoff max elapsed time must be non-negative, got: %d", retry.Backoff.MaxElapsedTime)
+	}
+
+	if retry.Backoff.Exponent < 0 {
+		return fmt.Errorf("retry backoff exponent must be non-negative, got: %f", retry.Backoff.Exponent)
+	}
+
+	// Validate that max interval is not less than initial interval (if both are specified)
+	if retry.Backoff.InitialInterval > 0 && retry.Backoff.MaxInterval > 0 &&
+		retry.Backoff.InitialInterval > retry.Backoff.MaxInterval {
+		return fmt.Errorf("retry backoff initial interval (%d) cannot be greater than max interval (%d)",
+			retry.Backoff.InitialInterval, retry.Backoff.MaxInterval)
+	}
+
+	// Validate status codes
+	for _, statusCode := range retry.StatusCodes {
+		if statusCode == "" {
+			return fmt.Errorf("retry status codes cannot contain empty strings")
+		}
+		// Allow common patterns like "5XX", "4XX", or specific codes like "429", "503"
+		if !isValidStatusCode(statusCode) {
+			return fmt.Errorf("retry status code '%s' is not valid", statusCode)
+		}
+	}
+
+	return nil
+}
+
+// isValidStatusCode checks if a status code is valid (either a pattern like "5XX" or specific code).
+func isValidStatusCode(code string) bool {
+	// Allow patterns like "5XX", "4XX", "3XX", "2XX", "1XX"
+	if len(code) == 3 && (code[1] == 'X' && code[2] == 'X') {
+		first := code[0]
+		return first >= '1' && first <= '5'
+	}
+
+	// Allow specific HTTP status codes (100-599)
+	if len(code) == 3 {
+		for _, r := range code {
+			if r < '0' || r > '9' {
+				return false
+			}
+		}
+		// Convert to int and check range
+		var statusCode int
+		for i, r := range code {
+			if i == 0 {
+				statusCode = int(r-'0') * 100
+			} else if i == 1 {
+				statusCode += int(r-'0') * 10
+			} else {
+				statusCode += int(r - '0')
+			}
+		}
+		return statusCode >= 100 && statusCode <= 599
+	}
+
+	return false
 }
 
 // validateOperations validates that all operations are in PascalCase and are valid CRUD operations.
@@ -2220,4 +2356,63 @@ func applyDefaultOverlays(service *Service) *Service {
 	}
 
 	return finalService
+}
+
+// HasRetryConfiguration checks if the service has retry configuration defined.
+func (s Service) HasRetryConfiguration() bool {
+	return s.Retry != nil
+}
+
+// GetRetryConfigurationWithDefaults returns the retry configuration with default values applied.
+func (s Service) GetRetryConfigurationWithDefaults() RetryConfiguration {
+	if s.Retry == nil {
+		return createDefaultRetryConfiguration()
+	}
+
+	config := *s.Retry
+
+	// Apply defaults for missing values
+	if config.Strategy == "" {
+		config.Strategy = RetryStrategyBackoff
+	}
+
+	if config.Backoff.InitialInterval == 0 {
+		config.Backoff.InitialInterval = defaultRetryInitialInterval
+	}
+
+	if config.Backoff.MaxInterval == 0 {
+		config.Backoff.MaxInterval = defaultRetryMaxInterval
+	}
+
+	if config.Backoff.MaxElapsedTime == 0 {
+		config.Backoff.MaxElapsedTime = defaultRetryMaxElapsedTime
+	}
+
+	if config.Backoff.Exponent == 0 {
+		config.Backoff.Exponent = defaultRetryExponent
+	}
+
+	if len(config.StatusCodes) == 0 {
+		config.StatusCodes = []string{defaultRetryStatusCodes}
+	}
+
+	// Note: RetryConnectionErrors is a bool, so we keep the zero value (false) if not set
+	// Users must explicitly set it to true if they want connection error retries
+
+	return config
+}
+
+// createDefaultRetryConfiguration creates a retry configuration with all default values.
+func createDefaultRetryConfiguration() RetryConfiguration {
+	return RetryConfiguration{
+		Strategy: RetryStrategyBackoff,
+		Backoff: RetryBackoffConfiguration{
+			InitialInterval: defaultRetryInitialInterval,
+			MaxInterval:     defaultRetryMaxInterval,
+			MaxElapsedTime:  defaultRetryMaxElapsedTime,
+			Exponent:        defaultRetryExponent,
+		},
+		StatusCodes:           []string{defaultRetryStatusCodes},
+		RetryConnectionErrors: defaultRetryConnectionErrors,
+	}
 }

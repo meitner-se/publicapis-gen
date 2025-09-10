@@ -3007,3 +3007,266 @@ resources:
 		assert.True(t, hasUserObject, "Should have User object from overlay")
 	})
 }
+
+// ============================================================================
+// Service Retry Configuration Tests
+// ============================================================================
+
+func TestService_HasRetryConfiguration(t *testing.T) {
+	// Test service without retry configuration
+	serviceWithoutRetry := Service{
+		Name: "TestService",
+	}
+	assert.False(t, serviceWithoutRetry.HasRetryConfiguration(), "Service without retry configuration should return false")
+
+	// Test service with retry configuration
+	serviceWithRetry := Service{
+		Name: "TestService",
+		Retry: &RetryConfiguration{
+			Strategy: RetryStrategyBackoff,
+		},
+	}
+	assert.True(t, serviceWithRetry.HasRetryConfiguration(), "Service with retry configuration should return true")
+}
+
+func TestService_GetRetryConfigurationWithDefaults(t *testing.T) {
+	t.Run("service without retry configuration returns defaults", func(t *testing.T) {
+		service := Service{
+			Name: "TestService",
+		}
+
+		config := service.GetRetryConfigurationWithDefaults()
+
+		assert.Equal(t, RetryStrategyBackoff, config.Strategy, "Should use default strategy")
+		assert.Equal(t, defaultRetryInitialInterval, config.Backoff.InitialInterval, "Should use default initial interval")
+		assert.Equal(t, defaultRetryMaxInterval, config.Backoff.MaxInterval, "Should use default max interval")
+		assert.Equal(t, defaultRetryMaxElapsedTime, config.Backoff.MaxElapsedTime, "Should use default max elapsed time")
+		assert.Equal(t, defaultRetryExponent, config.Backoff.Exponent, "Should use default exponent")
+		assert.Equal(t, []string{defaultRetryStatusCodes}, config.StatusCodes, "Should use default status codes")
+		assert.Equal(t, defaultRetryConnectionErrors, config.RetryConnectionErrors, "Should use default connection errors setting")
+	})
+
+	t.Run("service with complete retry configuration returns configuration as is", func(t *testing.T) {
+		expectedConfig := &RetryConfiguration{
+			Strategy: RetryStrategyBackoff,
+			Backoff: RetryBackoffConfiguration{
+				InitialInterval: 1000,
+				MaxInterval:     30000,
+				MaxElapsedTime:  1800000,
+				Exponent:        2.0,
+			},
+			StatusCodes:           []string{"5XX", "429"},
+			RetryConnectionErrors: false,
+		}
+
+		service := Service{
+			Name:  "TestService",
+			Retry: expectedConfig,
+		}
+
+		config := service.GetRetryConfigurationWithDefaults()
+
+		assert.Equal(t, expectedConfig.Strategy, config.Strategy, "Should use configured strategy")
+		assert.Equal(t, expectedConfig.Backoff.InitialInterval, config.Backoff.InitialInterval, "Should use configured initial interval")
+		assert.Equal(t, expectedConfig.Backoff.MaxInterval, config.Backoff.MaxInterval, "Should use configured max interval")
+		assert.Equal(t, expectedConfig.Backoff.MaxElapsedTime, config.Backoff.MaxElapsedTime, "Should use configured max elapsed time")
+		assert.Equal(t, expectedConfig.Backoff.Exponent, config.Backoff.Exponent, "Should use configured exponent")
+		assert.Equal(t, expectedConfig.StatusCodes, config.StatusCodes, "Should use configured status codes")
+		assert.Equal(t, expectedConfig.RetryConnectionErrors, config.RetryConnectionErrors, "Should use configured connection errors setting")
+	})
+
+	t.Run("service with partial retry configuration applies defaults for missing values", func(t *testing.T) {
+		partialConfig := &RetryConfiguration{
+			Backoff: RetryBackoffConfiguration{
+				InitialInterval: 2000,
+				// MaxInterval and MaxElapsedTime missing, should use defaults
+				Exponent: 3.0,
+			},
+			// Strategy and StatusCodes missing, should use defaults
+			RetryConnectionErrors: true,
+		}
+
+		service := Service{
+			Name:  "TestService",
+			Retry: partialConfig,
+		}
+
+		config := service.GetRetryConfigurationWithDefaults()
+
+		// Should use defaults for missing values
+		assert.Equal(t, RetryStrategyBackoff, config.Strategy, "Should use default strategy when not specified")
+		assert.Equal(t, defaultRetryMaxInterval, config.Backoff.MaxInterval, "Should use default max interval when not specified")
+		assert.Equal(t, defaultRetryMaxElapsedTime, config.Backoff.MaxElapsedTime, "Should use default max elapsed time when not specified")
+		assert.Equal(t, []string{defaultRetryStatusCodes}, config.StatusCodes, "Should use default status codes when not specified")
+
+		// Should use configured values when present
+		assert.Equal(t, partialConfig.Backoff.InitialInterval, config.Backoff.InitialInterval, "Should use configured initial interval")
+		assert.Equal(t, partialConfig.Backoff.Exponent, config.Backoff.Exponent, "Should use configured exponent")
+		assert.Equal(t, partialConfig.RetryConnectionErrors, config.RetryConnectionErrors, "Should use configured connection errors setting")
+	})
+}
+
+func TestCreateDefaultRetryConfiguration(t *testing.T) {
+	config := createDefaultRetryConfiguration()
+
+	assert.Equal(t, RetryStrategyBackoff, config.Strategy, "Should use default strategy")
+	assert.Equal(t, defaultRetryInitialInterval, config.Backoff.InitialInterval, "Should use default initial interval")
+	assert.Equal(t, defaultRetryMaxInterval, config.Backoff.MaxInterval, "Should use default max interval")
+	assert.Equal(t, defaultRetryMaxElapsedTime, config.Backoff.MaxElapsedTime, "Should use default max elapsed time")
+	assert.Equal(t, defaultRetryExponent, config.Backoff.Exponent, "Should use default exponent")
+	assert.Equal(t, []string{defaultRetryStatusCodes}, config.StatusCodes, "Should use default status codes")
+	assert.Equal(t, defaultRetryConnectionErrors, config.RetryConnectionErrors, "Should use default connection errors setting")
+}
+
+// ============================================================================
+// Retry Configuration Validation Tests
+// ============================================================================
+
+func TestValidateRetryConfiguration(t *testing.T) {
+	t.Run("nil configuration is valid", func(t *testing.T) {
+		err := validateRetryConfiguration(nil)
+		assert.NoError(t, err, "Nil retry configuration should be valid")
+	})
+
+	t.Run("valid configuration", func(t *testing.T) {
+		config := &RetryConfiguration{
+			Strategy: RetryStrategyBackoff,
+			Backoff: RetryBackoffConfiguration{
+				InitialInterval: 1000,
+				MaxInterval:     30000,
+				MaxElapsedTime:  1800000,
+				Exponent:        2.0,
+			},
+			StatusCodes:           []string{"5XX", "429"},
+			RetryConnectionErrors: false,
+		}
+
+		err := validateRetryConfiguration(config)
+		assert.NoError(t, err, "Valid retry configuration should pass validation")
+	})
+
+	t.Run("invalid strategy", func(t *testing.T) {
+		config := &RetryConfiguration{
+			Strategy: "invalid_strategy",
+		}
+
+		err := validateRetryConfiguration(config)
+		assert.Error(t, err, "Invalid strategy should fail validation")
+		assert.Contains(t, err.Error(), "retry strategy 'invalid_strategy' must be 'backoff'")
+	})
+
+	t.Run("negative initial interval", func(t *testing.T) {
+		config := &RetryConfiguration{
+			Backoff: RetryBackoffConfiguration{
+				InitialInterval: -1000,
+			},
+		}
+
+		err := validateRetryConfiguration(config)
+		assert.Error(t, err, "Negative initial interval should fail validation")
+		assert.Contains(t, err.Error(), "initial interval must be non-negative")
+	})
+
+	t.Run("negative max interval", func(t *testing.T) {
+		config := &RetryConfiguration{
+			Backoff: RetryBackoffConfiguration{
+				MaxInterval: -5000,
+			},
+		}
+
+		err := validateRetryConfiguration(config)
+		assert.Error(t, err, "Negative max interval should fail validation")
+		assert.Contains(t, err.Error(), "max interval must be non-negative")
+	})
+
+	t.Run("negative max elapsed time", func(t *testing.T) {
+		config := &RetryConfiguration{
+			Backoff: RetryBackoffConfiguration{
+				MaxElapsedTime: -10000,
+			},
+		}
+
+		err := validateRetryConfiguration(config)
+		assert.Error(t, err, "Negative max elapsed time should fail validation")
+		assert.Contains(t, err.Error(), "max elapsed time must be non-negative")
+	})
+
+	t.Run("negative exponent", func(t *testing.T) {
+		config := &RetryConfiguration{
+			Backoff: RetryBackoffConfiguration{
+				Exponent: -1.5,
+			},
+		}
+
+		err := validateRetryConfiguration(config)
+		assert.Error(t, err, "Negative exponent should fail validation")
+		assert.Contains(t, err.Error(), "exponent must be non-negative")
+	})
+
+	t.Run("initial interval greater than max interval", func(t *testing.T) {
+		config := &RetryConfiguration{
+			Backoff: RetryBackoffConfiguration{
+				InitialInterval: 5000,
+				MaxInterval:     1000,
+			},
+		}
+
+		err := validateRetryConfiguration(config)
+		assert.Error(t, err, "Initial interval greater than max interval should fail validation")
+		assert.Contains(t, err.Error(), "initial interval (5000) cannot be greater than max interval (1000)")
+	})
+
+	t.Run("empty status code", func(t *testing.T) {
+		config := &RetryConfiguration{
+			StatusCodes: []string{"5XX", "", "429"},
+		}
+
+		err := validateRetryConfiguration(config)
+		assert.Error(t, err, "Empty status code should fail validation")
+		assert.Contains(t, err.Error(), "status codes cannot contain empty strings")
+	})
+
+	t.Run("invalid status code", func(t *testing.T) {
+		config := &RetryConfiguration{
+			StatusCodes: []string{"invalid"},
+		}
+
+		err := validateRetryConfiguration(config)
+		assert.Error(t, err, "Invalid status code should fail validation")
+		assert.Contains(t, err.Error(), "status code 'invalid' is not valid")
+	})
+}
+
+func TestIsValidStatusCode(t *testing.T) {
+	// Test valid pattern codes
+	validPatterns := []string{"1XX", "2XX", "3XX", "4XX", "5XX"}
+	for _, pattern := range validPatterns {
+		t.Run("valid pattern "+pattern, func(t *testing.T) {
+			assert.True(t, isValidStatusCode(pattern), "Pattern %s should be valid", pattern)
+		})
+	}
+
+	// Test valid specific codes
+	validCodes := []string{"200", "404", "429", "500", "503"}
+	for _, code := range validCodes {
+		t.Run("valid code "+code, func(t *testing.T) {
+			assert.True(t, isValidStatusCode(code), "Code %s should be valid", code)
+		})
+	}
+
+	// Test invalid patterns
+	invalidPatterns := []string{"0XX", "6XX", "xXX", "X5X", "XX5", "XXX"}
+	for _, pattern := range invalidPatterns {
+		t.Run("invalid pattern "+pattern, func(t *testing.T) {
+			assert.False(t, isValidStatusCode(pattern), "Pattern %s should be invalid", pattern)
+		})
+	}
+
+	// Test invalid codes
+	invalidCodes := []string{"99", "600", "abc", "12", "1234", ""}
+	for _, code := range invalidCodes {
+		t.Run("invalid code "+code, func(t *testing.T) {
+			assert.False(t, isValidStatusCode(code), "Code %s should be invalid", code)
+		})
+	}
+}
