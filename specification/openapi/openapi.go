@@ -767,7 +767,7 @@ func (g *Generator) createRequestBody(bodyParams []specification.Field, service 
 // createResponse creates a v3.Response from an endpoint response using native types.
 func (g *Generator) createResponse(response specification.EndpointResponse, service *specification.Service) *v3.Response {
 	openAPIResponse := &v3.Response{
-		Description: successDescription,
+		Description: response.Description,
 	}
 
 	// Add response content if present

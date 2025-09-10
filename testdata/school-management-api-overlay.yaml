@@ -1120,6 +1120,7 @@ resources:
     response:
       content_type: application/json
       status_code: 201
+      description: Successfully created the Students
       headers: []
       body_fields: []
       body_object: Students
@@ -1166,6 +1167,7 @@ resources:
     response:
       content_type: application/json
       status_code: 200
+      description: Successfully updated the Students
       headers: []
       body_fields: []
       body_object: Students
@@ -1186,6 +1188,7 @@ resources:
     response:
       content_type: application/json
       status_code: 204
+      description: Successfully deleted the Students
       headers: []
       body_fields: []
   - name: Get
@@ -1205,6 +1208,7 @@ resources:
     response:
       content_type: application/json
       status_code: 200
+      description: Successfully retrieved the Students
       headers: []
       body_fields: []
       body_object: Students
@@ -1230,6 +1234,7 @@ resources:
     response:
       content_type: application/json
       status_code: 200
+      description: Successfully retrieved the list of Students
       headers: []
       body_fields:
       - name: data
@@ -1265,6 +1270,7 @@ resources:
     response:
       content_type: application/json
       status_code: 200
+      description: Successfully searched for Students
       headers: []
       body_fields:
       - name: data

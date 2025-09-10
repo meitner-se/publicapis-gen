@@ -996,6 +996,7 @@ func TestValidateEndpoint(t *testing.T) {
 		"response": {
 			"content_type": "",
 			"status_code": 200,
+			"description": "Successfully retrieved the user",
 			"headers": [],
 			"body_fields": []
 		}
@@ -1064,6 +1065,7 @@ func TestValidateEndpointResponse(t *testing.T) {
 	validEndpointResponseJSON := `{
 		"content_type": "application/json",
 		"status_code": 200,
+		"description": "Successful response",
 		"headers": [],
 		"body_fields": []
 	}`
@@ -1075,6 +1077,7 @@ func TestValidateEndpointResponse(t *testing.T) {
 	validEndpointResponseWithBodyObjectJSON := `{
 		"content_type": "application/json",
 		"status_code": 201,
+		"description": "Successfully created the user",
 		"headers": [],
 		"body_fields": [],
 		"body_object": "User"
@@ -1178,6 +1181,7 @@ func TestParseServiceFromJSON(t *testing.T) {
 						"response": {
 							"content_type": "application/json",
 							"status_code": 200,
+							"description": "Successfully retrieved the user",
 							"headers": [],
 							"body_fields": []
 						}
@@ -1268,6 +1272,7 @@ resources:
         response:
           content_type: application/json
           status_code: 200
+          description: Successfully retrieved the user
           headers: []
           body_fields: []
 `
@@ -1468,6 +1473,7 @@ func TestParseResourceFromJSON(t *testing.T) {
 				"response": {
 					"content_type": "application/json",
 					"status_code": 200,
+					"description": "Successfully retrieved the user",
 					"headers": [],
 					"body_fields": []
 				}
@@ -1527,6 +1533,7 @@ endpoints:
     response:
       content_type: application/json
       status_code: 200
+      description: Successfully retrieved the user
       headers: []
       body_fields: []
 `
@@ -1655,6 +1662,7 @@ func TestValidationWithComplexStructures(t *testing.T) {
 						"response": {
 							"content_type": "application/json",
 							"status_code": 201,
+							"description": "Successfully created the user",
 							"headers": [
 								{"name": "Location", "type": "String", "description": "Created resource URL"}
 							],

@@ -89,7 +89,7 @@
         },
         "responses": {
           "202": {
-            "description": "Successful response",
+            "description": "Successfully queued report generation",
             "content": {
               "application/json": {
                 "schema": {
@@ -342,7 +342,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful response",
+            "description": "Successfully performed advanced search",
             "content": {
               "application/json": {
                 "schema": {
@@ -521,7 +521,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful response",
+            "description": "Successfully retrieved the list of Students",
             "content": {
               "application/json": {
                 "schema": {
@@ -739,7 +739,7 @@
         },
         "responses": {
           "201": {
-            "description": "Successful response",
+            "description": "Successfully created the Students",
             "content": {
               "application/json": {
                 "schema": {
@@ -890,7 +890,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful response",
+            "description": "Successfully retrieved the Students",
             "content": {
               "application/json": {
                 "schema": {
@@ -1025,7 +1025,7 @@
         ],
         "responses": {
           "204": {
-            "description": "Successful response"
+            "description": "Successfully deleted the Students"
           },
           "400": {
             "description": "The request was malformed or contained invalid parameters. 400 status code",
@@ -1215,7 +1215,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful response",
+            "description": "Successfully updated the Students",
             "content": {
               "application/json": {
                 "schema": {
@@ -1397,7 +1397,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful response",
+            "description": "Successfully searched for Students",
             "content": {
               "application/json": {
                 "schema": {
@@ -1601,7 +1601,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful response",
+            "description": "Successfully imported students",
             "content": {
               "application/json": {
                 "schema": {

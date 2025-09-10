@@ -284,6 +284,16 @@ const (
 	searchFilterParamDesc      = "Filter criteria to search for specific records"
 )
 
+// Response Description Constants
+const (
+	createResponseDescTemplate = "Successfully created the %s"
+	updateResponseDescTemplate = "Successfully updated the %s"
+	deleteResponseDescTemplate = "Successfully deleted the %s"
+	getResponseDescTemplate    = "Successfully retrieved the %s"
+	listResponseDescTemplate   = "Successfully retrieved the list of %s"
+	searchResponseDescTemplate = "Successfully searched for %s"
+)
+
 // Request Error Constants
 const (
 	requestErrorSuffix            = "RequestError"
@@ -543,6 +553,9 @@ type EndpointResponse struct {
 	// HTTP status code this response represents (e.g. 200, 201, 400)
 	StatusCode int `json:"status_code"`
 
+	// Description of the response
+	Description string `json:"description"`
+
 	// Headers returned in the response
 	Headers []Field `json:"headers"`
 
@@ -795,7 +808,7 @@ func generateCreateEndpoint(result *Service, resource Resource) {
 			Method:      httpMethodPost,
 			Path:        createEndpointPath,
 			Request:     createStandardRequest([]Field{}, []Field{}, bodyParams),
-			Response:    createStandardResponse(createResponseStatusCode, &resourceName),
+			Response:    createStandardResponse(createResponseStatusCode, fmt.Sprintf(createResponseDescTemplate, resourceName), &resourceName),
 		}
 
 		addEndpointToResource(result, resource.Name, createEndpoint)
@@ -819,7 +832,7 @@ func generateUpdateEndpoint(result *Service, resource Resource) {
 			Method:      httpMethodPatch,
 			Path:        updateEndpointPath,
 			Request:     createStandardRequest([]Field{idParam}, []Field{}, bodyParams),
-			Response:    createStandardResponse(updateResponseStatusCode, &resourceName),
+			Response:    createStandardResponse(updateResponseStatusCode, fmt.Sprintf(updateResponseDescTemplate, resourceName), &resourceName),
 		}
 
 		addEndpointToResource(result, resource.Name, updateEndpoint)
@@ -841,7 +854,7 @@ func generateDeleteEndpoint(result *Service, resource Resource) {
 			Method:      httpMethodDelete,
 			Path:        deleteEndpointPath,
 			Request:     createStandardRequest([]Field{idParam}, []Field{}, []Field{}),
-			Response:    createStandardResponse(deleteResponseStatusCode, nil), // No body object for delete
+			Response:    createStandardResponse(deleteResponseStatusCode, fmt.Sprintf(deleteResponseDescTemplate, resource.Name), nil), // No body object for delete
 		}
 
 		addEndpointToResource(result, resource.Name, deleteEndpoint)
@@ -864,7 +877,7 @@ func generateGetEndpoint(result *Service, resource Resource) {
 			Method:      httpMethodGet,
 			Path:        getEndpointPath,
 			Request:     createStandardRequest([]Field{idParam}, []Field{}, []Field{}),
-			Response:    createStandardResponse(getResponseStatusCode, &resourceName),
+			Response:    createStandardResponse(getResponseStatusCode, fmt.Sprintf(getResponseDescTemplate, resourceName), &resourceName),
 		}
 
 		addEndpointToResource(result, resource.Name, getEndpoint)
@@ -887,7 +900,7 @@ func generateListEndpoint(result *Service, resource Resource) {
 			Method:      httpMethodGet,
 			Path:        listEndpointPath,
 			Request:     createStandardRequest([]Field{}, []Field{limitParam, offsetParam}, []Field{}),
-			Response:    createListResponse(listResponseStatusCode, dataField, paginationField),
+			Response:    createListResponse(listResponseStatusCode, fmt.Sprintf(listResponseDescTemplate, pluralResourceName), dataField, paginationField),
 		}
 
 		addEndpointToResource(result, resource.Name, listEndpoint)
@@ -915,7 +928,7 @@ func generateSearchEndpoint(result *Service, resource Resource) {
 			Method:      httpMethodPost,
 			Path:        searchEndpointPath,
 			Request:     createStandardRequest([]Field{}, []Field{limitParam, offsetParam}, []Field{filterParam}),
-			Response:    createListResponse(searchResponseStatusCode, dataField, paginationField),
+			Response:    createListResponse(searchResponseStatusCode, fmt.Sprintf(searchResponseDescTemplate, pluralResourceName), dataField, paginationField),
 		}
 
 		addEndpointToResource(result, resource.Name, searchEndpoint)
@@ -943,11 +956,12 @@ func createStandardRequest(pathParams []Field, queryParams []Field, bodyParams [
 	}
 }
 
-// createStandardResponse creates a standard endpoint response with the given status code and optional body object.
-func createStandardResponse(statusCode int, bodyObject *string) EndpointResponse {
+// createStandardResponse creates a standard endpoint response with the given status code, description, and optional body object.
+func createStandardResponse(statusCode int, description string, bodyObject *string) EndpointResponse {
 	return EndpointResponse{
 		ContentType: contentTypeJSON,
 		StatusCode:  statusCode,
+		Description: description,
 		Headers:     []Field{},
 		BodyFields:  []Field{},
 		BodyObject:  bodyObject,
@@ -955,10 +969,11 @@ func createStandardResponse(statusCode int, bodyObject *string) EndpointResponse
 }
 
 // createListResponse creates a standard list endpoint response with pagination and data fields.
-func createListResponse(statusCode int, dataField Field, paginationField Field) EndpointResponse {
+func createListResponse(statusCode int, description string, dataField Field, paginationField Field) EndpointResponse {
 	return EndpointResponse{
 		ContentType: contentTypeJSON,
 		StatusCode:  statusCode,
+		Description: description,
 		Headers:     []Field{},
 		BodyFields:  []Field{dataField, paginationField},
 		BodyObject:  nil,
