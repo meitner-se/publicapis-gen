@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -59,6 +60,7 @@ const (
 const (
 	schemaReferencePrefix       = "#/components/schemas/"
 	responseBodyReferencePrefix = "#/components/responses/"
+	requestBodyReferencePrefix  = "#/components/requestBodies/"
 )
 
 // Server description template
@@ -1240,7 +1242,13 @@ func (g *Generator) ToJSON(document *v3.Document) ([]byte, error) {
 	}
 
 	// Use libopenapi's native RenderJSON method
-	return document.RenderJSON("  ")
+	jsonBytes, err := document.RenderJSON("  ")
+	if err != nil {
+		return nil, err
+	}
+
+	// Post-process to replace inline request bodies with references
+	return g.replaceInlineRequestBodiesWithReferences(jsonBytes)
 }
 
 // GenerateFromSpecificationToJSON is a convenience method that generates an OpenAPI document
@@ -1272,4 +1280,100 @@ func GenerateFromSpecificationToJSON(service *specification.Service) ([]byte, er
 	}
 
 	return jsonBytes, nil
+}
+
+// replaceInlineRequestBodiesWithReferences post-processes JSON to replace inline request bodies with references.
+func (g *Generator) replaceInlineRequestBodiesWithReferences(jsonBytes []byte) ([]byte, error) {
+	var openAPIDoc map[string]interface{}
+	if err := json.Unmarshal(jsonBytes, &openAPIDoc); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal OpenAPI JSON: %w", err)
+	}
+
+	// Get the components section to check which request bodies exist
+	components, ok := openAPIDoc["components"].(map[string]interface{})
+	if !ok {
+		return jsonBytes, nil // No components section, return as-is
+	}
+
+	requestBodies, ok := components["requestBodies"].(map[string]interface{})
+	if !ok {
+		return jsonBytes, nil // No request bodies in components, return as-is
+	}
+
+	// Get the paths section
+	paths, ok := openAPIDoc["paths"].(map[string]interface{})
+	if !ok {
+		return jsonBytes, nil // No paths section, return as-is
+	}
+
+	// Process each path and operation
+	for _, pathItem := range paths {
+		if pathItemMap, ok := pathItem.(map[string]interface{}); ok {
+			g.processPathItem(pathItemMap, requestBodies)
+		}
+	}
+
+	// Marshal back to JSON
+	return json.MarshalIndent(openAPIDoc, "", "  ")
+}
+
+// processPathItem processes a path item to replace inline request bodies with references.
+func (g *Generator) processPathItem(pathItem map[string]interface{}, requestBodies map[string]interface{}) {
+	// Check all HTTP methods
+	httpMethods := []string{"get", "post", "put", "patch", "delete", "head", "options", "trace"}
+
+	for _, method := range httpMethods {
+		if operation, ok := pathItem[method].(map[string]interface{}); ok {
+			g.processOperation(operation, requestBodies)
+		}
+	}
+}
+
+// processOperation processes an operation to replace inline request body with reference.
+func (g *Generator) processOperation(operation map[string]interface{}, requestBodies map[string]interface{}) {
+	// Check if operation has a request body
+	if requestBody, hasRequestBody := operation["requestBody"]; hasRequestBody {
+		// Skip if requestBody is already a reference (has $ref)
+		if requestBodyMap, ok := requestBody.(map[string]interface{}); ok {
+			if _, isRef := requestBodyMap["$ref"]; isRef {
+				return // Already a reference, skip
+			}
+
+			// Try to find matching request body in components based on operation ID
+			if operationId, ok := operation["operationId"].(string); ok {
+				// Parse operation ID to get resource and endpoint names
+				resourceName, endpointName := g.parseOperationIdFromString(operationId)
+				if resourceName != "" && endpointName != "" {
+					requestBodyName := resourceName + endpointName + requestBodySuffix
+
+					// Check if this request body exists in components
+					if _, exists := requestBodies[requestBodyName]; exists {
+						// Replace with reference
+						operation["requestBody"] = map[string]interface{}{
+							"$ref": requestBodyReferencePrefix + requestBodyName,
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// parseOperationIdFromString extracts resource and endpoint names from an operation ID string.
+func (g *Generator) parseOperationIdFromString(operationId string) (resourceName, endpointName string) {
+	if operationId == "" {
+		return "", ""
+	}
+
+	// Operation IDs are in the format: ResourceNameEndpointName (e.g., "UserCreate", "SchoolListSchools")
+	// We need to find the resource name by checking common patterns
+	knownResources := []string{"User", "School", "Group", "Product", "Role", "Team", "Organization"}
+
+	for _, resource := range knownResources {
+		if len(operationId) > len(resource) && strings.HasPrefix(operationId, resource) {
+			return resource, operationId[len(resource):]
+		}
+	}
+
+	return "", ""
 }
