@@ -149,6 +149,7 @@ resources:
         response:
           content_type: "application/json"
           status_code: 200
+          description: "Successfully imported students"
           body_fields:
             - name: "imported"
               type: "Int"
@@ -197,6 +198,7 @@ resources:
         response:
           content_type: "application/json"
           status_code: 202
+          description: "Successfully queued report generation"
           body_fields:
             - name: "reportId"
               type: "UUID"
@@ -257,6 +259,7 @@ resources:
         response:
           content_type: "application/json"
           status_code: 200
+          description: "Successfully performed advanced search"
           body_fields:
             - name: "students"
               type: "Student"
