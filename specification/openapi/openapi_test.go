@@ -1267,3 +1267,146 @@ func TestSchemaReferences(t *testing.T) {
 
 	t.Logf("Generated JSON:\n%s", jsonString)
 }
+
+func TestRequestBodySchemaReferences(t *testing.T) {
+	generator := newGenerator()
+	service := &specification.Service{
+		Name: "TestAPI",
+		Objects: []specification.Object{
+			{
+				Name:        "CreateUserRequest",
+				Description: "Request payload for creating a user",
+				Fields: []specification.Field{
+					{
+						Name:        "name",
+						Description: "User name",
+						Type:        specification.FieldTypeString,
+					},
+					{
+						Name:        "email",
+						Description: "User email",
+						Type:        specification.FieldTypeString,
+					},
+				},
+			},
+		},
+		Resources: []specification.Resource{
+			{
+				Name:        "User",
+				Description: "User resource",
+				Operations:  []string{specification.OperationCreate},
+				Endpoints: []specification.Endpoint{
+					{
+						Name:        "Create",
+						Title:       "Create User",
+						Description: "Create a new user",
+						Method:      "POST",
+						Path:        "",
+						Request: specification.EndpointRequest{
+							BodyParams: []specification.Field{
+								{
+									Name:        "request",
+									Description: "User creation request",
+									Type:        "CreateUserRequest",
+								},
+							},
+						},
+						Response: specification.EndpointResponse{StatusCode: 201, ContentType: "application/json"},
+					},
+				},
+			},
+		},
+	}
+
+	document, err := generator.GenerateFromService(service)
+	assert.NoError(t, err, "Should generate document successfully")
+	assert.NotNil(t, document, "Document should not be nil")
+
+	// Convert to JSON to check schema references
+	jsonBytes, err := generator.ToJSON(document)
+	assert.NoError(t, err, "Should convert to JSON successfully")
+	jsonString := string(jsonBytes)
+
+	// Verify that a single body parameter referencing a component schema
+	// uses direct schema reference instead of object wrapper
+	assert.Contains(t, jsonString, "\"allOf\"", "Request body should use allOf for direct schema reference")
+	assert.Contains(t, jsonString, "\"$ref\": \"#/components/schemas/CreateUserRequest\"", "Request body should directly reference the component schema")
+
+	// Should NOT contain object wrapper with properties in the request body schema
+	// (error responses will still have properties, so we need to check specifically for the request body)
+	assert.NotContains(t, jsonString, "\"type\": \"object\",\n                \"properties\"", "Request body should not use object wrapper for single component schema parameter")
+	assert.NotContains(t, jsonString, "\"request\":", "Request body should not contain the parameter name as a property")
+
+	t.Logf("Generated request body schema:\n%s", jsonString)
+}
+
+func TestRequestBodyMultipleParams(t *testing.T) {
+	generator := newGenerator()
+	service := &specification.Service{
+		Name: "TestAPI",
+		Objects: []specification.Object{
+			{
+				Name:        "Address",
+				Description: "User address information",
+				Fields: []specification.Field{
+					{
+						Name:        "street",
+						Description: "Street address",
+						Type:        specification.FieldTypeString,
+					},
+				},
+			},
+		},
+		Resources: []specification.Resource{
+			{
+				Name:        "User",
+				Description: "User resource",
+				Operations:  []string{specification.OperationCreate},
+				Endpoints: []specification.Endpoint{
+					{
+						Name:        "Create",
+						Title:       "Create User",
+						Description: "Create a new user",
+						Method:      "POST",
+						Path:        "",
+						Request: specification.EndpointRequest{
+							BodyParams: []specification.Field{
+								{
+									Name:        "name",
+									Description: "User name",
+									Type:        specification.FieldTypeString,
+								},
+								{
+									Name:        "address",
+									Description: "User address",
+									Type:        "Address",
+								},
+							},
+						},
+						Response: specification.EndpointResponse{StatusCode: 201, ContentType: "application/json"},
+					},
+				},
+			},
+		},
+	}
+
+	document, err := generator.GenerateFromService(service)
+	assert.NoError(t, err, "Should generate document successfully")
+	assert.NotNil(t, document, "Document should not be nil")
+
+	// Convert to JSON to check schema references
+	jsonBytes, err := generator.ToJSON(document)
+	assert.NoError(t, err, "Should convert to JSON successfully")
+	jsonString := string(jsonBytes)
+
+	// Verify that multiple body parameters still use object wrapper
+	assert.Contains(t, jsonString, "\"type\": \"object\"", "Multiple parameters should use object wrapper")
+	assert.Contains(t, jsonString, "\"properties\"", "Multiple parameters should have properties")
+	assert.Contains(t, jsonString, "\"name\":", "Should contain name parameter")
+	assert.Contains(t, jsonString, "\"address\":", "Should contain address parameter")
+
+	// The address field should still use allOf with $ref
+	assert.Contains(t, jsonString, "\"$ref\": \"#/components/schemas/Address\"", "Address field should reference component schema")
+
+	t.Logf("Generated multiple params request body:\n%s", jsonString)
+}

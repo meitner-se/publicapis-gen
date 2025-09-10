@@ -667,25 +667,48 @@ func (g *Generator) createParameter(field specification.Field, location string, 
 
 // createRequestBody creates a v3.RequestBody from body parameters using native types.
 func (g *Generator) createRequestBody(bodyParams []specification.Field, service *specification.Service) *v3.RequestBody {
-	// Create schema from body parameters
-	schema := &base.Schema{
-		Type:       []string{schemaTypeObject},
-		Properties: orderedmap.New[string, *base.SchemaProxy](),
-	}
+	var schema *base.Schema
+	var isRequired bool
 
-	requiredFields := []string{}
-	for _, field := range bodyParams {
-		fieldSchema := g.createFieldSchema(field, service)
-		proxy := base.CreateSchemaProxy(fieldSchema)
-		schema.Properties.Set(field.TagJSON(), proxy)
-
-		if field.IsRequired(service) {
-			requiredFields = append(requiredFields, field.TagJSON())
+	// If there's only one body parameter and it references a component schema,
+	// use the component schema directly instead of wrapping it in an object
+	if len(bodyParams) == 1 {
+		field := bodyParams[0]
+		if service.HasObject(field.Type) || service.HasEnum(field.Type) {
+			// Create a direct reference to the component schema using allOf
+			refString := schemaReferencePrefix + field.Type
+			refProxy := base.CreateSchemaProxyRef(refString)
+			schema = &base.Schema{
+				AllOf:       []*base.SchemaProxy{refProxy},
+				Description: field.Description,
+			}
+			isRequired = field.IsRequired(service)
 		}
 	}
 
-	if len(requiredFields) > 0 {
-		schema.Required = requiredFields
+	// If we didn't create a direct reference schema, fall back to the object wrapper approach
+	if schema == nil {
+		schema = &base.Schema{
+			Type:       []string{schemaTypeObject},
+			Properties: orderedmap.New[string, *base.SchemaProxy](),
+		}
+
+		requiredFields := []string{}
+		for _, field := range bodyParams {
+			fieldSchema := g.createFieldSchema(field, service)
+			proxy := base.CreateSchemaProxy(fieldSchema)
+			schema.Properties.Set(field.TagJSON(), proxy)
+
+			if field.IsRequired(service) {
+				requiredFields = append(requiredFields, field.TagJSON())
+			}
+		}
+
+		if len(requiredFields) > 0 {
+			schema.Required = requiredFields
+		}
+
+		isRequired = len(requiredFields) > 0
 	}
 
 	// Create media type
@@ -696,7 +719,6 @@ func (g *Generator) createRequestBody(bodyParams []specification.Field, service 
 	content := orderedmap.New[string, *v3.MediaType]()
 	content.Set(contentTypeJSON, mediaType)
 
-	isRequired := len(requiredFields) > 0
 	return &v3.RequestBody{
 		Description: requestBodyDescription,
 		Content:     content,
