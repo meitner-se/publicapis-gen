@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -778,6 +779,58 @@ func TestSpeakeasyTimeoutExtension(t *testing.T) {
 	// Verify the Speakeasy timeout extension is present
 	assert.Contains(t, jsonString, "\"x-speakeasy-timeout\"", "Should contain x-speakeasy-timeout extension")
 	assert.Contains(t, jsonString, "\"x-speakeasy-timeout\": 30000", "Should contain default timeout value of 30000 milliseconds")
+}
+
+// TestSpeakeasyTimeoutExtensionWithCustomTimeout verifies that custom timeout configuration from specification is used in generated OpenAPI documents.
+func TestSpeakeasyTimeoutExtensionWithCustomTimeout(t *testing.T) {
+	generator := newGenerator()
+	customTimeoutMs := 45000 // 45 seconds
+	service := &specification.Service{
+		Name:    "TestAPI",
+		Version: "1.0.0",
+		Timeout: &specification.TimeoutConfiguration{
+			Timeout: customTimeoutMs,
+		},
+	}
+
+	document, err := generator.GenerateFromService(service)
+	assert.NoError(t, err, "Should generate document successfully")
+	assert.NotNil(t, document, "Document should not be nil")
+
+	// Convert to JSON to verify the extension
+	jsonBytes, err := generator.ToJSON(document)
+	assert.NoError(t, err, "Should convert to JSON successfully")
+	jsonString := string(jsonBytes)
+
+	// Verify the Speakeasy timeout extension is present with custom value
+	assert.Contains(t, jsonString, "\"x-speakeasy-timeout\"", "Should contain x-speakeasy-timeout extension")
+	expectedTimeoutValue := fmt.Sprintf("\"x-speakeasy-timeout\": %d", customTimeoutMs)
+	assert.Contains(t, jsonString, expectedTimeoutValue, "Should contain custom timeout value of %d milliseconds", customTimeoutMs)
+}
+
+// TestSpeakeasyTimeoutExtensionWithZeroTimeout verifies that default timeout is used when custom timeout is zero or negative.
+func TestSpeakeasyTimeoutExtensionWithZeroTimeout(t *testing.T) {
+	generator := newGenerator()
+	service := &specification.Service{
+		Name:    "TestAPI",
+		Version: "1.0.0",
+		Timeout: &specification.TimeoutConfiguration{
+			Timeout: 0, // Zero timeout should fall back to default
+		},
+	}
+
+	document, err := generator.GenerateFromService(service)
+	assert.NoError(t, err, "Should generate document successfully")
+	assert.NotNil(t, document, "Document should not be nil")
+
+	// Convert to JSON to verify the extension
+	jsonBytes, err := generator.ToJSON(document)
+	assert.NoError(t, err, "Should convert to JSON successfully")
+	jsonString := string(jsonBytes)
+
+	// Verify the Speakeasy timeout extension uses default value when timeout is zero
+	assert.Contains(t, jsonString, "\"x-speakeasy-timeout\"", "Should contain x-speakeasy-timeout extension")
+	assert.Contains(t, jsonString, "\"x-speakeasy-timeout\": 30000", "Should use default timeout value when custom timeout is zero")
 }
 
 // TestSpeakeasyPaginationExtension verifies that Speakeasy pagination configuration is added to paginated operations.

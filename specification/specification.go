@@ -54,6 +54,11 @@ const (
 	defaultRetryConnectionErrors = true
 )
 
+// Default timeout configuration values
+const (
+	defaultTimeoutMs = 30000 // 30 seconds in milliseconds
+)
+
 // Filter suffixes
 const (
 	filterSuffix         = "Filter"
@@ -359,6 +364,12 @@ type RetryConfiguration struct {
 	RetryConnectionErrors bool `json:"retry_connection_errors"`
 }
 
+// TimeoutConfiguration defines the timeout behavior for API calls.
+type TimeoutConfiguration struct {
+	// Timeout is the request timeout in milliseconds
+	Timeout int `json:"timeout"`
+}
+
 // Service is the definition of an API service.
 type Service struct {
 	// Name of the service
@@ -372,6 +383,9 @@ type Service struct {
 
 	// Retry configuration for the service
 	Retry *RetryConfiguration `json:"retry,omitempty"`
+
+	// Timeout configuration for the service
+	Timeout *TimeoutConfiguration `json:"timeout,omitempty"`
 
 	// Enums that are used in the service
 	Enums []Enum `json:"enums"`
@@ -545,6 +559,8 @@ func ApplyOverlay(input *Service) *Service {
 		Name:      input.Name,
 		Version:   input.Version,
 		Servers:   append([]ServiceServer{}, input.Servers...), // Copy servers slice
+		Retry:     input.Retry,                                 // Copy retry configuration
+		Timeout:   input.Timeout,                               // Copy timeout configuration
 		Enums:     make([]Enum, 0, len(input.Enums)+2),         // +2 for ErrorCode and ErrorFieldCode enums
 		Objects:   make([]Object, 0, len(input.Objects)+3),     // +3 for Error, ErrorField, and Pagination objects
 		Resources: make([]Resource, len(input.Resources)),
@@ -1153,6 +1169,8 @@ func ApplyFilterOverlay(input *Service) *Service {
 		Name:      input.Name,
 		Version:   input.Version,
 		Servers:   append([]ServiceServer{}, input.Servers...), // Copy servers slice
+		Retry:     input.Retry,                                 // Copy retry configuration
+		Timeout:   input.Timeout,                               // Copy timeout configuration
 		Enums:     make([]Enum, len(input.Enums)),
 		Objects:   make([]Object, 0, len(input.Objects)*7), // Estimate for filter objects
 		Resources: make([]Resource, len(input.Resources)),

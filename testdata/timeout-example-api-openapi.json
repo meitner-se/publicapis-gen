@@ -1,0 +1,981 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Timeout Configuration Example API API",
+    "description": "Generated API documentation",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "List all Users",
+        "description": "Returns a paginated list of all `Users` in your organization.",
+        "operationId": "UsersList",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of items to return (default: 50)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "The maximum number of items to return (default: 50)",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "The number of items to skip before starting to return results (default: 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "The number of items to skip before starting to return results (default: 0)",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "title": "Users"
+                      },
+                      "description": "Array of Users objects"
+                    },
+                    "pagination": {
+                      "title": "Pagination",
+                      "description": "Pagination information"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was malformed or contained invalid parameters. 400 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is missing valid authentication credentials. 401 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "When the rate limit has been exceeded, 429 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Some serverside issue, 5xx status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          }
+        },
+        "x-speakeasy-pagination": {
+          "strategy": "offsetLimit",
+          "offsetParam": "offset",
+          "limitParam": "limit",
+          "totalField": "pagination.total",
+          "dataField": "data"
+        }
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Create Users",
+        "description": "Create a new Users",
+        "operationId": "UsersCreate",
+        "parameters": [],
+        "requestBody": {
+          "description": "Request body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "User email address"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "User display name"
+                  }
+                },
+                "required": [
+                  "email",
+                  "name"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Users"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was malformed or contained invalid parameters. 400 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is missing valid authentication credentials. 401 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The request was well-formed but failed validation (e.g. invalid field format or constraints), 422 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "When the rate limit has been exceeded, 429 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Some serverside issue, 5xx status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Retrieve an existing Users",
+        "description": "Retrieves the `Users` with the given ID.",
+        "operationId": "UsersGet",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Users to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The unique identifier of the Users to retrieve"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Users"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was malformed or contained invalid parameters. 400 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is missing valid authentication credentials. 401 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "When the rate limit has been exceeded, 429 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Some serverside issue, 5xx status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Delete Users",
+        "description": "Delete a Users",
+        "operationId": "UsersDelete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Users to delete",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The unique identifier of the Users to delete"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "The request was malformed or contained invalid parameters. 400 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is missing valid authentication credentials. 401 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "When the rate limit has been exceeded, 429 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Some serverside issue, 5xx status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Update Users",
+        "description": "Update a Users",
+        "operationId": "UsersUpdate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Users to update",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The unique identifier of the Users to update"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Request body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "User email address"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "User display name"
+                  }
+                },
+                "required": [
+                  "email",
+                  "name"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Users"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was malformed or contained invalid parameters. 400 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is missing valid authentication credentials. 401 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The request was well-formed but failed validation (e.g. invalid field format or constraints), 422 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "When the rate limit has been exceeded, 429 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Some serverside issue, 5xx status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/_search": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Search Users",
+        "description": "Search for `Users` with filtering capabilities.",
+        "operationId": "UsersSearch",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of items to return (default: 50)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "The maximum number of items to return (default: 50)",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "The number of items to skip before starting to return results (default: 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "The number of items to skip before starting to return results (default: 0)",
+              "default": 0
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Request body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "filter": {
+                    "type": "string",
+                    "description": "Filter criteria to search for specific records"
+                  }
+                },
+                "required": [
+                  "filter"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "title": "Users"
+                      },
+                      "description": "Array of Users objects"
+                    },
+                    "pagination": {
+                      "title": "Pagination",
+                      "description": "Pagination information"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was malformed or contained invalid parameters. 400 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is missing valid authentication credentials. 401 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The request was well-formed but failed validation (e.g. invalid field format or constraints), 422 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "When the rate limit has been exceeded, 429 status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Some serverside issue, 5xx status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Error"
+                }
+              }
+            }
+          }
+        },
+        "x-speakeasy-pagination": {
+          "strategy": "offsetLimit",
+          "offsetParam": "offset",
+          "limitParam": "limit",
+          "totalField": "pagination.total",
+          "dataField": "data"
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorCode": {
+        "type": "string",
+        "enum": [
+          "BadRequest",
+          "Unauthorized",
+          "Forbidden",
+          "NotFound",
+          "Conflict",
+          "UnprocessableEntity",
+          "RateLimited",
+          "Internal"
+        ],
+        "description": "Standard error codes used in API responses"
+      },
+      "ErrorFieldCode": {
+        "type": "string",
+        "enum": [
+          "AlreadyExists",
+          "Required",
+          "NotFound",
+          "InvalidValue"
+        ],
+        "description": "Error codes for field-level validation errors"
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "title": "ErrorCode",
+            "description": "The specific error code indicating the type of error"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable error message providing additional details"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "description": "Standard error response object containing error code and message"
+      },
+      "ErrorField": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "title": "ErrorFieldCode",
+            "description": "The specific error code indicating the type of field validation error"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable error message providing details about the field validation error"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "description": "Field-specific error information containing error code and message for validation errors"
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "offset": {
+            "type": "integer",
+            "description": "Number of items to skip from the beginning of the result set"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of items to return in the result set"
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total number of items available for pagination"
+          }
+        },
+        "required": [
+          "offset",
+          "limit",
+          "total"
+        ],
+        "description": "Pagination parameters for controlling result sets in list operations"
+      },
+      "Meta": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the resource was created"
+          },
+          "createdBy": {
+            "type": "string",
+            "format": "uuid",
+            "description": "User who created the resource",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the resource was last updated"
+          },
+          "updatedBy": {
+            "type": "string",
+            "format": "uuid",
+            "description": "User who last updated the resource",
+            "nullable": true
+          }
+        },
+        "required": [
+          "createdAt",
+          "updatedAt"
+        ],
+        "description": "Meta contains information about the creation and modification of a resource for auditing purposes"
+      },
+      "Users": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the Users"
+          },
+          "meta": {
+            "title": "Meta",
+            "description": "Metadata information for the Users"
+          },
+          "email": {
+            "type": "string",
+            "description": "User email address"
+          },
+          "name": {
+            "type": "string",
+            "description": "User display name"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "name"
+        ],
+        "description": "User management with custom timeout configuration"
+      },
+      "UsersCreateRequestError": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "title": "ErrorField",
+            "description": "User email address",
+            "nullable": true
+          },
+          "name": {
+            "title": "ErrorField",
+            "description": "User display name",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Users Create endpoint"
+      },
+      "UsersUpdateRequestError": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "title": "ErrorField",
+            "description": "User email address",
+            "nullable": true
+          },
+          "name": {
+            "title": "ErrorField",
+            "description": "User display name",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Users Update endpoint"
+      },
+      "UsersSearchRequestError": {
+        "type": "object",
+        "properties": {
+          "filter": {
+            "type": "string",
+            "description": "Filter criteria to search for specific records",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Users Search endpoint"
+      }
+    }
+  },
+  "x-speakeasy-retries": {
+    "strategy": "backoff",
+    "backoff": {
+      "initialInterval": 500,
+      "maxInterval": 60000,
+      "maxElapsedTime": 3600000,
+      "exponent": 1.5
+    },
+    "statusCodes": [
+      "5XX"
+    ],
+    "retryConnectionErrors": true
+  },
+  "x-speakeasy-timeout": 45000
+}
