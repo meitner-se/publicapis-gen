@@ -96,6 +96,11 @@ const (
 	schemaTypeObject  = "object"
 )
 
+// YAML tag constants
+const (
+	tagString = "!!str"
+)
+
 // Schema formats
 const (
 	schemaFormatUUID     = "uuid"
@@ -494,6 +499,7 @@ func (g *Generator) createEnumSchema(enum specification.Enum) *base.Schema {
 		node := &yaml.Node{
 			Kind:  yaml.ScalarNode,
 			Value: value.Name,
+			Tag:   tagString, // Ensure enum values are treated as strings
 		}
 		enumValues[i] = node
 	}
