@@ -1020,9 +1020,10 @@ func (g *Generator) createResponseReference(response specification.EndpointRespo
 		extensions := orderedmap.New[string, *yaml.Node]()
 		extensions.Set("$ref", &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: refString})
 
-		// Return a response that serializes as a reference
+		// Return a response that serializes as a reference with description
 		return &v3.Response{
-			Extensions: extensions,
+			Description: response.Description,
+			Extensions:  extensions,
 		}
 	}
 
