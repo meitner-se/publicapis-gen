@@ -883,48 +883,6 @@ func (g *Generator) createTypedExampleNode(fieldType, exampleValue string) *yaml
 	}
 }
 
-// generateDefaultExample generates a default example value for a field based on its type and name.
-func (g *Generator) generateDefaultExample(field specification.Field) string {
-	// Check for common field names first
-	switch field.Name {
-	case "id", "ID":
-		return "123e4567-e89b-12d3-a456-426614174000"
-	case "createdAt", "CreatedAt":
-		return "2024-01-15T10:30:00Z"
-	case "updatedAt", "UpdatedAt":
-		return "2024-01-15T14:45:00Z"
-	case "createdBy", "CreatedBy", "updatedBy", "UpdatedBy":
-		return "987fcdeb-51a2-43d1-b567-123456789abc"
-	case "offset", "Offset":
-		return "0"
-	case "limit", "Limit":
-		return "50"
-	case "total", "Total":
-		return "100"
-	case "count", "Count":
-		return "25"
-	}
-
-	// Fallback to type-based defaults
-	switch field.Type {
-	case specification.FieldTypeUUID:
-		return "123e4567-e89b-12d3-a456-426614174000"
-	case specification.FieldTypeTimestamp:
-		return "2024-01-15T10:30:00Z"
-	case specification.FieldTypeDate:
-		return "2024-01-15"
-	case specification.FieldTypeInt:
-		return "42"
-	case specification.FieldTypeBool:
-		return "true"
-	case specification.FieldTypeString:
-		return "example value"
-	default:
-		// For enums and custom types, use a generic string
-		return "example"
-	}
-}
-
 // generateRequestBodyExample generates an example value for a request body based on the body parameters.
 // For enum/primitive fields with examples, it uses the field example directly.
 // For object fields, it traverses to the object and builds examples from the object's fields.
@@ -981,13 +939,11 @@ func (g *Generator) generateObjectExampleFromFields(fields []specification.Field
 	for _, field := range fields {
 		var valueNode *yaml.Node
 
-		// For enum or primitive types, use field example or generate default
+		// For enum or primitive types, use field example if available
 		if g.isPrimitiveType(field.Type) || service.HasEnum(field.Type) {
-			exampleValue := field.Example
-			if exampleValue == "" {
-				exampleValue = g.generateDefaultExample(field)
+			if field.Example != "" {
+				valueNode = g.createTypedExampleNode(field.Type, field.Example)
 			}
-			valueNode = g.createTypedExampleNode(field.Type, exampleValue)
 		} else if service.HasObject(field.Type) {
 			// For object types, recursively generate example from object definition
 			obj := service.GetObject(field.Type)

@@ -785,14 +785,23 @@
         "properties": {
           "offset": {
             "type": "integer",
+            "examples": [
+              0
+            ],
             "description": "Number of items to skip from the beginning of the result set"
           },
           "limit": {
             "type": "integer",
+            "examples": [
+              1
+            ],
             "description": "Maximum number of items to return in the result set"
           },
           "total": {
             "type": "integer",
+            "examples": [
+              100
+            ],
             "description": "Total number of items available for pagination"
           }
         },
@@ -808,22 +817,34 @@
         "properties": {
           "createdAt": {
             "type": "string",
+            "examples": [
+              "2024-01-15T10:30:00Z"
+            ],
             "format": "date-time",
             "description": "Timestamp when the resource was created"
           },
           "createdBy": {
             "type": "string",
+            "examples": [
+              "987fcdeb-51a2-43d1-b567-123456789abc"
+            ],
             "format": "uuid",
             "description": "User who created the resource",
             "nullable": true
           },
           "updatedAt": {
             "type": "string",
+            "examples": [
+              "2024-01-15T14:45:00Z"
+            ],
             "format": "date-time",
             "description": "Timestamp when the resource was last updated"
           },
           "updatedBy": {
             "type": "string",
+            "examples": [
+              "987fcdeb-51a2-43d1-b567-123456789abc"
+            ],
             "format": "uuid",
             "description": "User who last updated the resource",
             "nullable": true
@@ -2020,13 +2041,6 @@
                   "description": "List of import error messages"
                 }
               }
-            },
-            "example": {
-              "imported": 42,
-              "failed": 42,
-              "errors": [
-                "example value"
-              ]
             }
           }
         }
@@ -2084,11 +2098,6 @@
                   "nullable": true
                 }
               }
-            },
-            "example": {
-              "reportId": "123e4567-e89b-12d3-a456-426614174000",
-              "estimatedCompletionTime": "2024-01-15T10:30:00Z",
-              "downloadUrl": "example value"
             }
           }
         }
@@ -2150,19 +2159,6 @@
                   "description": "Search facets and counts"
                 }
               }
-            },
-            "example": {
-              "students": [
-                {
-                  "firstName": "example value",
-                  "lastName": "example value",
-                  "studentId": "example value",
-                  "status": "example",
-                  "gradeLevel": "example"
-                }
-              ],
-              "totalCount": 42,
-              "facets": "example value"
             }
           }
         }
@@ -2215,24 +2211,7 @@
                 "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
                 "updatedAt": "2024-01-15T14:45:00Z",
                 "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
-              },
-              "firstName": "example value",
-              "lastName": "example value",
-              "studentId": "example value",
-              "status": "example",
-              "gradeLevel": "example",
-              "contact": {
-                "email": "example value",
-                "phone": "example value"
-              },
-              "address": {
-                "street": "example value",
-                "city": "example value",
-                "state": "example value",
-                "zipCode": "example value"
-              },
-              "enrollmentDate": "2024-01-15",
-              "graduationDate": "2024-01-15"
+              }
             }
           }
         }
@@ -2285,24 +2264,7 @@
                 "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
                 "updatedAt": "2024-01-15T14:45:00Z",
                 "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
-              },
-              "firstName": "example value",
-              "lastName": "example value",
-              "studentId": "example value",
-              "status": "example",
-              "gradeLevel": "example",
-              "contact": {
-                "email": "example value",
-                "phone": "example value"
-              },
-              "address": {
-                "street": "example value",
-                "city": "example value",
-                "state": "example value",
-                "zipCode": "example value"
-              },
-              "enrollmentDate": "2024-01-15",
-              "graduationDate": "2024-01-15"
+              }
             }
           }
         }
@@ -2355,24 +2317,7 @@
                 "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
                 "updatedAt": "2024-01-15T14:45:00Z",
                 "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
-              },
-              "firstName": "example value",
-              "lastName": "example value",
-              "studentId": "example value",
-              "status": "example",
-              "gradeLevel": "example",
-              "contact": {
-                "email": "example value",
-                "phone": "example value"
-              },
-              "address": {
-                "street": "example value",
-                "city": "example value",
-                "state": "example value",
-                "zipCode": "example value"
-              },
-              "enrollmentDate": "2024-01-15",
-              "graduationDate": "2024-01-15"
+              }
             }
           }
         }
@@ -2414,29 +2359,12 @@
                     "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
                     "updatedAt": "2024-01-15T14:45:00Z",
                     "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
-                  },
-                  "firstName": "example value",
-                  "lastName": "example value",
-                  "studentId": "example value",
-                  "status": "example",
-                  "gradeLevel": "example",
-                  "contact": {
-                    "email": "example value",
-                    "phone": "example value"
-                  },
-                  "address": {
-                    "street": "example value",
-                    "city": "example value",
-                    "state": "example value",
-                    "zipCode": "example value"
-                  },
-                  "enrollmentDate": "2024-01-15",
-                  "graduationDate": "2024-01-15"
+                  }
                 }
               ],
               "pagination": {
                 "offset": 0,
-                "limit": 50,
+                "limit": 1,
                 "total": 100
               }
             }
@@ -2480,29 +2408,12 @@
                     "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
                     "updatedAt": "2024-01-15T14:45:00Z",
                     "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
-                  },
-                  "firstName": "example value",
-                  "lastName": "example value",
-                  "studentId": "example value",
-                  "status": "example",
-                  "gradeLevel": "example",
-                  "contact": {
-                    "email": "example value",
-                    "phone": "example value"
-                  },
-                  "address": {
-                    "street": "example value",
-                    "city": "example value",
-                    "state": "example value",
-                    "zipCode": "example value"
-                  },
-                  "enrollmentDate": "2024-01-15",
-                  "graduationDate": "2024-01-15"
+                  }
                 }
               ],
               "pagination": {
                 "offset": 0,
-                "limit": 50,
+                "limit": 1,
                 "total": 100
               }
             }
@@ -2719,18 +2630,6 @@
                   "default": false
                 }
               }
-            },
-            "example": {
-              "students": [
-                {
-                  "firstName": "example value",
-                  "lastName": "example value",
-                  "studentId": "example value",
-                  "status": "example",
-                  "gradeLevel": "example"
-                }
-              ],
-              "overwriteExisting": true
             }
           }
         },
@@ -2779,13 +2678,6 @@
                   "default": false
                 }
               }
-            },
-            "example": {
-              "gradeLevel": "example",
-              "status": "example",
-              "enrollmentDateFrom": "2024-01-15",
-              "enrollmentDateTo": "2024-01-15",
-              "includeInactive": true
             }
           }
         },
@@ -2842,19 +2734,6 @@
                   "nullable": true
                 }
               }
-            },
-            "example": {
-              "nameQuery": "example value",
-              "gradeLevel": [
-                "example"
-              ],
-              "status": [
-                "example"
-              ],
-              "enrollmentDateRange": [
-                "2024-01-15"
-              ],
-              "hasGraduationDate": true
             }
           }
         },
@@ -2926,24 +2805,6 @@
                 "gradeLevel",
                 "enrollmentDate"
               ]
-            },
-            "example": {
-              "firstName": "example value",
-              "lastName": "example value",
-              "studentId": "example value",
-              "status": "example",
-              "gradeLevel": "example",
-              "contact": {
-                "email": "example value",
-                "phone": "example value"
-              },
-              "address": {
-                "street": "example value",
-                "city": "example value",
-                "state": "example value",
-                "zipCode": "example value"
-              },
-              "enrollmentDate": "2024-01-15"
             }
           }
         },
@@ -3010,23 +2871,6 @@
                 "lastName",
                 "gradeLevel"
               ]
-            },
-            "example": {
-              "firstName": "example value",
-              "lastName": "example value",
-              "status": "example",
-              "gradeLevel": "example",
-              "contact": {
-                "email": "example value",
-                "phone": "example value"
-              },
-              "address": {
-                "street": "example value",
-                "city": "example value",
-                "state": "example value",
-                "zipCode": "example value"
-              },
-              "graduationDate": "2024-01-15"
             }
           }
         },

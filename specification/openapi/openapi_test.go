@@ -1922,23 +1922,27 @@ func TestResponseBodyExamples(t *testing.T) {
 						Name:        "createdAt",
 						Description: "Timestamp when the resource was created",
 						Type:        specification.FieldTypeTimestamp,
+						Example:     "2024-01-15T10:30:00Z",
 					},
 					{
 						Name:        "createdBy",
 						Description: "User who created the resource",
 						Type:        specification.FieldTypeUUID,
 						Modifiers:   []string{specification.ModifierNullable},
+						Example:     "987fcdeb-51a2-43d1-b567-123456789abc",
 					},
 					{
 						Name:        "updatedAt",
 						Description: "Timestamp when the resource was last updated",
 						Type:        specification.FieldTypeTimestamp,
+						Example:     "2024-01-15T14:45:00Z",
 					},
 					{
 						Name:        "updatedBy",
 						Description: "User who last updated the resource",
 						Type:        specification.FieldTypeUUID,
 						Modifiers:   []string{specification.ModifierNullable},
+						Example:     "987fcdeb-51a2-43d1-b567-123456789abc",
 					},
 				},
 			},
@@ -1950,16 +1954,19 @@ func TestResponseBodyExamples(t *testing.T) {
 						Name:        "offset",
 						Description: "Number of items to skip from the beginning of the result set",
 						Type:        specification.FieldTypeInt,
+						Example:     "0",
 					},
 					{
 						Name:        "limit",
 						Description: "Maximum number of items to return in the result set",
 						Type:        specification.FieldTypeInt,
+						Example:     "1",
 					},
 					{
 						Name:        "total",
 						Description: "Total number of items available for pagination",
 						Type:        specification.FieldTypeInt,
+						Example:     "100",
 					},
 				},
 			},
@@ -2082,7 +2089,7 @@ func TestResponseBodyExamples(t *testing.T) {
 
 	// Verify pagination fields are present with default examples
 	assert.Contains(t, jsonString, "\"offset\": 0", "Should contain default pagination offset")
-	assert.Contains(t, jsonString, "\"limit\": 50", "Should contain default pagination limit")
+	assert.Contains(t, jsonString, "\"limit\": 1", "Should contain default pagination limit")
 	assert.Contains(t, jsonString, "\"total\": 100", "Should contain default pagination total")
 
 	// Verify meta object is nested within user objects
