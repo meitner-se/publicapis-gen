@@ -972,6 +972,30 @@ func (g *Generator) generateObjectExampleFromFields(fields []specification.Field
 	return objNode
 }
 
+// generateResponseBodyExample generates an example value for a response body based on the response definition.
+// For responses with BodyObject, it generates an example from the object definition.
+// For responses with BodyFields, it generates an example from the field definitions.
+func (g *Generator) generateResponseBodyExample(response specification.EndpointResponse, service *specification.Service) *yaml.Node {
+	// If response has a body object, generate example from the object definition
+	if response.BodyObject != nil {
+		if service.HasObject(*response.BodyObject) {
+			obj := service.GetObject(*response.BodyObject)
+			if obj != nil {
+				return g.generateObjectExample(*obj, service)
+			}
+		}
+		return nil
+	}
+
+	// If response has body fields, generate example from the fields
+	if len(response.BodyFields) > 0 {
+		return g.generateObjectExampleFromFields(response.BodyFields, service)
+	}
+
+	// No response body content
+	return nil
+}
+
 // createComponentRequestBody creates a v3.RequestBody for the components section.
 func (g *Generator) createComponentRequestBody(bodyParams []specification.Field, service *specification.Service) *v3.RequestBody {
 	var schema *base.Schema
@@ -1171,6 +1195,12 @@ func (g *Generator) createComponentResponse(response specification.EndpointRespo
 			mediaType := &v3.MediaType{
 				Schema: base.CreateSchemaProxy(schema),
 			}
+
+			// Generate response example
+			if responseExample := g.generateResponseBodyExample(response, service); responseExample != nil {
+				mediaType.Example = responseExample
+			}
+
 			content.Set(contentTypeJSON, mediaType)
 			componentResponse.Content = content
 		}
@@ -1379,6 +1409,12 @@ func (g *Generator) createResponse(response specification.EndpointResponse, reso
 			mediaType := &v3.MediaType{
 				Schema: base.CreateSchemaProxy(schema),
 			}
+
+			// Generate response example
+			if responseExample := g.generateResponseBodyExample(response, service); responseExample != nil {
+				mediaType.Example = responseExample
+			}
+
 			content.Set(contentTypeJSON, mediaType)
 			openAPIResponse.Content = content
 		}

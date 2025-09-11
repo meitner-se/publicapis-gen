@@ -1855,6 +1855,168 @@ func TestRequestBodyExamples(t *testing.T) {
 	t.Logf("Generated OpenAPI JSON with request body examples:\n%s", jsonString)
 }
 
+// TestResponseBodyExamples tests that response body examples are generated correctly.
+func TestResponseBodyExamples(t *testing.T) {
+	generator := newGenerator()
+
+	service := &specification.Service{
+		Name:    "Test API",
+		Version: "1.0.0",
+		Enums: []specification.Enum{
+			{
+				Name:        "Status",
+				Description: "Status enum",
+				Values: []specification.EnumValue{
+					{Name: "Active", Description: "Active status"},
+					{Name: "Inactive", Description: "Inactive status"},
+				},
+			},
+		},
+		Objects: []specification.Object{
+			{
+				Name:        "User",
+				Description: "User object",
+				Fields: []specification.Field{
+					{
+						Name:        "id",
+						Description: "User ID",
+						Type:        specification.FieldTypeUUID,
+						Example:     "123e4567-e89b-12d3-a456-426614174000",
+					},
+					{
+						Name:        "name",
+						Description: "User name",
+						Type:        specification.FieldTypeString,
+						Example:     "John Doe",
+					},
+					{
+						Name:        "age",
+						Description: "User age",
+						Type:        specification.FieldTypeInt,
+						Example:     "30",
+					},
+					{
+						Name:        "active",
+						Description: "User active status",
+						Type:        specification.FieldTypeBool,
+						Example:     "true",
+					},
+					{
+						Name:        "status",
+						Description: "User status",
+						Type:        "Status",
+						Example:     "Active",
+					},
+				},
+			},
+		},
+		Resources: []specification.Resource{
+			{
+				Name:        "User",
+				Description: "User management",
+				Operations:  []string{specification.OperationCreate, specification.OperationRead},
+				Endpoints: []specification.Endpoint{
+					{
+						Name:        "Create",
+						Title:       "Create User",
+						Description: "Create a new user",
+						Method:      "POST",
+						Path:        "",
+						Request: specification.EndpointRequest{
+							BodyParams: []specification.Field{
+								{
+									Name:        "name",
+									Description: "User name",
+									Type:        specification.FieldTypeString,
+									Example:     "Jane Smith",
+								},
+							},
+						},
+						Response: specification.EndpointResponse{
+							StatusCode:  201,
+							ContentType: "application/json",
+							BodyObject:  &[]string{"User"}[0], // Return User object
+						},
+					},
+					{
+						Name:        "Get",
+						Title:       "Get User",
+						Description: "Get a user by ID",
+						Method:      "GET",
+						Path:        "/{id}",
+						Request: specification.EndpointRequest{
+							PathParams: []specification.Field{
+								{
+									Name:        "id",
+									Description: "User ID",
+									Type:        specification.FieldTypeUUID,
+								},
+							},
+						},
+						Response: specification.EndpointResponse{
+							StatusCode:  200,
+							ContentType: "application/json",
+							BodyObject:  &[]string{"User"}[0], // Return User object
+						},
+					},
+					{
+						Name:        "List",
+						Title:       "List Users",
+						Description: "List all users",
+						Method:      "GET",
+						Path:        "",
+						Request:     specification.EndpointRequest{},
+						Response: specification.EndpointResponse{
+							StatusCode:  200,
+							ContentType: "application/json",
+							BodyFields: []specification.Field{
+								{
+									Name:        "users",
+									Description: "List of users",
+									Type:        "User",
+									Modifiers:   []string{specification.ModifierArray},
+								},
+								{
+									Name:        "count",
+									Description: "Total count of users",
+									Type:        specification.FieldTypeInt,
+									Example:     "42",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	document, err := generator.GenerateFromService(service)
+	assert.NoError(t, err, "Should generate document successfully")
+	assert.NotNil(t, document, "Document should not be nil")
+
+	// Convert to JSON to examine structure
+	jsonBytes, err := generator.ToJSON(document)
+	assert.NoError(t, err, "Should convert to JSON successfully")
+	jsonString := string(jsonBytes)
+
+	// Verify that examples exist in response bodies
+	assert.Contains(t, jsonString, "\"example\"", "Response bodies should contain examples")
+
+	// Verify string types are quoted in response examples
+	assert.Contains(t, jsonString, "\"John Doe\"", "Should contain string field example with quotes in response")
+	assert.Contains(t, jsonString, "\"123e4567-e89b-12d3-a456-426614174000\"", "Should contain UUID field example with quotes in response")
+	assert.Contains(t, jsonString, "\"Active\"", "Should contain enum field example with quotes in response")
+
+	// Verify integer types are unquoted in response examples
+	assert.Contains(t, jsonString, "\"age\": 30", "Should contain integer field example without quotes in response")
+	assert.Contains(t, jsonString, "\"count\": 42", "Should contain integer field example without quotes in response")
+
+	// Verify boolean types are unquoted in response examples
+	assert.Contains(t, jsonString, "\"active\": true", "Should contain boolean field example without quotes in response")
+
+	t.Logf("Generated OpenAPI JSON with response body examples:\n%s", jsonString)
+}
+
 // TestRequestBodyNamingConvention verifies the systematic naming of request bodies.
 func TestRequestBodyNamingConvention(t *testing.T) {
 	generator := newGenerator()
