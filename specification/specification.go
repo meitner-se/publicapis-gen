@@ -751,16 +751,19 @@ func addDefaultEnumsAndObjects(result *Service, input *Service) {
 					Name:        offsetFieldName,
 					Description: offsetFieldDescription,
 					Type:        FieldTypeInt,
+					Example:     "0",
 				},
 				{
 					Name:        limitFieldName,
 					Description: limitFieldDescription,
 					Type:        FieldTypeInt,
+					Example:     "1",
 				},
 				{
 					Name:        totalFieldName,
 					Description: totalFieldDescription,
 					Type:        FieldTypeInt,
+					Example:     "100",
 				},
 			},
 		}
@@ -1762,6 +1765,7 @@ func createAutoColumnID(resourceName string) Field {
 		Name:        autoColumnIDName,
 		Description: fmt.Sprintf(autoColumnIDDescTemplate, resourceName),
 		Type:        FieldTypeUUID,
+		Example:     "123e4567-e89b-12d3-a456-426614174000",
 	}
 }
 
@@ -1771,6 +1775,7 @@ func createAutoColumnCreatedAt(resourceName string) Field {
 		Name:        autoColumnCreatedAtName,
 		Description: fmt.Sprintf(autoColumnCreatedAtTemplate, resourceName),
 		Type:        FieldTypeTimestamp,
+		Example:     "2024-01-15T10:30:00Z",
 	}
 }
 
@@ -1781,6 +1786,7 @@ func createAutoColumnCreatedBy(resourceName string) Field {
 		Description: fmt.Sprintf(autoColumnCreatedByTemplate, resourceName),
 		Type:        FieldTypeUUID,
 		Modifiers:   []string{ModifierNullable},
+		Example:     "987fcdeb-51a2-43d1-b567-123456789abc",
 	}
 }
 
@@ -1790,6 +1796,7 @@ func createAutoColumnUpdatedAt(resourceName string) Field {
 		Name:        autoColumnUpdatedAtName,
 		Description: fmt.Sprintf(autoColumnUpdatedAtTemplate, resourceName),
 		Type:        FieldTypeTimestamp,
+		Example:     "2024-01-15T14:45:00Z",
 	}
 }
 
@@ -1800,6 +1807,7 @@ func createAutoColumnUpdatedBy(resourceName string) Field {
 		Description: fmt.Sprintf(autoColumnUpdatedByTemplate, resourceName),
 		Type:        FieldTypeUUID,
 		Modifiers:   []string{ModifierNullable},
+		Example:     "987fcdeb-51a2-43d1-b567-123456789abc",
 	}
 }
 
@@ -1824,23 +1832,27 @@ func createDefaultMeta() Object {
 				Name:        autoColumnCreatedAtName,
 				Description: "Timestamp when the resource was created",
 				Type:        FieldTypeTimestamp,
+				Example:     "2024-01-15T10:30:00Z",
 			},
 			{
 				Name:        autoColumnCreatedByName,
 				Description: "User who created the resource",
 				Type:        FieldTypeUUID,
 				Modifiers:   []string{ModifierNullable},
+				Example:     "987fcdeb-51a2-43d1-b567-123456789abc",
 			},
 			{
 				Name:        autoColumnUpdatedAtName,
 				Description: "Timestamp when the resource was last updated",
 				Type:        FieldTypeTimestamp,
+				Example:     "2024-01-15T14:45:00Z",
 			},
 			{
 				Name:        autoColumnUpdatedByName,
 				Description: "User who last updated the resource",
 				Type:        FieldTypeUUID,
 				Modifiers:   []string{ModifierNullable},
+				Example:     "987fcdeb-51a2-43d1-b567-123456789abc",
 			},
 		},
 	}
