@@ -848,6 +848,41 @@ func (g *Generator) isPrimitiveType(fieldType string) bool {
 	}
 }
 
+// createTypedExampleNode creates a properly typed YAML node for an example value based on the field type.
+func (g *Generator) createTypedExampleNode(fieldType, exampleValue string) *yaml.Node {
+	switch fieldType {
+	case specification.FieldTypeInt:
+		// For integer types, create a numeric node
+		return &yaml.Node{
+			Kind:  yaml.ScalarNode,
+			Tag:   "!!int",
+			Value: exampleValue,
+		}
+	case specification.FieldTypeBool:
+		// For boolean types, create a boolean node
+		return &yaml.Node{
+			Kind:  yaml.ScalarNode,
+			Tag:   "!!bool",
+			Value: exampleValue,
+		}
+	case specification.FieldTypeString, specification.FieldTypeUUID,
+		specification.FieldTypeDate, specification.FieldTypeTimestamp:
+		// For string-based types, create a string node
+		return &yaml.Node{
+			Kind:  yaml.ScalarNode,
+			Tag:   "!!str",
+			Value: exampleValue,
+		}
+	default:
+		// For enums and other types, default to string
+		return &yaml.Node{
+			Kind:  yaml.ScalarNode,
+			Tag:   "!!str",
+			Value: exampleValue,
+		}
+	}
+}
+
 // generateRequestBodyExample generates an example value for a request body based on the body parameters.
 // For enum/primitive fields with examples, it uses the field example directly.
 // For object fields, it traverses to the object and builds examples from the object's fields.
@@ -864,10 +899,7 @@ func (g *Generator) generateRequestBodyExample(bodyParams []specification.Field,
 		// For enum or primitive types, use field example if available
 		if g.isPrimitiveType(field.Type) || service.HasEnum(field.Type) {
 			if field.Example != "" {
-				return &yaml.Node{
-					Kind:  yaml.ScalarNode,
-					Value: field.Example,
-				}
+				return g.createTypedExampleNode(field.Type, field.Example)
 			}
 			return nil
 		}
@@ -910,10 +942,7 @@ func (g *Generator) generateObjectExampleFromFields(fields []specification.Field
 		// For enum or primitive types, use field example if available
 		if g.isPrimitiveType(field.Type) || service.HasEnum(field.Type) {
 			if field.Example != "" {
-				valueNode = &yaml.Node{
-					Kind:  yaml.ScalarNode,
-					Value: field.Example,
-				}
+				valueNode = g.createTypedExampleNode(field.Type, field.Example)
 			}
 		} else if service.HasObject(field.Type) {
 			// For object types, recursively generate example from object definition

@@ -1785,6 +1785,18 @@ func TestRequestBodyExamples(t *testing.T) {
 									Example:     "Jane Smith",
 								},
 								{
+									Name:        "age",
+									Description: "User age",
+									Type:        specification.FieldTypeInt,
+									Example:     "25",
+								},
+								{
+									Name:        "active",
+									Description: "User active status",
+									Type:        specification.FieldTypeBool,
+									Example:     "true",
+								},
+								{
 									Name:        "status",
 									Description: "User status",
 									Type:        "Status",
@@ -1827,10 +1839,18 @@ func TestRequestBodyExamples(t *testing.T) {
 
 	// Verify that examples exist in request bodies
 	assert.Contains(t, jsonString, "\"examples\"", "Request bodies should contain examples")
-	assert.Contains(t, jsonString, "\"Jane Smith\"", "Should contain primitive field example")
-	assert.Contains(t, jsonString, "\"Active\"", "Should contain enum field example")
-	assert.Contains(t, jsonString, "\"John Doe\"", "Should contain object field example from traversal")
-	assert.Contains(t, jsonString, "30", "Should contain object field example from traversal")
+
+	// Verify string types are quoted
+	assert.Contains(t, jsonString, "\"Jane Smith\"", "Should contain string field example with quotes")
+	assert.Contains(t, jsonString, "\"Active\"", "Should contain enum field example with quotes")
+	assert.Contains(t, jsonString, "\"John Doe\"", "Should contain object string field example with quotes")
+
+	// Verify integer types are unquoted
+	assert.Contains(t, jsonString, "\"age\": 25", "Should contain integer field example without quotes")
+	assert.Contains(t, jsonString, "\"age\": 30", "Should contain object integer field example without quotes")
+
+	// Verify boolean types are unquoted
+	assert.Contains(t, jsonString, "\"active\": true", "Should contain boolean field example without quotes")
 
 	t.Logf("Generated OpenAPI JSON with request body examples:\n%s", jsonString)
 }
