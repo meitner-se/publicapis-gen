@@ -141,6 +141,8 @@ const (
 	errorObjectName         = "Error"
 	messageFieldName        = "message"
 	codeFieldName           = "code"
+	errorFieldName          = "error"
+	errorFieldsFieldName    = "errorFields"
 	errorCodeEnumName       = "ErrorCode"
 	requestBodySuffix       = "RequestBody"
 	responseBodySuffix      = "ResponseBody"
@@ -936,29 +938,63 @@ func (g *Generator) createResponseReference(response specification.EndpointRespo
 	return g.createResponse(response, service)
 }
 
-// addErrorResponseBodiesToComponents adds common error response bodies to the components section.
-func (g *Generator) addErrorResponseBodiesToComponents(components *v3.Components, service *specification.Service) {
-	// Create error schema
-	var errorSchema *base.Schema
+// createWrappedErrorSchema creates an error response schema with the error wrapped in an "error" object.
+func (g *Generator) createWrappedErrorSchema(service *specification.Service) *base.Schema {
+	// Create the inner error object schema
+	var innerErrorSchema *base.Schema
 	if service.HasObject(errorObjectName) {
 		// Create a proper $ref schema reference using allOf
 		refString := schemaReferencePrefix + errorObjectName
 		refProxy := base.CreateSchemaProxyRef(refString)
-		errorSchema = &base.Schema{
+		innerErrorSchema = &base.Schema{
 			AllOf: []*base.SchemaProxy{refProxy},
 		}
 	} else {
 		// Fallback generic error schema
-		errorSchema = &base.Schema{
+		innerErrorSchema = &base.Schema{
 			Type:       []string{schemaTypeObject},
 			Properties: orderedmap.New[string, *base.SchemaProxy](),
 		}
 		messageSchema := &base.Schema{Type: []string{schemaTypeString}}
 		codeSchema := &base.Schema{Type: []string{schemaTypeString}}
-		errorSchema.Properties.Set(messageFieldName, base.CreateSchemaProxy(messageSchema))
-		errorSchema.Properties.Set(codeFieldName, base.CreateSchemaProxy(codeSchema))
-		errorSchema.Required = []string{messageFieldName, codeFieldName}
+		innerErrorSchema.Properties.Set(messageFieldName, base.CreateSchemaProxy(messageSchema))
+		innerErrorSchema.Properties.Set(codeFieldName, base.CreateSchemaProxy(codeSchema))
+		innerErrorSchema.Required = []string{messageFieldName, codeFieldName}
 	}
+
+	// Create the wrapper schema with "error" field
+	wrapperSchema := &base.Schema{
+		Type:       []string{schemaTypeObject},
+		Properties: orderedmap.New[string, *base.SchemaProxy](),
+	}
+	wrapperSchema.Properties.Set(errorFieldName, base.CreateSchemaProxy(innerErrorSchema))
+	wrapperSchema.Required = []string{errorFieldName}
+
+	return wrapperSchema
+}
+
+// createValidationErrorSchema creates an error response schema with error and errorFields.
+func (g *Generator) createValidationErrorSchema(service *specification.Service) *base.Schema {
+	// Start with the wrapped error schema
+	wrapperSchema := g.createWrappedErrorSchema(service)
+
+	// Add errorFields as a generic object (since specific validation fields depend on the request)
+	errorFieldsSchema := &base.Schema{
+		Type: []string{schemaTypeObject},
+		AdditionalProperties: &base.DynamicValue[*base.SchemaProxy, bool]{
+			A: base.CreateSchemaProxy(&base.Schema{Type: []string{schemaTypeString}}),
+		},
+	}
+	wrapperSchema.Properties.Set(errorFieldsFieldName, base.CreateSchemaProxy(errorFieldsSchema))
+	wrapperSchema.Required = append(wrapperSchema.Required, errorFieldsFieldName)
+
+	return wrapperSchema
+}
+
+// addErrorResponseBodiesToComponents adds common error response bodies to the components section.
+func (g *Generator) addErrorResponseBodiesToComponents(components *v3.Components, service *specification.Service) {
+	// Use the new wrapped error schema
+	errorSchema := g.createWrappedErrorSchema(service)
 
 	errorContent := orderedmap.New[string, *v3.MediaType]()
 	mediaType := &v3.MediaType{
@@ -1047,30 +1083,18 @@ func (g *Generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Resp
 
 	if errorCodeEnum == nil {
 		// Fallback to default error responses if ErrorCode enum not found
-		g.addDefaultErrorResponseReferences(responses)
+		g.addDefaultErrorResponseReferences(responses, endpoint, service)
 		return
 	}
 
-	// Create error schema for inline responses (components are still populated for future use)
+	// Create appropriate error schema based on whether endpoint has body parameters
 	var errorSchema *base.Schema
-	if service.HasObject(errorObjectName) {
-		// Create a proper $ref schema reference using allOf
-		refString := schemaReferencePrefix + errorObjectName
-		refProxy := base.CreateSchemaProxyRef(refString)
-		errorSchema = &base.Schema{
-			AllOf: []*base.SchemaProxy{refProxy},
-		}
+	if hasBodyParams {
+		// Use validation error schema for endpoints with body parameters
+		errorSchema = g.createValidationErrorSchema(service)
 	} else {
-		// Fallback generic error schema
-		errorSchema = &base.Schema{
-			Type:       []string{schemaTypeObject},
-			Properties: orderedmap.New[string, *base.SchemaProxy](),
-		}
-		messageSchema := &base.Schema{Type: []string{schemaTypeString}}
-		codeSchema := &base.Schema{Type: []string{schemaTypeString}}
-		errorSchema.Properties.Set(messageFieldName, base.CreateSchemaProxy(messageSchema))
-		errorSchema.Properties.Set(codeFieldName, base.CreateSchemaProxy(codeSchema))
-		errorSchema.Required = []string{messageFieldName, codeFieldName}
+		// Use standard wrapped error schema for endpoints without body parameters
+		errorSchema = g.createWrappedErrorSchema(service)
 	}
 
 	errorContent := orderedmap.New[string, *v3.MediaType]()
@@ -1099,17 +1123,19 @@ func (g *Generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Resp
 
 // addDefaultErrorResponseReferences adds fallback error response references when ErrorCode enum is not found.
 // TODO: Update to use actual references once we determine the correct libopenapi approach
-func (g *Generator) addDefaultErrorResponseReferences(responses *orderedmap.Map[string, *v3.Response]) {
-	// Create fallback generic error schema for inline responses
-	errorSchema := &base.Schema{
-		Type:       []string{schemaTypeObject},
-		Properties: orderedmap.New[string, *base.SchemaProxy](),
+func (g *Generator) addDefaultErrorResponseReferences(responses *orderedmap.Map[string, *v3.Response], endpoint specification.Endpoint, service *specification.Service) {
+	// Check if endpoint has body parameters to determine appropriate schema
+	hasBodyParams := len(endpoint.Request.BodyParams) > 0
+
+	// Create appropriate error schema based on whether endpoint has body parameters
+	var errorSchema *base.Schema
+	if hasBodyParams {
+		// Use validation error schema for endpoints with body parameters
+		errorSchema = g.createValidationErrorSchema(service)
+	} else {
+		// Use standard wrapped error schema for endpoints without body parameters
+		errorSchema = g.createWrappedErrorSchema(service)
 	}
-	messageSchema := &base.Schema{Type: []string{schemaTypeString}}
-	codeSchema := &base.Schema{Type: []string{schemaTypeString}}
-	errorSchema.Properties.Set(messageFieldName, base.CreateSchemaProxy(messageSchema))
-	errorSchema.Properties.Set(codeFieldName, base.CreateSchemaProxy(codeSchema))
-	errorSchema.Required = []string{messageFieldName, codeFieldName}
 
 	errorContent := orderedmap.New[string, *v3.MediaType]()
 	mediaType := &v3.MediaType{
