@@ -1836,12 +1836,48 @@ func getComment(tabs string, description string, name string) string {
 }
 
 // camelCase converts a string to camelCase format.
-// Special case: "ID" becomes "id" instead of "iD"
+// Special cases:
+// - "ID" becomes "id" instead of "iD"
+// - Consecutive capital letters at the start are lowercased (e.g., "CSNSchoolCode" -> "csnSchoolCode")
 func camelCase(s string) string {
 	if s == "ID" {
 		return "id"
 	}
-	return strmangle.CamelCase(s)
+
+	result := strmangle.CamelCase(s)
+
+	// Handle consecutive capital letters at the beginning
+	// Convert sequences like "cSNSchool" to "csnSchool"
+	if len(result) > 1 {
+		runes := []rune(result)
+
+		// Find the end of consecutive uppercase letters at the beginning (after first char)
+		consecutiveEnd := 1
+		for consecutiveEnd < len(runes) && runes[consecutiveEnd] >= 'A' && runes[consecutiveEnd] <= 'Z' {
+			consecutiveEnd++
+		}
+
+		// If we have consecutive uppercase letters, convert them to lowercase
+		// except possibly the last one if it's followed by lowercase letters
+		if consecutiveEnd > 2 {
+			// If the sequence is followed by lowercase letters, keep the last uppercase letter
+			// Example: "cSNSchool" -> "csnSchool" (convert "SN" to "sn", keep "S" before "chool")
+			if consecutiveEnd < len(runes) && runes[consecutiveEnd] >= 'a' && runes[consecutiveEnd] <= 'z' {
+				consecutiveEnd--
+			}
+
+			// Convert consecutive uppercase letters to lowercase
+			for i := 1; i < consecutiveEnd; i++ {
+				if runes[i] >= 'A' && runes[i] <= 'Z' {
+					runes[i] = runes[i] - 'A' + 'a'
+				}
+			}
+
+			result = string(runes)
+		}
+	}
+
+	return result
 }
 
 // toKebabCase converts a string to kebab-case format.

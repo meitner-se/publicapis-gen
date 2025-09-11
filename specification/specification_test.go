@@ -1336,7 +1336,10 @@ func TestCamelCase(t *testing.T) {
 		{"user_id", "userID"},
 		{"api_key", "apiKey"},
 		{"username", "username"},
-		{"ID", "id"}, // Special case: ID should become id, not iD
+		{"ID", "id"},                           // Special case: ID should become id, not iD
+		{"CSNSchoolCode", "csnSchoolCode"},     // Special case: consecutive capitals should be lowercased
+		{"APIKey", "apiKey"},                   // Another case with consecutive capitals
+		{"HTTPSConnection", "httpsConnection"}, // Multiple consecutive capitals
 	}
 
 	for _, tc := range testCases {
