@@ -837,6 +837,112 @@ func (g *Generator) createRequestBodyName(resourceName, endpointName string) str
 	return resourceName + endpointName
 }
 
+// isPrimitiveType returns true if the field type is a primitive type.
+func (g *Generator) isPrimitiveType(fieldType string) bool {
+	switch fieldType {
+	case specification.FieldTypeUUID, specification.FieldTypeDate, specification.FieldTypeTimestamp,
+		specification.FieldTypeString, specification.FieldTypeInt, specification.FieldTypeBool:
+		return true
+	default:
+		return false
+	}
+}
+
+// generateRequestBodyExample generates an example value for a request body based on the body parameters.
+// For enum/primitive fields with examples, it uses the field example directly.
+// For object fields, it traverses to the object and builds examples from the object's fields.
+func (g *Generator) generateRequestBodyExample(bodyParams []specification.Field, service *specification.Service) *yaml.Node {
+	if len(bodyParams) == 0 {
+		return nil
+	}
+
+	// If there's only one body parameter and it's an object/enum with no direct example,
+	// try to generate example from the object definition
+	if len(bodyParams) == 1 {
+		field := bodyParams[0]
+
+		// For enum or primitive types, use field example if available
+		if g.isPrimitiveType(field.Type) || service.HasEnum(field.Type) {
+			if field.Example != "" {
+				return &yaml.Node{
+					Kind:  yaml.ScalarNode,
+					Value: field.Example,
+				}
+			}
+			return nil
+		}
+
+		// For object types, traverse to object example
+		if service.HasObject(field.Type) {
+			obj := service.GetObject(field.Type)
+			if obj != nil {
+				return g.generateObjectExample(*obj, service)
+			}
+		}
+		return nil
+	}
+
+	// For multiple fields, create an object example
+	return g.generateObjectExampleFromFields(bodyParams, service)
+}
+
+// generateObjectExample generates an example from an object definition.
+func (g *Generator) generateObjectExample(obj specification.Object, service *specification.Service) *yaml.Node {
+	return g.generateObjectExampleFromFields(obj.Fields, service)
+}
+
+// generateObjectExampleFromFields generates an example object from a slice of fields.
+func (g *Generator) generateObjectExampleFromFields(fields []specification.Field, service *specification.Service) *yaml.Node {
+	if len(fields) == 0 {
+		return nil
+	}
+
+	// Create object node
+	objNode := &yaml.Node{
+		Kind: yaml.MappingNode,
+	}
+
+	hasAnyExample := false
+
+	for _, field := range fields {
+		var valueNode *yaml.Node
+
+		// For enum or primitive types, use field example if available
+		if g.isPrimitiveType(field.Type) || service.HasEnum(field.Type) {
+			if field.Example != "" {
+				valueNode = &yaml.Node{
+					Kind:  yaml.ScalarNode,
+					Value: field.Example,
+				}
+			}
+		} else if service.HasObject(field.Type) {
+			// For object types, recursively generate example from object definition
+			obj := service.GetObject(field.Type)
+			if obj != nil {
+				valueNode = g.generateObjectExample(*obj, service)
+			}
+		}
+
+		// Only add field to example if we have a value
+		if valueNode != nil {
+			// Add field name
+			keyNode := &yaml.Node{
+				Kind:  yaml.ScalarNode,
+				Value: field.TagJSON(),
+			}
+			objNode.Content = append(objNode.Content, keyNode)
+			objNode.Content = append(objNode.Content, valueNode)
+			hasAnyExample = true
+		}
+	}
+
+	if !hasAnyExample {
+		return nil
+	}
+
+	return objNode
+}
+
 // createComponentRequestBody creates a v3.RequestBody for the components section.
 func (g *Generator) createComponentRequestBody(bodyParams []specification.Field, service *specification.Service) *v3.RequestBody {
 	var schema *base.Schema
@@ -886,6 +992,11 @@ func (g *Generator) createComponentRequestBody(bodyParams []specification.Field,
 	// Create media type
 	mediaType := &v3.MediaType{
 		Schema: base.CreateSchemaProxy(schema),
+	}
+
+	// Generate examples for the request body
+	if example := g.generateRequestBodyExample(bodyParams, service); example != nil {
+		mediaType.Example = example
 	}
 
 	content := orderedmap.New[string, *v3.MediaType]()

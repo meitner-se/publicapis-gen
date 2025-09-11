@@ -1727,6 +1727,114 @@ func TestRequestBodiesComponentsSection(t *testing.T) {
 	t.Logf("Generated OpenAPI JSON with requestBodies components:\n%s", jsonString)
 }
 
+// TestRequestBodyExamples verifies that request bodies include appropriate examples.
+func TestRequestBodyExamples(t *testing.T) {
+	generator := newGenerator()
+
+	service := &specification.Service{
+		Name:    "Test API",
+		Version: "1.0.0",
+		Enums: []specification.Enum{
+			{
+				Name:        "Status",
+				Description: "Status enum",
+				Values: []specification.EnumValue{
+					{Name: "Active", Description: "Active status"},
+					{Name: "Inactive", Description: "Inactive status"},
+				},
+			},
+		},
+		Objects: []specification.Object{
+			{
+				Name:        "User",
+				Description: "User object",
+				Fields: []specification.Field{
+					{
+						Name:        "name",
+						Description: "User name",
+						Type:        specification.FieldTypeString,
+						Example:     "John Doe",
+					},
+					{
+						Name:        "age",
+						Description: "User age",
+						Type:        specification.FieldTypeInt,
+						Example:     "30",
+					},
+				},
+			},
+		},
+		Resources: []specification.Resource{
+			{
+				Name:        "User",
+				Description: "User management",
+				Operations:  []string{specification.OperationCreate},
+				Endpoints: []specification.Endpoint{
+					{
+						Name:        "Create",
+						Title:       "Create User",
+						Description: "Create a new user",
+						Method:      "POST",
+						Path:        "",
+						Request: specification.EndpointRequest{
+							BodyParams: []specification.Field{
+								{
+									Name:        "name",
+									Description: "User name",
+									Type:        specification.FieldTypeString,
+									Example:     "Jane Smith",
+								},
+								{
+									Name:        "status",
+									Description: "User status",
+									Type:        "Status",
+									Example:     "Active",
+								},
+							},
+						},
+						Response: specification.EndpointResponse{StatusCode: 201, ContentType: "application/json"},
+					},
+					{
+						Name:        "CreateFromObject",
+						Title:       "Create User From Object",
+						Description: "Create a user using object type",
+						Method:      "POST",
+						Path:        "/from-object",
+						Request: specification.EndpointRequest{
+							BodyParams: []specification.Field{
+								{
+									Name:        "user",
+									Description: "User object",
+									Type:        "User",
+								},
+							},
+						},
+						Response: specification.EndpointResponse{StatusCode: 201, ContentType: "application/json"},
+					},
+				},
+			},
+		},
+	}
+
+	document, err := generator.GenerateFromService(service)
+	assert.NoError(t, err, "Should generate document successfully")
+	assert.NotNil(t, document, "Document should not be nil")
+
+	// Convert to JSON to examine structure
+	jsonBytes, err := generator.ToJSON(document)
+	assert.NoError(t, err, "Should convert to JSON successfully")
+	jsonString := string(jsonBytes)
+
+	// Verify that examples exist in request bodies
+	assert.Contains(t, jsonString, "\"examples\"", "Request bodies should contain examples")
+	assert.Contains(t, jsonString, "\"Jane Smith\"", "Should contain primitive field example")
+	assert.Contains(t, jsonString, "\"Active\"", "Should contain enum field example")
+	assert.Contains(t, jsonString, "\"John Doe\"", "Should contain object field example from traversal")
+	assert.Contains(t, jsonString, "30", "Should contain object field example from traversal")
+
+	t.Logf("Generated OpenAPI JSON with request body examples:\n%s", jsonString)
+}
+
 // TestRequestBodyNamingConvention verifies the systematic naming of request bodies.
 func TestRequestBodyNamingConvention(t *testing.T) {
 	generator := newGenerator()
