@@ -152,6 +152,7 @@ const (
 	requestBodySuffix       = "RequestBody"
 	responseBodySuffix      = "ResponseBody"
 	errorResponseBodyPrefix = "Error"
+	requestErrorSuffix      = "RequestError"
 )
 
 // Generator handles OpenAPI 3.1 specification generation from specification.Service.
@@ -745,7 +746,7 @@ func (g *Generator) createOperation(endpoint specification.Endpoint, resource sp
 	responses.Set(strconv.Itoa(endpoint.Response.StatusCode), successResponse)
 
 	// Add error responses
-	g.addErrorResponses(responses, endpoint, service)
+	g.addErrorResponses(responses, endpoint, resource, service)
 
 	operation.Responses = &v3.Responses{
 		Codes: responses,
@@ -880,6 +881,17 @@ func (g *Generator) addResponseBodiesToComponents(components *v3.Components, ser
 					components.Responses.Set(responseBodyName, responseBody)
 				}
 			}
+
+			// Add endpoint-specific 422 error response if endpoint has body parameters
+			if len(endpoint.Request.BodyParams) > 0 {
+				response422Name := resource.Name + endpoint.Name + httpStatus422 + responseBodySuffix
+				if _, exists := responseBodyMap[response422Name]; !exists {
+					// Create 422 validation error response using RequestError schema
+					response422 := g.createEndpointSpecific422ErrorResponse(resource.Name, endpoint.Name, service)
+					responseBodyMap[response422Name] = response422
+					components.Responses.Set(response422Name, response422)
+				}
+			}
 		}
 	}
 
@@ -936,11 +948,85 @@ func (g *Generator) createComponentResponse(response specification.EndpointRespo
 	return componentResponse
 }
 
+// createEndpointSpecific422ErrorResponse creates a 422 error response component for an endpoint using RequestError schema.
+func (g *Generator) createEndpointSpecific422ErrorResponse(resourceName, endpointName string, service *specification.Service) *v3.Response {
+	// Create schema with error field (ErrorCode) and errorFields field (RequestError type)
+	schema := &base.Schema{
+		Type:       []string{schemaTypeObject},
+		Properties: orderedmap.New[string, *base.SchemaProxy](),
+	}
+
+	// Add error field using ErrorCode enum
+	var errorSchema *base.Schema
+	if service.HasEnum(errorCodeEnumName) {
+		// Reference the ErrorCode enum
+		refString := schemaReferencePrefix + errorCodeEnumName
+		refProxy := base.CreateSchemaProxyRef(refString)
+		errorSchema = &base.Schema{
+			AllOf: []*base.SchemaProxy{refProxy},
+		}
+	} else {
+		// Fallback to string if ErrorCode enum not found
+		errorSchema = &base.Schema{Type: []string{schemaTypeString}}
+	}
+	schema.Properties.Set(errorFieldName, base.CreateSchemaProxy(errorSchema))
+
+	// Add errorFields field using RequestError type
+	requestErrorObjectName := resourceName + endpointName + requestErrorSuffix
+	var errorFieldsSchema *base.Schema
+	if service.HasObject(requestErrorObjectName) {
+		// Reference the RequestError object
+		refString := schemaReferencePrefix + requestErrorObjectName
+		refProxy := base.CreateSchemaProxyRef(refString)
+		errorFieldsSchema = &base.Schema{
+			AllOf: []*base.SchemaProxy{refProxy},
+		}
+	} else {
+		// Fallback to generic object with additional properties
+		errorFieldsSchema = &base.Schema{
+			Type: []string{schemaTypeObject},
+			AdditionalProperties: &base.DynamicValue[*base.SchemaProxy, bool]{
+				A: base.CreateSchemaProxy(&base.Schema{Type: []string{schemaTypeString}}),
+			},
+		}
+	}
+	schema.Properties.Set(errorFieldsFieldName, base.CreateSchemaProxy(errorFieldsSchema))
+
+	// Set required fields
+	schema.Required = []string{errorFieldName, errorFieldsFieldName}
+
+	content := orderedmap.New[string, *v3.MediaType]()
+	mediaType := &v3.MediaType{
+		Schema: base.CreateSchemaProxy(schema),
+	}
+	content.Set(contentTypeJSON, mediaType)
+
+	return &v3.Response{
+		Description: "Unprocessable Entity - The request was well-formed but failed validation",
+		Content:     content,
+	}
+}
+
 // createResponseReference creates a v3.Response that references a component response body.
-// TODO: Implement proper response references once we determine the correct libopenapi approach
 func (g *Generator) createResponseReference(response specification.EndpointResponse, resourceName, endpointName string, service *specification.Service) *v3.Response {
-	// For now, create inline responses while we populate the components section
-	// This ensures the components/responses section is populated for future reference implementation
+	// Check if this response has content that should be referenced
+	if response.BodyObject != nil || len(response.BodyFields) > 0 {
+		// Since v3.Response doesn't directly support references, we use the Extensions field
+		// with a $ref YAML node to create a reference that serializes properly
+		responseBodyName := g.createResponseBodyName(resourceName, endpointName, response.StatusCode)
+		refString := responseBodyReferencePrefix + responseBodyName
+
+		// Create an extension map with a $ref node
+		extensions := orderedmap.New[string, *yaml.Node]()
+		extensions.Set("$ref", &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: refString})
+
+		// Return a response that serializes as a reference
+		return &v3.Response{
+			Extensions: extensions,
+		}
+	}
+
+	// For responses without content, return the inline response
 	return g.createResponse(response, service)
 }
 
@@ -979,34 +1065,15 @@ func (g *Generator) createWrappedErrorSchema(service *specification.Service) *ba
 	return wrapperSchema
 }
 
-// createValidationErrorSchema creates an error response schema with error and errorFields.
-func (g *Generator) createValidationErrorSchema(service *specification.Service) *base.Schema {
-	// Start with the wrapped error schema
-	wrapperSchema := g.createWrappedErrorSchema(service)
-
-	// Add errorFields as a generic object (since specific validation fields depend on the request)
-	errorFieldsSchema := &base.Schema{
-		Type: []string{schemaTypeObject},
-		AdditionalProperties: &base.DynamicValue[*base.SchemaProxy, bool]{
-			A: base.CreateSchemaProxy(&base.Schema{Type: []string{schemaTypeString}}),
-		},
-	}
-	wrapperSchema.Properties.Set(errorFieldsFieldName, base.CreateSchemaProxy(errorFieldsSchema))
-	wrapperSchema.Required = append(wrapperSchema.Required, errorFieldsFieldName)
-
-	return wrapperSchema
-}
-
 // addErrorResponseBodiesToComponents adds common error response bodies to the components section.
 func (g *Generator) addErrorResponseBodiesToComponents(components *v3.Components, service *specification.Service) {
-	// Use the new wrapped error schema
-	errorSchema := g.createWrappedErrorSchema(service)
-
-	errorContent := orderedmap.New[string, *v3.MediaType]()
-	mediaType := &v3.MediaType{
-		Schema: base.CreateSchemaProxy(errorSchema),
+	// Create standard wrapped error schema
+	standardErrorSchema := g.createWrappedErrorSchema(service)
+	standardErrorContent := orderedmap.New[string, *v3.MediaType]()
+	standardMediaType := &v3.MediaType{
+		Schema: base.CreateSchemaProxy(standardErrorSchema),
 	}
-	errorContent.Set(contentTypeJSON, mediaType)
+	standardErrorContent.Set(contentTypeJSON, standardMediaType)
 
 	// Define common error responses in deterministic order
 	errorResponses := []struct {
@@ -1015,17 +1082,21 @@ func (g *Generator) addErrorResponseBodiesToComponents(components *v3.Components
 	}{
 		{badRequestDescription, httpStatus400},
 		{unauthorizedDescription, httpStatus401},
+		{"Forbidden - Request is authenticated, but the user is not allowed to perform the operation", httpStatus403},
 		{notFoundDescription, httpStatus404},
+		{"Conflict - The request could not be completed due to a conflict", httpStatus409},
+		{"Too Many Requests - When the rate limit has been exceeded", httpStatus429},
 		{internalErrorDescription, httpStatus500},
 	}
 
 	for _, errorResponse := range errorResponses {
-		responseBodyName := errorResponseBodyPrefix + errorResponse.statusCode + responseBodySuffix
-		response := &v3.Response{
+		// Add standard error response
+		standardResponseBodyName := errorResponseBodyPrefix + errorResponse.statusCode + responseBodySuffix
+		standardResponse := &v3.Response{
 			Description: errorResponse.description,
-			Content:     errorContent,
+			Content:     standardErrorContent,
 		}
-		components.Responses.Set(responseBodyName, response)
+		components.Responses.Set(standardResponseBodyName, standardResponse)
 	}
 }
 
@@ -1074,7 +1145,7 @@ func (g *Generator) createResponse(response specification.EndpointResponse, serv
 }
 
 // addErrorResponses adds error responses based on errorCodes from the specification.
-func (g *Generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Response], endpoint specification.Endpoint, service *specification.Service) {
+func (g *Generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Response], endpoint specification.Endpoint, resource specification.Resource, service *specification.Service) {
 	// Check if endpoint has body parameters
 	hasBodyParams := len(endpoint.Request.BodyParams) > 0
 
@@ -1089,65 +1160,35 @@ func (g *Generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Resp
 
 	if errorCodeEnum == nil {
 		// Fallback to default error responses if ErrorCode enum not found
-		g.addDefaultErrorResponseReferences(responses, endpoint, service)
+		g.addDefaultErrorResponseReferences(responses, endpoint, resource, service)
 		return
 	}
 
-	// Create appropriate error schema based on whether endpoint has body parameters
-	var errorSchema *base.Schema
-	if hasBodyParams {
-		// Use validation error schema for endpoints with body parameters
-		errorSchema = g.createValidationErrorSchema(service)
-	} else {
-		// Use standard wrapped error schema for endpoints without body parameters
-		errorSchema = g.createWrappedErrorSchema(service)
-	}
-
-	errorContent := orderedmap.New[string, *v3.MediaType]()
-	mediaType := &v3.MediaType{
-		Schema: base.CreateSchemaProxy(errorSchema),
-	}
-	errorContent.Set(contentTypeJSON, mediaType)
-
 	// Generate responses for each error code
 	for _, enumValue := range errorCodeEnum.Values {
-		statusCode, description := g.mapErrorCodeToStatusAndDescription(enumValue.Name, enumValue.Description)
+		statusCode, _ := g.mapErrorCodeToStatusAndDescription(enumValue.Name, enumValue.Description)
 
 		// Skip 422 UnprocessableEntity if endpoint has no body parameters
 		if statusCode == httpStatus422 && !hasBodyParams {
 			continue
 		}
 
-		// Create inline error response (components are still populated for future reference use)
-		errorResponse := &v3.Response{
-			Description: description,
-			Content:     errorContent,
+		var errorResponse *v3.Response
+		if statusCode == httpStatus422 && hasBodyParams {
+			// Use endpoint-specific error response for 422 validation errors
+			errorResponse = g.createEndpointSpecificErrorResponseReference(statusCode, resource.Name, endpoint.Name)
+		} else {
+			// Use generic error response for all other status codes
+			errorResponse = g.createErrorResponseReference(statusCode, hasBodyParams)
 		}
 		responses.Set(statusCode, errorResponse)
 	}
 }
 
 // addDefaultErrorResponseReferences adds fallback error response references when ErrorCode enum is not found.
-// TODO: Update to use actual references once we determine the correct libopenapi approach
-func (g *Generator) addDefaultErrorResponseReferences(responses *orderedmap.Map[string, *v3.Response], endpoint specification.Endpoint, service *specification.Service) {
+func (g *Generator) addDefaultErrorResponseReferences(responses *orderedmap.Map[string, *v3.Response], endpoint specification.Endpoint, resource specification.Resource, service *specification.Service) {
 	// Check if endpoint has body parameters to determine appropriate schema
 	hasBodyParams := len(endpoint.Request.BodyParams) > 0
-
-	// Create appropriate error schema based on whether endpoint has body parameters
-	var errorSchema *base.Schema
-	if hasBodyParams {
-		// Use validation error schema for endpoints with body parameters
-		errorSchema = g.createValidationErrorSchema(service)
-	} else {
-		// Use standard wrapped error schema for endpoints without body parameters
-		errorSchema = g.createWrappedErrorSchema(service)
-	}
-
-	errorContent := orderedmap.New[string, *v3.MediaType]()
-	mediaType := &v3.MediaType{
-		Schema: base.CreateSchemaProxy(errorSchema),
-	}
-	errorContent.Set(contentTypeJSON, mediaType)
 
 	// Define default error status codes and descriptions in deterministic order
 	defaultErrors := []struct {
@@ -1161,11 +1202,8 @@ func (g *Generator) addDefaultErrorResponseReferences(responses *orderedmap.Map[
 	}
 
 	for _, defaultError := range defaultErrors {
-		// Create inline error response (components are still populated for future reference use)
-		errorResponse := &v3.Response{
-			Description: defaultError.description,
-			Content:     errorContent,
-		}
+		// Use reference to component error response (all default errors use generic responses)
+		errorResponse := g.createErrorResponseReference(defaultError.statusCode, hasBodyParams)
 		responses.Set(defaultError.statusCode, errorResponse)
 	}
 }
@@ -1259,6 +1297,38 @@ func (g *Generator) createRequestBodyReference(resourceName, endpointName string
 
 	// Return a request body that serializes as a reference
 	return &v3.RequestBody{
+		Extensions: extensions,
+	}
+}
+
+// createErrorResponseReference creates a v3.Response that references a component error response.
+func (g *Generator) createErrorResponseReference(statusCode string, hasBodyParams bool) *v3.Response {
+	// Create reference to the appropriate component error response
+	responseBodyName := errorResponseBodyPrefix + statusCode + responseBodySuffix
+	refString := responseBodyReferencePrefix + responseBodyName
+
+	// Create an extension map with a $ref node
+	extensions := orderedmap.New[string, *yaml.Node]()
+	extensions.Set("$ref", &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: refString})
+
+	// Return a response that serializes as a reference
+	return &v3.Response{
+		Extensions: extensions,
+	}
+}
+
+// createEndpointSpecificErrorResponseReference creates a v3.Response that references an endpoint-specific error response (for 422).
+func (g *Generator) createEndpointSpecificErrorResponseReference(statusCode string, resourceName, endpointName string) *v3.Response {
+	// Create reference to the endpoint-specific error response (e.g., EmployeeCreate422ResponseBody)
+	responseBodyName := resourceName + endpointName + statusCode + responseBodySuffix
+	refString := responseBodyReferencePrefix + responseBodyName
+
+	// Create an extension map with a $ref node
+	extensions := orderedmap.New[string, *yaml.Node]()
+	extensions.Set("$ref", &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: refString})
+
+	// Return a response that serializes as a reference
+	return &v3.Response{
 		Extensions: extensions,
 	}
 }
