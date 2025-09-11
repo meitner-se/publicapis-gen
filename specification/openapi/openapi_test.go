@@ -356,12 +356,12 @@ func TestGenerator_addErrorResponses(t *testing.T) {
 		for _, statusCode := range expectedStatusCodes {
 			response := responses.GetOrZero(statusCode)
 			assert.NotNil(t, response, "Should have %s error response", statusCode)
-			// Response should have a reference to the component
+			// Response should have a reference to the validation error component (since endpoint has body params)
 			assert.NotNil(t, response.Extensions, "Error response %s should have reference extension", statusCode)
 			refNode := response.Extensions.GetOrZero("$ref")
 			assert.NotNil(t, refNode, "Error response %s should have $ref", statusCode)
-			expectedRef := "#/components/responses/Error" + statusCode + "ResponseBody"
-			assert.Equal(t, expectedRef, refNode.Value, "Error response %s should reference correct component", statusCode)
+			expectedRef := "#/components/responses/Error" + statusCode + "ValidationResponseBody"
+			assert.Equal(t, expectedRef, refNode.Value, "Error response %s should reference correct validation component", statusCode)
 		}
 	})
 
@@ -405,17 +405,21 @@ func TestGenerator_addErrorResponses(t *testing.T) {
 		assert.Equal(t, 2, responses.Len(), "Should have 2 error responses (excluding 422)")
 		response400 := responses.GetOrZero("400")
 		assert.NotNil(t, response400, "Should have 400 error response")
-		// Check that response400 is a reference
+		// Check that response400 is a reference to standard error (endpoint has no body params)
 		assert.NotNil(t, response400.Extensions, "Response 400 should have reference extension")
 		refNode400 := response400.Extensions.GetOrZero("$ref")
 		assert.NotNil(t, refNode400, "Response 400 should have $ref")
+		expectedRef400 := "#/components/responses/Error400ResponseBody"
+		assert.Equal(t, expectedRef400, refNode400.Value, "Response 400 should reference standard error component")
 
 		response404 := responses.GetOrZero("404")
 		assert.NotNil(t, response404, "Should have 404 error response")
-		// Check that response404 is a reference
+		// Check that response404 is a reference to standard error (endpoint has no body params)
 		assert.NotNil(t, response404.Extensions, "Response 404 should have reference extension")
 		refNode404 := response404.Extensions.GetOrZero("$ref")
 		assert.NotNil(t, refNode404, "Response 404 should have $ref")
+		expectedRef404 := "#/components/responses/Error404ResponseBody"
+		assert.Equal(t, expectedRef404, refNode404.Value, "Response 404 should reference standard error component")
 
 		response422 := responses.GetOrZero("422")
 		assert.Nil(t, response422, "Should not have 422 error response for endpoint without body params")

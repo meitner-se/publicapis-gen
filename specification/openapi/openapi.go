@@ -1014,14 +1014,21 @@ func (g *Generator) createValidationErrorSchema(service *specification.Service) 
 
 // addErrorResponseBodiesToComponents adds common error response bodies to the components section.
 func (g *Generator) addErrorResponseBodiesToComponents(components *v3.Components, service *specification.Service) {
-	// Use the new wrapped error schema
-	errorSchema := g.createWrappedErrorSchema(service)
-
-	errorContent := orderedmap.New[string, *v3.MediaType]()
-	mediaType := &v3.MediaType{
-		Schema: base.CreateSchemaProxy(errorSchema),
+	// Create standard wrapped error schema for endpoints without body parameters
+	standardErrorSchema := g.createWrappedErrorSchema(service)
+	standardErrorContent := orderedmap.New[string, *v3.MediaType]()
+	standardMediaType := &v3.MediaType{
+		Schema: base.CreateSchemaProxy(standardErrorSchema),
 	}
-	errorContent.Set(contentTypeJSON, mediaType)
+	standardErrorContent.Set(contentTypeJSON, standardMediaType)
+
+	// Create validation error schema for endpoints with body parameters
+	validationErrorSchema := g.createValidationErrorSchema(service)
+	validationErrorContent := orderedmap.New[string, *v3.MediaType]()
+	validationMediaType := &v3.MediaType{
+		Schema: base.CreateSchemaProxy(validationErrorSchema),
+	}
+	validationErrorContent.Set(contentTypeJSON, validationMediaType)
 
 	// Define common error responses in deterministic order
 	errorResponses := []struct {
@@ -1035,12 +1042,21 @@ func (g *Generator) addErrorResponseBodiesToComponents(components *v3.Components
 	}
 
 	for _, errorResponse := range errorResponses {
-		responseBodyName := errorResponseBodyPrefix + errorResponse.statusCode + responseBodySuffix
-		response := &v3.Response{
+		// Add standard error response (for endpoints without body parameters)
+		standardResponseBodyName := errorResponseBodyPrefix + errorResponse.statusCode + responseBodySuffix
+		standardResponse := &v3.Response{
 			Description: errorResponse.description,
-			Content:     errorContent,
+			Content:     standardErrorContent,
 		}
-		components.Responses.Set(responseBodyName, response)
+		components.Responses.Set(standardResponseBodyName, standardResponse)
+
+		// Add validation error response (for endpoints with body parameters)
+		validationResponseBodyName := errorResponseBodyPrefix + errorResponse.statusCode + "Validation" + responseBodySuffix
+		validationResponse := &v3.Response{
+			Description: errorResponse.description,
+			Content:     validationErrorContent,
+		}
+		components.Responses.Set(validationResponseBodyName, validationResponse)
 	}
 }
 
@@ -1117,14 +1133,17 @@ func (g *Generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Resp
 			continue
 		}
 
-		// Use reference to component error response
-		errorResponse := g.createErrorResponseReference(statusCode)
+		// Use reference to component error response, choosing the appropriate schema type
+		errorResponse := g.createErrorResponseReference(statusCode, hasBodyParams)
 		responses.Set(statusCode, errorResponse)
 	}
 }
 
 // addDefaultErrorResponseReferences adds fallback error response references when ErrorCode enum is not found.
 func (g *Generator) addDefaultErrorResponseReferences(responses *orderedmap.Map[string, *v3.Response], endpoint specification.Endpoint, service *specification.Service) {
+	// Check if endpoint has body parameters to determine appropriate schema
+	hasBodyParams := len(endpoint.Request.BodyParams) > 0
+
 	// Define default error status codes and descriptions in deterministic order
 	defaultErrors := []struct {
 		statusCode  string
@@ -1137,8 +1156,8 @@ func (g *Generator) addDefaultErrorResponseReferences(responses *orderedmap.Map[
 	}
 
 	for _, defaultError := range defaultErrors {
-		// Use reference to component error response
-		errorResponse := g.createErrorResponseReference(defaultError.statusCode)
+		// Use reference to component error response, choosing the appropriate schema type
+		errorResponse := g.createErrorResponseReference(defaultError.statusCode, hasBodyParams)
 		responses.Set(defaultError.statusCode, errorResponse)
 	}
 }
@@ -1237,9 +1256,17 @@ func (g *Generator) createRequestBodyReference(resourceName, endpointName string
 }
 
 // createErrorResponseReference creates a v3.Response that references a component error response.
-func (g *Generator) createErrorResponseReference(statusCode string) *v3.Response {
-	// Create reference to the component error response
-	responseBodyName := errorResponseBodyPrefix + statusCode + responseBodySuffix
+func (g *Generator) createErrorResponseReference(statusCode string, hasBodyParams bool) *v3.Response {
+	// Create reference to the appropriate component error response
+	var responseBodyName string
+	if hasBodyParams {
+		// Use validation error response for endpoints with body parameters
+		responseBodyName = errorResponseBodyPrefix + statusCode + "Validation" + responseBodySuffix
+	} else {
+		// Use standard error response for endpoints without body parameters
+		responseBodyName = errorResponseBodyPrefix + statusCode + responseBodySuffix
+	}
+
 	refString := responseBodyReferencePrefix + responseBodyName
 
 	// Create an extension map with a $ref node
