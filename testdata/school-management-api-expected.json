@@ -12,6 +12,505 @@
     }
   ],
   "paths": {
+    "/students": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "List all Students",
+        "description": "Returns a paginated list of all `Students` in your organization.",
+        "operationId": "StudentsList",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of Students to return (default: 50)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "The number of Students to skip before starting to return results (default: 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for Students List operation - returns a paginated list of Students",
+            "$ref": "#/components/responses/StudentsList200ResponseBody"
+          },
+          "400": {
+            "description": "Bad Request error for Students List operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students List operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students List operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students List operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students List operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students List operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students List operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-pagination": {
+          "strategy": "offsetLimit",
+          "offsetParam": "offset",
+          "limitParam": "limit",
+          "totalField": "pagination.total",
+          "dataField": "data"
+        }
+      },
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Create Students",
+        "description": "Create a new Students",
+        "operationId": "StudentsCreate",
+        "parameters": [],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsCreateRequestBody"
+        },
+        "responses": {
+          "201": {
+            "description": "Response for Students Create operation - returns the created Students",
+            "$ref": "#/components/responses/StudentsCreate201ResponseBody"
+          },
+          "400": {
+            "description": "Bad Request error for Students Create operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Create operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Create operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Create operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Create operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students Create operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsCreate422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Create operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Create operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        }
+      }
+    },
+    "/students/{id}": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Retrieve an existing Students",
+        "description": "Retrieves the `Students` with the given ID.",
+        "operationId": "StudentsGet",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Students to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for Students Get operation - returns the requested Students",
+            "$ref": "#/components/responses/StudentsGet200ResponseBody"
+          },
+          "400": {
+            "description": "Bad Request error for Students Get operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Get operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Get operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Get operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Get operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Get operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Get operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Delete Students",
+        "description": "Delete a Students",
+        "operationId": "StudentsDelete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Students to delete",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Response for Students Delete operation - confirms successful deletion"
+          },
+          "400": {
+            "description": "Bad Request error for Students Delete operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Delete operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Delete operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Delete operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Delete operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Delete operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Delete operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Update Students",
+        "description": "Update a Students",
+        "operationId": "StudentsUpdate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Students to update",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsUpdateRequestBody"
+        },
+        "responses": {
+          "200": {
+            "description": "Response for Students Update operation - returns the updated Students",
+            "$ref": "#/components/responses/StudentsUpdate200ResponseBody"
+          },
+          "400": {
+            "description": "Bad Request error for Students Update operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Update operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Update operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Update operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Update operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students Update operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsUpdate422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Update operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Update operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        }
+      }
+    },
+    "/students/_search": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Search Students",
+        "description": "Search for `Students` with filtering capabilities.",
+        "operationId": "StudentsSearch",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of Students to return (default: 50)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "The number of Students to skip before starting to return results (default: 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsSearchRequestBody"
+        },
+        "responses": {
+          "200": {
+            "description": "Response for Students Search operation - returns filtered Students results",
+            "$ref": "#/components/responses/StudentsSearch200ResponseBody"
+          },
+          "400": {
+            "description": "Bad Request error for Students Search operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Search operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Search operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Search operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Search operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students Search operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsSearch422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Search operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Search operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-pagination": {
+          "strategy": "offsetLimit",
+          "offsetParam": "offset",
+          "limitParam": "limit",
+          "totalField": "pagination.total",
+          "dataField": "data"
+        }
+      }
+    },
+    "/students/bulk-import": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Bulk Import Students",
+        "description": "Import multiple students from a CSV file or structured data",
+        "operationId": "StudentsBulkImport",
+        "parameters": [
+          {
+            "name": "validateOnly",
+            "in": "query",
+            "description": "Only validate data without importing",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsBulkImportRequestBody"
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully imported students",
+            "$ref": "#/components/responses/StudentsBulkImport200ResponseBody"
+          },
+          "400": {
+            "description": "Bad Request error for Students BulkImport operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students BulkImport operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students BulkImport operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students BulkImport operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students BulkImport operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students BulkImport operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsBulkImport422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students BulkImport operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students BulkImport operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        }
+      }
+    },
+    "/students/reports/generate": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Generate Student Report",
+        "description": "Generate a comprehensive report for students based on filters",
+        "operationId": "StudentsGenerateReport",
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "description": "Report format (pdf, excel, csv)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "pdf"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsGenerateReportRequestBody"
+        },
+        "responses": {
+          "202": {
+            "description": "Successfully queued report generation",
+            "$ref": "#/components/responses/StudentsGenerateReport202ResponseBody"
+          },
+          "400": {
+            "description": "Bad Request error for Students GenerateReport operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students GenerateReport operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students GenerateReport operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students GenerateReport operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students GenerateReport operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students GenerateReport operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsGenerateReport422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students GenerateReport operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students GenerateReport operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        }
+      }
+    },
     "/students/advanced-search": {
       "post": {
         "tags": [
@@ -67,538 +566,39 @@
         },
         "responses": {
           "200": {
-            "description": "",
+            "description": "Successfully performed advanced search",
             "$ref": "#/components/responses/StudentsAdvancedSearch200ResponseBody"
           },
           "400": {
-            "description": "",
+            "description": "Bad Request error for Students AdvancedSearch operation - request contains invalid parameters",
             "$ref": "#/components/responses/Error400ResponseBody"
           },
           "401": {
-            "description": "",
+            "description": "Unauthorized error for Students AdvancedSearch operation - authentication required",
             "$ref": "#/components/responses/Error401ResponseBody"
           },
           "403": {
-            "description": "",
+            "description": "Forbidden error for Students AdvancedSearch operation - insufficient permissions",
             "$ref": "#/components/responses/Error403ResponseBody"
           },
           "404": {
-            "description": "",
+            "description": "Not Found error for Students AdvancedSearch operation - resource does not exist",
             "$ref": "#/components/responses/Error404ResponseBody"
           },
           "409": {
-            "description": "",
+            "description": "Conflict error for Students AdvancedSearch operation - request conflicts with current state",
             "$ref": "#/components/responses/Error409ResponseBody"
           },
           "422": {
-            "description": "",
+            "description": "Validation error for Students AdvancedSearch operation - request data failed validation",
             "$ref": "#/components/responses/StudentsAdvancedSearch422ResponseBody"
           },
           "429": {
-            "description": "",
+            "description": "Rate Limit error for Students AdvancedSearch operation - too many requests",
             "$ref": "#/components/responses/Error429ResponseBody"
           },
           "500": {
-            "description": "",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        }
-      }
-    },
-    "/students": {
-      "get": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "List all Students",
-        "description": "Returns a paginated list of all `Students` in your organization.",
-        "operationId": "StudentsList",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of Students to return (default: 50)",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 50
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "The number of Students to skip before starting to return results (default: 0)",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 0
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "$ref": "#/components/responses/StudentsList200ResponseBody"
-          },
-          "400": {
-            "description": "",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "429": {
-            "description": "",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-pagination": {
-          "strategy": "offsetLimit",
-          "offsetParam": "offset",
-          "limitParam": "limit",
-          "totalField": "pagination.total",
-          "dataField": "data"
-        }
-      },
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Create Students",
-        "description": "Create a new Students",
-        "operationId": "StudentsCreate",
-        "parameters": [],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsCreateRequestBody"
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "$ref": "#/components/responses/StudentsCreate201ResponseBody"
-          },
-          "400": {
-            "description": "",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "",
-            "$ref": "#/components/responses/StudentsCreate422ResponseBody"
-          },
-          "429": {
-            "description": "",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        }
-      }
-    },
-    "/students/{id}": {
-      "get": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Retrieve an existing Students",
-        "description": "Retrieves the `Students` with the given ID.",
-        "operationId": "StudentsGet",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "The unique identifier of the Students to retrieve",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "$ref": "#/components/responses/StudentsGet200ResponseBody"
-          },
-          "400": {
-            "description": "",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "429": {
-            "description": "",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Delete Students",
-        "description": "Delete a Students",
-        "operationId": "StudentsDelete",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "The unique identifier of the Students to delete",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successfully deleted the Students"
-          },
-          "400": {
-            "description": "",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "429": {
-            "description": "",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Update Students",
-        "description": "Update a Students",
-        "operationId": "StudentsUpdate",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "The unique identifier of the Students to update",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsUpdateRequestBody"
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "$ref": "#/components/responses/StudentsUpdate200ResponseBody"
-          },
-          "400": {
-            "description": "",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "",
-            "$ref": "#/components/responses/StudentsUpdate422ResponseBody"
-          },
-          "429": {
-            "description": "",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        }
-      }
-    },
-    "/students/_search": {
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Search Students",
-        "description": "Search for `Students` with filtering capabilities.",
-        "operationId": "StudentsSearch",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of Students to return (default: 50)",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 50
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "The number of Students to skip before starting to return results (default: 0)",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 0
-            }
-          }
-        ],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsSearchRequestBody"
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "$ref": "#/components/responses/StudentsSearch200ResponseBody"
-          },
-          "400": {
-            "description": "",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "",
-            "$ref": "#/components/responses/StudentsSearch422ResponseBody"
-          },
-          "429": {
-            "description": "",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-pagination": {
-          "strategy": "offsetLimit",
-          "offsetParam": "offset",
-          "limitParam": "limit",
-          "totalField": "pagination.total",
-          "dataField": "data"
-        }
-      }
-    },
-    "/students/bulk-import": {
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Bulk Import Students",
-        "description": "Import multiple students from a CSV file or structured data",
-        "operationId": "StudentsBulkImport",
-        "parameters": [
-          {
-            "name": "validateOnly",
-            "in": "query",
-            "description": "Only validate data without importing",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          }
-        ],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsBulkImportRequestBody"
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "$ref": "#/components/responses/StudentsBulkImport200ResponseBody"
-          },
-          "400": {
-            "description": "",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "",
-            "$ref": "#/components/responses/StudentsBulkImport422ResponseBody"
-          },
-          "429": {
-            "description": "",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        }
-      }
-    },
-    "/students/reports/generate": {
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Generate Student Report",
-        "description": "Generate a comprehensive report for students based on filters",
-        "operationId": "StudentsGenerateReport",
-        "parameters": [
-          {
-            "name": "format",
-            "in": "query",
-            "description": "Report format (pdf, excel, csv)",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "pdf"
-            }
-          }
-        ],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsGenerateReportRequestBody"
-        },
-        "responses": {
-          "202": {
-            "description": "",
-            "$ref": "#/components/responses/StudentsGenerateReport202ResponseBody"
-          },
-          "400": {
-            "description": "",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "",
-            "$ref": "#/components/responses/StudentsGenerateReport422ResponseBody"
-          },
-          "429": {
-            "description": "",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "",
+            "description": "Internal Server error for Students AdvancedSearch operation - unexpected server error",
             "$ref": "#/components/responses/Error500ResponseBody"
           }
         }
@@ -2173,7 +2173,7 @@
         }
       },
       "StudentsCreate201ResponseBody": {
-        "description": "Successfully created the Students",
+        "description": "Response for Students Create operation - returns the created Students",
         "content": {
           "application/json": {
             "schema": {
@@ -2217,7 +2217,7 @@
         }
       },
       "StudentsUpdate200ResponseBody": {
-        "description": "Successfully updated the Students",
+        "description": "Response for Students Update operation - returns the updated Students",
         "content": {
           "application/json": {
             "schema": {
@@ -2261,7 +2261,7 @@
         }
       },
       "StudentsGet200ResponseBody": {
-        "description": "Successfully retrieved the Students",
+        "description": "Response for Students Get operation - returns the requested Students",
         "content": {
           "application/json": {
             "schema": {
@@ -2275,7 +2275,7 @@
         }
       },
       "StudentsList200ResponseBody": {
-        "description": "Successfully retrieved the list of Students",
+        "description": "Response for Students List operation - returns a paginated list of Students",
         "content": {
           "application/json": {
             "schema": {
@@ -2306,7 +2306,7 @@
         }
       },
       "StudentsSearch200ResponseBody": {
-        "description": "Successfully searched for Students",
+        "description": "Response for Students Search operation - returns filtered Students results",
         "content": {
           "application/json": {
             "schema": {
