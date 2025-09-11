@@ -346,8 +346,13 @@ func TestGenerator_addErrorResponses(t *testing.T) {
 			Response: specification.EndpointResponse{StatusCode: 201},
 		}
 
+		resource := specification.Resource{
+			Name:        "User",
+			Description: "User resource",
+		}
+
 		responses := orderedmap.New[string, *v3.Response]()
-		generator.addErrorResponses(responses, endpointWithBody, service)
+		generator.addErrorResponses(responses, endpointWithBody, resource, service)
 
 		// Should have all error responses including 422
 		expectedStatusCodes := []string{"400", "401", "403", "404", "409", "422", "429", "500"}
@@ -356,12 +361,19 @@ func TestGenerator_addErrorResponses(t *testing.T) {
 		for _, statusCode := range expectedStatusCodes {
 			response := responses.GetOrZero(statusCode)
 			assert.NotNil(t, response, "Should have %s error response", statusCode)
-			// Response should have a reference to the validation error component (since endpoint has body params)
+			// Response should have a reference to the component
 			assert.NotNil(t, response.Extensions, "Error response %s should have reference extension", statusCode)
 			refNode := response.Extensions.GetOrZero("$ref")
 			assert.NotNil(t, refNode, "Error response %s should have $ref", statusCode)
-			expectedRef := "#/components/responses/Error" + statusCode + "ValidationResponseBody"
-			assert.Equal(t, expectedRef, refNode.Value, "Error response %s should reference correct validation component", statusCode)
+
+			// 422 should use endpoint-specific reference, others use generic error references
+			var expectedRef string
+			if statusCode == "422" {
+				expectedRef = "#/components/responses/UserCreateUser422ResponseBody"
+			} else {
+				expectedRef = "#/components/responses/Error" + statusCode + "ResponseBody"
+			}
+			assert.Equal(t, expectedRef, refNode.Value, "Error response %s should reference correct component", statusCode)
 		}
 	})
 
@@ -398,8 +410,13 @@ func TestGenerator_addErrorResponses(t *testing.T) {
 			Response: specification.EndpointResponse{StatusCode: 200},
 		}
 
+		resource := specification.Resource{
+			Name:        "User",
+			Description: "User resource",
+		}
+
 		responses := orderedmap.New[string, *v3.Response]()
-		generator.addErrorResponses(responses, endpointWithoutBody, service)
+		generator.addErrorResponses(responses, endpointWithoutBody, resource, service)
 
 		// Should have error responses but not 422
 		assert.Equal(t, 2, responses.Len(), "Should have 2 error responses (excluding 422)")
@@ -444,8 +461,13 @@ func TestGenerator_addErrorResponses(t *testing.T) {
 			Response: specification.EndpointResponse{StatusCode: 200},
 		}
 
+		resource := specification.Resource{
+			Name:        "Test",
+			Description: "Test resource",
+		}
+
 		responses := orderedmap.New[string, *v3.Response]()
-		generator.addErrorResponses(responses, endpoint, service)
+		generator.addErrorResponses(responses, endpoint, resource, service)
 
 		// Should fall back to default error responses
 		expectedDefaultStatusCodes := []string{"400", "401", "404", "500"}
