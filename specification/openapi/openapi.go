@@ -950,21 +950,50 @@ func (g *Generator) createComponentResponse(response specification.EndpointRespo
 
 // createEndpointSpecific422ErrorResponse creates a 422 error response component for an endpoint using RequestError schema.
 func (g *Generator) createEndpointSpecific422ErrorResponse(resourceName, endpointName string, service *specification.Service) *v3.Response {
-	// Find the RequestError object for this endpoint
-	requestErrorObjectName := resourceName + endpointName + requestErrorSuffix
+	// Create schema with error field (ErrorCode) and errorFields field (RequestError type)
+	schema := &base.Schema{
+		Type:       []string{schemaTypeObject},
+		Properties: orderedmap.New[string, *base.SchemaProxy](),
+	}
 
-	var schema *base.Schema
-	if service.HasObject(requestErrorObjectName) {
-		// Create a proper $ref schema reference using allOf to the RequestError object
-		refString := schemaReferencePrefix + requestErrorObjectName
+	// Add error field using ErrorCode enum
+	var errorSchema *base.Schema
+	if service.HasEnum(errorCodeEnumName) {
+		// Reference the ErrorCode enum
+		refString := schemaReferencePrefix + errorCodeEnumName
 		refProxy := base.CreateSchemaProxyRef(refString)
-		schema = &base.Schema{
+		errorSchema = &base.Schema{
 			AllOf: []*base.SchemaProxy{refProxy},
 		}
 	} else {
-		// Fallback: create a generic validation error schema
-		schema = g.createValidationErrorSchema(service)
+		// Fallback to string if ErrorCode enum not found
+		errorSchema = &base.Schema{Type: []string{schemaTypeString}}
 	}
+	schema.Properties.Set(errorFieldName, base.CreateSchemaProxy(errorSchema))
+
+	// Add errorFields field using RequestError type
+	requestErrorObjectName := resourceName + endpointName + requestErrorSuffix
+	var errorFieldsSchema *base.Schema
+	if service.HasObject(requestErrorObjectName) {
+		// Reference the RequestError object
+		refString := schemaReferencePrefix + requestErrorObjectName
+		refProxy := base.CreateSchemaProxyRef(refString)
+		errorFieldsSchema = &base.Schema{
+			AllOf: []*base.SchemaProxy{refProxy},
+		}
+	} else {
+		// Fallback to generic object with additional properties
+		errorFieldsSchema = &base.Schema{
+			Type: []string{schemaTypeObject},
+			AdditionalProperties: &base.DynamicValue[*base.SchemaProxy, bool]{
+				A: base.CreateSchemaProxy(&base.Schema{Type: []string{schemaTypeString}}),
+			},
+		}
+	}
+	schema.Properties.Set(errorFieldsFieldName, base.CreateSchemaProxy(errorFieldsSchema))
+
+	// Set required fields
+	schema.Required = []string{errorFieldName, errorFieldsFieldName}
 
 	content := orderedmap.New[string, *v3.MediaType]()
 	mediaType := &v3.MediaType{
