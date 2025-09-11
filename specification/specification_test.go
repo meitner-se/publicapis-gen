@@ -303,6 +303,50 @@ func TestService(t *testing.T) {
 		assert.Equal(t, len(service.Objects), len(unmarshaledService.Objects))
 		assert.Equal(t, len(service.Resources), len(unmarshaledService.Resources))
 	})
+
+	t.Run("with license information", func(t *testing.T) {
+		service := Service{
+			Name:    "TestService",
+			Version: "1.0.0",
+			License: &ServiceLicense{
+				Name:       "MIT License",
+				URL:        "https://opensource.org/licenses/MIT",
+				Identifier: "MIT",
+			},
+		}
+
+		// Test JSON marshaling
+		jsonData, err := json.Marshal(service)
+		require.NoError(t, err)
+		assert.NotEmpty(t, jsonData)
+
+		// Test JSON unmarshaling
+		var unmarshaledService Service
+		err = json.Unmarshal(jsonData, &unmarshaledService)
+		require.NoError(t, err)
+		assert.Equal(t, service.Name, unmarshaledService.Name)
+		assert.Equal(t, service.Version, unmarshaledService.Version)
+		require.NotNil(t, unmarshaledService.License)
+		assert.Equal(t, service.License.Name, unmarshaledService.License.Name)
+		assert.Equal(t, service.License.URL, unmarshaledService.License.URL)
+		assert.Equal(t, service.License.Identifier, unmarshaledService.License.Identifier)
+
+		// Test YAML marshaling
+		yamlData, err := yaml.Marshal(service)
+		require.NoError(t, err)
+		assert.NotEmpty(t, yamlData)
+
+		// Test YAML unmarshaling
+		var unmarshaledYAMLService Service
+		err = yaml.Unmarshal(yamlData, &unmarshaledYAMLService)
+		require.NoError(t, err)
+		assert.Equal(t, service.Name, unmarshaledYAMLService.Name)
+		assert.Equal(t, service.Version, unmarshaledYAMLService.Version)
+		require.NotNil(t, unmarshaledYAMLService.License)
+		assert.Equal(t, service.License.Name, unmarshaledYAMLService.License.Name)
+		assert.Equal(t, service.License.URL, unmarshaledYAMLService.License.URL)
+		assert.Equal(t, service.License.Identifier, unmarshaledYAMLService.License.Identifier)
+	})
 }
 
 func TestService_IsObject(t *testing.T) {
