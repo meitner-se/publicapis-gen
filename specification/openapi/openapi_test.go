@@ -2190,3 +2190,221 @@ func TestParameterDescriptionNotDuplicated(t *testing.T) {
 	assert.Equal(t, 1, offsetDescCount, "Offset description should appear exactly once")
 	assert.Equal(t, 1, archivedDescCount, "Archived description should appear exactly once")
 }
+
+// ============================================================================
+// Enum Value Descriptions Tests
+// ============================================================================
+
+// TestGenerator_createEnumSchema_WithValueDescriptions tests that enum schemas include individual value descriptions using oneOf pattern.
+func TestGenerator_createEnumSchema_WithValueDescriptions(t *testing.T) {
+	generator := newGenerator()
+
+	// Test enum with value descriptions uses oneOf pattern
+	t.Run("enum with value descriptions uses oneOf pattern", func(t *testing.T) {
+		service := &specification.Service{
+			Name:    "EnumDescriptionAPI",
+			Version: "1.0.0",
+			Enums: []specification.Enum{
+				{
+					Name:        "UserStatus",
+					Description: "Status of a user account",
+					Values: []specification.EnumValue{
+						{Name: "Active", Description: "User account is active and can be used"},
+						{Name: "Inactive", Description: "User account is inactive and cannot be used"},
+						{Name: "Suspended", Description: "User account is temporarily suspended"},
+						{Name: "Deleted", Description: "User account has been deleted"},
+					},
+				},
+			},
+		}
+
+		document, err := generator.GenerateFromService(service)
+		assert.NoError(t, err, "Should generate document successfully")
+		assert.NotNil(t, document, "Document should not be nil")
+
+		// Convert to JSON to verify the structure
+		jsonBytes, err := generator.ToJSON(document)
+		assert.NoError(t, err, "Should convert to JSON successfully")
+		jsonString := string(jsonBytes)
+
+		// Verify that the enum uses oneOf pattern instead of simple enum array
+		assert.Contains(t, jsonString, "\"oneOf\"", "Enum with value descriptions should use oneOf pattern")
+		assert.NotContains(t, jsonString, "\"enum\":", "Enum with value descriptions should not use simple enum array")
+
+		// Verify that all enum value descriptions are included
+		assert.Contains(t, jsonString, "User account is active and can be used", "Should contain Active description")
+		assert.Contains(t, jsonString, "User account is inactive and cannot be used", "Should contain Inactive description")
+		assert.Contains(t, jsonString, "User account is temporarily suspended", "Should contain Suspended description")
+		assert.Contains(t, jsonString, "User account has been deleted", "Should contain Deleted description")
+
+		// Verify that const values are used for each enum option
+		assert.Contains(t, jsonString, "\"const\": \"Active\"", "Should contain const value for Active")
+		assert.Contains(t, jsonString, "\"const\": \"Inactive\"", "Should contain const value for Inactive")
+		assert.Contains(t, jsonString, "\"const\": \"Suspended\"", "Should contain const value for Suspended")
+		assert.Contains(t, jsonString, "\"const\": \"Deleted\"", "Should contain const value for Deleted")
+
+		// Verify that the overall enum description is still included
+		assert.Contains(t, jsonString, "Status of a user account", "Should contain enum description")
+
+		t.Logf("Generated enum with value descriptions:\n%s", jsonString)
+	})
+
+	// Test enum without value descriptions uses simple enum array
+	t.Run("enum without value descriptions uses simple enum array", func(t *testing.T) {
+		service := &specification.Service{
+			Name:    "SimpleEnumAPI",
+			Version: "1.0.0",
+			Enums: []specification.Enum{
+				{
+					Name:        "Priority",
+					Description: "Task priority levels",
+					Values: []specification.EnumValue{
+						{Name: "Low"},    // No description
+						{Name: "Medium"}, // No description
+						{Name: "High"},   // No description
+					},
+				},
+			},
+		}
+
+		document, err := generator.GenerateFromService(service)
+		assert.NoError(t, err, "Should generate document successfully")
+		assert.NotNil(t, document, "Document should not be nil")
+
+		// Convert to JSON to verify the structure
+		jsonBytes, err := generator.ToJSON(document)
+		assert.NoError(t, err, "Should convert to JSON successfully")
+		jsonString := string(jsonBytes)
+
+		// Verify that the enum uses simple enum array
+		assert.Contains(t, jsonString, "\"enum\":", "Enum without value descriptions should use simple enum array")
+		assert.NotContains(t, jsonString, "\"oneOf\"", "Enum without value descriptions should not use oneOf pattern")
+
+		// Verify that enum values are included
+		assert.Contains(t, jsonString, "\"Low\"", "Should contain Low value")
+		assert.Contains(t, jsonString, "\"Medium\"", "Should contain Medium value")
+		assert.Contains(t, jsonString, "\"High\"", "Should contain High value")
+
+		// Should not contain const pattern
+		assert.NotContains(t, jsonString, "\"const\":", "Simple enum should not use const pattern")
+
+		// Verify that the overall enum description is included
+		assert.Contains(t, jsonString, "Task priority levels", "Should contain enum description")
+
+		t.Logf("Generated simple enum without value descriptions:\n%s", jsonString)
+	})
+
+	// Test enum with mixed descriptions (some values have descriptions, some don't)
+	t.Run("enum with mixed descriptions uses oneOf pattern", func(t *testing.T) {
+		service := &specification.Service{
+			Name:    "MixedEnumAPI",
+			Version: "1.0.0",
+			Enums: []specification.Enum{
+				{
+					Name:        "AccountType",
+					Description: "Types of user accounts",
+					Values: []specification.EnumValue{
+						{Name: "Basic", Description: "Basic account with limited features"},
+						{Name: "Premium"}, // No description
+						{Name: "Enterprise", Description: "Enterprise account with full features"},
+					},
+				},
+			},
+		}
+
+		document, err := generator.GenerateFromService(service)
+		assert.NoError(t, err, "Should generate document successfully")
+		assert.NotNil(t, document, "Document should not be nil")
+
+		// Convert to JSON to verify the structure
+		jsonBytes, err := generator.ToJSON(document)
+		assert.NoError(t, err, "Should convert to JSON successfully")
+		jsonString := string(jsonBytes)
+
+		// Should use oneOf pattern if any value has a description
+		assert.Contains(t, jsonString, "\"oneOf\"", "Enum with any value descriptions should use oneOf pattern")
+		assert.NotContains(t, jsonString, "\"enum\":", "Mixed enum should not use simple enum array")
+
+		// Verify descriptions are included for values that have them
+		assert.Contains(t, jsonString, "Basic account with limited features", "Should contain Basic description")
+		assert.Contains(t, jsonString, "Enterprise account with full features", "Should contain Enterprise description")
+
+		// Verify all values are present as const
+		assert.Contains(t, jsonString, "\"const\": \"Basic\"", "Should contain const value for Basic")
+		assert.Contains(t, jsonString, "\"const\": \"Premium\"", "Should contain const value for Premium")
+		assert.Contains(t, jsonString, "\"const\": \"Enterprise\"", "Should contain const value for Enterprise")
+
+		t.Logf("Generated mixed enum with some value descriptions:\n%s", jsonString)
+	})
+}
+
+// TestGenerator_enumHasValueDescriptions tests the helper function that checks if enum has value descriptions.
+func TestGenerator_enumHasValueDescriptions(t *testing.T) {
+	generator := newGenerator()
+
+	testCases := []struct {
+		name           string
+		enum           specification.Enum
+		expectedResult bool
+	}{
+		{
+			name: "enum with all values having descriptions",
+			enum: specification.Enum{
+				Name: "StatusWithDesc",
+				Values: []specification.EnumValue{
+					{Name: "Active", Description: "User is active"},
+					{Name: "Inactive", Description: "User is inactive"},
+				},
+			},
+			expectedResult: true,
+		},
+		{
+			name: "enum with no values having descriptions",
+			enum: specification.Enum{
+				Name: "StatusNoDesc",
+				Values: []specification.EnumValue{
+					{Name: "Active"},
+					{Name: "Inactive"},
+				},
+			},
+			expectedResult: false,
+		},
+		{
+			name: "enum with some values having descriptions",
+			enum: specification.Enum{
+				Name: "StatusMixed",
+				Values: []specification.EnumValue{
+					{Name: "Active", Description: "User is active"},
+					{Name: "Inactive"}, // No description
+				},
+			},
+			expectedResult: true,
+		},
+		{
+			name: "enum with empty values",
+			enum: specification.Enum{
+				Name:   "EmptyEnum",
+				Values: []specification.EnumValue{},
+			},
+			expectedResult: false,
+		},
+		{
+			name: "enum with empty string descriptions",
+			enum: specification.Enum{
+				Name: "EmptyDescEnum",
+				Values: []specification.EnumValue{
+					{Name: "Active", Description: ""},
+					{Name: "Inactive", Description: ""},
+				},
+			},
+			expectedResult: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := generator.enumHasValueDescriptions(tc.enum)
+			assert.Equal(t, tc.expectedResult, result, "enumHasValueDescriptions should return %t for %s", tc.expectedResult, tc.name)
+		})
+	}
+}

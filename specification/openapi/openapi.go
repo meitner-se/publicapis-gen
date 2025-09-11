@@ -511,6 +511,15 @@ func (g *Generator) createTagsFromResources(service *specification.Service) []*b
 
 // createEnumSchema creates a base.Schema for an enum using native types.
 func (g *Generator) createEnumSchema(enum specification.Enum) *base.Schema {
+	// Check if any enum values have descriptions
+	hasDescriptions := g.enumHasValueDescriptions(enum)
+
+	if hasDescriptions {
+		// Use oneOf pattern to include descriptions for each enum value
+		return g.createEnumSchemaWithDescriptions(enum)
+	}
+
+	// Use simple enum array when no descriptions are provided
 	schema := &base.Schema{
 		Type:        []string{schemaTypeString},
 		Description: enum.Description,
@@ -527,6 +536,47 @@ func (g *Generator) createEnumSchema(enum specification.Enum) *base.Schema {
 		enumValues[i] = node
 	}
 	schema.Enum = enumValues
+
+	return schema
+}
+
+// enumHasValueDescriptions checks if any values in the enum have descriptions.
+func (g *Generator) enumHasValueDescriptions(enum specification.Enum) bool {
+	for _, value := range enum.Values {
+		if value.Description != "" {
+			return true
+		}
+	}
+	return false
+}
+
+// createEnumSchemaWithDescriptions creates a base.Schema for an enum using oneOf pattern to include value descriptions.
+func (g *Generator) createEnumSchemaWithDescriptions(enum specification.Enum) *base.Schema {
+	schema := &base.Schema{
+		Type:        []string{schemaTypeString},
+		Description: enum.Description,
+		OneOf:       make([]*base.SchemaProxy, len(enum.Values)),
+	}
+
+	// Create oneOf schemas for each enum value with description
+	for i, value := range enum.Values {
+		valueSchema := &base.Schema{
+			Type:        []string{schemaTypeString},
+			Description: value.Description,
+		}
+
+		// Set the constant value for this enum option
+		constValue := &yaml.Node{
+			Kind:  yaml.ScalarNode,
+			Value: value.Name,
+			Tag:   tagString,
+		}
+		valueSchema.Const = constValue
+
+		// Create schema proxy
+		proxy := base.CreateSchemaProxy(valueSchema)
+		schema.OneOf[i] = proxy
+	}
 
 	return schema
 }
