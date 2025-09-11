@@ -1065,24 +1065,6 @@ func (g *Generator) createWrappedErrorSchema(service *specification.Service) *ba
 	return wrapperSchema
 }
 
-// createValidationErrorSchema creates an error response schema with error and errorFields.
-func (g *Generator) createValidationErrorSchema(service *specification.Service) *base.Schema {
-	// Start with the wrapped error schema
-	wrapperSchema := g.createWrappedErrorSchema(service)
-
-	// Add errorFields as a generic object (since specific validation fields depend on the request)
-	errorFieldsSchema := &base.Schema{
-		Type: []string{schemaTypeObject},
-		AdditionalProperties: &base.DynamicValue[*base.SchemaProxy, bool]{
-			A: base.CreateSchemaProxy(&base.Schema{Type: []string{schemaTypeString}}),
-		},
-	}
-	wrapperSchema.Properties.Set(errorFieldsFieldName, base.CreateSchemaProxy(errorFieldsSchema))
-	wrapperSchema.Required = append(wrapperSchema.Required, errorFieldsFieldName)
-
-	return wrapperSchema
-}
-
 // addErrorResponseBodiesToComponents adds common error response bodies to the components section.
 func (g *Generator) addErrorResponseBodiesToComponents(components *v3.Components, service *specification.Service) {
 	// Create standard wrapped error schema
