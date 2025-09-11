@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/aarondl/strmangle"
-	"github.com/goccy/go-yaml"
+	yaml "github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/ast"
 	"github.com/goccy/go-yaml/parser"
 	"github.com/goccy/go-yaml/token"
@@ -260,28 +260,32 @@ const (
 
 // List Endpoint Constants
 const (
-	listEndpointName         = "List"
-	listEndpointPath         = ""
-	listEndpointTitlePrefix  = "List all "
-	listEndpointDescTemplate = "Returns a paginated list of all `%s` in your organization."
-	listResponseStatusCode   = 200
-	listLimitParamName       = "limit"
-	listLimitParamDesc       = "The maximum number of items to return (default: 50)"
-	listLimitDefaultValue    = "50"
-	listOffsetParamName      = "offset"
-	listOffsetParamDesc      = "The number of items to skip before starting to return results (default: 0)"
-	listOffsetDefaultValue   = "0"
+	listEndpointName            = "List"
+	listEndpointPath            = ""
+	listEndpointTitlePrefix     = "List all "
+	listEndpointDescTemplate    = "Returns a paginated list of all `%s` in your organization."
+	listResponseStatusCode      = 200
+	listLimitParamName          = "limit"
+	listLimitParamDesc          = "The maximum number of items to return (default: 50)"
+	listLimitParamDescTemplate  = "The maximum number of %s to return (default: 50) when listing %s"
+	listLimitDefaultValue       = "50"
+	listOffsetParamName         = "offset"
+	listOffsetParamDesc         = "The number of items to skip before starting to return results (default: 0)"
+	listOffsetParamDescTemplate = "The number of %s to skip before starting to return results (default: 0) when listing %s"
+	listOffsetDefaultValue      = "0"
 )
 
 // Search Endpoint Constants
 const (
-	searchEndpointName         = "Search"
-	searchEndpointPath         = "/_search"
-	searchEndpointTitlePrefix  = "Search "
-	searchEndpointDescTemplate = "Search for `%s` with filtering capabilities."
-	searchResponseStatusCode   = 200
-	searchFilterParamName      = "Filter"
-	searchFilterParamDesc      = "Filter criteria to search for specific records"
+	searchEndpointName            = "Search"
+	searchEndpointPath            = "/_search"
+	searchEndpointTitlePrefix     = "Search "
+	searchEndpointDescTemplate    = "Search for `%s` with filtering capabilities."
+	searchResponseStatusCode      = 200
+	searchFilterParamName         = "Filter"
+	searchFilterParamDesc         = "Filter criteria to search for specific records"
+	searchLimitParamDescTemplate  = "The maximum number of %s to return (default: 50) when searching %s"
+	searchOffsetParamDescTemplate = "The number of %s to skip before starting to return results (default: 0) when searching %s"
 )
 
 // Response Description Constants
@@ -887,8 +891,8 @@ func generateGetEndpoint(result *Service, resource Resource) {
 // generateListEndpoint generates a List endpoint for resources that have Read operations.
 func generateListEndpoint(result *Service, resource Resource) {
 	if resource.HasReadOperation() && !resource.HasEndpoint(listEndpointName) {
-		limitParam := createLimitParamForResource(resource)
-		offsetParam := createOffsetParamForResource(resource)
+		limitParam := createListLimitParamForResource(resource)
+		offsetParam := createListOffsetParamForResource(resource)
 		paginationField := createPaginationField()
 		dataField := createDataField(resource.Name)
 		pluralResourceName := resource.GetPluralName()
@@ -910,8 +914,8 @@ func generateListEndpoint(result *Service, resource Resource) {
 // generateSearchEndpoint generates a Search endpoint for resources that have Read operations.
 func generateSearchEndpoint(result *Service, resource Resource) {
 	if resource.HasReadOperation() && !resource.HasEndpoint(searchEndpointName) {
-		limitParam := createLimitParamForResource(resource)
-		offsetParam := createOffsetParamForResource(resource)
+		limitParam := createSearchLimitParamForResource(resource)
+		offsetParam := createSearchOffsetParamForResource(resource)
 		filterParam := Field{
 			Name:        searchFilterParamName,
 			Description: searchFilterParamDesc,
@@ -1649,10 +1653,22 @@ func createLimitParam() Field {
 	}
 }
 
-// createLimitParamForResource creates a limit parameter with resource-specific description.
-func createLimitParamForResource(resource Resource) Field {
+// createListLimitParamForResource creates a limit parameter with resource-specific description for List operations.
+func createListLimitParamForResource(resource Resource) Field {
 	pluralResourceName := resource.GetPluralName()
-	resourceSpecificDescription := fmt.Sprintf("The maximum number of %s to return (default: 50)", pluralResourceName)
+	resourceSpecificDescription := fmt.Sprintf(listLimitParamDescTemplate, pluralResourceName, pluralResourceName)
+	return Field{
+		Name:        listLimitParamName,
+		Description: resourceSpecificDescription,
+		Type:        FieldTypeInt,
+		Default:     listLimitDefaultValue,
+	}
+}
+
+// createSearchLimitParamForResource creates a limit parameter with resource-specific description for Search operations.
+func createSearchLimitParamForResource(resource Resource) Field {
+	pluralResourceName := resource.GetPluralName()
+	resourceSpecificDescription := fmt.Sprintf(searchLimitParamDescTemplate, pluralResourceName, pluralResourceName)
 	return Field{
 		Name:        listLimitParamName,
 		Description: resourceSpecificDescription,
@@ -1671,10 +1687,22 @@ func createOffsetParam() Field {
 	}
 }
 
-// createOffsetParamForResource creates an offset parameter with resource-specific description.
-func createOffsetParamForResource(resource Resource) Field {
+// createListOffsetParamForResource creates an offset parameter with resource-specific description for List operations.
+func createListOffsetParamForResource(resource Resource) Field {
 	pluralResourceName := resource.GetPluralName()
-	resourceSpecificDescription := fmt.Sprintf("The number of %s to skip before starting to return results (default: 0)", pluralResourceName)
+	resourceSpecificDescription := fmt.Sprintf(listOffsetParamDescTemplate, pluralResourceName, pluralResourceName)
+	return Field{
+		Name:        listOffsetParamName,
+		Description: resourceSpecificDescription,
+		Type:        FieldTypeInt,
+		Default:     listOffsetDefaultValue,
+	}
+}
+
+// createSearchOffsetParamForResource creates an offset parameter with resource-specific description for Search operations.
+func createSearchOffsetParamForResource(resource Resource) Field {
+	pluralResourceName := resource.GetPluralName()
+	resourceSpecificDescription := fmt.Sprintf(searchOffsetParamDescTemplate, pluralResourceName, pluralResourceName)
 	return Field{
 		Name:        listOffsetParamName,
 		Description: resourceSpecificDescription,
