@@ -1710,15 +1710,15 @@ func TestRequestBodiesComponentsSection(t *testing.T) {
 	assert.Contains(t, jsonString, "\"requestBodies\"", "Components should contain requestBodies section")
 
 	// Verify expected request body names exist
-	assert.Contains(t, jsonString, "\"UserCreateRequestBody\"", "Should contain UserCreateRequestBody")
-	assert.Contains(t, jsonString, "\"UserUpdateRequestBody\"", "Should contain UserUpdateRequestBody")
-	assert.Contains(t, jsonString, "\"ProductCreateRequestBody\"", "Should contain ProductCreateRequestBody")
+	assert.Contains(t, jsonString, "\"UserCreate\"", "Should contain UserCreate")
+	assert.Contains(t, jsonString, "\"UserUpdate\"", "Should contain UserUpdate")
+	assert.Contains(t, jsonString, "\"ProductCreate\"", "Should contain ProductCreate")
 
 	// TODO: Implement request body references - for now, operations use inline request bodies
 	// Once references are implemented, uncomment these tests:
-	// assert.Contains(t, jsonString, "\"$ref\": \"#/components/requestBodies/UserCreateRequestBody\"", "POST /user operation should reference UserCreateRequestBody")
-	// assert.Contains(t, jsonString, "\"$ref\": \"#/components/requestBodies/UserUpdateRequestBody\"", "PATCH /user/{id} operation should reference UserUpdateRequestBody")
-	// assert.Contains(t, jsonString, "\"$ref\": \"#/components/requestBodies/ProductCreateRequestBody\"", "POST /product operation should reference ProductCreateRequestBody")
+	// assert.Contains(t, jsonString, "\"$ref\": \"#/components/requestBodies/UserCreate\"", "POST /user operation should reference UserCreate")
+	// assert.Contains(t, jsonString, "\"$ref\": \"#/components/requestBodies/UserUpdate\"", "PATCH /user/{id} operation should reference UserUpdate")
+	// assert.Contains(t, jsonString, "\"$ref\": \"#/components/requestBodies/ProductCreate\"", "POST /product operation should reference ProductCreate")
 
 	// For now, verify that operations still have inline request bodies
 	assert.Contains(t, jsonString, "\"requestBody\"", "Operations should have request bodies")
@@ -1736,17 +1736,17 @@ func TestRequestBodyNamingConvention(t *testing.T) {
 		endpointName string
 		expectedName string
 	}{
-		{"User", "Create", "UserCreateRequestBody"},
-		{"User", "Update", "UserUpdateRequestBody"},
-		{"User", "BulkImport", "UserBulkImportRequestBody"},
-		{"Organization", "Create", "OrganizationCreateRequestBody"},
-		{"Product", "Search", "ProductSearchRequestBody"},
+		{"User", "Create", "UserCreate"},
+		{"User", "Update", "UserUpdate"},
+		{"User", "BulkImport", "UserBulkImport"},
+		{"Organization", "Create", "OrganizationCreate"},
+		{"Product", "Search", "ProductSearch"},
 	}
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s-%s", tc.resourceName, tc.endpointName), func(t *testing.T) {
 			actualName := generator.createRequestBodyName(tc.resourceName, tc.endpointName)
-			assert.Equal(t, tc.expectedName, actualName, "Request body name should follow ResourceNameEndpointNameRequestBody convention")
+			assert.Equal(t, tc.expectedName, actualName, "Request body name should follow ResourceNameEndpointName convention")
 		})
 	}
 }
@@ -1814,14 +1814,14 @@ func TestRequestBodyReferencesWithComponentSchemas(t *testing.T) {
 
 	// Verify that requestBodies section exists
 	assert.Contains(t, jsonString, "\"requestBodies\"", "Components should contain requestBodies section")
-	assert.Contains(t, jsonString, "\"UserCreateRequestBody\"", "Should contain UserCreateRequestBody")
+	assert.Contains(t, jsonString, "\"UserCreate\"", "Should contain UserCreate")
 
 	// Verify that the request body uses direct schema reference (not object wrapper)
 	assert.Contains(t, jsonString, "\"allOf\"", "Request body should use allOf for direct schema reference")
 	assert.Contains(t, jsonString, "\"$ref\": \"#/components/schemas/CreateUserRequest\"", "Request body should reference the component schema")
 
 	// TODO: Implement request body references
-	// assert.Contains(t, jsonString, "\"$ref\": \"#/components/requestBodies/UserCreateRequestBody\"", "Operation should reference UserCreateRequestBody")
+	// assert.Contains(t, jsonString, "\"$ref\": \"#/components/requestBodies/UserCreate\"", "Operation should reference UserCreate")
 
 	t.Logf("Generated request body with component schema reference:\n%s", jsonString)
 }
@@ -1879,17 +1879,16 @@ func TestRequestBodyDuplicationPrevention(t *testing.T) {
 	jsonString := string(jsonBytes)
 
 	// Count occurrences of each request body name
-	userCreateCount := countSubstring(jsonString, "\"UserCreateRequestBody\"")
-	userCreateAltCount := countSubstring(jsonString, "\"UserCreateAlternativeRequestBody\"")
+	userCreateCount := countSubstring(jsonString, "\"UserCreate\"")
+	userCreateAltCount := countSubstring(jsonString, "\"UserCreateAlternative\"")
 
-	// For now, each request body name should appear exactly once in the components section
-	// TODO: When references are implemented, they should appear twice (definition + reference)
-	assert.Equal(t, 1, userCreateCount, "UserCreateRequestBody should appear exactly once in components")
-	assert.Equal(t, 1, userCreateAltCount, "UserCreateAlternativeRequestBody should appear exactly once in components")
+	// Each request body name should appear twice: once in definition and once in reference
+	assert.Equal(t, 2, userCreateCount, "UserCreate should appear twice (definition + reference)")
+	assert.Equal(t, 2, userCreateAltCount, "UserCreateAlternative should appear twice (definition + reference)")
 
 	// Verify both request bodies exist
-	assert.Contains(t, jsonString, "\"UserCreateRequestBody\"", "Should contain UserCreateRequestBody")
-	assert.Contains(t, jsonString, "\"UserCreateAlternativeRequestBody\"", "Should contain UserCreateAlternativeRequestBody")
+	assert.Contains(t, jsonString, "\"UserCreate\"", "Should contain UserCreate")
+	assert.Contains(t, jsonString, "\"UserCreateAlternative\"", "Should contain UserCreateAlternative")
 
 	t.Logf("Generated request bodies without duplication:\n%s", jsonString)
 }

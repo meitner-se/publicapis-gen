@@ -45,7 +45,7 @@
         "responses": {
           "200": {
             "description": "Response for Students List operation - returns a paginated list of Students",
-            "$ref": "#/components/responses/StudentsList200ResponseBody"
+            "$ref": "#/components/responses/StudentsList"
           },
           "400": {
             "description": "Bad Request error for Students List operation - request contains invalid parameters",
@@ -93,12 +93,12 @@
         "operationId": "StudentsCreate",
         "parameters": [],
         "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsCreateRequestBody"
+          "$ref": "#/components/requestBodies/StudentsCreate"
         },
         "responses": {
           "201": {
             "description": "Response for Students Create operation - returns the created Students",
-            "$ref": "#/components/responses/StudentsCreate201ResponseBody"
+            "$ref": "#/components/responses/StudentsCreate"
           },
           "400": {
             "description": "Bad Request error for Students Create operation - request contains invalid parameters",
@@ -158,7 +158,7 @@
         "responses": {
           "200": {
             "description": "Response for Students Get operation - returns the requested Students",
-            "$ref": "#/components/responses/StudentsGet200ResponseBody"
+            "$ref": "#/components/responses/StudentsGet"
           },
           "400": {
             "description": "Bad Request error for Students Get operation - request contains invalid parameters",
@@ -263,12 +263,12 @@
           }
         ],
         "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsUpdateRequestBody"
+          "$ref": "#/components/requestBodies/StudentsUpdate"
         },
         "responses": {
           "200": {
             "description": "Response for Students Update operation - returns the updated Students",
-            "$ref": "#/components/responses/StudentsUpdate200ResponseBody"
+            "$ref": "#/components/responses/StudentsUpdate"
           },
           "400": {
             "description": "Bad Request error for Students Update operation - request contains invalid parameters",
@@ -336,12 +336,12 @@
           }
         ],
         "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsSearchRequestBody"
+          "$ref": "#/components/requestBodies/StudentsSearch"
         },
         "responses": {
           "200": {
             "description": "Response for Students Search operation - returns filtered Students results",
-            "$ref": "#/components/responses/StudentsSearch200ResponseBody"
+            "$ref": "#/components/responses/StudentsSearch"
           },
           "400": {
             "description": "Bad Request error for Students Search operation - request contains invalid parameters",
@@ -406,12 +406,12 @@
           }
         ],
         "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsBulkImportRequestBody"
+          "$ref": "#/components/requestBodies/StudentsBulkImport"
         },
         "responses": {
           "200": {
             "description": "Successfully imported students",
-            "$ref": "#/components/responses/StudentsBulkImport200ResponseBody"
+            "$ref": "#/components/responses/StudentsBulkImport"
           },
           "400": {
             "description": "Bad Request error for Students BulkImport operation - request contains invalid parameters",
@@ -469,12 +469,12 @@
           }
         ],
         "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsGenerateReportRequestBody"
+          "$ref": "#/components/requestBodies/StudentsGenerateReport"
         },
         "responses": {
           "202": {
             "description": "Successfully queued report generation",
-            "$ref": "#/components/responses/StudentsGenerateReport202ResponseBody"
+            "$ref": "#/components/responses/StudentsGenerateReport"
           },
           "400": {
             "description": "Bad Request error for Students GenerateReport operation - request contains invalid parameters",
@@ -562,12 +562,12 @@
           }
         ],
         "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsAdvancedSearchRequestBody"
+          "$ref": "#/components/requestBodies/StudentsAdvancedSearch"
         },
         "responses": {
           "200": {
             "description": "Successfully performed advanced search",
-            "$ref": "#/components/responses/StudentsAdvancedSearch200ResponseBody"
+            "$ref": "#/components/responses/StudentsAdvancedSearch"
           },
           "400": {
             "description": "Bad Request error for Students AdvancedSearch operation - request contains invalid parameters",
@@ -1997,7 +1997,7 @@
       }
     },
     "responses": {
-      "StudentsBulkImport200ResponseBody": {
+      "StudentsBulkImport": {
         "description": "Successfully imported students",
         "content": {
           "application/json": {
@@ -2054,7 +2054,7 @@
           }
         }
       },
-      "StudentsGenerateReport202ResponseBody": {
+      "StudentsGenerateReport": {
         "description": "Successfully queued report generation",
         "content": {
           "application/json": {
@@ -2111,7 +2111,7 @@
           }
         }
       },
-      "StudentsAdvancedSearch200ResponseBody": {
+      "StudentsAdvancedSearch": {
         "description": "Successfully performed advanced search",
         "content": {
           "application/json": {
@@ -2172,7 +2172,7 @@
           }
         }
       },
-      "StudentsCreate201ResponseBody": {
+      "StudentsCreate": {
         "description": "Response for Students Create operation - returns the created Students",
         "content": {
           "application/json": {
@@ -2216,7 +2216,7 @@
           }
         }
       },
-      "StudentsUpdate200ResponseBody": {
+      "StudentsUpdate": {
         "description": "Response for Students Update operation - returns the updated Students",
         "content": {
           "application/json": {
@@ -2260,7 +2260,7 @@
           }
         }
       },
-      "StudentsGet200ResponseBody": {
+      "StudentsGet": {
         "description": "Response for Students Get operation - returns the requested Students",
         "content": {
           "application/json": {
@@ -2274,7 +2274,7 @@
           }
         }
       },
-      "StudentsList200ResponseBody": {
+      "StudentsList": {
         "description": "Response for Students List operation - returns a paginated list of Students",
         "content": {
           "application/json": {
@@ -2305,7 +2305,7 @@
           }
         }
       },
-      "StudentsSearch200ResponseBody": {
+      "StudentsSearch": {
         "description": "Response for Students Search operation - returns filtered Students results",
         "content": {
           "application/json": {
@@ -2522,7 +2522,7 @@
       }
     },
     "requestBodies": {
-      "StudentsBulkImportRequestBody": {
+      "StudentsBulkImport": {
         "description": "Request body",
         "content": {
           "application/json": {
@@ -2551,7 +2551,7 @@
         },
         "required": false
       },
-      "StudentsGenerateReportRequestBody": {
+      "StudentsGenerateReport": {
         "description": "Request body",
         "content": {
           "application/json": {
@@ -2599,7 +2599,7 @@
         },
         "required": false
       },
-      "StudentsAdvancedSearchRequestBody": {
+      "StudentsAdvancedSearch": {
         "description": "Request body",
         "content": {
           "application/json": {
@@ -2655,7 +2655,7 @@
         },
         "required": false
       },
-      "StudentsCreateRequestBody": {
+      "StudentsCreate": {
         "description": "Request body",
         "content": {
           "application/json": {
@@ -2726,7 +2726,7 @@
         },
         "required": true
       },
-      "StudentsUpdateRequestBody": {
+      "StudentsUpdate": {
         "description": "Request body",
         "content": {
           "application/json": {
@@ -2792,7 +2792,7 @@
         },
         "required": true
       },
-      "StudentsSearchRequestBody": {
+      "StudentsSearch": {
         "description": "Request body",
         "content": {
           "application/json": {
