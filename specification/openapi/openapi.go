@@ -906,8 +906,11 @@ func (g *Generator) createResponseBodyName(resourceName, endpointName string, st
 
 // createComponentResponse creates a v3.Response for the components section.
 func (g *Generator) createComponentResponse(response specification.EndpointResponse, service *specification.Service) *v3.Response {
-	componentResponse := &v3.Response{
-		Description: response.Description,
+	componentResponse := &v3.Response{}
+
+	// Only include description if it's not empty to avoid empty string descriptions
+	if response.Description != "" {
+		componentResponse.Description = response.Description
 	}
 
 	// Add response content if present
@@ -1020,11 +1023,15 @@ func (g *Generator) createResponseReference(response specification.EndpointRespo
 		extensions := orderedmap.New[string, *yaml.Node]()
 		extensions.Set("$ref", &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: refString})
 
-		// Return a response that serializes as a reference with description
-		return &v3.Response{
-			Description: response.Description,
-			Extensions:  extensions,
+		// Return a response that serializes as a reference
+		// Only include description if it's not empty to avoid empty string descriptions
+		result := &v3.Response{
+			Extensions: extensions,
 		}
+		if response.Description != "" {
+			result.Description = response.Description
+		}
+		return result
 	}
 
 	// For responses without content, return the inline response
@@ -1103,8 +1110,11 @@ func (g *Generator) addErrorResponseBodiesToComponents(components *v3.Components
 
 // createResponse creates a v3.Response from an endpoint response using native types.
 func (g *Generator) createResponse(response specification.EndpointResponse, service *specification.Service) *v3.Response {
-	openAPIResponse := &v3.Response{
-		Description: response.Description,
+	openAPIResponse := &v3.Response{}
+
+	// Only include description if it's not empty to avoid empty string descriptions
+	if response.Description != "" {
+		openAPIResponse.Description = response.Description
 	}
 
 	// Add response content if present
@@ -1313,6 +1323,7 @@ func (g *Generator) createErrorResponseReference(statusCode string, hasBodyParam
 	extensions.Set("$ref", &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: refString})
 
 	// Return a response that serializes as a reference
+	// Description is omitted since it's defined in the component
 	return &v3.Response{
 		Extensions: extensions,
 	}
@@ -1329,6 +1340,7 @@ func (g *Generator) createEndpointSpecificErrorResponseReference(statusCode stri
 	extensions.Set("$ref", &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: refString})
 
 	// Return a response that serializes as a reference
+	// Description is omitted since it's defined in the component
 	return &v3.Response{
 		Extensions: extensions,
 	}
