@@ -12,222 +12,6 @@
     }
   ],
   "paths": {
-    "/students/advanced-search": {
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Advanced Student Search",
-        "description": "Search students with advanced filtering and sorting options",
-        "operationId": "StudentsAdvancedSearch",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "Maximum number of results to return",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 50
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "Number of results to skip",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 0
-            }
-          },
-          {
-            "name": "sortBy",
-            "in": "query",
-            "description": "Field to sort by",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "lastName"
-            }
-          },
-          {
-            "name": "sortOrder",
-            "in": "query",
-            "description": "Sort order (asc, desc)",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "asc"
-            }
-          }
-        ],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsAdvancedSearchRequestBody"
-        },
-        "responses": {
-          "200": {
-            "description": "Successfully performed advanced search",
-            "$ref": "#/components/responses/StudentsAdvancedSearch200ResponseBody"
-          },
-          "400": {
-            "description": "",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "",
-            "$ref": "#/components/responses/StudentsAdvancedSearch422ResponseBody"
-          },
-          "429": {
-            "description": "",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        }
-      }
-    },
-    "/students": {
-      "get": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "List all Students",
-        "description": "Returns a paginated list of all `Students` in your organization.",
-        "operationId": "StudentsList",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of Students to return (default: 50)",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 50
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "The number of Students to skip before starting to return results (default: 0)",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 0
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved the list of Students",
-            "$ref": "#/components/responses/StudentsList200ResponseBody"
-          },
-          "400": {
-            "description": "",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "429": {
-            "description": "",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-pagination": {
-          "strategy": "offsetLimit",
-          "offsetParam": "offset",
-          "limitParam": "limit",
-          "totalField": "pagination.total",
-          "dataField": "data"
-        }
-      },
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Create Students",
-        "description": "Create a new Students",
-        "operationId": "StudentsCreate",
-        "parameters": [],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsCreateRequestBody"
-        },
-        "responses": {
-          "201": {
-            "description": "Successfully created the Students",
-            "$ref": "#/components/responses/StudentsCreate201ResponseBody"
-          },
-          "400": {
-            "description": "",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "",
-            "$ref": "#/components/responses/StudentsCreate422ResponseBody"
-          },
-          "429": {
-            "description": "",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        }
-      }
-    },
     "/students/{id}": {
       "get": {
         "tags": [
@@ -250,7 +34,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successfully retrieved the Students",
+            "description": "Response for Students Get operation - returns the requested Students",
             "$ref": "#/components/responses/StudentsGet200ResponseBody"
           },
           "400": {
@@ -304,7 +88,7 @@
         ],
         "responses": {
           "204": {
-            "description": "Successfully deleted the Students"
+            "description": "Response for Students Delete operation - confirms successful deletion"
           },
           "400": {
             "description": "",
@@ -360,7 +144,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successfully updated the Students",
+            "description": "Response for Students Update operation - returns the updated Students",
             "$ref": "#/components/responses/StudentsUpdate200ResponseBody"
           },
           "400": {
@@ -433,7 +217,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successfully searched for Students",
+            "description": "Response for Students Search operation - returns filtered Students results",
             "$ref": "#/components/responses/StudentsSearch200ResponseBody"
           },
           "400": {
@@ -592,6 +376,222 @@
           "422": {
             "description": "",
             "$ref": "#/components/responses/StudentsGenerateReport422ResponseBody"
+          },
+          "429": {
+            "description": "",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        }
+      }
+    },
+    "/students/advanced-search": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Advanced Student Search",
+        "description": "Search students with advanced filtering and sorting options",
+        "operationId": "StudentsAdvancedSearch",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of results to return",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of results to skip",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "description": "Field to sort by",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "lastName"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "description": "Sort order (asc, desc)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "asc"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsAdvancedSearchRequestBody"
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully performed advanced search",
+            "$ref": "#/components/responses/StudentsAdvancedSearch200ResponseBody"
+          },
+          "400": {
+            "description": "",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "",
+            "$ref": "#/components/responses/StudentsAdvancedSearch422ResponseBody"
+          },
+          "429": {
+            "description": "",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        }
+      }
+    },
+    "/students": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "List all Students",
+        "description": "Returns a paginated list of all `Students` in your organization.",
+        "operationId": "StudentsList",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of Students to return (default: 50)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "The number of Students to skip before starting to return results (default: 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for Students List operation - returns a paginated list of Students",
+            "$ref": "#/components/responses/StudentsList200ResponseBody"
+          },
+          "400": {
+            "description": "",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "429": {
+            "description": "",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-pagination": {
+          "strategy": "offsetLimit",
+          "offsetParam": "offset",
+          "limitParam": "limit",
+          "totalField": "pagination.total",
+          "dataField": "data"
+        }
+      },
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Create Students",
+        "description": "Create a new Students",
+        "operationId": "StudentsCreate",
+        "parameters": [],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsCreateRequestBody"
+        },
+        "responses": {
+          "201": {
+            "description": "Response for Students Create operation - returns the created Students",
+            "$ref": "#/components/responses/StudentsCreate201ResponseBody"
+          },
+          "400": {
+            "description": "",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "",
+            "$ref": "#/components/responses/StudentsCreate422ResponseBody"
           },
           "429": {
             "description": "",
@@ -920,30 +920,6 @@
         ],
         "description": "Student management resource"
       },
-      "ContactRequestError": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Email address",
-            "nullable": true
-          },
-          "phone": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Phone number",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Contact"
-      },
       "AddressRequestError": {
         "type": "object",
         "properties": {
@@ -985,6 +961,30 @@
           }
         },
         "description": "Request error object for Address"
+      },
+      "ContactRequestError": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Email address",
+            "nullable": true
+          },
+          "phone": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Phone number",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Contact"
       },
       "StudentRequestError": {
         "type": "object",
@@ -2173,7 +2173,7 @@
         }
       },
       "StudentsCreate201ResponseBody": {
-        "description": "Successfully created the Students",
+        "description": "Response for Students Create operation - returns the created Students",
         "content": {
           "application/json": {
             "schema": {
@@ -2217,7 +2217,7 @@
         }
       },
       "StudentsUpdate200ResponseBody": {
-        "description": "Successfully updated the Students",
+        "description": "Response for Students Update operation - returns the updated Students",
         "content": {
           "application/json": {
             "schema": {
@@ -2261,7 +2261,7 @@
         }
       },
       "StudentsGet200ResponseBody": {
-        "description": "Successfully retrieved the Students",
+        "description": "Response for Students Get operation - returns the requested Students",
         "content": {
           "application/json": {
             "schema": {
@@ -2275,7 +2275,7 @@
         }
       },
       "StudentsList200ResponseBody": {
-        "description": "Successfully retrieved the list of Students",
+        "description": "Response for Students List operation - returns a paginated list of Students",
         "content": {
           "application/json": {
             "schema": {
@@ -2306,7 +2306,7 @@
         }
       },
       "StudentsSearch200ResponseBody": {
-        "description": "Successfully searched for Students",
+        "description": "Response for Students Search operation - returns filtered Students results",
         "content": {
           "application/json": {
             "schema": {
