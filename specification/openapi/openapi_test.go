@@ -2050,6 +2050,124 @@ func TestGenerator_GenerateFromService_ContactDetails(t *testing.T) {
 	})
 }
 
+// TestGenerator_GenerateFromService_WithLicense tests OpenAPI document generation with license information.
+func TestGenerator_GenerateFromService_WithLicense(t *testing.T) {
+	// Test with complete license information
+	t.Run("complete license information is included", func(t *testing.T) {
+		generator := newGenerator()
+		service := &specification.Service{
+			Name:    "TestService",
+			Version: "1.0.0",
+			License: &specification.ServiceLicense{
+				Name:       "MIT License",
+				URL:        "https://opensource.org/licenses/MIT",
+				Identifier: "MIT",
+			},
+		}
+
+		document, err := generator.GenerateFromService(service)
+		assert.NoError(t, err, "Should generate document successfully")
+		assert.NotNil(t, document, "Document should not be nil")
+		assert.NotNil(t, document.Info, "Document Info should not be nil")
+		assert.NotNil(t, document.Info.License, "Document Info License should not be nil")
+
+		// Check license details
+		assert.Equal(t, "MIT License", document.Info.License.Name, "License name should match service license")
+		assert.Equal(t, "https://opensource.org/licenses/MIT", document.Info.License.URL, "License URL should match service license")
+		assert.Equal(t, "MIT", document.Info.License.Identifier, "License identifier should match service license")
+
+		// Generate JSON to verify structure
+		jsonBytes, err := generator.ToJSON(document)
+		assert.NoError(t, err, "Should convert to JSON successfully")
+		jsonString := string(jsonBytes)
+
+		assert.Contains(t, jsonString, "\"license\"", "JSON should contain license field")
+		assert.Contains(t, jsonString, "\"MIT License\"", "JSON should contain license name")
+		assert.Contains(t, jsonString, "\"https://opensource.org/licenses/MIT\"", "JSON should contain license URL")
+		assert.Contains(t, jsonString, "\"MIT\"", "JSON should contain license identifier")
+	})
+
+	// Test with partial license information (name only)
+	t.Run("partial license information with name only", func(t *testing.T) {
+		generator := newGenerator()
+		service := &specification.Service{
+			Name:    "TestService",
+			Version: "1.0.0",
+			License: &specification.ServiceLicense{
+				Name: "Apache License 2.0",
+			},
+		}
+
+		document, err := generator.GenerateFromService(service)
+		assert.NoError(t, err, "Should generate document successfully")
+		assert.NotNil(t, document, "Document should not be nil")
+		assert.NotNil(t, document.Info.License, "Document Info License should not be nil")
+
+		// Check provided license details
+		assert.Equal(t, "Apache License 2.0", document.Info.License.Name, "License name should match service license")
+		assert.Equal(t, "", document.Info.License.URL, "License URL should be empty when not provided")
+		assert.Equal(t, "", document.Info.License.Identifier, "License identifier should be empty when not provided")
+
+		// Generate JSON to verify structure
+		jsonBytes, err := generator.ToJSON(document)
+		assert.NoError(t, err, "Should convert to JSON successfully")
+		jsonString := string(jsonBytes)
+
+		assert.Contains(t, jsonString, "\"license\"", "JSON should contain license field")
+		assert.Contains(t, jsonString, "\"Apache License 2.0\"", "JSON should contain license name")
+	})
+
+	// Test with nil license
+	t.Run("nil license is not included", func(t *testing.T) {
+		generator := newGenerator()
+		service := &specification.Service{
+			Name:    "TestService",
+			Version: "1.0.0",
+			License: nil,
+		}
+
+		document, err := generator.GenerateFromService(service)
+		assert.NoError(t, err, "Should generate document successfully")
+		assert.NotNil(t, document, "Document should not be nil")
+		assert.NotNil(t, document.Info, "Document Info should not be nil")
+		assert.Nil(t, document.Info.License, "Document Info License should be nil when not provided")
+
+		// Generate JSON to verify structure
+		jsonBytes, err := generator.ToJSON(document)
+		assert.NoError(t, err, "Should convert to JSON successfully")
+		jsonString := string(jsonBytes)
+
+		assert.NotContains(t, jsonString, "\"license\"", "JSON should not contain license field when not provided")
+	})
+
+	// Test with empty license name
+	t.Run("empty license name is not included", func(t *testing.T) {
+		generator := newGenerator()
+		service := &specification.Service{
+			Name:    "TestService",
+			Version: "1.0.0",
+			License: &specification.ServiceLicense{
+				Name:       "",
+				URL:        "https://example.com/license",
+				Identifier: "EXAMPLE",
+			},
+		}
+
+		document, err := generator.GenerateFromService(service)
+		assert.NoError(t, err, "Should generate document successfully")
+		assert.NotNil(t, document, "Document should not be nil")
+		assert.NotNil(t, document.Info, "Document Info should not be nil")
+		assert.Nil(t, document.Info.License, "Document Info License should be nil when name is empty")
+
+		// Generate JSON to verify structure
+		jsonBytes, err := generator.ToJSON(document)
+		assert.NoError(t, err, "Should convert to JSON successfully")
+		jsonString := string(jsonBytes)
+
+		assert.NotContains(t, jsonString, "\"license\"", "JSON should not contain license field when name is empty")
+	})
+}
+
 // TestParameterDescriptionNotDuplicated verifies that parameter descriptions are not duplicated in schema objects
 func TestParameterDescriptionNotDuplicated(t *testing.T) {
 	generator := newGenerator()

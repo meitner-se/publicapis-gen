@@ -415,6 +415,20 @@ func (g *Generator) buildV3Document(service *specification.Service) *v3.Document
 		}
 	}
 
+	// Add license information if available in the service
+	if service.License != nil && service.License.Name != "" {
+		license := &base.License{
+			Name: service.License.Name,
+		}
+		if service.License.URL != "" {
+			license.URL = service.License.URL
+		}
+		if service.License.Identifier != "" {
+			license.Identifier = service.License.Identifier
+		}
+		info.License = license
+	}
+
 	// Create Document
 	document := &v3.Document{
 		Version: g.Version,

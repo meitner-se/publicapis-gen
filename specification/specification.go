@@ -355,6 +355,18 @@ type ServiceContact struct {
 	Email string `json:"email,omitempty"`
 }
 
+// ServiceLicense represents the license information for the API service.
+type ServiceLicense struct {
+	// Name of the license used for the API (required)
+	Name string `json:"name"`
+
+	// URL pointing to the license used for the API
+	URL string `json:"url,omitempty"`
+
+	// SPDX license identifier for the license used for the API
+	Identifier string `json:"identifier,omitempty"`
+}
+
 // RetryBackoffConfiguration defines the backoff behavior for retry attempts.
 type RetryBackoffConfiguration struct {
 	// InitialInterval is the initial interval between retries in milliseconds
@@ -401,6 +413,9 @@ type Service struct {
 
 	// Contact information for the service
 	Contact *ServiceContact `json:"contact,omitempty"`
+
+	// License information for the service
+	License *ServiceLicense `json:"license,omitempty"`
 
 	// Servers that are part of the service
 	Servers []ServiceServer `json:"servers,omitempty"`
@@ -586,6 +601,7 @@ func ApplyOverlay(input *Service) *Service {
 		Name:      input.Name,
 		Version:   input.Version,
 		Contact:   input.Contact,                               // Copy contact information
+		License:   input.License,                               // Copy license information
 		Servers:   append([]ServiceServer{}, input.Servers...), // Copy servers slice
 		Retry:     input.Retry,                                 // Copy retry configuration
 		Timeout:   input.Timeout,                               // Copy timeout configuration
@@ -1199,6 +1215,7 @@ func ApplyFilterOverlay(input *Service) *Service {
 		Name:      input.Name,
 		Version:   input.Version,
 		Contact:   input.Contact,                               // Copy contact information
+		License:   input.License,                               // Copy license information
 		Servers:   append([]ServiceServer{}, input.Servers...), // Copy servers slice
 		Retry:     input.Retry,                                 // Copy retry configuration
 		Timeout:   input.Timeout,                               // Copy timeout configuration
