@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/aarondl/strmangle"
-	"github.com/goccy/go-yaml"
+	yaml "github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/ast"
 	"github.com/goccy/go-yaml/parser"
 	"github.com/goccy/go-yaml/token"
@@ -1653,18 +1653,6 @@ func createLimitParam() Field {
 	}
 }
 
-// createLimitParamForResource creates a limit parameter with resource-specific description.
-func createLimitParamForResource(resource Resource) Field {
-	pluralResourceName := resource.GetPluralName()
-	resourceSpecificDescription := fmt.Sprintf("The maximum number of %s to return (default: 50)", pluralResourceName)
-	return Field{
-		Name:        listLimitParamName,
-		Description: resourceSpecificDescription,
-		Type:        FieldTypeInt,
-		Default:     listLimitDefaultValue,
-	}
-}
-
 // createListLimitParamForResource creates a limit parameter with resource-specific description for List operations.
 func createListLimitParamForResource(resource Resource) Field {
 	pluralResourceName := resource.GetPluralName()
@@ -1694,18 +1682,6 @@ func createOffsetParam() Field {
 	return Field{
 		Name:        listOffsetParamName,
 		Description: listOffsetParamDesc,
-		Type:        FieldTypeInt,
-		Default:     listOffsetDefaultValue,
-	}
-}
-
-// createOffsetParamForResource creates an offset parameter with resource-specific description.
-func createOffsetParamForResource(resource Resource) Field {
-	pluralResourceName := resource.GetPluralName()
-	resourceSpecificDescription := fmt.Sprintf("The number of %s to skip before starting to return results (default: 0)", pluralResourceName)
-	return Field{
-		Name:        listOffsetParamName,
-		Description: resourceSpecificDescription,
 		Type:        FieldTypeInt,
 		Default:     listOffsetDefaultValue,
 	}

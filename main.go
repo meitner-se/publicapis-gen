@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/goccy/go-yaml"
+	yaml "github.com/goccy/go-yaml"
 	"github.com/meitner-se/publicapis-gen/specification"
 	"github.com/meitner-se/publicapis-gen/specification/openapi"
 	"github.com/meitner-se/publicapis-gen/specification/schema"
