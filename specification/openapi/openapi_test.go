@@ -2014,6 +2014,14 @@ func TestResponseBodyExamples(t *testing.T) {
 	// Verify boolean types are unquoted in response examples
 	assert.Contains(t, jsonString, "\"active\": true", "Should contain boolean field example without quotes in response")
 
+	// Verify array fields are properly wrapped in arrays
+	assert.Contains(t, jsonString, "\"users\": [", "Array field should start with opening bracket")
+	assert.Contains(t, jsonString, "]", "Array field should end with closing bracket")
+
+	// Verify that array contains object structure (not just primitive)
+	jsonContainsArrayWithObject := strings.Contains(jsonString, "\"users\": [{") || strings.Contains(jsonString, "\"users\": [\n")
+	assert.True(t, jsonContainsArrayWithObject, "Array field should contain properly structured objects")
+
 	t.Logf("Generated OpenAPI JSON with response body examples:\n%s", jsonString)
 }
 

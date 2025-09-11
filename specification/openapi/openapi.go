@@ -952,6 +952,15 @@ func (g *Generator) generateObjectExampleFromFields(fields []specification.Field
 			}
 		}
 
+		// Handle array modifier - wrap the value in an array if needed
+		if valueNode != nil && field.IsArray() {
+			arrayNode := &yaml.Node{
+				Kind: yaml.SequenceNode,
+			}
+			arrayNode.Content = append(arrayNode.Content, valueNode)
+			valueNode = arrayNode
+		}
+
 		// Only add field to example if we have a value
 		if valueNode != nil {
 			// Add field name
