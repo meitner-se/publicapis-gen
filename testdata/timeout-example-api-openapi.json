@@ -18,22 +18,22 @@
           {
             "name": "limit",
             "in": "query",
-            "description": "The maximum number of Users to return (default: 50)",
+            "description": "The maximum number of Users to return (default: 50) when listing Users",
             "required": false,
             "schema": {
               "type": "integer",
-              "description": "The maximum number of Users to return (default: 50)",
+              "description": "The maximum number of Users to return (default: 50) when listing Users",
               "default": 50
             }
           },
           {
             "name": "offset",
             "in": "query",
-            "description": "The number of Users to skip before starting to return results (default: 0)",
+            "description": "The number of Users to skip before starting to return results (default: 0) when listing Users",
             "required": false,
             "schema": {
               "type": "integer",
-              "description": "The number of Users to skip before starting to return results (default: 0)",
+              "description": "The number of Users to skip before starting to return results (default: 0) when listing Users",
               "default": 0
             }
           }
@@ -787,22 +787,22 @@
           {
             "name": "limit",
             "in": "query",
-            "description": "The maximum number of Users to return (default: 50)",
+            "description": "The maximum number of Users to return (default: 50) when searching Users",
             "required": false,
             "schema": {
               "type": "integer",
-              "description": "The maximum number of Users to return (default: 50)",
+              "description": "The maximum number of Users to return (default: 50) when searching Users",
               "default": 50
             }
           },
           {
             "name": "offset",
             "in": "query",
-            "description": "The number of Users to skip before starting to return results (default: 0)",
+            "description": "The number of Users to skip before starting to return results (default: 0) when searching Users",
             "required": false,
             "schema": {
               "type": "integer",
-              "description": "The number of Users to skip before starting to return results (default: 0)",
+              "description": "The number of Users to skip before starting to return results (default: 0) when searching Users",
               "default": 0
             }
           }
