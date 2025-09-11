@@ -1907,6 +1907,60 @@ func TestResponseBodyExamples(t *testing.T) {
 						Type:        "Status",
 						Example:     "Active",
 					},
+					{
+						Name:        "meta",
+						Description: "Metadata information",
+						Type:        "Meta",
+					},
+				},
+			},
+			{
+				Name:        "Meta",
+				Description: "Meta contains information about the creation and modification of a resource for auditing purposes",
+				Fields: []specification.Field{
+					{
+						Name:        "createdAt",
+						Description: "Timestamp when the resource was created",
+						Type:        specification.FieldTypeTimestamp,
+					},
+					{
+						Name:        "createdBy",
+						Description: "User who created the resource",
+						Type:        specification.FieldTypeUUID,
+						Modifiers:   []string{specification.ModifierNullable},
+					},
+					{
+						Name:        "updatedAt",
+						Description: "Timestamp when the resource was last updated",
+						Type:        specification.FieldTypeTimestamp,
+					},
+					{
+						Name:        "updatedBy",
+						Description: "User who last updated the resource",
+						Type:        specification.FieldTypeUUID,
+						Modifiers:   []string{specification.ModifierNullable},
+					},
+				},
+			},
+			{
+				Name:        "Pagination",
+				Description: "Pagination parameters for controlling result sets in list operations",
+				Fields: []specification.Field{
+					{
+						Name:        "offset",
+						Description: "Number of items to skip from the beginning of the result set",
+						Type:        specification.FieldTypeInt,
+					},
+					{
+						Name:        "limit",
+						Description: "Maximum number of items to return in the result set",
+						Type:        specification.FieldTypeInt,
+					},
+					{
+						Name:        "total",
+						Description: "Total number of items available for pagination",
+						Type:        specification.FieldTypeInt,
+					},
 				},
 			},
 		},
@@ -1971,16 +2025,15 @@ func TestResponseBodyExamples(t *testing.T) {
 							ContentType: "application/json",
 							BodyFields: []specification.Field{
 								{
-									Name:        "users",
+									Name:        "data",
 									Description: "List of users",
 									Type:        "User",
 									Modifiers:   []string{specification.ModifierArray},
 								},
 								{
-									Name:        "count",
-									Description: "Total count of users",
-									Type:        specification.FieldTypeInt,
-									Example:     "42",
+									Name:        "pagination",
+									Description: "Pagination information",
+									Type:        "Pagination",
 								},
 							},
 						},
@@ -2009,18 +2062,31 @@ func TestResponseBodyExamples(t *testing.T) {
 
 	// Verify integer types are unquoted in response examples
 	assert.Contains(t, jsonString, "\"age\": 30", "Should contain integer field example without quotes in response")
-	assert.Contains(t, jsonString, "\"count\": 42", "Should contain integer field example without quotes in response")
 
 	// Verify boolean types are unquoted in response examples
 	assert.Contains(t, jsonString, "\"active\": true", "Should contain boolean field example without quotes in response")
 
 	// Verify array fields are properly wrapped in arrays
-	assert.Contains(t, jsonString, "\"users\": [", "Array field should start with opening bracket")
+	assert.Contains(t, jsonString, "\"data\": [", "Array field should start with opening bracket")
 	assert.Contains(t, jsonString, "]", "Array field should end with closing bracket")
 
 	// Verify that array contains object structure (not just primitive)
-	jsonContainsArrayWithObject := strings.Contains(jsonString, "\"users\": [{") || strings.Contains(jsonString, "\"users\": [\n")
+	jsonContainsArrayWithObject := strings.Contains(jsonString, "\"data\": [{") || strings.Contains(jsonString, "\"data\": [\n")
 	assert.True(t, jsonContainsArrayWithObject, "Array field should contain properly structured objects")
+
+	// Verify standard entity fields are present with default examples
+	assert.Contains(t, jsonString, "\"createdAt\": \"2024-01-15T10:30:00Z\"", "Should contain default createdAt timestamp")
+	assert.Contains(t, jsonString, "\"updatedAt\": \"2024-01-15T14:45:00Z\"", "Should contain default updatedAt timestamp")
+	assert.Contains(t, jsonString, "\"createdBy\": \"987fcdeb-51a2-43d1-b567-123456789abc\"", "Should contain default createdBy UUID")
+	assert.Contains(t, jsonString, "\"updatedBy\": \"987fcdeb-51a2-43d1-b567-123456789abc\"", "Should contain default updatedBy UUID")
+
+	// Verify pagination fields are present with default examples
+	assert.Contains(t, jsonString, "\"offset\": 0", "Should contain default pagination offset")
+	assert.Contains(t, jsonString, "\"limit\": 50", "Should contain default pagination limit")
+	assert.Contains(t, jsonString, "\"total\": 100", "Should contain default pagination total")
+
+	// Verify meta object is nested within user objects
+	assert.Contains(t, jsonString, "\"meta\":", "User objects should contain meta field")
 
 	t.Logf("Generated OpenAPI JSON with response body examples:\n%s", jsonString)
 }
