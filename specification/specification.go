@@ -334,50 +334,13 @@ const (
 	extJSON = ".json"
 )
 
-// Security scheme types
+// Security constants
 const (
-	SecurityTypeMutualTLS = "mutualTLS"
-	SecurityTypeHTTP      = "http"
-	SecurityTypeAPIKey    = "apiKey"
-)
-
-// Security scheme HTTP schemes
-const (
-	SecuritySchemeBearer = "bearer"
-)
-
-// Security scheme bearer formats
-const (
-	SecurityBearerFormatJWT = "JWT"
-)
-
-// Security scheme locations for API key
-const (
-	SecurityLocationHeader = "header"
-	SecurityLocationQuery  = "query"
-	SecurityLocationCookie = "cookie"
-)
-
-// Standard security scheme names
-const (
-	SecuritySchemeMTLSName      = "mtls"
-	SecuritySchemeBearerName    = "bearerAuth"
-	SecuritySchemeClientIDName  = "clientId"
-	SecuritySchemeClientSecName = "clientSecret"
-)
-
-// Standard API key header names
-const (
-	HeaderXClientID     = "X-Client-Id"
-	HeaderXClientSecret = "X-Client-Secret"
-)
-
-// Standard security descriptions
-const (
-	SecurityDescMTLS         = "Client TLS certificate required."
-	SecurityDescBearer       = "Bearer access token in Authorization header."
-	SecurityDescClientID     = "Your client identifier."
-	SecurityDescClientSecret = "Your client secret."
+	securityTypeMutualTLS  = "mutualTLS"
+	securityTypeHTTP       = "http"
+	securityTypeAPIKey     = "apiKey"
+	securitySchemeBearer   = "bearer"
+	securityLocationHeader = "header"
 )
 
 // ServiceServer represents a server in the API service.
@@ -418,37 +381,16 @@ type ServiceLicense struct {
 
 // SecurityScheme represents a security scheme definition.
 type SecurityScheme struct {
-	// Type of the security scheme (mutualTLS, http, apiKey)
-	Type string `json:"type"`
-
-	// Description of the security scheme
-	Description string `json:"description,omitempty"`
-
-	// Scheme for HTTP-based security (e.g., "bearer")
-	Scheme string `json:"scheme,omitempty"`
-
-	// BearerFormat for HTTP bearer token authentication
+	Type         string `json:"type"`
+	Description  string `json:"description,omitempty"`
+	Scheme       string `json:"scheme,omitempty"`
 	BearerFormat string `json:"bearerFormat,omitempty"`
-
-	// Name of the header, query or cookie parameter for apiKey
-	Name string `json:"name,omitempty"`
-
-	// Location of the API key (header, query, cookie)
-	In string `json:"in,omitempty"`
+	Name         string `json:"name,omitempty"`
+	In           string `json:"in,omitempty"`
 }
 
-// SecurityRequirement represents which security schemes apply to a particular operation.
-// The key is the security scheme name and the value is a list of scope names (empty for non-OAuth2/OpenID Connect schemes).
-type SecurityRequirement map[string][]string
-
-// ServiceSecurity represents the security configuration for the service.
-type ServiceSecurity struct {
-	// SecuritySchemes defines the security schemes available
-	SecuritySchemes map[string]SecurityScheme `json:"securitySchemes,omitempty"`
-
-	// Security defines which security schemes are required by default
-	Security []SecurityRequirement `json:"security,omitempty"`
-}
+// SecurityRequirement represents scheme names that must be satisfied together.
+type SecurityRequirement []string
 
 // RetryBackoffConfiguration defines the backoff behavior for retry attempts.
 type RetryBackoffConfiguration struct {
@@ -503,8 +445,11 @@ type Service struct {
 	// Servers that are part of the service
 	Servers []ServiceServer `json:"servers,omitempty"`
 
-	// Security configuration for the service
-	Security *ServiceSecurity `json:"security,omitempty"`
+	// SecuritySchemes defines available security schemes
+	SecuritySchemes map[string]SecurityScheme `json:"securitySchemes,omitempty"`
+
+	// Security defines global security requirements (OR logic between requirements)
+	Security []SecurityRequirement `json:"security,omitempty"`
 
 	// Retry configuration for the service
 	Retry *RetryConfiguration `json:"retry,omitempty"`
@@ -684,17 +629,18 @@ func ApplyOverlay(input *Service) *Service {
 
 	// Create a deep copy of the input service
 	result := &Service{
-		Name:      input.Name,
-		Version:   input.Version,
-		Contact:   input.Contact,                               // Copy contact information
-		License:   input.License,                               // Copy license information
-		Servers:   append([]ServiceServer{}, input.Servers...), // Copy servers slice
-		Security:  input.Security,                              // Copy security configuration
-		Retry:     input.Retry,                                 // Copy retry configuration
-		Timeout:   input.Timeout,                               // Copy timeout configuration
-		Enums:     make([]Enum, 0, len(input.Enums)+2),         // +2 for ErrorCode and ErrorFieldCode enums
-		Objects:   make([]Object, 0, len(input.Objects)+3),     // +3 for Error, ErrorField, and Pagination objects
-		Resources: make([]Resource, len(input.Resources)),
+		Name:            input.Name,
+		Version:         input.Version,
+		Contact:         input.Contact,                               // Copy contact information
+		License:         input.License,                               // Copy license information
+		Servers:         append([]ServiceServer{}, input.Servers...), // Copy servers slice
+		SecuritySchemes: input.SecuritySchemes,                       // Copy security schemes
+		Security:        input.Security,                              // Copy security requirements
+		Retry:           input.Retry,                                 // Copy retry configuration
+		Timeout:         input.Timeout,                               // Copy timeout configuration
+		Enums:           make([]Enum, 0, len(input.Enums)+2),         // +2 for ErrorCode and ErrorFieldCode enums
+		Objects:         make([]Object, 0, len(input.Objects)+3),     // +3 for Error, ErrorField, and Pagination objects
+		Resources:       make([]Resource, len(input.Resources)),
 	}
 
 	// Add default enums and objects if they don't already exist
@@ -1302,17 +1248,18 @@ func ApplyFilterOverlay(input *Service) *Service {
 
 	// Create a deep copy of the input service
 	result := &Service{
-		Name:      input.Name,
-		Version:   input.Version,
-		Contact:   input.Contact,                               // Copy contact information
-		License:   input.License,                               // Copy license information
-		Servers:   append([]ServiceServer{}, input.Servers...), // Copy servers slice
-		Security:  input.Security,                              // Copy security configuration
-		Retry:     input.Retry,                                 // Copy retry configuration
-		Timeout:   input.Timeout,                               // Copy timeout configuration
-		Enums:     make([]Enum, len(input.Enums)),
-		Objects:   make([]Object, 0, len(input.Objects)*7), // Estimate for filter objects
-		Resources: make([]Resource, len(input.Resources)),
+		Name:            input.Name,
+		Version:         input.Version,
+		Contact:         input.Contact,                               // Copy contact information
+		License:         input.License,                               // Copy license information
+		Servers:         append([]ServiceServer{}, input.Servers...), // Copy servers slice
+		SecuritySchemes: input.SecuritySchemes,                       // Copy security schemes
+		Security:        input.Security,                              // Copy security requirements
+		Retry:           input.Retry,                                 // Copy retry configuration
+		Timeout:         input.Timeout,                               // Copy timeout configuration
+		Enums:           make([]Enum, len(input.Enums)),
+		Objects:         make([]Object, 0, len(input.Objects)*7), // Estimate for filter objects
+		Resources:       make([]Resource, len(input.Resources)),
 	}
 
 	// Copy enums

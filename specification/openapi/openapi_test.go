@@ -2758,41 +2758,33 @@ func TestGenerator_GenerateFromServiceWithSecurity(t *testing.T) {
 	service := &specification.Service{
 		Name:    "Security Test API",
 		Version: "1.0.0",
-		Security: &specification.ServiceSecurity{
-			SecuritySchemes: map[string]specification.SecurityScheme{
-				"mtls": {
-					Type:        "mutualTLS",
-					Description: "Client TLS certificate required.",
-				},
-				"bearerAuth": {
-					Type:         "http",
-					Scheme:       "bearer",
-					BearerFormat: "JWT",
-					Description:  "Bearer access token in Authorization header.",
-				},
-				"clientId": {
-					Type:        "apiKey",
-					In:          "header",
-					Name:        "X-Client-Id",
-					Description: "Your client identifier.",
-				},
-				"clientSecret": {
-					Type:        "apiKey",
-					In:          "header",
-					Name:        "X-Client-Secret",
-					Description: "Your client secret.",
-				},
+		SecuritySchemes: map[string]specification.SecurityScheme{
+			"mtls": {
+				Type:        "mutualTLS",
+				Description: "Client TLS certificate required.",
 			},
-			Security: []specification.SecurityRequirement{
-				{
-					"mtls":       []string{},
-					"bearerAuth": []string{},
-				},
-				{
-					"clientId":     []string{},
-					"clientSecret": []string{},
-				},
+			"bearerAuth": {
+				Type:         "http",
+				Scheme:       "bearer",
+				BearerFormat: "JWT",
+				Description:  "Bearer access token in Authorization header.",
 			},
+			"clientId": {
+				Type:        "apiKey",
+				In:          "header",
+				Name:        "X-Client-Id",
+				Description: "Your client identifier.",
+			},
+			"clientSecret": {
+				Type:        "apiKey",
+				In:          "header",
+				Name:        "X-Client-Secret",
+				Description: "Your client secret.",
+			},
+		},
+		Security: []specification.SecurityRequirement{
+			{"mtls", "bearerAuth"},
+			{"clientId", "clientSecret"},
 		},
 		Enums: []specification.Enum{},
 		Objects: []specification.Object{
@@ -2827,7 +2819,7 @@ func TestGenerator_GenerateFromServiceWithSecurity(t *testing.T) {
 	// Generate OpenAPI document
 	generator := newGenerator()
 	document, err := generator.GenerateFromService(service)
-	
+
 	assert.NoError(t, err, "Should generate document without error")
 	assert.NotNil(t, document, "Generated document should not be nil")
 
@@ -2875,7 +2867,7 @@ func TestGenerator_GenerateFromServiceWithSecurity(t *testing.T) {
 	// Verify first security requirement (mtls + bearerAuth)
 	firstReq := document.Security[0]
 	assert.NotNil(t, firstReq.Requirements, "First security requirement should have requirements")
-	
+
 	mtlsScopes, mtlsExists := firstReq.Requirements.Get("mtls")
 	bearerScopes, bearerExists := firstReq.Requirements.Get("bearerAuth")
 	assert.True(t, mtlsExists, "First requirement should contain mtls")
@@ -2886,7 +2878,7 @@ func TestGenerator_GenerateFromServiceWithSecurity(t *testing.T) {
 	// Verify second security requirement (clientId + clientSecret)
 	secondReq := document.Security[1]
 	assert.NotNil(t, secondReq.Requirements, "Second security requirement should have requirements")
-	
+
 	clientIdScopes, clientIdExists := secondReq.Requirements.Get("clientId")
 	clientSecretScopes, clientSecretExists := secondReq.Requirements.Get("clientSecret")
 	assert.True(t, clientIdExists, "Second requirement should contain clientId")
@@ -2901,25 +2893,20 @@ func TestGenerator_GenerateFromServiceSecurityYAML(t *testing.T) {
 	service := &specification.Service{
 		Name:    "Security YAML Test",
 		Version: "1.0.0",
-		Security: &specification.ServiceSecurity{
-			SecuritySchemes: map[string]specification.SecurityScheme{
-				"mtls": {
-					Type:        "mutualTLS",
-					Description: "Client TLS certificate required.",
-				},
-				"bearerAuth": {
-					Type:         "http",
-					Scheme:       "bearer",
-					BearerFormat: "JWT",
-					Description:  "Bearer access token in Authorization header.",
-				},
+		SecuritySchemes: map[string]specification.SecurityScheme{
+			"mtls": {
+				Type:        "mutualTLS",
+				Description: "Client TLS certificate required.",
 			},
-			Security: []specification.SecurityRequirement{
-				{
-					"mtls":       []string{},
-					"bearerAuth": []string{},
-				},
+			"bearerAuth": {
+				Type:         "http",
+				Scheme:       "bearer",
+				BearerFormat: "JWT",
+				Description:  "Bearer access token in Authorization header.",
 			},
+		},
+		Security: []specification.SecurityRequirement{
+			{"mtls", "bearerAuth"},
 		},
 		Enums:     []specification.Enum{},
 		Objects:   []specification.Object{},
@@ -2929,7 +2916,7 @@ func TestGenerator_GenerateFromServiceSecurityYAML(t *testing.T) {
 	// Generate document
 	generator := newGenerator()
 	document, err := generator.GenerateFromService(service)
-	
+
 	assert.NoError(t, err, "Should generate document without error")
 	assert.NotNil(t, document, "Generated document should not be nil")
 
@@ -2938,7 +2925,7 @@ func TestGenerator_GenerateFromServiceSecurityYAML(t *testing.T) {
 	assert.NoError(t, err, "Should render document to YAML without error")
 
 	yamlStr := string(yamlBytes)
-	
+
 	// Verify the YAML contains expected security structures
 	assert.Contains(t, yamlStr, "components:", "YAML should contain components section")
 	assert.Contains(t, yamlStr, "securitySchemes:", "YAML should contain securitySchemes")
