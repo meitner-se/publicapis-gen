@@ -8,7 +8,13 @@
   "servers": [
     {
       "url": "https://api.school.example.com/v1",
-      "description": "Production server for School Management API"
+      "description": "Production server for School Management API",
+      "x-speakeasy-server-id": "production"
+    },
+    {
+      "url": "https://staging-api.school.example.com/v1",
+      "description": "Staging server for School Management API",
+      "x-speakeasy-server-id": "staging"
     }
   ],
   "paths": {
@@ -987,48 +993,6 @@
         },
         "description": "Request error object for Contact"
       },
-      "AddressRequestError": {
-        "type": "object",
-        "properties": {
-          "street": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Street address",
-            "nullable": true
-          },
-          "city": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "City",
-            "nullable": true
-          },
-          "state": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "State or province",
-            "nullable": true
-          },
-          "zipCode": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "ZIP or postal code",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Address"
-      },
       "StudentRequestError": {
         "type": "object",
         "properties": {
@@ -1079,6 +1043,48 @@
           }
         },
         "description": "Request error object for Student"
+      },
+      "AddressRequestError": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Street address",
+            "nullable": true
+          },
+          "city": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "City",
+            "nullable": true
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "State or province",
+            "nullable": true
+          },
+          "zipCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "ZIP or postal code",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Address"
       },
       "StudentsBulkImportRequestError": {
         "type": "object",
