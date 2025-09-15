@@ -4,11 +4,51 @@ on:
   push:
     paths:
       - '**'
+  pull_request:
+    paths:
+      - '**'
+
+# Global environment variables for cache optimization
+env:
+  GO_VERSION: '1.22'  # Primary Go version for caching
+  GO_CACHE_VERSION: v1  # Increment this to bust all caches if needed
 
 jobs:
+  # Cache setup job - runs once and shares cache across all other jobs
+  setup:
+    name: Setup Dependencies
+    runs-on: ubuntu-latest
+    outputs:
+      cache-hit: ${{ steps.cache.outputs.cache-hit }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules and build cache
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ env.GO_CACHE_VERSION }}-${{ hashFiles('**/go.sum', '**/go.mod') }}
+        restore-keys: |
+          ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ env.GO_CACHE_VERSION }}-
+
+    - name: Download dependencies
+      if: steps.cache.outputs.cache-hit != 'true'
+      run: |
+        go mod download
+        go mod verify
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    needs: setup
     strategy:
       matrix:
         go-version: ['1.21', '1.22']
@@ -21,21 +61,23 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
 
-    - name: Cache Go modules
-      uses: actions/cache@v4
+    # Only restore cache for the primary version, others will download fresh
+    - name: Restore Go cache
+      if: matrix.go-version == env.GO_VERSION
+      uses: actions/cache/restore@v4
       with:
         path: |
           ~/.cache/go-build
           ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
+        key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ env.GO_CACHE_VERSION }}-${{ hashFiles('**/go.sum', '**/go.mod') }}
         restore-keys: |
-          ${{ runner.os }}-go-${{ matrix.go-version }}-
+          ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ env.GO_CACHE_VERSION }}-
 
     - name: Download dependencies
-      run: go mod download
-
-    - name: Verify dependencies
-      run: go mod verify
+      if: matrix.go-version != env.GO_VERSION
+      run: |
+        go mod download
+        go mod verify
 
     - name: Check go mod tidy
       run: |
@@ -64,6 +106,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    needs: setup
     strategy:
       matrix:
         go-version: ['1.21', '1.22']
@@ -76,18 +119,23 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
 
-    - name: Cache Go modules
-      uses: actions/cache@v4
+    # Only restore cache for the primary version, others will download fresh
+    - name: Restore Go cache
+      if: matrix.go-version == env.GO_VERSION
+      uses: actions/cache/restore@v4
       with:
         path: |
           ~/.cache/go-build
           ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
+        key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ env.GO_CACHE_VERSION }}-${{ hashFiles('**/go.sum', '**/go.mod') }}
         restore-keys: |
-          ${{ runner.os }}-go-${{ matrix.go-version }}-
+          ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ env.GO_CACHE_VERSION }}-
 
     - name: Download dependencies
-      run: go mod download
+      if: matrix.go-version != env.GO_VERSION
+      run: |
+        go mod download
+        go mod verify
 
     - name: Build
       run: go build -v ./...
@@ -95,6 +143,7 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    needs: setup
     strategy:
       matrix:
         go-version: ['1.21', '1.22']
@@ -107,18 +156,23 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
 
-    - name: Cache Go modules
-      uses: actions/cache@v4
+    # Only restore cache for the primary version, others will download fresh
+    - name: Restore Go cache
+      if: matrix.go-version == env.GO_VERSION
+      uses: actions/cache/restore@v4
       with:
         path: |
           ~/.cache/go-build
           ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
+        key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ env.GO_CACHE_VERSION }}-${{ hashFiles('**/go.sum', '**/go.mod') }}
         restore-keys: |
-          ${{ runner.os }}-go-${{ matrix.go-version }}-
+          ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ env.GO_CACHE_VERSION }}-
 
     - name: Download dependencies
-      run: go mod download
+      if: matrix.go-version != env.GO_VERSION
+      run: |
+        go mod download
+        go mod verify
 
     - name: Run tests
       run: go test -v -race -coverprofile=coverage.out ./...
@@ -135,7 +189,9 @@ jobs:
           exit 1
         fi
 
+    # Only upload coverage from primary Go version to avoid duplicate reports
     - name: Upload coverage to Codecov
+      if: matrix.go-version == env.GO_VERSION
       uses: codecov/codecov-action@v4
       with:
         file: ./coverage.out
