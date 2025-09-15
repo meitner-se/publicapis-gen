@@ -217,6 +217,54 @@ const (
 	contentTypeJSON = "application/json"
 )
 
+// Security Types
+const (
+	SecurityTypeMTLS        = "mutualTLS"
+	SecurityTypeHTTP        = "http"
+	SecurityTypeAPIKey      = "apiKey"
+	SecurityTypeOAuth2      = "oauth2"
+	SecurityTypeOpenIDConnect = "openIdConnect"
+)
+
+// Security Scheme Names
+const (
+	SecuritySchemeMTLS         = "mtls"
+	SecuritySchemeBearerAuth   = "bearerAuth"
+	SecuritySchemeClientID     = "clientId"
+	SecuritySchemeClientSecret = "clientSecret"
+)
+
+// Security Descriptions
+const (
+	securityDescMTLS         = "Client TLS certificate required."
+	securityDescBearerAuth   = "Bearer access token in Authorization header."
+	securityDescClientID     = "Your client identifier."
+	securityDescClientSecret = "Your client secret."
+)
+
+// HTTP Scheme Types
+const (
+	HTTPSchemeBearer = "bearer"
+)
+
+// Bearer Formats
+const (
+	BearerFormatJWT = "JWT"
+)
+
+// API Key Locations
+const (
+	APIKeyInHeader = "header"
+	APIKeyInQuery  = "query"
+	APIKeyInCookie = "cookie"
+)
+
+// Standard Header Names
+const (
+	HeaderClientID     = "X-Client-Id"
+	HeaderClientSecret = "X-Client-Secret"
+)
+
 // Create Endpoint Constants
 const (
 	createEndpointName        = "Create"
@@ -404,6 +452,40 @@ type RetryConfiguration struct {
 type TimeoutConfiguration struct {
 	// Timeout is the request timeout in milliseconds
 	Timeout int `json:"timeout"`
+}
+
+// SecurityScheme represents a single security scheme definition.
+type SecurityScheme struct {
+	// Type of the security scheme (mutualTLS, http, apiKey, oauth2, openIdConnect)
+	Type string `json:"type"`
+
+	// Scheme used for HTTP security type (e.g., bearer, basic)
+	Scheme string `json:"scheme,omitempty"`
+
+	// BearerFormat describes the format of the bearer token (e.g., JWT)
+	BearerFormat string `json:"bearerFormat,omitempty"`
+
+	// In specifies where the API key is located (header, query, cookie) for apiKey type
+	In string `json:"in,omitempty"`
+
+	// Name of the header, query parameter or cookie for apiKey type
+	Name string `json:"name,omitempty"`
+
+	// Description of the security scheme
+	Description string `json:"description,omitempty"`
+}
+
+// SecurityRequirement represents a security requirement that consists of
+// multiple security schemes that must be satisfied together (AND logic).
+type SecurityRequirement map[string][]string
+
+// SecurityConfiguration defines the security schemes and requirements for the API.
+type SecurityConfiguration struct {
+	// Schemes defines the available security schemes
+	Schemes map[string]SecurityScheme `json:"schemes"`
+
+	// Requirements defines alternative security requirements (OR logic between requirements)
+	Requirements []SecurityRequirement `json:"requirements"`
 }
 
 // Service is the definition of an API service.
