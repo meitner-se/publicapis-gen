@@ -296,11 +296,22 @@
           }
         },
         "x-speakeasy-pagination": {
-          "strategy": "offsetLimit",
-          "offsetParam": "offset",
-          "limitParam": "limit",
-          "totalField": "pagination.total",
-          "dataField": "data"
+          "type": "offsetLimit",
+          "inputs": [
+            {
+              "name": "offset",
+              "in": "parameters",
+              "type": "offset"
+            },
+            {
+              "name": "limit",
+              "in": "parameters",
+              "type": "limit"
+            }
+          ],
+          "outputs": {
+            "results": "$.data.resultArray"
+          }
         }
       },
       "post": {
@@ -596,11 +607,22 @@
           }
         },
         "x-speakeasy-pagination": {
-          "strategy": "offsetLimit",
-          "offsetParam": "offset",
-          "limitParam": "limit",
-          "totalField": "pagination.total",
-          "dataField": "data"
+          "type": "offsetLimit",
+          "inputs": [
+            {
+              "name": "offset",
+              "in": "parameters",
+              "type": "offset"
+            },
+            {
+              "name": "limit",
+              "in": "parameters",
+              "type": "limit"
+            }
+          ],
+          "outputs": {
+            "results": "$.data.resultArray"
+          }
         }
       }
     }

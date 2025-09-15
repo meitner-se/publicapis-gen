@@ -1045,11 +1045,15 @@ func TestSpeakeasyPaginationExtension(t *testing.T) {
 
 	// Verify that the Speakeasy pagination extension is present in paginated operations
 	assert.Contains(t, jsonString, "\"x-speakeasy-pagination\"", "Should contain x-speakeasy-pagination extension")
-	assert.Contains(t, jsonString, "\"strategy\": \"offsetLimit\"", "Should contain offsetLimit strategy")
-	assert.Contains(t, jsonString, "\"offsetParam\": \"offset\"", "Should contain offset parameter name")
-	assert.Contains(t, jsonString, "\"limitParam\": \"limit\"", "Should contain limit parameter name")
-	assert.Contains(t, jsonString, "\"totalField\": \"pagination.total\"", "Should contain total field path")
-	assert.Contains(t, jsonString, "\"dataField\": \"data\"", "Should contain data field name")
+	assert.Contains(t, jsonString, "\"type\": \"offsetLimit\"", "Should contain offsetLimit type")
+	assert.Contains(t, jsonString, "\"inputs\":", "Should contain inputs array")
+	assert.Contains(t, jsonString, "\"name\": \"offset\"", "Should contain offset input name")
+	assert.Contains(t, jsonString, "\"name\": \"limit\"", "Should contain limit input name")
+	assert.Contains(t, jsonString, "\"in\": \"parameters\"", "Should contain parameters location")
+	assert.Contains(t, jsonString, "\"type\": \"offset\"", "Should contain offset input type")
+	assert.Contains(t, jsonString, "\"type\": \"limit\"", "Should contain limit input type")
+	assert.Contains(t, jsonString, "\"outputs\":", "Should contain outputs object")
+	assert.Contains(t, jsonString, "\"results\": \"$.data.resultArray\"", "Should contain results field path")
 
 	// Count the occurrences of the pagination extension - should appear twice (List and Search operations)
 	paginationExtensionCount := countSubstring(jsonString, "\"x-speakeasy-pagination\"")
