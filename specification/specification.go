@@ -336,11 +336,8 @@ const (
 
 // Security constants
 const (
-	securityTypeMutualTLS  = "mutualTLS"
-	securityTypeHTTP       = "http"
-	securityTypeAPIKey     = "apiKey"
-	securitySchemeBearer   = "bearer"
-	securityLocationHeader = "header"
+	securityTypeHTTP   = "http"
+	securityTypeAPIKey = "apiKey"
 )
 
 // ServiceServer represents a server in the API service.

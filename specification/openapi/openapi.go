@@ -193,11 +193,8 @@ const (
 
 // Security scheme constants
 const (
-	securityTypeMutualTLS  = "mutualTLS"
-	securityTypeHTTP       = "http"
-	securityTypeAPIKey     = "apiKey"
-	securitySchemeBearer   = "bearer"
-	securityLocationHeader = "header"
+	securityTypeHTTP   = "http"
+	securityTypeAPIKey = "apiKey"
 )
 
 // Generator handles OpenAPI 3.1 specification generation from specification.Service.
