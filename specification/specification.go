@@ -1469,7 +1469,7 @@ func (t Field) IsNullable() bool {
 
 // TagJSON returns the JSON tag name for the field in camelCase.
 func (t Field) TagJSON() string {
-	return camelCase(t.Name)
+	return CamelCase(t.Name)
 }
 
 // GetComment returns a formatted comment for the field.
@@ -1895,11 +1895,11 @@ func getComment(tabs string, description string, name string) string {
 	return comment
 }
 
-// camelCase converts a string to camelCase format.
+// CamelCase converts a string to camelCase format.
 // Special cases:
 // - "ID" becomes "id" instead of "iD"
 // - Consecutive capital letters at the start are lowercased (e.g., "CSNSchoolCode" -> "csnSchoolCode")
-func camelCase(s string) string {
+func CamelCase(s string) string {
 	if s == "ID" {
 		return "id"
 	}

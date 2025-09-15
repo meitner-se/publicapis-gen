@@ -390,16 +390,16 @@ func (g *Generator) addSpeakeasyOperationNamingExtensions(operation *v3.Operatio
 		operation.Extensions = orderedmap.New[string, *yaml.Node]()
 	}
 
-	// Add x-speakeasy-group extension (resource name in lowercase and plural)
-	groupValue := strings.ToLower(resource.GetPluralName())
+	// Add x-speakeasy-group extension (resource name in camelCase and plural)
+	groupValue := specification.CamelCase(resource.GetPluralName())
 	groupNode := &yaml.Node{
 		Kind:  yaml.ScalarNode,
 		Value: groupValue,
 	}
 	operation.Extensions.Set(speakeasyGroupExtension, groupNode)
 
-	// Add x-speakeasy-name-override extension (method name in lowercase)
-	nameOverrideValue := strings.ToLower(endpoint.Name)
+	// Add x-speakeasy-name-override extension (method name in camelCase)
+	nameOverrideValue := specification.CamelCase(endpoint.Name)
 	nameOverrideNode := &yaml.Node{
 		Kind:  yaml.ScalarNode,
 		Value: nameOverrideValue,

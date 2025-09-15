@@ -1388,7 +1388,7 @@ func TestCamelCase(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.input, func(t *testing.T) {
-			result := camelCase(tc.input)
+			result := CamelCase(tc.input)
 			assert.Equal(t, tc.expected, result, "CamelCase conversion for '%s' should be '%s'", tc.input, tc.expected)
 		})
 	}
@@ -1410,7 +1410,7 @@ func TestCamelCase(t *testing.T) {
 
 		for _, tc := range edgeCases {
 			t.Run("camelCase_"+tc.input, func(t *testing.T) {
-				result := camelCase(tc.input)
+				result := CamelCase(tc.input)
 				assert.Equal(t, tc.expected, result, "CamelCase of '%s' should be '%s'", tc.input, tc.expected)
 			})
 		}
