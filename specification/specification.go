@@ -341,6 +341,9 @@ type ServiceServer struct {
 
 	// Description of the server
 	Description string `json:"description,omitempty"`
+
+	// ID is a unique identifier for the server for SDK generation
+	ID string `json:"id,omitempty"`
 }
 
 // ServiceContact represents the contact information for the API service.
