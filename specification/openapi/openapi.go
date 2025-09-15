@@ -141,6 +141,11 @@ const (
 	defaultTimeoutMs          = 30000 // 30 seconds in milliseconds
 )
 
+// Speakeasy server ID extension constants
+const (
+	speakeasyServerIdExtension = "x-speakeasy-server-id"
+)
+
 // Retry configuration field names
 const (
 	retryFieldStrategy              = "strategy"
@@ -478,10 +483,24 @@ func (g *Generator) buildV3Document(service *specification.Service) *v3.Document
 	if len(service.Servers) > 0 {
 		servers := make([]*v3.Server, len(service.Servers))
 		for i, server := range service.Servers {
-			servers[i] = &v3.Server{
+			openAPIServer := &v3.Server{
 				URL:         server.URL,
 				Description: server.Description,
 			}
+
+			// Add x-speakeasy-server-id extension if server has an ID
+			if server.ID != "" {
+				if openAPIServer.Extensions == nil {
+					openAPIServer.Extensions = orderedmap.New[string, *yaml.Node]()
+				}
+				serverIdNode := &yaml.Node{
+					Kind:  yaml.ScalarNode,
+					Value: server.ID,
+				}
+				openAPIServer.Extensions.Set(speakeasyServerIdExtension, serverIdNode)
+			}
+
+			servers[i] = openAPIServer
 		}
 		document.Servers = servers
 	} else if g.ServerURL != "" {

@@ -3,6 +3,10 @@ version: "1.0.0"
 servers:
   - url: "https://api.school.example.com/v1"
     description: "Production server for School Management API"
+    id: "production"
+  - url: "https://staging-api.school.example.com/v1"
+    description: "Staging server for School Management API"
+    id: "staging"
 
 enums:
   - name: "StudentStatus"

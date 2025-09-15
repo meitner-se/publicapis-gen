@@ -214,6 +214,70 @@ func TestGenerator_GenerateFromService(t *testing.T) {
 		assert.Contains(t, jsonString, "https://api.example.com", "JSON should contain first server URL")
 		assert.Contains(t, jsonString, "https://staging-api.example.com", "JSON should contain second server URL")
 	})
+
+	// Test servers with x-speakeasy-server-id extensions
+	t.Run("service with servers and server IDs", func(t *testing.T) {
+		generator := newGenerator()
+		service := &specification.Service{
+			Name:    "UserAPI",
+			Version: "2.0.0",
+			Servers: []specification.ServiceServer{
+				{
+					URL:         "https://api.example.com",
+					Description: "Production server",
+					ID:          "prod",
+				},
+				{
+					URL:         "https://staging-api.example.com",
+					Description: "Staging server",
+					ID:          "staging",
+				},
+			},
+			Objects: []specification.Object{
+				{
+					Name:        "User",
+					Description: "User object",
+					Fields: []specification.Field{
+						{
+							Name:        "email",
+							Description: "User email",
+							Type:        specification.FieldTypeString,
+						},
+					},
+				},
+			},
+		}
+
+		document, err := generator.GenerateFromService(service)
+
+		assert.NoError(t, err, "Should generate document successfully")
+		assert.NotNil(t, document, "Document should not be nil")
+		assert.Equal(t, 2, len(document.Servers), "Document should have 2 servers from service")
+
+		// Verify first server with extension
+		assert.Equal(t, "https://api.example.com", document.Servers[0].URL, "First server URL should match service")
+		assert.Equal(t, "Production server", document.Servers[0].Description, "First server description should match service")
+		assert.NotNil(t, document.Servers[0].Extensions, "First server should have extensions")
+		serverIdNode := document.Servers[0].Extensions.GetOrZero("x-speakeasy-server-id")
+		assert.NotNil(t, serverIdNode, "First server should have x-speakeasy-server-id extension")
+		assert.Equal(t, "prod", serverIdNode.Value, "First server ID should be 'prod'")
+
+		// Verify second server with extension
+		assert.Equal(t, "https://staging-api.example.com", document.Servers[1].URL, "Second server URL should match service")
+		assert.Equal(t, "Staging server", document.Servers[1].Description, "Second server description should match service")
+		assert.NotNil(t, document.Servers[1].Extensions, "Second server should have extensions")
+		serverIdNode2 := document.Servers[1].Extensions.GetOrZero("x-speakeasy-server-id")
+		assert.NotNil(t, serverIdNode2, "Second server should have x-speakeasy-server-id extension")
+		assert.Equal(t, "staging", serverIdNode2.Value, "Second server ID should be 'staging'")
+
+		// Test JSON output includes server IDs
+		jsonBytes, err := generator.ToJSON(document)
+		assert.NoError(t, err, "Should convert document to JSON successfully")
+		jsonString := string(jsonBytes)
+		assert.Contains(t, jsonString, "x-speakeasy-server-id", "JSON should contain x-speakeasy-server-id extension")
+		assert.Contains(t, jsonString, "prod", "JSON should contain 'prod' server ID")
+		assert.Contains(t, jsonString, "staging", "JSON should contain 'staging' server ID")
+	})
 }
 
 // TestGenerator_ToYAML tests YAML conversion functionality.

@@ -1,0 +1,2949 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "School Management API API",
+    "description": "Generated API documentation",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.school.example.com/v1",
+      "description": "Production server for School Management API",
+      "x-speakeasy-server-id": "production"
+    },
+    {
+      "url": "https://staging-api.school.example.com/v1",
+      "description": "Staging server for School Management API",
+      "x-speakeasy-server-id": "staging"
+    }
+  ],
+  "paths": {
+    "/students/bulk-import": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Bulk Import Students",
+        "description": "Import multiple students from a CSV file or structured data",
+        "operationId": "StudentsBulkImport",
+        "parameters": [
+          {
+            "name": "validateOnly",
+            "in": "query",
+            "description": "Only validate data without importing",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsBulkImport"
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully imported students",
+            "$ref": "#/components/responses/StudentsBulkImport"
+          },
+          "400": {
+            "description": "Bad Request error for Students BulkImport operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students BulkImport operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students BulkImport operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students BulkImport operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students BulkImport operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students BulkImport operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsBulkImport422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students BulkImport operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students BulkImport operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        }
+      }
+    },
+    "/students/reports/generate": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Generate Student Report",
+        "description": "Generate a comprehensive report for students based on filters",
+        "operationId": "StudentsGenerateReport",
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "description": "Report format (pdf, excel, csv)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "pdf"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsGenerateReport"
+        },
+        "responses": {
+          "202": {
+            "description": "Successfully queued report generation",
+            "$ref": "#/components/responses/StudentsGenerateReport"
+          },
+          "400": {
+            "description": "Bad Request error for Students GenerateReport operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students GenerateReport operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students GenerateReport operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students GenerateReport operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students GenerateReport operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students GenerateReport operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsGenerateReport422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students GenerateReport operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students GenerateReport operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        }
+      }
+    },
+    "/students/advanced-search": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Advanced Student Search",
+        "description": "Search students with advanced filtering and sorting options",
+        "operationId": "StudentsAdvancedSearch",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of results to return",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of results to skip",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "description": "Field to sort by",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "lastName"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "description": "Sort order (asc, desc)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "asc"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsAdvancedSearch"
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully performed advanced search",
+            "$ref": "#/components/responses/StudentsAdvancedSearch"
+          },
+          "400": {
+            "description": "Bad Request error for Students AdvancedSearch operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students AdvancedSearch operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students AdvancedSearch operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students AdvancedSearch operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students AdvancedSearch operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students AdvancedSearch operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsAdvancedSearch422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students AdvancedSearch operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students AdvancedSearch operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        }
+      }
+    },
+    "/students": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "List all Students",
+        "description": "Returns a paginated list of all `Students` in your organization.",
+        "operationId": "StudentsList",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of Students to return (default: 50) when listing Students",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "The number of Students to skip before starting to return results (default: 0) when listing Students",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for Students List operation - returns a paginated list of Students",
+            "$ref": "#/components/responses/StudentsList"
+          },
+          "400": {
+            "description": "Bad Request error for Students List operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students List operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students List operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students List operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students List operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students List operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students List operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-pagination": {
+          "type": "offsetLimit",
+          "inputs": [
+            {
+              "name": "offset",
+              "in": "parameters",
+              "type": "offset"
+            },
+            {
+              "name": "limit",
+              "in": "parameters",
+              "type": "limit"
+            }
+          ],
+          "outputs": {
+            "results": "$.data.resultArray"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Create Students",
+        "description": "Create a new Students",
+        "operationId": "StudentsCreate",
+        "parameters": [],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsCreate"
+        },
+        "responses": {
+          "201": {
+            "description": "Response for Students Create operation - returns the created Students",
+            "$ref": "#/components/responses/StudentsCreate"
+          },
+          "400": {
+            "description": "Bad Request error for Students Create operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Create operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Create operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Create operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Create operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students Create operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsCreate422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Create operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Create operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        }
+      }
+    },
+    "/students/{id}": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Retrieve an existing Students",
+        "description": "Retrieves the `Students` with the given ID.",
+        "operationId": "StudentsGet",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Students to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for Students Get operation - returns the requested Students",
+            "$ref": "#/components/responses/StudentsGet"
+          },
+          "400": {
+            "description": "Bad Request error for Students Get operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Get operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Get operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Get operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Get operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Get operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Get operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Delete Students",
+        "description": "Delete a Students",
+        "operationId": "StudentsDelete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Students to delete",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Response for Students Delete operation - confirms successful deletion"
+          },
+          "400": {
+            "description": "Bad Request error for Students Delete operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Delete operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Delete operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Delete operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Delete operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Delete operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Delete operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Update Students",
+        "description": "Update a Students",
+        "operationId": "StudentsUpdate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Students to update",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsUpdate"
+        },
+        "responses": {
+          "200": {
+            "description": "Response for Students Update operation - returns the updated Students",
+            "$ref": "#/components/responses/StudentsUpdate"
+          },
+          "400": {
+            "description": "Bad Request error for Students Update operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Update operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Update operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Update operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Update operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students Update operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsUpdate422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Update operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Update operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        }
+      }
+    },
+    "/students/_search": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Search Students",
+        "description": "Search for `Students` with filtering capabilities.",
+        "operationId": "StudentsSearch",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of Students to return (default: 50) when searching Students",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "The number of Students to skip before starting to return results (default: 0) when searching Students",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsSearch"
+        },
+        "responses": {
+          "200": {
+            "description": "Response for Students Search operation - returns filtered Students results",
+            "$ref": "#/components/responses/StudentsSearch"
+          },
+          "400": {
+            "description": "Bad Request error for Students Search operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Search operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Search operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Search operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Search operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students Search operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsSearch422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Search operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Search operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-pagination": {
+          "type": "offsetLimit",
+          "inputs": [
+            {
+              "name": "offset",
+              "in": "parameters",
+              "type": "offset"
+            },
+            {
+              "name": "limit",
+              "in": "parameters",
+              "type": "limit"
+            }
+          ],
+          "outputs": {
+            "results": "$.data.resultArray"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "StudentStatus": {
+        "type": "string",
+        "enum": [
+          "Active",
+          "Inactive",
+          "Graduated"
+        ],
+        "description": "Status of a student in the system"
+      },
+      "GradeLevel": {
+        "type": "string",
+        "enum": [
+          "Elementary",
+          "Middle",
+          "High"
+        ],
+        "description": "Grade levels in the school"
+      },
+      "ErrorCode": {
+        "type": "string",
+        "enum": [
+          "BadRequest",
+          "Unauthorized",
+          "Forbidden",
+          "NotFound",
+          "Conflict",
+          "UnprocessableEntity",
+          "RateLimited",
+          "Internal"
+        ],
+        "description": "Standard error codes used in API responses"
+      },
+      "ErrorFieldCode": {
+        "type": "string",
+        "enum": [
+          "AlreadyExists",
+          "Required",
+          "NotFound",
+          "InvalidValue"
+        ],
+        "description": "Error codes for field-level validation errors"
+      },
+      "Contact": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Email address"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number",
+            "nullable": true
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "description": "Contact information"
+      },
+      "Address": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "type": "string",
+            "description": "Street address"
+          },
+          "city": {
+            "type": "string",
+            "description": "City"
+          },
+          "state": {
+            "type": "string",
+            "description": "State or province"
+          },
+          "zipCode": {
+            "type": "string",
+            "description": "ZIP or postal code"
+          }
+        },
+        "required": [
+          "street",
+          "city",
+          "state",
+          "zipCode"
+        ],
+        "description": "Physical address information"
+      },
+      "Student": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "description": "Student's first name"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Student's last name"
+          },
+          "studentId": {
+            "type": "string",
+            "description": "School-assigned student ID"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudentStatus"
+              }
+            ],
+            "description": "Current status of the student"
+          },
+          "gradeLevel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GradeLevel"
+              }
+            ],
+            "description": "Current grade level"
+          }
+        },
+        "required": [
+          "firstName",
+          "lastName",
+          "studentId",
+          "status",
+          "gradeLevel"
+        ],
+        "description": "Student information"
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorCode"
+              }
+            ],
+            "description": "The specific error code indicating the type of error"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable error message providing additional details"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "description": "Standard error response object containing error code and message"
+      },
+      "ErrorField": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorFieldCode"
+              }
+            ],
+            "description": "The specific error code indicating the type of field validation error"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable error message providing details about the field validation error"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "description": "Field-specific error information containing error code and message for validation errors"
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "offset": {
+            "type": "integer",
+            "examples": [
+              0
+            ],
+            "description": "Number of items to skip from the beginning of the result set"
+          },
+          "limit": {
+            "type": "integer",
+            "examples": [
+              1
+            ],
+            "description": "Maximum number of items to return in the result set"
+          },
+          "total": {
+            "type": "integer",
+            "examples": [
+              100
+            ],
+            "description": "Total number of items available for pagination"
+          }
+        },
+        "required": [
+          "offset",
+          "limit",
+          "total"
+        ],
+        "description": "Pagination parameters for controlling result sets in list operations"
+      },
+      "Meta": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "type": "string",
+            "examples": [
+              "2024-01-15T10:30:00Z"
+            ],
+            "format": "date-time",
+            "description": "Timestamp when the resource was created"
+          },
+          "createdBy": {
+            "type": "string",
+            "examples": [
+              "987fcdeb-51a2-43d1-b567-123456789abc"
+            ],
+            "format": "uuid",
+            "description": "User who created the resource",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "examples": [
+              "2024-01-15T14:45:00Z"
+            ],
+            "format": "date-time",
+            "description": "Timestamp when the resource was last updated"
+          },
+          "updatedBy": {
+            "type": "string",
+            "examples": [
+              "987fcdeb-51a2-43d1-b567-123456789abc"
+            ],
+            "format": "uuid",
+            "description": "User who last updated the resource",
+            "nullable": true
+          }
+        },
+        "required": [
+          "createdAt",
+          "updatedAt"
+        ],
+        "description": "Meta contains information about the creation and modification of a resource for auditing purposes"
+      },
+      "Students": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique student identifier"
+          },
+          "meta": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Meta"
+              }
+            ],
+            "description": "Metadata information for the Students"
+          },
+          "firstName": {
+            "type": "string",
+            "description": "Student's first name"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Student's last name"
+          },
+          "studentId": {
+            "type": "string",
+            "description": "School-assigned student ID"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudentStatus"
+              }
+            ],
+            "description": "Current status of the student",
+            "default": "Active"
+          },
+          "gradeLevel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GradeLevel"
+              }
+            ],
+            "description": "Current grade level"
+          },
+          "contact": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Contact"
+              }
+            ],
+            "description": "Student contact information"
+          },
+          "address": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Address"
+              }
+            ],
+            "description": "Student home address",
+            "nullable": true
+          },
+          "enrollmentDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date when student was enrolled"
+          },
+          "graduationDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Expected or actual graduation date",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "id",
+          "firstName",
+          "lastName",
+          "studentId",
+          "gradeLevel",
+          "enrollmentDate"
+        ],
+        "description": "Student management resource"
+      },
+      "ContactRequestError": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Email address",
+            "nullable": true
+          },
+          "phone": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Phone number",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Contact"
+      },
+      "StudentRequestError": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Student's first name",
+            "nullable": true
+          },
+          "lastName": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Student's last name",
+            "nullable": true
+          },
+          "studentId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "School-assigned student ID",
+            "nullable": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Current status of the student",
+            "nullable": true
+          },
+          "gradeLevel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Current grade level",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Student"
+      },
+      "AddressRequestError": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Street address",
+            "nullable": true
+          },
+          "city": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "City",
+            "nullable": true
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "State or province",
+            "nullable": true
+          },
+          "zipCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "ZIP or postal code",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Address"
+      },
+      "StudentsBulkImportRequestError": {
+        "type": "object",
+        "properties": {
+          "students": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudentRequestError"
+              }
+            ],
+            "description": "Array of student data to import",
+            "nullable": true
+          },
+          "overwriteExisting": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Whether to overwrite existing student records",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Students BulkImport endpoint"
+      },
+      "StudentsGenerateReportRequestError": {
+        "type": "object",
+        "properties": {
+          "gradeLevel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Filter by specific grade level",
+            "nullable": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Filter by student status",
+            "nullable": true
+          },
+          "enrollmentDateFrom": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Filter students enrolled after this date",
+            "nullable": true
+          },
+          "enrollmentDateTo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Filter students enrolled before this date",
+            "nullable": true
+          },
+          "includeInactive": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Include inactive students in report",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Students GenerateReport endpoint"
+      },
+      "StudentsAdvancedSearchRequestError": {
+        "type": "object",
+        "properties": {
+          "nameQuery": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Search in first name and last name",
+            "nullable": true
+          },
+          "gradeLevel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Filter by one or more grade levels",
+            "nullable": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Filter by one or more statuses",
+            "nullable": true
+          },
+          "enrollmentDateRange": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Date range filter [from, to]",
+            "nullable": true
+          },
+          "hasGraduationDate": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Filter students with or without graduation date",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Students AdvancedSearch endpoint"
+      },
+      "StudentsCreateRequestError": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Student's first name",
+            "nullable": true
+          },
+          "lastName": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Student's last name",
+            "nullable": true
+          },
+          "studentId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "School-assigned student ID",
+            "nullable": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Current status of the student",
+            "nullable": true
+          },
+          "gradeLevel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Current grade level",
+            "nullable": true
+          },
+          "contact": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactRequestError"
+              }
+            ],
+            "description": "Student contact information",
+            "nullable": true
+          },
+          "address": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressRequestError"
+              }
+            ],
+            "description": "Student home address",
+            "nullable": true
+          },
+          "enrollmentDate": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Date when student was enrolled",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Students Create endpoint"
+      },
+      "StudentsUpdateRequestError": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Student's first name",
+            "nullable": true
+          },
+          "lastName": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Student's last name",
+            "nullable": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Current status of the student",
+            "nullable": true
+          },
+          "gradeLevel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Current grade level",
+            "nullable": true
+          },
+          "contact": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactRequestError"
+              }
+            ],
+            "description": "Student contact information",
+            "nullable": true
+          },
+          "address": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressRequestError"
+              }
+            ],
+            "description": "Student home address",
+            "nullable": true
+          },
+          "graduationDate": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Expected or actual graduation date",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Students Update endpoint"
+      },
+      "StudentsSearchRequestError": {
+        "type": "object",
+        "properties": {
+          "filter": {
+            "type": "string",
+            "description": "Filter criteria to search for specific records",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Students Search endpoint"
+      },
+      "ContactFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterEquals"
+              }
+            ],
+            "description": "Equality filters for Contact",
+            "nullable": true
+          },
+          "notEquals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterEquals"
+              }
+            ],
+            "description": "Inequality filters for Contact",
+            "nullable": true
+          },
+          "greaterThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterRange"
+              }
+            ],
+            "description": "Greater than filters for Contact",
+            "nullable": true
+          },
+          "smallerThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterRange"
+              }
+            ],
+            "description": "Smaller than filters for Contact",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterRange"
+              }
+            ],
+            "description": "Greater than or equal filters for Contact",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterRange"
+              }
+            ],
+            "description": "Smaller than or equal filters for Contact",
+            "nullable": true
+          },
+          "contains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterContains"
+              }
+            ],
+            "description": "Contains filters for Contact",
+            "nullable": true
+          },
+          "notContains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterContains"
+              }
+            ],
+            "description": "Not contains filters for Contact",
+            "nullable": true
+          },
+          "like": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterLike"
+              }
+            ],
+            "description": "LIKE filters for Contact",
+            "nullable": true
+          },
+          "notLike": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterLike"
+              }
+            ],
+            "description": "NOT LIKE filters for Contact",
+            "nullable": true
+          },
+          "null": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterNull"
+              }
+            ],
+            "description": "Null filters for Contact",
+            "nullable": true
+          },
+          "notNull": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterNull"
+              }
+            ],
+            "description": "Not null filters for Contact",
+            "nullable": true
+          },
+          "orCondition": {
+            "type": "boolean",
+            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
+          },
+          "nestedFilters": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ContactFilter"
+                }
+              ]
+            },
+            "description": "NestedFilters of the Contact, useful for more complex filters"
+          }
+        },
+        "required": [
+          "orCondition"
+        ],
+        "description": "Filter object for Contact"
+      },
+      "ContactFilterEquals": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Email address",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number",
+            "nullable": true
+          }
+        },
+        "description": "Equality/Inequality filter fields for Contact"
+      },
+      "ContactFilterRange": {
+        "type": "object",
+        "description": "Range filter fields for Contact"
+      },
+      "ContactFilterContains": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Email address"
+          },
+          "phone": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Phone number"
+          }
+        },
+        "description": "Contains filter fields for Contact"
+      },
+      "ContactFilterLike": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Email address",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number",
+            "nullable": true
+          }
+        },
+        "description": "LIKE filter fields for Contact"
+      },
+      "ContactFilterNull": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "boolean",
+            "description": "Phone number",
+            "nullable": true
+          }
+        },
+        "description": "Null filter fields for Contact"
+      },
+      "AddressFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterEquals"
+              }
+            ],
+            "description": "Equality filters for Address",
+            "nullable": true
+          },
+          "notEquals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterEquals"
+              }
+            ],
+            "description": "Inequality filters for Address",
+            "nullable": true
+          },
+          "greaterThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterRange"
+              }
+            ],
+            "description": "Greater than filters for Address",
+            "nullable": true
+          },
+          "smallerThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterRange"
+              }
+            ],
+            "description": "Smaller than filters for Address",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterRange"
+              }
+            ],
+            "description": "Greater than or equal filters for Address",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterRange"
+              }
+            ],
+            "description": "Smaller than or equal filters for Address",
+            "nullable": true
+          },
+          "contains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterContains"
+              }
+            ],
+            "description": "Contains filters for Address",
+            "nullable": true
+          },
+          "notContains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterContains"
+              }
+            ],
+            "description": "Not contains filters for Address",
+            "nullable": true
+          },
+          "like": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterLike"
+              }
+            ],
+            "description": "LIKE filters for Address",
+            "nullable": true
+          },
+          "notLike": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterLike"
+              }
+            ],
+            "description": "NOT LIKE filters for Address",
+            "nullable": true
+          },
+          "null": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterNull"
+              }
+            ],
+            "description": "Null filters for Address",
+            "nullable": true
+          },
+          "notNull": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterNull"
+              }
+            ],
+            "description": "Not null filters for Address",
+            "nullable": true
+          },
+          "orCondition": {
+            "type": "boolean",
+            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
+          },
+          "nestedFilters": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/AddressFilter"
+                }
+              ]
+            },
+            "description": "NestedFilters of the Address, useful for more complex filters"
+          }
+        },
+        "required": [
+          "orCondition"
+        ],
+        "description": "Filter object for Address"
+      },
+      "AddressFilterEquals": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "type": "string",
+            "description": "Street address",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "description": "City",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "description": "State or province",
+            "nullable": true
+          },
+          "zipCode": {
+            "type": "string",
+            "description": "ZIP or postal code",
+            "nullable": true
+          }
+        },
+        "description": "Equality/Inequality filter fields for Address"
+      },
+      "AddressFilterRange": {
+        "type": "object",
+        "description": "Range filter fields for Address"
+      },
+      "AddressFilterContains": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Street address"
+          },
+          "city": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "City"
+          },
+          "state": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "State or province"
+          },
+          "zipCode": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "ZIP or postal code"
+          }
+        },
+        "description": "Contains filter fields for Address"
+      },
+      "AddressFilterLike": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "type": "string",
+            "description": "Street address",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "description": "City",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "description": "State or province",
+            "nullable": true
+          },
+          "zipCode": {
+            "type": "string",
+            "description": "ZIP or postal code",
+            "nullable": true
+          }
+        },
+        "description": "LIKE filter fields for Address"
+      },
+      "AddressFilterNull": {
+        "type": "object",
+        "description": "Null filter fields for Address"
+      },
+      "StudentFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudentFilterEquals"
+              }
+            ],
+            "description": "Equality filters for Student",
+            "nullable": true
+          },
+          "notEquals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudentFilterEquals"
+              }
+            ],
+            "description": "Inequality filters for Student",
+            "nullable": true
+          },
+          "greaterThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudentFilterRange"
+              }
+            ],
+            "description": "Greater than filters for Student",
+            "nullable": true
+          },
+          "smallerThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudentFilterRange"
+              }
+            ],
+            "description": "Smaller than filters for Student",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudentFilterRange"
+              }
+            ],
+            "description": "Greater than or equal filters for Student",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudentFilterRange"
+              }
+            ],
+            "description": "Smaller than or equal filters for Student",
+            "nullable": true
+          },
+          "contains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudentFilterContains"
+              }
+            ],
+            "description": "Contains filters for Student",
+            "nullable": true
+          },
+          "notContains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudentFilterContains"
+              }
+            ],
+            "description": "Not contains filters for Student",
+            "nullable": true
+          },
+          "like": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudentFilterLike"
+              }
+            ],
+            "description": "LIKE filters for Student",
+            "nullable": true
+          },
+          "notLike": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudentFilterLike"
+              }
+            ],
+            "description": "NOT LIKE filters for Student",
+            "nullable": true
+          },
+          "null": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudentFilterNull"
+              }
+            ],
+            "description": "Null filters for Student",
+            "nullable": true
+          },
+          "notNull": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudentFilterNull"
+              }
+            ],
+            "description": "Not null filters for Student",
+            "nullable": true
+          },
+          "orCondition": {
+            "type": "boolean",
+            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
+          },
+          "nestedFilters": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/StudentFilter"
+                }
+              ]
+            },
+            "description": "NestedFilters of the Student, useful for more complex filters"
+          }
+        },
+        "required": [
+          "orCondition"
+        ],
+        "description": "Filter object for Student"
+      },
+      "StudentFilterEquals": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "description": "Student's first name",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Student's last name",
+            "nullable": true
+          },
+          "studentId": {
+            "type": "string",
+            "description": "School-assigned student ID",
+            "nullable": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudentStatus"
+              }
+            ],
+            "description": "Current status of the student",
+            "nullable": true
+          },
+          "gradeLevel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GradeLevel"
+              }
+            ],
+            "description": "Current grade level",
+            "nullable": true
+          }
+        },
+        "description": "Equality/Inequality filter fields for Student"
+      },
+      "StudentFilterRange": {
+        "type": "object",
+        "description": "Range filter fields for Student"
+      },
+      "StudentFilterContains": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Student's first name"
+          },
+          "lastName": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Student's last name"
+          },
+          "studentId": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "School-assigned student ID"
+          },
+          "status": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/StudentStatus"
+                }
+              ]
+            },
+            "description": "Current status of the student"
+          },
+          "gradeLevel": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/GradeLevel"
+                }
+              ]
+            },
+            "description": "Current grade level"
+          }
+        },
+        "description": "Contains filter fields for Student"
+      },
+      "StudentFilterLike": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "description": "Student's first name",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Student's last name",
+            "nullable": true
+          },
+          "studentId": {
+            "type": "string",
+            "description": "School-assigned student ID",
+            "nullable": true
+          }
+        },
+        "description": "LIKE filter fields for Student"
+      },
+      "StudentFilterNull": {
+        "type": "object",
+        "description": "Null filter fields for Student"
+      }
+    },
+    "responses": {
+      "StudentsBulkImport": {
+        "description": "Successfully imported students",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "imported": {
+                  "type": "integer",
+                  "description": "Number of students successfully imported"
+                },
+                "failed": {
+                  "type": "integer",
+                  "description": "Number of students that failed to import"
+                },
+                "errors": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "List of import error messages"
+                }
+              }
+            }
+          }
+        }
+      },
+      "StudentsBulkImport422ResponseBody": {
+        "description": "Unprocessable Entity - The request was well-formed but failed validation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorCode"
+                    }
+                  ]
+                },
+                "errorFields": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StudentsBulkImportRequestError"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error",
+                "errorFields"
+              ]
+            }
+          }
+        }
+      },
+      "StudentsGenerateReport": {
+        "description": "Successfully queued report generation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "reportId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Unique identifier for the generated report"
+                },
+                "estimatedCompletionTime": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the report is expected to be ready"
+                },
+                "downloadUrl": {
+                  "type": "string",
+                  "description": "URL to download the report once ready",
+                  "nullable": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "StudentsGenerateReport422ResponseBody": {
+        "description": "Unprocessable Entity - The request was well-formed but failed validation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorCode"
+                    }
+                  ]
+                },
+                "errorFields": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StudentsGenerateReportRequestError"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error",
+                "errorFields"
+              ]
+            }
+          }
+        }
+      },
+      "StudentsAdvancedSearch": {
+        "description": "Successfully performed advanced search",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "students": {
+                  "type": "array",
+                  "items": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Student"
+                      }
+                    ]
+                  },
+                  "description": "Array of matching students"
+                },
+                "totalCount": {
+                  "type": "integer",
+                  "description": "Total number of matching students"
+                },
+                "facets": {
+                  "type": "string",
+                  "description": "Search facets and counts"
+                }
+              }
+            }
+          }
+        }
+      },
+      "StudentsAdvancedSearch422ResponseBody": {
+        "description": "Unprocessable Entity - The request was well-formed but failed validation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorCode"
+                    }
+                  ]
+                },
+                "errorFields": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StudentsAdvancedSearchRequestError"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error",
+                "errorFields"
+              ]
+            }
+          }
+        }
+      },
+      "StudentsCreate": {
+        "description": "Response for Students Create operation - returns the created Students",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Students"
+                }
+              ]
+            },
+            "example": {
+              "id": "123e4567-e89b-12d3-a456-426614174000",
+              "meta": {
+                "createdAt": "2024-01-15T10:30:00Z",
+                "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                "updatedAt": "2024-01-15T14:45:00Z",
+                "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+              }
+            }
+          }
+        }
+      },
+      "StudentsCreate422ResponseBody": {
+        "description": "Unprocessable Entity - The request was well-formed but failed validation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorCode"
+                    }
+                  ]
+                },
+                "errorFields": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StudentsCreateRequestError"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error",
+                "errorFields"
+              ]
+            }
+          }
+        }
+      },
+      "StudentsUpdate": {
+        "description": "Response for Students Update operation - returns the updated Students",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Students"
+                }
+              ]
+            },
+            "example": {
+              "id": "123e4567-e89b-12d3-a456-426614174000",
+              "meta": {
+                "createdAt": "2024-01-15T10:30:00Z",
+                "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                "updatedAt": "2024-01-15T14:45:00Z",
+                "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+              }
+            }
+          }
+        }
+      },
+      "StudentsUpdate422ResponseBody": {
+        "description": "Unprocessable Entity - The request was well-formed but failed validation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorCode"
+                    }
+                  ]
+                },
+                "errorFields": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StudentsUpdateRequestError"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error",
+                "errorFields"
+              ]
+            }
+          }
+        }
+      },
+      "StudentsGet": {
+        "description": "Response for Students Get operation - returns the requested Students",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Students"
+                }
+              ]
+            },
+            "example": {
+              "id": "123e4567-e89b-12d3-a456-426614174000",
+              "meta": {
+                "createdAt": "2024-01-15T10:30:00Z",
+                "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                "updatedAt": "2024-01-15T14:45:00Z",
+                "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+              }
+            }
+          }
+        }
+      },
+      "StudentsList": {
+        "description": "Response for Students List operation - returns a paginated list of Students",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Students"
+                      }
+                    ]
+                  },
+                  "description": "Array of Students objects"
+                },
+                "pagination": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  ],
+                  "description": "Pagination information"
+                }
+              }
+            },
+            "example": {
+              "data": [
+                {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "meta": {
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                    "updatedAt": "2024-01-15T14:45:00Z",
+                    "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                  }
+                }
+              ],
+              "pagination": {
+                "offset": 0,
+                "limit": 1,
+                "total": 100
+              }
+            }
+          }
+        }
+      },
+      "StudentsSearch": {
+        "description": "Response for Students Search operation - returns filtered Students results",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Students"
+                      }
+                    ]
+                  },
+                  "description": "Array of Students objects"
+                },
+                "pagination": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  ],
+                  "description": "Pagination information"
+                }
+              }
+            },
+            "example": {
+              "data": [
+                {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "meta": {
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                    "updatedAt": "2024-01-15T14:45:00Z",
+                    "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                  }
+                }
+              ],
+              "pagination": {
+                "offset": 0,
+                "limit": 1,
+                "total": 100
+              }
+            }
+          }
+        }
+      },
+      "StudentsSearch422ResponseBody": {
+        "description": "Unprocessable Entity - The request was well-formed but failed validation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorCode"
+                    }
+                  ]
+                },
+                "errorFields": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StudentsSearchRequestError"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error",
+                "errorFields"
+              ]
+            }
+          }
+        }
+      },
+      "Error400ResponseBody": {
+        "description": "Bad Request - The request was malformed or contained invalid parameters",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            }
+          }
+        }
+      },
+      "Error401ResponseBody": {
+        "description": "Unauthorized - The request is missing valid authentication credentials",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            }
+          }
+        }
+      },
+      "Error403ResponseBody": {
+        "description": "Forbidden - Request is authenticated, but the user is not allowed to perform the operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            }
+          }
+        }
+      },
+      "Error404ResponseBody": {
+        "description": "Not Found - The requested resource does not exist",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            }
+          }
+        }
+      },
+      "Error409ResponseBody": {
+        "description": "Conflict - The request could not be completed due to a conflict",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            }
+          }
+        }
+      },
+      "Error429ResponseBody": {
+        "description": "Too Many Requests - When the rate limit has been exceeded",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            }
+          }
+        }
+      },
+      "Error500ResponseBody": {
+        "description": "Internal Server Error - An unexpected server error occurred",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "requestBodies": {
+      "StudentsBulkImport": {
+        "description": "Request body",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "students": {
+                  "type": "array",
+                  "items": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Student"
+                      }
+                    ]
+                  },
+                  "description": "Array of student data to import"
+                },
+                "overwriteExisting": {
+                  "type": "boolean",
+                  "description": "Whether to overwrite existing student records",
+                  "default": false
+                }
+              }
+            }
+          }
+        },
+        "required": false
+      },
+      "StudentsGenerateReport": {
+        "description": "Request body",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "gradeLevel": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/GradeLevel"
+                    }
+                  ],
+                  "description": "Filter by specific grade level",
+                  "nullable": true
+                },
+                "status": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StudentStatus"
+                    }
+                  ],
+                  "description": "Filter by student status",
+                  "nullable": true
+                },
+                "enrollmentDateFrom": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Filter students enrolled after this date",
+                  "nullable": true
+                },
+                "enrollmentDateTo": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Filter students enrolled before this date",
+                  "nullable": true
+                },
+                "includeInactive": {
+                  "type": "boolean",
+                  "description": "Include inactive students in report",
+                  "default": false
+                }
+              }
+            }
+          }
+        },
+        "required": false
+      },
+      "StudentsAdvancedSearch": {
+        "description": "Request body",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "nameQuery": {
+                  "type": "string",
+                  "description": "Search in first name and last name",
+                  "nullable": true
+                },
+                "gradeLevel": {
+                  "type": "array",
+                  "items": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/GradeLevel"
+                      }
+                    ]
+                  },
+                  "description": "Filter by one or more grade levels",
+                  "nullable": true
+                },
+                "status": {
+                  "type": "array",
+                  "items": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/StudentStatus"
+                      }
+                    ]
+                  },
+                  "description": "Filter by one or more statuses",
+                  "nullable": true
+                },
+                "enrollmentDateRange": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "description": "Date range filter [from, to]",
+                  "nullable": true
+                },
+                "hasGraduationDate": {
+                  "type": "boolean",
+                  "description": "Filter students with or without graduation date",
+                  "nullable": true
+                }
+              }
+            }
+          }
+        },
+        "required": false
+      },
+      "StudentsCreate": {
+        "description": "Request body",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "firstName": {
+                  "type": "string",
+                  "description": "Student's first name"
+                },
+                "lastName": {
+                  "type": "string",
+                  "description": "Student's last name"
+                },
+                "studentId": {
+                  "type": "string",
+                  "description": "School-assigned student ID"
+                },
+                "status": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StudentStatus"
+                    }
+                  ],
+                  "description": "Current status of the student",
+                  "default": "Active"
+                },
+                "gradeLevel": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/GradeLevel"
+                    }
+                  ],
+                  "description": "Current grade level"
+                },
+                "contact": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Contact"
+                    }
+                  ],
+                  "description": "Student contact information"
+                },
+                "address": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Address"
+                    }
+                  ],
+                  "description": "Student home address",
+                  "nullable": true
+                },
+                "enrollmentDate": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Date when student was enrolled"
+                }
+              },
+              "required": [
+                "firstName",
+                "lastName",
+                "studentId",
+                "gradeLevel",
+                "enrollmentDate"
+              ]
+            }
+          }
+        },
+        "required": true
+      },
+      "StudentsUpdate": {
+        "description": "Request body",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "firstName": {
+                  "type": "string",
+                  "description": "Student's first name"
+                },
+                "lastName": {
+                  "type": "string",
+                  "description": "Student's last name"
+                },
+                "status": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StudentStatus"
+                    }
+                  ],
+                  "description": "Current status of the student",
+                  "default": "Active"
+                },
+                "gradeLevel": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/GradeLevel"
+                    }
+                  ],
+                  "description": "Current grade level"
+                },
+                "contact": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Contact"
+                    }
+                  ],
+                  "description": "Student contact information"
+                },
+                "address": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Address"
+                    }
+                  ],
+                  "description": "Student home address",
+                  "nullable": true
+                },
+                "graduationDate": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Expected or actual graduation date",
+                  "nullable": true
+                }
+              },
+              "required": [
+                "firstName",
+                "lastName",
+                "gradeLevel"
+              ]
+            }
+          }
+        },
+        "required": true
+      },
+      "StudentsSearch": {
+        "description": "Request body",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "filter": {
+                  "type": "string",
+                  "description": "Filter criteria to search for specific records"
+                }
+              },
+              "required": [
+                "filter"
+              ]
+            }
+          }
+        },
+        "required": true
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Students",
+      "description": "Student management resource"
+    }
+  ],
+  "x-speakeasy-retries": {
+    "strategy": "backoff",
+    "backoff": {
+      "initialInterval": 500,
+      "maxInterval": 60000,
+      "maxElapsedTime": 3600000,
+      "exponent": 1.5
+    },
+    "statusCodes": [
+      "5XX"
+    ],
+    "retryConnectionErrors": true
+  },
+  "x-speakeasy-timeout": 30000
+}
