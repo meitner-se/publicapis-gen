@@ -18,6 +18,99 @@
     }
   ],
   "paths": {
+    "/students/_search": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Search Students",
+        "description": "Search for `Students` with filtering capabilities.",
+        "operationId": "StudentsSearch",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of Students to return (default: 50) when searching Students",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "The number of Students to skip before starting to return results (default: 0) when searching Students",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsSearch"
+        },
+        "responses": {
+          "200": {
+            "description": "Response for Students Search operation - returns filtered Students results",
+            "$ref": "#/components/responses/StudentsSearch"
+          },
+          "400": {
+            "description": "Bad Request error for Students Search operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Search operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Search operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Search operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Search operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students Search operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsSearch422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Search operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Search operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-pagination": {
+          "type": "offsetLimit",
+          "inputs": [
+            {
+              "name": "offset",
+              "in": "parameters",
+              "type": "offset"
+            },
+            {
+              "name": "limit",
+              "in": "parameters",
+              "type": "limit"
+            }
+          ],
+          "outputs": {
+            "results": "$.data.resultArray"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "search"
+      }
+    },
     "/students/bulk-import": {
       "post": {
         "tags": [
@@ -78,7 +171,9 @@
             "description": "Internal Server error for Students BulkImport operation - unexpected server error",
             "$ref": "#/components/responses/Error500ResponseBody"
           }
-        }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "bulkimport"
       }
     },
     "/students/reports/generate": {
@@ -141,7 +236,9 @@
             "description": "Internal Server error for Students GenerateReport operation - unexpected server error",
             "$ref": "#/components/responses/Error500ResponseBody"
           }
-        }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "generatereport"
       }
     },
     "/students/advanced-search": {
@@ -234,7 +331,9 @@
             "description": "Internal Server error for Students AdvancedSearch operation - unexpected server error",
             "$ref": "#/components/responses/Error500ResponseBody"
           }
-        }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "advancedsearch"
       }
     },
     "/students": {
@@ -318,7 +417,9 @@
           "outputs": {
             "results": "$.data.resultArray"
           }
-        }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "list"
       },
       "post": {
         "tags": [
@@ -368,7 +469,9 @@
             "description": "Internal Server error for Students Create operation - unexpected server error",
             "$ref": "#/components/responses/Error500ResponseBody"
           }
-        }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "create"
       }
     },
     "/students/{id}": {
@@ -424,7 +527,9 @@
             "description": "Internal Server error for Students Get operation - unexpected server error",
             "$ref": "#/components/responses/Error500ResponseBody"
           }
-        }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "get"
       },
       "delete": {
         "tags": [
@@ -477,7 +582,9 @@
             "description": "Internal Server error for Students Delete operation - unexpected server error",
             "$ref": "#/components/responses/Error500ResponseBody"
           }
-        }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "delete"
       },
       "patch": {
         "tags": [
@@ -538,98 +645,9 @@
             "description": "Internal Server error for Students Update operation - unexpected server error",
             "$ref": "#/components/responses/Error500ResponseBody"
           }
-        }
-      }
-    },
-    "/students/_search": {
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Search Students",
-        "description": "Search for `Students` with filtering capabilities.",
-        "operationId": "StudentsSearch",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of Students to return (default: 50) when searching Students",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 50
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "The number of Students to skip before starting to return results (default: 0) when searching Students",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 0
-            }
-          }
-        ],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsSearch"
         },
-        "responses": {
-          "200": {
-            "description": "Response for Students Search operation - returns filtered Students results",
-            "$ref": "#/components/responses/StudentsSearch"
-          },
-          "400": {
-            "description": "Bad Request error for Students Search operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students Search operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students Search operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students Search operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students Search operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "Validation error for Students Search operation - request data failed validation",
-            "$ref": "#/components/responses/StudentsSearch422ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students Search operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students Search operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-pagination": {
-          "type": "offsetLimit",
-          "inputs": [
-            {
-              "name": "offset",
-              "in": "parameters",
-              "type": "offset"
-            },
-            {
-              "name": "limit",
-              "in": "parameters",
-              "type": "limit"
-            }
-          ],
-          "outputs": {
-            "results": "$.data.resultArray"
-          }
-        }
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "update"
       }
     }
   },
@@ -969,29 +987,47 @@
         ],
         "description": "Student management resource"
       },
-      "ContactRequestError": {
+      "AddressRequestError": {
         "type": "object",
         "properties": {
-          "email": {
+          "street": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
-            "description": "Email address",
+            "description": "Street address",
             "nullable": true
           },
-          "phone": {
+          "city": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
-            "description": "Phone number",
+            "description": "City",
+            "nullable": true
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "State or province",
+            "nullable": true
+          },
+          "zipCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "ZIP or postal code",
             "nullable": true
           }
         },
-        "description": "Request error object for Contact"
+        "description": "Request error object for Address"
       },
       "StudentRequestError": {
         "type": "object",
@@ -1044,47 +1080,29 @@
         },
         "description": "Request error object for Student"
       },
-      "AddressRequestError": {
+      "ContactRequestError": {
         "type": "object",
         "properties": {
-          "street": {
+          "email": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
-            "description": "Street address",
+            "description": "Email address",
             "nullable": true
           },
-          "city": {
+          "phone": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
-            "description": "City",
-            "nullable": true
-          },
-          "state": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "State or province",
-            "nullable": true
-          },
-          "zipCode": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "ZIP or postal code",
+            "description": "Phone number",
             "nullable": true
           }
         },
-        "description": "Request error object for Address"
+        "description": "Request error object for Contact"
       },
       "StudentsBulkImportRequestError": {
         "type": "object",

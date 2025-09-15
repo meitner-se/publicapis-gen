@@ -146,6 +146,12 @@ const (
 	speakeasyServerIdExtension = "x-speakeasy-server-id"
 )
 
+// Speakeasy operation naming extension constants
+const (
+	speakeasyGroupExtension        = "x-speakeasy-group"
+	speakeasyNameOverrideExtension = "x-speakeasy-name-override"
+)
+
 // Retry configuration field names
 const (
 	retryFieldStrategy              = "strategy"
@@ -375,6 +381,30 @@ func (g *Generator) addSpeakeasyPaginationExtension(operation *v3.Operation) {
 
 	// Add the extension to the operation
 	operation.Extensions.Set(speakeasyPaginationExtension, paginationNode)
+}
+
+// addSpeakeasyOperationNamingExtensions adds Speakeasy operation naming extensions to an operation.
+func (g *Generator) addSpeakeasyOperationNamingExtensions(operation *v3.Operation, endpoint specification.Endpoint, resource specification.Resource) {
+	// Initialize extensions map if it doesn't exist
+	if operation.Extensions == nil {
+		operation.Extensions = orderedmap.New[string, *yaml.Node]()
+	}
+
+	// Add x-speakeasy-group extension (resource name in lowercase and plural)
+	groupValue := strings.ToLower(resource.GetPluralName())
+	groupNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Value: groupValue,
+	}
+	operation.Extensions.Set(speakeasyGroupExtension, groupNode)
+
+	// Add x-speakeasy-name-override extension (method name in lowercase)
+	nameOverrideValue := strings.ToLower(endpoint.Name)
+	nameOverrideNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Value: nameOverrideValue,
+	}
+	operation.Extensions.Set(speakeasyNameOverrideExtension, nameOverrideNode)
 }
 
 // isPaginatedOperation determines if an endpoint represents a paginated operation
@@ -844,6 +874,9 @@ func (g *Generator) createOperation(endpoint specification.Endpoint, resource sp
 	if g.isPaginatedOperation(endpoint) {
 		g.addSpeakeasyPaginationExtension(operation)
 	}
+
+	// Add Speakeasy operation naming extensions
+	g.addSpeakeasyOperationNamingExtensions(operation, endpoint, resource)
 
 	return operation
 }
