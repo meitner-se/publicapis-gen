@@ -1316,6 +1316,151 @@ func (g *Generator) createComponentResponse(response specification.EndpointRespo
 	return componentResponse
 }
 
+// generate422ErrorExample generates a realistic example for a 422 error response.
+func (g *Generator) generate422ErrorExample(resourceName, endpointName string, service *specification.Service) *yaml.Node {
+	// Create the root object
+	rootNode := &yaml.Node{
+		Kind: yaml.MappingNode,
+	}
+
+	// Add error field with UnprocessableEntity value
+	errorKeyNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: errorFieldName,
+	}
+	errorValueNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: errorCodeUnprocessableEntity,
+	}
+	rootNode.Content = append(rootNode.Content, errorKeyNode, errorValueNode)
+
+	// Add errorFields field with validation examples
+	errorFieldsKeyNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: errorFieldsFieldName,
+	}
+
+	// Generate errorFields content based on RequestError object or fallback
+	var errorFieldsValueNode *yaml.Node
+	requestErrorObjectName := resourceName + endpointName + requestErrorSuffix
+	if service.HasObject(requestErrorObjectName) {
+		// Generate example from RequestError object definition
+		requestErrorObj := service.GetObject(requestErrorObjectName)
+		if requestErrorObj != nil {
+			errorFieldsValueNode = g.generateErrorFieldsExample(requestErrorObj.Fields, service)
+		}
+	}
+
+	// Fallback to generic error fields example if no RequestError object found
+	if errorFieldsValueNode == nil {
+		errorFieldsValueNode = g.generateGenericErrorFieldsExample()
+	}
+
+	rootNode.Content = append(rootNode.Content, errorFieldsKeyNode, errorFieldsValueNode)
+
+	return rootNode
+}
+
+// generateErrorFieldsExample generates errorFields examples from RequestError object fields.
+func (g *Generator) generateErrorFieldsExample(fields []specification.Field, service *specification.Service) *yaml.Node {
+	errorFieldsNode := &yaml.Node{
+		Kind: yaml.MappingNode,
+	}
+
+	// Show validation errors for first few fields as examples
+	exampleCount := 0
+	maxExamples := 2 // Limit to avoid overwhelming examples
+
+	for _, field := range fields {
+		if exampleCount >= maxExamples {
+			break
+		}
+
+		fieldKeyNode := &yaml.Node{
+			Kind:  yaml.ScalarNode,
+			Tag:   "!!str",
+			Value: field.TagJSON(),
+		}
+
+		var fieldValueNode *yaml.Node
+
+		// Handle nested RequestError objects
+		if strings.HasSuffix(field.Type, requestErrorSuffix) && service.HasObject(field.Type) {
+			nestedObj := service.GetObject(field.Type)
+			if nestedObj != nil {
+				fieldValueNode = g.generateErrorFieldsExample(nestedObj.Fields, service)
+			}
+		} else {
+			// Generate ErrorField example for primitive fields
+			fieldValueNode = g.generateSingleErrorFieldExample(field.Name)
+		}
+
+		if fieldValueNode != nil {
+			errorFieldsNode.Content = append(errorFieldsNode.Content, fieldKeyNode, fieldValueNode)
+			exampleCount++
+		}
+	}
+
+	return errorFieldsNode
+}
+
+// generateSingleErrorFieldExample generates an ErrorField example with code and message.
+func (g *Generator) generateSingleErrorFieldExample(fieldName string) *yaml.Node {
+	errorFieldNode := &yaml.Node{
+		Kind: yaml.MappingNode,
+	}
+
+	// Add code field
+	codeKeyNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: codeFieldName,
+	}
+	codeValueNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: "Required", // Use "Required" as default example
+	}
+	errorFieldNode.Content = append(errorFieldNode.Content, codeKeyNode, codeValueNode)
+
+	// Add message field
+	messageKeyNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: messageFieldName,
+	}
+	messageValueNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: fmt.Sprintf("%s is required", fieldName),
+	}
+	errorFieldNode.Content = append(errorFieldNode.Content, messageKeyNode, messageValueNode)
+
+	return errorFieldNode
+}
+
+// generateGenericErrorFieldsExample generates a generic errorFields example when no RequestError object is available.
+func (g *Generator) generateGenericErrorFieldsExample() *yaml.Node {
+	errorFieldsNode := &yaml.Node{
+		Kind: yaml.MappingNode,
+	}
+
+	// Add a generic field validation error example
+	fieldKeyNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: "fieldName",
+	}
+	fieldValueNode := g.generateSingleErrorFieldExample("fieldName")
+
+	errorFieldsNode.Content = append(errorFieldsNode.Content, fieldKeyNode, fieldValueNode)
+
+	return errorFieldsNode
+}
+
 // createEndpointSpecific422ErrorResponse creates a 422 error response component for an endpoint using RequestError schema.
 func (g *Generator) createEndpointSpecific422ErrorResponse(resourceName, endpointName string, service *specification.Service) *v3.Response {
 	// Create schema with error field (ErrorCode) and errorFields field (RequestError type)
@@ -1367,6 +1512,12 @@ func (g *Generator) createEndpointSpecific422ErrorResponse(resourceName, endpoin
 	mediaType := &v3.MediaType{
 		Schema: base.CreateSchemaProxy(schema),
 	}
+
+	// Generate 422 error response example
+	if errorExample := g.generate422ErrorExample(resourceName, endpointName, service); errorExample != nil {
+		mediaType.Example = errorExample
+	}
+
 	content.Set(contentTypeJSON, mediaType)
 
 	return &v3.Response{
