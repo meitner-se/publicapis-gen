@@ -1855,6 +1855,249 @@ func TestRequestBodyExamples(t *testing.T) {
 	t.Logf("Generated OpenAPI JSON with request body examples:\n%s", jsonString)
 }
 
+// TestResponseBodyExamples tests that response body examples are generated correctly.
+func TestResponseBodyExamples(t *testing.T) {
+	generator := newGenerator()
+
+	service := &specification.Service{
+		Name:    "Test API",
+		Version: "1.0.0",
+		Enums: []specification.Enum{
+			{
+				Name:        "Status",
+				Description: "Status enum",
+				Values: []specification.EnumValue{
+					{Name: "Active", Description: "Active status"},
+					{Name: "Inactive", Description: "Inactive status"},
+				},
+			},
+		},
+		Objects: []specification.Object{
+			{
+				Name:        "User",
+				Description: "User object",
+				Fields: []specification.Field{
+					{
+						Name:        "id",
+						Description: "User ID",
+						Type:        specification.FieldTypeUUID,
+						Example:     "123e4567-e89b-12d3-a456-426614174000",
+					},
+					{
+						Name:        "name",
+						Description: "User name",
+						Type:        specification.FieldTypeString,
+						Example:     "John Doe",
+					},
+					{
+						Name:        "age",
+						Description: "User age",
+						Type:        specification.FieldTypeInt,
+						Example:     "30",
+					},
+					{
+						Name:        "active",
+						Description: "User active status",
+						Type:        specification.FieldTypeBool,
+						Example:     "true",
+					},
+					{
+						Name:        "status",
+						Description: "User status",
+						Type:        "Status",
+						Example:     "Active",
+					},
+					{
+						Name:        "meta",
+						Description: "Metadata information",
+						Type:        "Meta",
+					},
+				},
+			},
+			{
+				Name:        "Meta",
+				Description: "Meta contains information about the creation and modification of a resource for auditing purposes",
+				Fields: []specification.Field{
+					{
+						Name:        "createdAt",
+						Description: "Timestamp when the resource was created",
+						Type:        specification.FieldTypeTimestamp,
+						Example:     "2024-01-15T10:30:00Z",
+					},
+					{
+						Name:        "createdBy",
+						Description: "User who created the resource",
+						Type:        specification.FieldTypeUUID,
+						Modifiers:   []string{specification.ModifierNullable},
+						Example:     "987fcdeb-51a2-43d1-b567-123456789abc",
+					},
+					{
+						Name:        "updatedAt",
+						Description: "Timestamp when the resource was last updated",
+						Type:        specification.FieldTypeTimestamp,
+						Example:     "2024-01-15T14:45:00Z",
+					},
+					{
+						Name:        "updatedBy",
+						Description: "User who last updated the resource",
+						Type:        specification.FieldTypeUUID,
+						Modifiers:   []string{specification.ModifierNullable},
+						Example:     "987fcdeb-51a2-43d1-b567-123456789abc",
+					},
+				},
+			},
+			{
+				Name:        "Pagination",
+				Description: "Pagination parameters for controlling result sets in list operations",
+				Fields: []specification.Field{
+					{
+						Name:        "offset",
+						Description: "Number of items to skip from the beginning of the result set",
+						Type:        specification.FieldTypeInt,
+						Example:     "0",
+					},
+					{
+						Name:        "limit",
+						Description: "Maximum number of items to return in the result set",
+						Type:        specification.FieldTypeInt,
+						Example:     "1",
+					},
+					{
+						Name:        "total",
+						Description: "Total number of items available for pagination",
+						Type:        specification.FieldTypeInt,
+						Example:     "100",
+					},
+				},
+			},
+		},
+		Resources: []specification.Resource{
+			{
+				Name:        "User",
+				Description: "User management",
+				Operations:  []string{specification.OperationCreate, specification.OperationRead},
+				Endpoints: []specification.Endpoint{
+					{
+						Name:        "Create",
+						Title:       "Create User",
+						Description: "Create a new user",
+						Method:      "POST",
+						Path:        "",
+						Request: specification.EndpointRequest{
+							BodyParams: []specification.Field{
+								{
+									Name:        "name",
+									Description: "User name",
+									Type:        specification.FieldTypeString,
+									Example:     "Jane Smith",
+								},
+							},
+						},
+						Response: specification.EndpointResponse{
+							StatusCode:  201,
+							ContentType: "application/json",
+							BodyObject:  &[]string{"User"}[0], // Return User object
+						},
+					},
+					{
+						Name:        "Get",
+						Title:       "Get User",
+						Description: "Get a user by ID",
+						Method:      "GET",
+						Path:        "/{id}",
+						Request: specification.EndpointRequest{
+							PathParams: []specification.Field{
+								{
+									Name:        "id",
+									Description: "User ID",
+									Type:        specification.FieldTypeUUID,
+								},
+							},
+						},
+						Response: specification.EndpointResponse{
+							StatusCode:  200,
+							ContentType: "application/json",
+							BodyObject:  &[]string{"User"}[0], // Return User object
+						},
+					},
+					{
+						Name:        "List",
+						Title:       "List Users",
+						Description: "List all users",
+						Method:      "GET",
+						Path:        "",
+						Request:     specification.EndpointRequest{},
+						Response: specification.EndpointResponse{
+							StatusCode:  200,
+							ContentType: "application/json",
+							BodyFields: []specification.Field{
+								{
+									Name:        "data",
+									Description: "List of users",
+									Type:        "User",
+									Modifiers:   []string{specification.ModifierArray},
+								},
+								{
+									Name:        "pagination",
+									Description: "Pagination information",
+									Type:        "Pagination",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	document, err := generator.GenerateFromService(service)
+	assert.NoError(t, err, "Should generate document successfully")
+	assert.NotNil(t, document, "Document should not be nil")
+
+	// Convert to JSON to examine structure
+	jsonBytes, err := generator.ToJSON(document)
+	assert.NoError(t, err, "Should convert to JSON successfully")
+	jsonString := string(jsonBytes)
+
+	// Verify that examples exist in response bodies
+	assert.Contains(t, jsonString, "\"example\"", "Response bodies should contain examples")
+
+	// Verify string types are quoted in response examples
+	assert.Contains(t, jsonString, "\"John Doe\"", "Should contain string field example with quotes in response")
+	assert.Contains(t, jsonString, "\"123e4567-e89b-12d3-a456-426614174000\"", "Should contain UUID field example with quotes in response")
+	assert.Contains(t, jsonString, "\"Active\"", "Should contain enum field example with quotes in response")
+
+	// Verify integer types are unquoted in response examples
+	assert.Contains(t, jsonString, "\"age\": 30", "Should contain integer field example without quotes in response")
+
+	// Verify boolean types are unquoted in response examples
+	assert.Contains(t, jsonString, "\"active\": true", "Should contain boolean field example without quotes in response")
+
+	// Verify array fields are properly wrapped in arrays
+	assert.Contains(t, jsonString, "\"data\": [", "Array field should start with opening bracket")
+	assert.Contains(t, jsonString, "]", "Array field should end with closing bracket")
+
+	// Verify that array contains object structure (not just primitive)
+	jsonContainsArrayWithObject := strings.Contains(jsonString, "\"data\": [{") || strings.Contains(jsonString, "\"data\": [\n")
+	assert.True(t, jsonContainsArrayWithObject, "Array field should contain properly structured objects")
+
+	// Verify standard entity fields are present with default examples
+	assert.Contains(t, jsonString, "\"createdAt\": \"2024-01-15T10:30:00Z\"", "Should contain default createdAt timestamp")
+	assert.Contains(t, jsonString, "\"updatedAt\": \"2024-01-15T14:45:00Z\"", "Should contain default updatedAt timestamp")
+	assert.Contains(t, jsonString, "\"createdBy\": \"987fcdeb-51a2-43d1-b567-123456789abc\"", "Should contain default createdBy UUID")
+	assert.Contains(t, jsonString, "\"updatedBy\": \"987fcdeb-51a2-43d1-b567-123456789abc\"", "Should contain default updatedBy UUID")
+
+	// Verify pagination fields are present with default examples
+	assert.Contains(t, jsonString, "\"offset\": 0", "Should contain default pagination offset")
+	assert.Contains(t, jsonString, "\"limit\": 1", "Should contain default pagination limit")
+	assert.Contains(t, jsonString, "\"total\": 100", "Should contain default pagination total")
+
+	// Verify meta object is nested within user objects
+	assert.Contains(t, jsonString, "\"meta\":", "User objects should contain meta field")
+
+	t.Logf("Generated OpenAPI JSON with response body examples:\n%s", jsonString)
+}
+
 // TestRequestBodyNamingConvention verifies the systematic naming of request bodies.
 func TestRequestBodyNamingConvention(t *testing.T) {
 	generator := newGenerator()

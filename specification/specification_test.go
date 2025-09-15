@@ -1141,7 +1141,7 @@ func TestCreateAutoColumnID(t *testing.T) {
 	assert.Equal(t, FieldTypeUUID, idField.Type, "Auto-column ID should have UUID type")
 	assert.Empty(t, idField.Modifiers, "Auto-column ID should have no modifiers")
 	assert.Empty(t, idField.Default, "Auto-column ID should have no default value")
-	assert.Empty(t, idField.Example, "Auto-column ID should have no example")
+	assert.Equal(t, "123e4567-e89b-12d3-a456-426614174000", idField.Example, "Auto-column ID should have example UUID")
 
 	t.Run("consistency", func(t *testing.T) {
 		id1 := createAutoColumnID(resourceName)
@@ -1165,7 +1165,7 @@ func TestCreateAutoColumnCreatedAt(t *testing.T) {
 	assert.Equal(t, FieldTypeTimestamp, createdAtField.Type, "Auto-column CreatedAt should have Timestamp type")
 	assert.Empty(t, createdAtField.Modifiers, "Auto-column CreatedAt should have no modifiers")
 	assert.Empty(t, createdAtField.Default, "Auto-column CreatedAt should have no default value")
-	assert.Empty(t, createdAtField.Example, "Auto-column CreatedAt should have no example")
+	assert.Equal(t, "2024-01-15T10:30:00Z", createdAtField.Example, "Auto-column CreatedAt should have example timestamp")
 
 	t.Run("consistency", func(t *testing.T) {
 		createdAt1 := createAutoColumnCreatedAt(resourceName)
@@ -1189,7 +1189,7 @@ func TestCreateAutoColumnCreatedBy(t *testing.T) {
 	assert.Equal(t, FieldTypeUUID, createdByField.Type, "Auto-column CreatedBy should have UUID type")
 	assert.Equal(t, []string{ModifierNullable}, createdByField.Modifiers, "Auto-column CreatedBy should have nullable modifier")
 	assert.Empty(t, createdByField.Default, "Auto-column CreatedBy should have no default value")
-	assert.Empty(t, createdByField.Example, "Auto-column CreatedBy should have no example")
+	assert.Equal(t, "987fcdeb-51a2-43d1-b567-123456789abc", createdByField.Example, "Auto-column CreatedBy should have example UUID")
 
 	t.Run("consistency", func(t *testing.T) {
 		createdBy1 := createAutoColumnCreatedBy(resourceName)
@@ -1213,7 +1213,7 @@ func TestCreateAutoColumnUpdatedAt(t *testing.T) {
 	assert.Equal(t, FieldTypeTimestamp, updatedAtField.Type, "Auto-column UpdatedAt should have Timestamp type")
 	assert.Empty(t, updatedAtField.Modifiers, "Auto-column UpdatedAt should have no modifiers")
 	assert.Empty(t, updatedAtField.Default, "Auto-column UpdatedAt should have no default value")
-	assert.Empty(t, updatedAtField.Example, "Auto-column UpdatedAt should have no example")
+	assert.Equal(t, "2024-01-15T14:45:00Z", updatedAtField.Example, "Auto-column UpdatedAt should have example timestamp")
 
 	t.Run("consistency", func(t *testing.T) {
 		updatedAt1 := createAutoColumnUpdatedAt(resourceName)
@@ -1237,7 +1237,7 @@ func TestCreateAutoColumnUpdatedBy(t *testing.T) {
 	assert.Equal(t, FieldTypeUUID, updatedByField.Type, "Auto-column UpdatedBy should have UUID type")
 	assert.Equal(t, []string{ModifierNullable}, updatedByField.Modifiers, "Auto-column UpdatedBy should have nullable modifier")
 	assert.Empty(t, updatedByField.Default, "Auto-column UpdatedBy should have no default value")
-	assert.Empty(t, updatedByField.Example, "Auto-column UpdatedBy should have no example")
+	assert.Equal(t, "987fcdeb-51a2-43d1-b567-123456789abc", updatedByField.Example, "Auto-column UpdatedBy should have example UUID")
 
 	t.Run("consistency", func(t *testing.T) {
 		updatedBy1 := createAutoColumnUpdatedBy(resourceName)
