@@ -155,12 +155,15 @@ const (
 
 // Speakeasy pagination configuration constants
 const (
-	speakeasyPaginationExtension = "x-speakeasy-pagination"
-	speakeasyPaginationStrategy  = "offsetLimit"
-	speakeasyOffsetParamName     = "offset"
-	speakeasyLimitParamName      = "limit"
-	speakeasyTotalFieldPath      = "pagination.total"
-	speakeasyDataFieldName       = "data"
+	speakeasyPaginationExtension  = "x-speakeasy-pagination"
+	speakeasyPaginationType       = "offsetLimit"
+	speakeasyOffsetParamName      = "offset"
+	speakeasyLimitParamName       = "limit"
+	speakeasyResultsFieldPath     = "$.data.resultArray"
+	speakeasyPaginationInputsIn   = "parameters"
+	speakeasyPaginationOffsetType = "offset"
+	speakeasyPaginationLimitType  = "limit"
+	speakeasyDataFieldName        = "data" // Still used in isPaginatedOperation
 )
 
 // Object and field names
@@ -311,28 +314,58 @@ func (g *Generator) addSpeakeasyPaginationExtension(operation *v3.Operation) {
 	}
 
 	// Create nodes for the pagination configuration
-	strategyKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "strategy"}
-	strategyValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyPaginationStrategy}
+	typeKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "type"}
+	typeValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyPaginationType}
 
-	offsetParamKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "offsetParam"}
-	offsetParamValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyOffsetParamName}
+	// Create the inputs array
+	inputsKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "inputs"}
+	inputsArrayNode := &yaml.Node{Kind: yaml.SequenceNode}
 
-	limitParamKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "limitParam"}
-	limitParamValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyLimitParamName}
+	// Create offset input object
+	offsetInputNode := &yaml.Node{Kind: yaml.MappingNode}
+	offsetNameKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "name"}
+	offsetNameValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyOffsetParamName}
+	offsetInKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "in"}
+	offsetInValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyPaginationInputsIn}
+	offsetTypeKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "type"}
+	offsetTypeValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyPaginationOffsetType}
+	offsetInputNode.Content = []*yaml.Node{
+		offsetNameKeyNode, offsetNameValueNode,
+		offsetInKeyNode, offsetInValueNode,
+		offsetTypeKeyNode, offsetTypeValueNode,
+	}
 
-	totalFieldKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "totalField"}
-	totalFieldValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyTotalFieldPath}
+	// Create limit input object
+	limitInputNode := &yaml.Node{Kind: yaml.MappingNode}
+	limitNameKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "name"}
+	limitNameValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyLimitParamName}
+	limitInKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "in"}
+	limitInValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyPaginationInputsIn}
+	limitTypeKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "type"}
+	limitTypeValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyPaginationLimitType}
+	limitInputNode.Content = []*yaml.Node{
+		limitNameKeyNode, limitNameValueNode,
+		limitInKeyNode, limitInValueNode,
+		limitTypeKeyNode, limitTypeValueNode,
+	}
 
-	dataFieldKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "dataField"}
-	dataFieldValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyDataFieldName}
+	// Add input objects to inputs array
+	inputsArrayNode.Content = []*yaml.Node{offsetInputNode, limitInputNode}
+
+	// Create the outputs object
+	outputsKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "outputs"}
+	outputsObjectNode := &yaml.Node{Kind: yaml.MappingNode}
+	resultsKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "results"}
+	resultsValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyResultsFieldPath}
+	outputsObjectNode.Content = []*yaml.Node{
+		resultsKeyNode, resultsValueNode,
+	}
 
 	// Assemble the main pagination configuration node
 	paginationNode.Content = []*yaml.Node{
-		strategyKeyNode, strategyValueNode,
-		offsetParamKeyNode, offsetParamValueNode,
-		limitParamKeyNode, limitParamValueNode,
-		totalFieldKeyNode, totalFieldValueNode,
-		dataFieldKeyNode, dataFieldValueNode,
+		typeKeyNode, typeValueNode,
+		inputsKeyNode, inputsArrayNode,
+		outputsKeyNode, outputsObjectNode,
 	}
 
 	// Add the extension to the operation
