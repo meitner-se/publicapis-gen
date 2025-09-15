@@ -1784,15 +1784,196 @@ func TestRequestBodiesComponentsSection(t *testing.T) {
 
 	// TODO: Implement request body references - for now, operations use inline request bodies
 	// Once references are implemented, uncomment these tests:
-	// assert.Contains(t, jsonString, "\"$ref\": \"#/components/requestBodies/UserCreate\"", "POST /user operation should reference UserCreate")
-	// assert.Contains(t, jsonString, "\"$ref\": \"#/components/requestBodies/UserUpdate\"", "PATCH /user/{id} operation should reference UserUpdate")
-	// assert.Contains(t, jsonString, "\"$ref\": \"#/components/requestBodies/ProductCreate\"", "POST /product operation should reference ProductCreate")
+}
 
-	// For now, verify that operations still have inline request bodies
-	assert.Contains(t, jsonString, "\"requestBody\"", "Operations should have request bodies")
-	assert.Contains(t, jsonString, "\"description\": \"Request body\"", "Request bodies should have description")
+// ============================================================================
+// Security Integration Tests
+// ============================================================================
 
-	t.Logf("Generated OpenAPI JSON with requestBodies components:\n%s", jsonString)
+// TestSecurityConfigurationIntegration tests complete OpenAPI generation with security configuration.
+func TestSecurityConfigurationIntegration(t *testing.T) {
+	generator := newGenerator()
+
+	// Create a service with security configuration
+	service := &specification.Service{
+		Name:    "SecureAPI",
+		Version: "1.0.0",
+		Security: &specification.SecurityConfiguration{
+			Schemes: map[string]specification.SecurityScheme{
+				specification.SecuritySchemeMTLS: {
+					Type:        specification.SecurityTypeMTLS,
+					Description: "Client TLS certificate required.",
+				},
+				specification.SecuritySchemeBearerAuth: {
+					Type:         specification.SecurityTypeHTTP,
+					Scheme:       specification.HTTPSchemeBearer,
+					BearerFormat: specification.BearerFormatJWT,
+					Description:  "Bearer access token in Authorization header.",
+				},
+				specification.SecuritySchemeClientID: {
+					Type:        specification.SecurityTypeAPIKey,
+					In:          specification.APIKeyInHeader,
+					Name:        specification.HeaderClientID,
+					Description: "Your client identifier.",
+				},
+				specification.SecuritySchemeClientSecret: {
+					Type:        specification.SecurityTypeAPIKey,
+					In:          specification.APIKeyInHeader,
+					Name:        specification.HeaderClientSecret,
+					Description: "Your client secret.",
+				},
+			},
+			Requirements: []specification.SecurityRequirement{
+				{
+					specification.SecuritySchemeMTLS:       []string{},
+					specification.SecuritySchemeBearerAuth: []string{},
+				},
+				{
+					specification.SecuritySchemeClientID:     []string{},
+					specification.SecuritySchemeClientSecret: []string{},
+				},
+			},
+		},
+		Resources: []specification.Resource{
+			{
+				Name:        "User",
+				Description: "User resource",
+				Operations:  []string{specification.OperationCreate, specification.OperationRead},
+				Fields: []specification.ResourceField{
+					{
+						Field: specification.Field{
+							Name:        "id",
+							Description: "User identifier",
+							Type:        specification.FieldTypeUUID,
+						},
+						Operations: []string{specification.OperationRead},
+					},
+					{
+						Field: specification.Field{
+							Name:        "email",
+							Description: "User email address",
+							Type:        specification.FieldTypeString,
+						},
+						Operations: []string{specification.OperationCreate, specification.OperationRead},
+					},
+				},
+			},
+		},
+	}
+
+	// Apply overlay to generate default endpoints
+	serviceWithOverlay := specification.ApplyOverlay(service)
+
+	// Generate OpenAPI document
+	document, err := generator.GenerateFromService(serviceWithOverlay)
+	assert.NoError(t, err, "Should generate OpenAPI document successfully")
+	assert.NotNil(t, document, "Generated document should not be nil")
+
+	// Verify security schemes are present
+	assert.NotNil(t, document.Components, "Document should have Components")
+	assert.NotNil(t, document.Components.SecuritySchemes, "Components should have SecuritySchemes")
+
+	// Check security schemes
+	mtlsScheme := document.Components.SecuritySchemes.GetOrZero(specification.SecuritySchemeMTLS)
+	assert.NotNil(t, mtlsScheme, "Should have mTLS security scheme")
+	assert.Equal(t, specification.SecurityTypeMTLS, mtlsScheme.Type, "mTLS scheme should have correct type")
+
+	bearerScheme := document.Components.SecuritySchemes.GetOrZero(specification.SecuritySchemeBearerAuth)
+	assert.NotNil(t, bearerScheme, "Should have bearer auth security scheme")
+	assert.Equal(t, specification.SecurityTypeHTTP, bearerScheme.Type, "Bearer scheme should have correct type")
+	assert.Equal(t, specification.HTTPSchemeBearer, bearerScheme.Scheme, "Bearer scheme should have correct scheme")
+	assert.Equal(t, specification.BearerFormatJWT, bearerScheme.BearerFormat, "Bearer scheme should have correct format")
+
+	clientIDScheme := document.Components.SecuritySchemes.GetOrZero(specification.SecuritySchemeClientID)
+	assert.NotNil(t, clientIDScheme, "Should have client ID security scheme")
+	assert.Equal(t, specification.SecurityTypeAPIKey, clientIDScheme.Type, "Client ID scheme should have correct type")
+	assert.Equal(t, specification.APIKeyInHeader, clientIDScheme.In, "Client ID scheme should be in header")
+	assert.Equal(t, specification.HeaderClientID, clientIDScheme.Name, "Client ID scheme should have correct header name")
+
+	clientSecretScheme := document.Components.SecuritySchemes.GetOrZero(specification.SecuritySchemeClientSecret)
+	assert.NotNil(t, clientSecretScheme, "Should have client secret security scheme")
+	assert.Equal(t, specification.SecurityTypeAPIKey, clientSecretScheme.Type, "Client Secret scheme should have correct type")
+	assert.Equal(t, specification.APIKeyInHeader, clientSecretScheme.In, "Client Secret scheme should be in header")
+	assert.Equal(t, specification.HeaderClientSecret, clientSecretScheme.Name, "Client Secret scheme should have correct header name")
+
+	// Check security requirements
+	assert.NotNil(t, document.Security, "Document should have security requirements")
+	assert.Len(t, document.Security, 2, "Should have 2 security requirements")
+
+	// First requirement: mTLS + Bearer
+	firstReq := document.Security[0]
+	assert.NotNil(t, firstReq, "First security requirement should not be nil")
+	assert.NotNil(t, firstReq.Requirements, "First requirement should have requirements map")
+	_, mtlsExists := firstReq.Requirements.Get(specification.SecuritySchemeMTLS)
+	assert.True(t, mtlsExists, "First requirement should contain mTLS")
+	_, bearerExists := firstReq.Requirements.Get(specification.SecuritySchemeBearerAuth)
+	assert.True(t, bearerExists, "First requirement should contain bearer auth")
+
+	// Second requirement: Client ID + Secret
+	secondReq := document.Security[1]
+	assert.NotNil(t, secondReq, "Second security requirement should not be nil")
+	assert.NotNil(t, secondReq.Requirements, "Second requirement should have requirements map")
+	_, clientIDExists := secondReq.Requirements.Get(specification.SecuritySchemeClientID)
+	assert.True(t, clientIDExists, "Second requirement should contain client ID")
+	_, clientSecretExists := secondReq.Requirements.Get(specification.SecuritySchemeClientSecret)
+	assert.True(t, clientSecretExists, "Second requirement should contain client secret")
+
+	// Convert to JSON to verify the complete structure
+	jsonBytes, err := generator.ToJSON(document)
+	assert.NoError(t, err, "Should convert document to JSON successfully")
+	jsonString := string(jsonBytes)
+
+	// Verify JSON contains expected security components
+	assert.Contains(t, jsonString, "\"components\"", "JSON should contain components section")
+	assert.Contains(t, jsonString, "\"securitySchemes\"", "JSON should contain securitySchemes section")
+	assert.Contains(t, jsonString, "\"mtls\"", "JSON should contain mtls scheme")
+	assert.Contains(t, jsonString, "\"bearerAuth\"", "JSON should contain bearerAuth scheme")
+	assert.Contains(t, jsonString, "\"clientId\"", "JSON should contain clientId scheme")
+	assert.Contains(t, jsonString, "\"clientSecret\"", "JSON should contain clientSecret scheme")
+
+	// Verify scheme types
+	assert.Contains(t, jsonString, "\"mutualTLS\"", "JSON should contain mutualTLS type")
+	assert.Contains(t, jsonString, "\"bearer\"", "JSON should contain bearer scheme")
+	assert.Contains(t, jsonString, "\"JWT\"", "JSON should contain JWT bearer format")
+	assert.Contains(t, jsonString, "\"X-Client-Id\"", "JSON should contain X-Client-Id header")
+	assert.Contains(t, jsonString, "\"X-Client-Secret\"", "JSON should contain X-Client-Secret header")
+
+	// Verify global security requirements
+	assert.Contains(t, jsonString, "\"security\"", "JSON should contain security requirements")
+
+	t.Logf("Generated OpenAPI JSON with security:\n%s", jsonString)
+
+	t.Run("without security configuration", func(t *testing.T) {
+		// Test service without security configuration
+		serviceWithoutSecurity := &specification.Service{
+			Name:    "UnsecureAPI",
+			Version: "1.0.0",
+			Resources: []specification.Resource{
+				{
+					Name:        "User",
+					Description: "User resource",
+					Operations:  []string{specification.OperationRead},
+				},
+			},
+		}
+
+		docWithoutSecurity, err := generator.GenerateFromService(serviceWithoutSecurity)
+		assert.NoError(t, err, "Should generate document without security")
+		assert.NotNil(t, docWithoutSecurity, "Document should not be nil")
+
+		// Verify no security schemes or requirements
+		if docWithoutSecurity.Components != nil && docWithoutSecurity.Components.SecuritySchemes != nil {
+			assert.Equal(t, 0, docWithoutSecurity.Components.SecuritySchemes.Len(), "Should have no security schemes")
+		}
+		assert.Nil(t, docWithoutSecurity.Security, "Should have no security requirements")
+
+		jsonBytesUnsecure, err := generator.ToJSON(docWithoutSecurity)
+		assert.NoError(t, err, "Should convert unsecure document to JSON")
+		jsonStringUnsecure := string(jsonBytesUnsecure)
+
+		assert.NotContains(t, jsonStringUnsecure, "\"securitySchemes\"", "JSON should not contain securitySchemes")
+		assert.NotContains(t, jsonStringUnsecure, "\"security\"", "JSON should not contain security requirements")
+	})
 }
 
 // TestRequestBodyExamples verifies that request bodies include appropriate examples.

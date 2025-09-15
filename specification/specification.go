@@ -219,10 +219,10 @@ const (
 
 // Security Types
 const (
-	SecurityTypeMTLS        = "mutualTLS"
-	SecurityTypeHTTP        = "http"
-	SecurityTypeAPIKey      = "apiKey"
-	SecurityTypeOAuth2      = "oauth2"
+	SecurityTypeMTLS          = "mutualTLS"
+	SecurityTypeHTTP          = "http"
+	SecurityTypeAPIKey        = "apiKey"
+	SecurityTypeOAuth2        = "oauth2"
 	SecurityTypeOpenIDConnect = "openIdConnect"
 )
 
@@ -511,6 +511,9 @@ type Service struct {
 	// Timeout configuration for the service
 	Timeout *TimeoutConfiguration `json:"timeout,omitempty"`
 
+	// Security configuration for the service
+	Security *SecurityConfiguration `json:"security,omitempty"`
+
 	// Enums that are used in the service
 	Enums []Enum `json:"enums"`
 
@@ -690,6 +693,7 @@ func ApplyOverlay(input *Service) *Service {
 		Servers:   append([]ServiceServer{}, input.Servers...), // Copy servers slice
 		Retry:     input.Retry,                                 // Copy retry configuration
 		Timeout:   input.Timeout,                               // Copy timeout configuration
+		Security:  input.Security,                              // Copy security configuration
 		Enums:     make([]Enum, 0, len(input.Enums)+2),         // +2 for ErrorCode and ErrorFieldCode enums
 		Objects:   make([]Object, 0, len(input.Objects)+3),     // +3 for Error, ErrorField, and Pagination objects
 		Resources: make([]Resource, len(input.Resources)),
@@ -1307,6 +1311,7 @@ func ApplyFilterOverlay(input *Service) *Service {
 		Servers:   append([]ServiceServer{}, input.Servers...), // Copy servers slice
 		Retry:     input.Retry,                                 // Copy retry configuration
 		Timeout:   input.Timeout,                               // Copy timeout configuration
+		Security:  input.Security,                              // Copy security configuration
 		Enums:     make([]Enum, len(input.Enums)),
 		Objects:   make([]Object, 0, len(input.Objects)*7), // Estimate for filter objects
 		Resources: make([]Resource, len(input.Resources)),
@@ -2252,6 +2257,13 @@ func validateService(service *Service) error {
 		}
 	}
 
+	// Validate security configuration
+	if service.Security != nil {
+		if err := validateSecurityConfiguration(service.Security); err != nil {
+			return fmt.Errorf("security configuration: %w", err)
+		}
+	}
+
 	// Validate resources
 	for i, resource := range service.Resources {
 		if err := validateResource(service, &resource); err != nil {
@@ -2407,6 +2419,102 @@ func validateRetryConfiguration(retry *RetryConfiguration) error {
 		// Allow common patterns like "5XX", "4XX", or specific codes like "429", "503"
 		if !isValidStatusCode(statusCode) {
 			return fmt.Errorf("retry status code '%s' is not valid", statusCode)
+		}
+	}
+
+	return nil
+}
+
+// validateSecurityConfiguration validates a security configuration against the defined rules.
+func validateSecurityConfiguration(security *SecurityConfiguration) error {
+	if security == nil {
+		return nil
+	}
+
+	// Validate security schemes
+	if len(security.Schemes) == 0 {
+		return fmt.Errorf("security configuration must have at least one security scheme")
+	}
+
+	// Validate each security scheme
+	for schemeName, scheme := range security.Schemes {
+		if err := validateSecurityScheme(schemeName, &scheme); err != nil {
+			return fmt.Errorf("security scheme '%s': %w", schemeName, err)
+		}
+	}
+
+	// Validate security requirements
+	if len(security.Requirements) == 0 {
+		return fmt.Errorf("security configuration must have at least one security requirement")
+	}
+
+	for i, requirement := range security.Requirements {
+		if err := validateSecurityRequirement(requirement, security.Schemes); err != nil {
+			return fmt.Errorf("security requirement %d: %w", i, err)
+		}
+	}
+
+	return nil
+}
+
+// validateSecurityScheme validates a single security scheme.
+func validateSecurityScheme(schemeName string, scheme *SecurityScheme) error {
+	if schemeName == "" {
+		return fmt.Errorf("security scheme name cannot be empty")
+	}
+
+	// Validate security type
+	validTypes := []string{
+		SecurityTypeMTLS, SecurityTypeHTTP, SecurityTypeAPIKey,
+		SecurityTypeOAuth2, SecurityTypeOpenIDConnect,
+	}
+	if !slices.Contains(validTypes, scheme.Type) {
+		return fmt.Errorf("invalid security type '%s', must be one of: %v", scheme.Type, validTypes)
+	}
+
+	// Validate type-specific properties
+	switch scheme.Type {
+	case SecurityTypeHTTP:
+		if scheme.Scheme == "" {
+			return fmt.Errorf("HTTP security scheme must have a 'scheme' property")
+		}
+		// Bearer format is only valid for bearer scheme
+		if scheme.BearerFormat != "" && scheme.Scheme != HTTPSchemeBearer {
+			return fmt.Errorf("bearerFormat can only be specified for bearer scheme")
+		}
+
+	case SecurityTypeAPIKey:
+		if scheme.In == "" {
+			return fmt.Errorf("API key security scheme must have an 'in' property")
+		}
+		if scheme.Name == "" {
+			return fmt.Errorf("API key security scheme must have a 'name' property")
+		}
+		validLocations := []string{APIKeyInHeader, APIKeyInQuery, APIKeyInCookie}
+		if !slices.Contains(validLocations, scheme.In) {
+			return fmt.Errorf("invalid API key location '%s', must be one of: %v", scheme.In, validLocations)
+		}
+
+	case SecurityTypeMTLS:
+		// mTLS doesn't require additional validation beyond type and description
+		if scheme.Scheme != "" || scheme.BearerFormat != "" || scheme.In != "" || scheme.Name != "" {
+			return fmt.Errorf("mTLS security scheme should only have type and description properties")
+		}
+	}
+
+	return nil
+}
+
+// validateSecurityRequirement validates a security requirement against available schemes.
+func validateSecurityRequirement(requirement SecurityRequirement, schemes map[string]SecurityScheme) error {
+	if len(requirement) == 0 {
+		return fmt.Errorf("security requirement cannot be empty")
+	}
+
+	// Check that all referenced security schemes exist
+	for schemeName := range requirement {
+		if _, exists := schemes[schemeName]; !exists {
+			return fmt.Errorf("referenced security scheme '%s' does not exist", schemeName)
 		}
 	}
 
@@ -2608,6 +2716,51 @@ func applyDefaultOverlays(service *Service) *Service {
 // HasRetryConfiguration checks if the service has retry configuration defined.
 func (s Service) HasRetryConfiguration() bool {
 	return s.Retry != nil
+}
+
+// HasSecurityConfiguration checks if the service has security configuration defined.
+func (s Service) HasSecurityConfiguration() bool {
+	return s.Security != nil
+}
+
+// GetDefaultSecurityConfiguration returns a default security configuration with mTLS + Bearer and ClientID + Secret.
+func GetDefaultSecurityConfiguration() *SecurityConfiguration {
+	return &SecurityConfiguration{
+		Schemes: map[string]SecurityScheme{
+			SecuritySchemeMTLS: {
+				Type:        SecurityTypeMTLS,
+				Description: securityDescMTLS,
+			},
+			SecuritySchemeBearerAuth: {
+				Type:         SecurityTypeHTTP,
+				Scheme:       HTTPSchemeBearer,
+				BearerFormat: BearerFormatJWT,
+				Description:  securityDescBearerAuth,
+			},
+			SecuritySchemeClientID: {
+				Type:        SecurityTypeAPIKey,
+				In:          APIKeyInHeader,
+				Name:        HeaderClientID,
+				Description: securityDescClientID,
+			},
+			SecuritySchemeClientSecret: {
+				Type:        SecurityTypeAPIKey,
+				In:          APIKeyInHeader,
+				Name:        HeaderClientSecret,
+				Description: securityDescClientSecret,
+			},
+		},
+		Requirements: []SecurityRequirement{
+			{
+				SecuritySchemeMTLS:       []string{},
+				SecuritySchemeBearerAuth: []string{},
+			},
+			{
+				SecuritySchemeClientID:     []string{},
+				SecuritySchemeClientSecret: []string{},
+			},
+		},
+	}
 }
 
 // GetRetryConfigurationWithDefaults returns the retry configuration with default values applied.

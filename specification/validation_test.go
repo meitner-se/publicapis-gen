@@ -486,6 +486,246 @@ func TestValidateEndpoint(t *testing.T) {
 }
 
 // ============================================================================
+// validateSecurityConfiguration Tests
+// ============================================================================
+
+func TestValidateSecurityConfiguration(t *testing.T) {
+	// Test valid security configuration
+	validConfig := &SecurityConfiguration{
+		Schemes: map[string]SecurityScheme{
+			SecuritySchemeMTLS: {
+				Type:        SecurityTypeMTLS,
+				Description: "Client certificate authentication",
+			},
+			SecuritySchemeBearerAuth: {
+				Type:         SecurityTypeHTTP,
+				Scheme:       HTTPSchemeBearer,
+				BearerFormat: BearerFormatJWT,
+				Description:  "Bearer token authentication",
+			},
+		},
+		Requirements: []SecurityRequirement{
+			{SecuritySchemeMTLS: []string{}, SecuritySchemeBearerAuth: []string{}},
+		},
+	}
+
+	err := validateSecurityConfiguration(validConfig)
+	assert.NoError(t, err, "Valid security configuration should pass validation")
+
+	t.Run("nil configuration", func(t *testing.T) {
+		err := validateSecurityConfiguration(nil)
+		assert.NoError(t, err, "Nil security configuration should pass validation")
+	})
+
+	t.Run("empty schemes", func(t *testing.T) {
+		emptyConfig := &SecurityConfiguration{
+			Schemes:      map[string]SecurityScheme{},
+			Requirements: []SecurityRequirement{{}},
+		}
+
+		err := validateSecurityConfiguration(emptyConfig)
+		assert.Error(t, err, "Configuration with empty schemes should fail validation")
+		assert.Contains(t, err.Error(), "at least one security scheme")
+	})
+
+	t.Run("empty requirements", func(t *testing.T) {
+		emptyReqConfig := &SecurityConfiguration{
+			Schemes: map[string]SecurityScheme{
+				"bearer": {Type: SecurityTypeHTTP, Scheme: HTTPSchemeBearer},
+			},
+			Requirements: []SecurityRequirement{},
+		}
+
+		err := validateSecurityConfiguration(emptyReqConfig)
+		assert.Error(t, err, "Configuration with empty requirements should fail validation")
+		assert.Contains(t, err.Error(), "at least one security requirement")
+	})
+
+	t.Run("invalid security scheme", func(t *testing.T) {
+		invalidSchemeConfig := &SecurityConfiguration{
+			Schemes: map[string]SecurityScheme{
+				"invalid": {Type: "invalidType"},
+			},
+			Requirements: []SecurityRequirement{
+				{"invalid": []string{}},
+			},
+		}
+
+		err := validateSecurityConfiguration(invalidSchemeConfig)
+		assert.Error(t, err, "Configuration with invalid scheme should fail validation")
+		assert.Contains(t, err.Error(), "security scheme 'invalid'")
+		assert.Contains(t, err.Error(), "invalid security type")
+	})
+
+	t.Run("requirement references non-existent scheme", func(t *testing.T) {
+		invalidReqConfig := &SecurityConfiguration{
+			Schemes: map[string]SecurityScheme{
+				"bearer": {Type: SecurityTypeHTTP, Scheme: HTTPSchemeBearer},
+			},
+			Requirements: []SecurityRequirement{
+				{"nonexistent": []string{}},
+			},
+		}
+
+		err := validateSecurityConfiguration(invalidReqConfig)
+		assert.Error(t, err, "Configuration with invalid requirement reference should fail validation")
+		assert.Contains(t, err.Error(), "referenced security scheme 'nonexistent' does not exist")
+	})
+}
+
+func TestValidateSecurityScheme(t *testing.T) {
+	t.Run("valid mTLS scheme", func(t *testing.T) {
+		scheme := &SecurityScheme{
+			Type:        SecurityTypeMTLS,
+			Description: "Client certificate required",
+		}
+
+		err := validateSecurityScheme("mtls", scheme)
+		assert.NoError(t, err, "Valid mTLS scheme should pass validation")
+	})
+
+	t.Run("valid HTTP bearer scheme", func(t *testing.T) {
+		scheme := &SecurityScheme{
+			Type:         SecurityTypeHTTP,
+			Scheme:       HTTPSchemeBearer,
+			BearerFormat: BearerFormatJWT,
+			Description:  "Bearer token authentication",
+		}
+
+		err := validateSecurityScheme("bearer", scheme)
+		assert.NoError(t, err, "Valid HTTP bearer scheme should pass validation")
+	})
+
+	t.Run("valid API key scheme", func(t *testing.T) {
+		scheme := &SecurityScheme{
+			Type:        SecurityTypeAPIKey,
+			In:          APIKeyInHeader,
+			Name:        "X-API-Key",
+			Description: "API key in header",
+		}
+
+		err := validateSecurityScheme("apiKey", scheme)
+		assert.NoError(t, err, "Valid API key scheme should pass validation")
+	})
+
+	t.Run("empty scheme name", func(t *testing.T) {
+		scheme := &SecurityScheme{Type: SecurityTypeMTLS}
+
+		err := validateSecurityScheme("", scheme)
+		assert.Error(t, err, "Empty scheme name should fail validation")
+		assert.Contains(t, err.Error(), "security scheme name cannot be empty")
+	})
+
+	t.Run("invalid security type", func(t *testing.T) {
+		scheme := &SecurityScheme{Type: "invalidType"}
+
+		err := validateSecurityScheme("test", scheme)
+		assert.Error(t, err, "Invalid security type should fail validation")
+		assert.Contains(t, err.Error(), "invalid security type")
+	})
+
+	t.Run("HTTP scheme without scheme property", func(t *testing.T) {
+		scheme := &SecurityScheme{Type: SecurityTypeHTTP}
+
+		err := validateSecurityScheme("http", scheme)
+		assert.Error(t, err, "HTTP scheme without scheme property should fail validation")
+		assert.Contains(t, err.Error(), "HTTP security scheme must have a 'scheme' property")
+	})
+
+	t.Run("bearer format with non-bearer scheme", func(t *testing.T) {
+		scheme := &SecurityScheme{
+			Type:         SecurityTypeHTTP,
+			Scheme:       "basic",
+			BearerFormat: BearerFormatJWT,
+		}
+
+		err := validateSecurityScheme("basic", scheme)
+		assert.Error(t, err, "Bearer format with non-bearer scheme should fail validation")
+		assert.Contains(t, err.Error(), "bearerFormat can only be specified for bearer scheme")
+	})
+
+	t.Run("API key scheme without 'in' property", func(t *testing.T) {
+		scheme := &SecurityScheme{
+			Type: SecurityTypeAPIKey,
+			Name: "X-API-Key",
+		}
+
+		err := validateSecurityScheme("apiKey", scheme)
+		assert.Error(t, err, "API key scheme without 'in' property should fail validation")
+		assert.Contains(t, err.Error(), "API key security scheme must have an 'in' property")
+	})
+
+	t.Run("API key scheme without name property", func(t *testing.T) {
+		scheme := &SecurityScheme{
+			Type: SecurityTypeAPIKey,
+			In:   APIKeyInHeader,
+		}
+
+		err := validateSecurityScheme("apiKey", scheme)
+		assert.Error(t, err, "API key scheme without name property should fail validation")
+		assert.Contains(t, err.Error(), "API key security scheme must have a 'name' property")
+	})
+
+	t.Run("invalid API key location", func(t *testing.T) {
+		scheme := &SecurityScheme{
+			Type: SecurityTypeAPIKey,
+			In:   "invalid",
+			Name: "X-API-Key",
+		}
+
+		err := validateSecurityScheme("apiKey", scheme)
+		assert.Error(t, err, "Invalid API key location should fail validation")
+		assert.Contains(t, err.Error(), "invalid API key location")
+	})
+
+	t.Run("mTLS scheme with invalid properties", func(t *testing.T) {
+		scheme := &SecurityScheme{
+			Type:   SecurityTypeMTLS,
+			Scheme: "should-not-be-here",
+		}
+
+		err := validateSecurityScheme("mtls", scheme)
+		assert.Error(t, err, "mTLS scheme with invalid properties should fail validation")
+		assert.Contains(t, err.Error(), "mTLS security scheme should only have type and description properties")
+	})
+}
+
+func TestValidateSecurityRequirement(t *testing.T) {
+	schemes := map[string]SecurityScheme{
+		"bearer": {Type: SecurityTypeHTTP, Scheme: HTTPSchemeBearer},
+		"mtls":   {Type: SecurityTypeMTLS},
+	}
+
+	t.Run("valid requirement", func(t *testing.T) {
+		requirement := SecurityRequirement{
+			"bearer": []string{},
+			"mtls":   []string{},
+		}
+
+		err := validateSecurityRequirement(requirement, schemes)
+		assert.NoError(t, err, "Valid security requirement should pass validation")
+	})
+
+	t.Run("empty requirement", func(t *testing.T) {
+		requirement := SecurityRequirement{}
+
+		err := validateSecurityRequirement(requirement, schemes)
+		assert.Error(t, err, "Empty security requirement should fail validation")
+		assert.Contains(t, err.Error(), "security requirement cannot be empty")
+	})
+
+	t.Run("requirement with non-existent scheme", func(t *testing.T) {
+		requirement := SecurityRequirement{
+			"nonexistent": []string{},
+		}
+
+		err := validateSecurityRequirement(requirement, schemes)
+		assert.Error(t, err, "Requirement with non-existent scheme should fail validation")
+		assert.Contains(t, err.Error(), "referenced security scheme 'nonexistent' does not exist")
+	})
+}
+
+// ============================================================================
 // Integration Tests
 // ============================================================================
 

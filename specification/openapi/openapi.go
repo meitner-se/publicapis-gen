@@ -546,9 +546,15 @@ func (g *Generator) buildV3Document(service *specification.Service) *v3.Document
 
 	// Create Components
 	components := &v3.Components{
-		Schemas:       orderedmap.New[string, *base.SchemaProxy](),
-		RequestBodies: orderedmap.New[string, *v3.RequestBody](),
-		Responses:     orderedmap.New[string, *v3.Response](),
+		Schemas:         orderedmap.New[string, *base.SchemaProxy](),
+		RequestBodies:   orderedmap.New[string, *v3.RequestBody](),
+		Responses:       orderedmap.New[string, *v3.Response](),
+		SecuritySchemes: orderedmap.New[string, *v3.SecurityScheme](),
+	}
+
+	// Add security schemes to components if security configuration exists
+	if service.HasSecurityConfiguration() {
+		g.addSecuritySchemesToComponents(components, service)
 	}
 
 	// Add enums to components
@@ -572,6 +578,11 @@ func (g *Generator) buildV3Document(service *specification.Service) *v3.Document
 	g.addResponseBodiesToComponents(components, service)
 
 	document.Components = components
+
+	// Add security requirements if security configuration exists
+	if service.HasSecurityConfiguration() {
+		document.Security = g.createSecurityRequirements(service)
+	}
 
 	// Create Paths
 	paths := orderedmap.New[string, *v3.PathItem]()
@@ -1604,6 +1615,64 @@ func (g *Generator) mapErrorCodeToStatusAndDescription(errorCodeName, errorCodeD
 		// Default to 500 for unknown error codes
 		return httpStatus500, errorCodeDescription
 	}
+}
+
+// addSecuritySchemesToComponents adds security schemes from the service to the OpenAPI components.
+func (g *Generator) addSecuritySchemesToComponents(components *v3.Components, service *specification.Service) {
+	if service.Security == nil || service.Security.Schemes == nil {
+		return
+	}
+
+	for schemeName, scheme := range service.Security.Schemes {
+		openAPIScheme := &v3.SecurityScheme{
+			Type:        scheme.Type,
+			Description: scheme.Description,
+		}
+
+		// Set scheme-specific properties
+		switch scheme.Type {
+		case specification.SecurityTypeHTTP:
+			if scheme.Scheme != "" {
+				openAPIScheme.Scheme = scheme.Scheme
+			}
+			if scheme.BearerFormat != "" {
+				openAPIScheme.BearerFormat = scheme.BearerFormat
+			}
+		case specification.SecurityTypeAPIKey:
+			if scheme.In != "" {
+				openAPIScheme.In = scheme.In
+			}
+			if scheme.Name != "" {
+				openAPIScheme.Name = scheme.Name
+			}
+		case specification.SecurityTypeMTLS:
+			// mTLS doesn't require additional properties beyond type and description
+		}
+
+		components.SecuritySchemes.Set(schemeName, openAPIScheme)
+	}
+}
+
+// createSecurityRequirements creates security requirements from the service security configuration.
+func (g *Generator) createSecurityRequirements(service *specification.Service) []*base.SecurityRequirement {
+	if service.Security == nil || len(service.Security.Requirements) == 0 {
+		return nil
+	}
+
+	requirements := make([]*base.SecurityRequirement, len(service.Security.Requirements))
+	for i, req := range service.Security.Requirements {
+		requirement := &base.SecurityRequirement{
+			Requirements: orderedmap.New[string, []string](),
+		}
+
+		for schemeName, scopes := range req {
+			requirement.Requirements.Set(schemeName, scopes)
+		}
+
+		requirements[i] = requirement
+	}
+
+	return requirements
 }
 
 // ToYAML converts an OpenAPI document to YAML format.

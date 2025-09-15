@@ -551,6 +551,98 @@ func TestService_GetObject(t *testing.T) {
 	})
 }
 
+func TestService_HasSecurityConfiguration(t *testing.T) {
+	// Arrange - service without security configuration
+	serviceWithoutSecurity := Service{
+		Name:     "ServiceWithoutSecurity",
+		Security: nil,
+	}
+
+	// Act & Assert - no security configuration
+	result := serviceWithoutSecurity.HasSecurityConfiguration()
+	assert.False(t, result, "Should return false when security configuration is nil")
+
+	// Arrange - service with security configuration
+	serviceWithSecurity := Service{
+		Name: "ServiceWithSecurity",
+		Security: &SecurityConfiguration{
+			Schemes: map[string]SecurityScheme{
+				"bearer": {
+					Type:        SecurityTypeHTTP,
+					Scheme:      HTTPSchemeBearer,
+					Description: "Bearer token authentication",
+				},
+			},
+			Requirements: []SecurityRequirement{
+				{"bearer": []string{}},
+			},
+		},
+	}
+
+	// Act & Assert - has security configuration
+	result = serviceWithSecurity.HasSecurityConfiguration()
+	assert.True(t, result, "Should return true when security configuration is present")
+}
+
+func TestGetDefaultSecurityConfiguration(t *testing.T) {
+	// Act
+	config := GetDefaultSecurityConfiguration()
+
+	// Assert
+	assert.NotNil(t, config, "Should return non-nil security configuration")
+	assert.NotNil(t, config.Schemes, "Should have security schemes")
+	assert.NotEmpty(t, config.Requirements, "Should have security requirements")
+
+	// Verify expected schemes
+	assert.Contains(t, config.Schemes, SecuritySchemeMTLS, "Should contain mTLS scheme")
+	assert.Contains(t, config.Schemes, SecuritySchemeBearerAuth, "Should contain bearer auth scheme")
+	assert.Contains(t, config.Schemes, SecuritySchemeClientID, "Should contain client ID scheme")
+	assert.Contains(t, config.Schemes, SecuritySchemeClientSecret, "Should contain client secret scheme")
+
+	// Verify mTLS scheme
+	mtlsScheme := config.Schemes[SecuritySchemeMTLS]
+	assert.Equal(t, SecurityTypeMTLS, mtlsScheme.Type, "mTLS scheme should have correct type")
+	assert.Equal(t, securityDescMTLS, mtlsScheme.Description, "mTLS scheme should have correct description")
+
+	// Verify bearer auth scheme
+	bearerScheme := config.Schemes[SecuritySchemeBearerAuth]
+	assert.Equal(t, SecurityTypeHTTP, bearerScheme.Type, "Bearer scheme should have correct type")
+	assert.Equal(t, HTTPSchemeBearer, bearerScheme.Scheme, "Bearer scheme should have correct scheme")
+	assert.Equal(t, BearerFormatJWT, bearerScheme.BearerFormat, "Bearer scheme should have correct format")
+	assert.Equal(t, securityDescBearerAuth, bearerScheme.Description, "Bearer scheme should have correct description")
+
+	// Verify client ID scheme
+	clientIDScheme := config.Schemes[SecuritySchemeClientID]
+	assert.Equal(t, SecurityTypeAPIKey, clientIDScheme.Type, "Client ID scheme should have correct type")
+	assert.Equal(t, APIKeyInHeader, clientIDScheme.In, "Client ID scheme should be in header")
+	assert.Equal(t, HeaderClientID, clientIDScheme.Name, "Client ID scheme should have correct header name")
+	assert.Equal(t, securityDescClientID, clientIDScheme.Description, "Client ID scheme should have correct description")
+
+	// Verify client secret scheme
+	clientSecretScheme := config.Schemes[SecuritySchemeClientSecret]
+	assert.Equal(t, SecurityTypeAPIKey, clientSecretScheme.Type, "Client Secret scheme should have correct type")
+	assert.Equal(t, APIKeyInHeader, clientSecretScheme.In, "Client Secret scheme should be in header")
+	assert.Equal(t, HeaderClientSecret, clientSecretScheme.Name, "Client Secret scheme should have correct header name")
+	assert.Equal(t, securityDescClientSecret, clientSecretScheme.Description, "Client Secret scheme should have correct description")
+
+	// Verify requirements
+	assert.Len(t, config.Requirements, 2, "Should have 2 security requirements")
+
+	// First requirement: mTLS + Bearer
+	firstReq := config.Requirements[0]
+	assert.Contains(t, firstReq, SecuritySchemeMTLS, "First requirement should contain mTLS")
+	assert.Contains(t, firstReq, SecuritySchemeBearerAuth, "First requirement should contain bearer auth")
+	assert.Empty(t, firstReq[SecuritySchemeMTLS], "mTLS scopes should be empty")
+	assert.Empty(t, firstReq[SecuritySchemeBearerAuth], "Bearer auth scopes should be empty")
+
+	// Second requirement: Client ID + Secret
+	secondReq := config.Requirements[1]
+	assert.Contains(t, secondReq, SecuritySchemeClientID, "Second requirement should contain client ID")
+	assert.Contains(t, secondReq, SecuritySchemeClientSecret, "Second requirement should contain client secret")
+	assert.Empty(t, secondReq[SecuritySchemeClientID], "Client ID scopes should be empty")
+	assert.Empty(t, secondReq[SecuritySchemeClientSecret], "Client secret scopes should be empty")
+}
+
 // ============================================================================
 // Enum Tests
 // ============================================================================
