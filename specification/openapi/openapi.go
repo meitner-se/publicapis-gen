@@ -1762,7 +1762,7 @@ func (g *Generator) createSecurityScheme(scheme specification.SecurityScheme) *v
 
 // addSecurityToDocument adds security requirements from the service to the OpenAPI document.
 func (g *Generator) addSecurityToDocument(document *v3.Document, service *specification.Service) {
-	if service.Security == nil || len(service.Security) == 0 {
+	if len(service.Security) == 0 {
 		return
 	}
 

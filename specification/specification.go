@@ -334,12 +334,6 @@ const (
 	extJSON = ".json"
 )
 
-// Security constants
-const (
-	securityTypeHTTP   = "http"
-	securityTypeAPIKey = "apiKey"
-)
-
 // ServiceServer represents a server in the API service.
 type ServiceServer struct {
 	// URL of the server
