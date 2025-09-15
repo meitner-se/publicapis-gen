@@ -191,6 +191,18 @@ const (
 	requestErrorSuffix      = "RequestError"
 )
 
+// Security scheme constants
+const (
+	securitySchemeMutualTLS = "mutualTLS"
+	securitySchemeHTTP      = "http"
+	securitySchemeAPIKey    = "apiKey"
+	securitySchemeBearer    = "bearer"
+	securityBearerFormatJWT = "JWT"
+	securityLocationHeader  = "header"
+	securityLocationQuery   = "query"
+	securityLocationCookie  = "cookie"
+)
+
 // Generator handles OpenAPI 3.1 specification generation from specification.Service.
 type Generator struct {
 	// Version specifies the OpenAPI version to generate (default: "3.1.0")
@@ -546,9 +558,10 @@ func (g *Generator) buildV3Document(service *specification.Service) *v3.Document
 
 	// Create Components
 	components := &v3.Components{
-		Schemas:       orderedmap.New[string, *base.SchemaProxy](),
-		RequestBodies: orderedmap.New[string, *v3.RequestBody](),
-		Responses:     orderedmap.New[string, *v3.Response](),
+		Schemas:         orderedmap.New[string, *base.SchemaProxy](),
+		RequestBodies:   orderedmap.New[string, *v3.RequestBody](),
+		Responses:       orderedmap.New[string, *v3.Response](),
+		SecuritySchemes: orderedmap.New[string, *v3.SecurityScheme](),
 	}
 
 	// Add enums to components
@@ -571,7 +584,13 @@ func (g *Generator) buildV3Document(service *specification.Service) *v3.Document
 	// Add response bodies to components
 	g.addResponseBodiesToComponents(components, service)
 
+	// Add security schemes to components
+	g.addSecuritySchemesToComponents(components, service)
+
 	document.Components = components
+
+	// Add security requirements to document
+	g.addSecurityToDocument(document, service)
 
 	// Create Paths
 	paths := orderedmap.New[string, *v3.PathItem]()
@@ -1712,4 +1731,68 @@ func (g *Generator) createEndpointSpecificErrorResponseReference(statusCode stri
 		Description: description,
 		Extensions:  extensions,
 	}
+}
+
+// addSecuritySchemesToComponents adds security schemes from the service to the OpenAPI components.
+func (g *Generator) addSecuritySchemesToComponents(components *v3.Components, service *specification.Service) {
+	if service.Security == nil || service.Security.SecuritySchemes == nil {
+		return
+	}
+
+	for schemeName, scheme := range service.Security.SecuritySchemes {
+		securityScheme := g.createSecurityScheme(scheme)
+		components.SecuritySchemes.Set(schemeName, securityScheme)
+	}
+}
+
+// createSecurityScheme creates a v3.SecurityScheme from a specification.SecurityScheme.
+func (g *Generator) createSecurityScheme(scheme specification.SecurityScheme) *v3.SecurityScheme {
+	securityScheme := &v3.SecurityScheme{
+		Type:        scheme.Type,
+		Description: scheme.Description,
+	}
+
+	// Set fields based on security scheme type
+	switch scheme.Type {
+	case securitySchemeHTTP:
+		if scheme.Scheme != "" {
+			securityScheme.Scheme = scheme.Scheme
+		}
+		if scheme.BearerFormat != "" {
+			securityScheme.BearerFormat = scheme.BearerFormat
+		}
+	case securitySchemeAPIKey:
+		if scheme.Name != "" {
+			securityScheme.Name = scheme.Name
+		}
+		if scheme.In != "" {
+			securityScheme.In = scheme.In
+		}
+	}
+	// mutualTLS type doesn't require additional fields
+
+	return securityScheme
+}
+
+// addSecurityToDocument adds security requirements from the service to the OpenAPI document.
+func (g *Generator) addSecurityToDocument(document *v3.Document, service *specification.Service) {
+	if service.Security == nil || len(service.Security.Security) == 0 {
+		return
+	}
+
+	// Convert specification.SecurityRequirement to base.SecurityRequirement
+	securityRequirements := make([]*base.SecurityRequirement, len(service.Security.Security))
+	for i, requirement := range service.Security.Security {
+		securityRequirement := &base.SecurityRequirement{
+			Requirements: orderedmap.New[string, []string](),
+		}
+		
+		for schemeName, scopes := range requirement {
+			securityRequirement.Requirements.Set(schemeName, scopes)
+		}
+		
+		securityRequirements[i] = securityRequirement
+	}
+
+	document.Security = securityRequirements
 }

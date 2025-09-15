@@ -2747,3 +2747,207 @@ func TestParameterDescriptionNotDuplicated(t *testing.T) {
 	assert.Equal(t, 1, offsetDescCount, "Offset description should appear exactly once")
 	assert.Equal(t, 1, archivedDescCount, "Archived description should appear exactly once")
 }
+
+// ============================================================================
+// Security Tests
+// ============================================================================
+
+// TestGenerator_GenerateFromServiceWithSecurity tests OpenAPI document generation with security configuration.
+func TestGenerator_GenerateFromServiceWithSecurity(t *testing.T) {
+	// Create a service with security configuration
+	service := &specification.Service{
+		Name:    "Security Test API",
+		Version: "1.0.0",
+		Security: &specification.ServiceSecurity{
+			SecuritySchemes: map[string]specification.SecurityScheme{
+				"mtls": {
+					Type:        "mutualTLS",
+					Description: "Client TLS certificate required.",
+				},
+				"bearerAuth": {
+					Type:         "http",
+					Scheme:       "bearer",
+					BearerFormat: "JWT",
+					Description:  "Bearer access token in Authorization header.",
+				},
+				"clientId": {
+					Type:        "apiKey",
+					In:          "header",
+					Name:        "X-Client-Id",
+					Description: "Your client identifier.",
+				},
+				"clientSecret": {
+					Type:        "apiKey",
+					In:          "header",
+					Name:        "X-Client-Secret",
+					Description: "Your client secret.",
+				},
+			},
+			Security: []specification.SecurityRequirement{
+				{
+					"mtls":       []string{},
+					"bearerAuth": []string{},
+				},
+				{
+					"clientId":     []string{},
+					"clientSecret": []string{},
+				},
+			},
+		},
+		Enums: []specification.Enum{},
+		Objects: []specification.Object{
+			{
+				Name:        "TestObject",
+				Description: "Test object for security testing",
+				Fields: []specification.Field{
+					{Name: "id", Type: "UUID", Description: "Unique identifier"},
+					{Name: "name", Type: "String", Description: "Object name"},
+				},
+			},
+		},
+		Resources: []specification.Resource{
+			{
+				Name:        "TestResource",
+				Description: "Test resource with security",
+				Operations:  []string{"Create", "Read"},
+				Fields: []specification.ResourceField{
+					{
+						Field: specification.Field{
+							Name:        "name",
+							Type:        "String",
+							Description: "Resource name",
+						},
+						Operations: []string{"Create", "Read"},
+					},
+				},
+			},
+		},
+	}
+
+	// Generate OpenAPI document
+	generator := newGenerator()
+	document, err := generator.GenerateFromService(service)
+	
+	assert.NoError(t, err, "Should generate document without error")
+	assert.NotNil(t, document, "Generated document should not be nil")
+
+	// Verify security schemes in components
+	assert.NotNil(t, document.Components, "Document should have components")
+	assert.NotNil(t, document.Components.SecuritySchemes, "Components should have security schemes")
+
+	// Count security schemes
+	schemeCount := 0
+	for pair := document.Components.SecuritySchemes.First(); pair != nil; pair = pair.Next() {
+		schemeCount++
+		schemeName := pair.Key()
+		scheme := pair.Value()
+
+		switch schemeName {
+		case "mtls":
+			assert.Equal(t, "mutualTLS", scheme.Type, "MTLS type should be mutualTLS")
+			assert.Equal(t, "Client TLS certificate required.", scheme.Description, "MTLS description should match")
+		case "bearerAuth":
+			assert.Equal(t, "http", scheme.Type, "Bearer auth type should be http")
+			assert.Equal(t, "bearer", scheme.Scheme, "Bearer auth scheme should be bearer")
+			assert.Equal(t, "JWT", scheme.BearerFormat, "Bearer auth format should be JWT")
+			assert.Equal(t, "Bearer access token in Authorization header.", scheme.Description, "Bearer auth description should match")
+		case "clientId":
+			assert.Equal(t, "apiKey", scheme.Type, "Client ID type should be apiKey")
+			assert.Equal(t, "header", scheme.In, "Client ID should be in header")
+			assert.Equal(t, "X-Client-Id", scheme.Name, "Client ID header name should be X-Client-Id")
+			assert.Equal(t, "Your client identifier.", scheme.Description, "Client ID description should match")
+		case "clientSecret":
+			assert.Equal(t, "apiKey", scheme.Type, "Client secret type should be apiKey")
+			assert.Equal(t, "header", scheme.In, "Client secret should be in header")
+			assert.Equal(t, "X-Client-Secret", scheme.Name, "Client secret header name should be X-Client-Secret")
+			assert.Equal(t, "Your client secret.", scheme.Description, "Client secret description should match")
+		default:
+			t.Errorf("Unexpected security scheme: %s", schemeName)
+		}
+	}
+
+	assert.Equal(t, 4, schemeCount, "Should have 4 security schemes")
+
+	// Verify security requirements in document
+	assert.NotNil(t, document.Security, "Document should have security requirements")
+	assert.Len(t, document.Security, 2, "Should have 2 security requirements")
+
+	// Verify first security requirement (mtls + bearerAuth)
+	firstReq := document.Security[0]
+	assert.NotNil(t, firstReq.Requirements, "First security requirement should have requirements")
+	
+	mtlsScopes, mtlsExists := firstReq.Requirements.Get("mtls")
+	bearerScopes, bearerExists := firstReq.Requirements.Get("bearerAuth")
+	assert.True(t, mtlsExists, "First requirement should contain mtls")
+	assert.True(t, bearerExists, "First requirement should contain bearerAuth")
+	assert.Len(t, mtlsScopes, 0, "MTLS should have empty scopes")
+	assert.Len(t, bearerScopes, 0, "Bearer auth should have empty scopes")
+
+	// Verify second security requirement (clientId + clientSecret)
+	secondReq := document.Security[1]
+	assert.NotNil(t, secondReq.Requirements, "Second security requirement should have requirements")
+	
+	clientIdScopes, clientIdExists := secondReq.Requirements.Get("clientId")
+	clientSecretScopes, clientSecretExists := secondReq.Requirements.Get("clientSecret")
+	assert.True(t, clientIdExists, "Second requirement should contain clientId")
+	assert.True(t, clientSecretExists, "Second requirement should contain clientSecret")
+	assert.Len(t, clientIdScopes, 0, "Client ID should have empty scopes")
+	assert.Len(t, clientSecretScopes, 0, "Client secret should have empty scopes")
+}
+
+// TestGenerator_GenerateFromServiceSecurityYAML tests that security generates correct YAML output.
+func TestGenerator_GenerateFromServiceSecurityYAML(t *testing.T) {
+	// Create a minimal service with security
+	service := &specification.Service{
+		Name:    "Security YAML Test",
+		Version: "1.0.0",
+		Security: &specification.ServiceSecurity{
+			SecuritySchemes: map[string]specification.SecurityScheme{
+				"mtls": {
+					Type:        "mutualTLS",
+					Description: "Client TLS certificate required.",
+				},
+				"bearerAuth": {
+					Type:         "http",
+					Scheme:       "bearer",
+					BearerFormat: "JWT",
+					Description:  "Bearer access token in Authorization header.",
+				},
+			},
+			Security: []specification.SecurityRequirement{
+				{
+					"mtls":       []string{},
+					"bearerAuth": []string{},
+				},
+			},
+		},
+		Enums:     []specification.Enum{},
+		Objects:   []specification.Object{},
+		Resources: []specification.Resource{},
+	}
+
+	// Generate document
+	generator := newGenerator()
+	document, err := generator.GenerateFromService(service)
+	
+	assert.NoError(t, err, "Should generate document without error")
+	assert.NotNil(t, document, "Generated document should not be nil")
+
+	// Render to YAML and verify structure
+	yamlBytes, err := document.Render()
+	assert.NoError(t, err, "Should render document to YAML without error")
+
+	yamlStr := string(yamlBytes)
+	
+	// Verify the YAML contains expected security structures
+	assert.Contains(t, yamlStr, "components:", "YAML should contain components section")
+	assert.Contains(t, yamlStr, "securitySchemes:", "YAML should contain securitySchemes")
+	assert.Contains(t, yamlStr, "security:", "YAML should contain security requirements")
+	assert.Contains(t, yamlStr, "mtls:", "YAML should contain mtls scheme")
+	assert.Contains(t, yamlStr, "bearerAuth:", "YAML should contain bearerAuth scheme")
+	assert.Contains(t, yamlStr, "mutualTLS", "YAML should contain mutualTLS type")
+	assert.Contains(t, yamlStr, "Client TLS certificate required.", "YAML should contain MTLS description")
+	assert.Contains(t, yamlStr, "Bearer access token in Authorization header.", "YAML should contain bearer auth description")
+
+	t.Logf("Generated Security YAML:\n%s", yamlStr)
+}
