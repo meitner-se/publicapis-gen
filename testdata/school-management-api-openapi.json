@@ -18,69 +18,6 @@
     }
   ],
   "paths": {
-    "/students/bulk-import": {
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Bulk Import Students",
-        "description": "Import multiple students from a CSV file or structured data",
-        "operationId": "StudentsBulkImport",
-        "parameters": [
-          {
-            "name": "validateOnly",
-            "in": "query",
-            "description": "Only validate data without importing",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          }
-        ],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsBulkImport"
-        },
-        "responses": {
-          "200": {
-            "description": "Successfully imported students",
-            "$ref": "#/components/responses/StudentsBulkImport"
-          },
-          "400": {
-            "description": "Bad Request error for Students BulkImport operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students BulkImport operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students BulkImport operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students BulkImport operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students BulkImport operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "Validation error for Students BulkImport operation - request data failed validation",
-            "$ref": "#/components/responses/StudentsBulkImport422ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students BulkImport operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students BulkImport operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        }
-      }
-    },
     "/students/reports/generate": {
       "post": {
         "tags": [
@@ -141,7 +78,9 @@
             "description": "Internal Server error for Students GenerateReport operation - unexpected server error",
             "$ref": "#/components/responses/Error500ResponseBody"
           }
-        }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "generateReport"
       }
     },
     "/students/advanced-search": {
@@ -234,7 +173,9 @@
             "description": "Internal Server error for Students AdvancedSearch operation - unexpected server error",
             "$ref": "#/components/responses/Error500ResponseBody"
           }
-        }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "advancedSearch"
       }
     },
     "/students": {
@@ -318,7 +259,9 @@
           "outputs": {
             "results": "$.data.resultArray"
           }
-        }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "list"
       },
       "post": {
         "tags": [
@@ -368,7 +311,9 @@
             "description": "Internal Server error for Students Create operation - unexpected server error",
             "$ref": "#/components/responses/Error500ResponseBody"
           }
-        }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "create"
       }
     },
     "/students/{id}": {
@@ -424,7 +369,9 @@
             "description": "Internal Server error for Students Get operation - unexpected server error",
             "$ref": "#/components/responses/Error500ResponseBody"
           }
-        }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "get"
       },
       "delete": {
         "tags": [
@@ -477,7 +424,9 @@
             "description": "Internal Server error for Students Delete operation - unexpected server error",
             "$ref": "#/components/responses/Error500ResponseBody"
           }
-        }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "delete"
       },
       "patch": {
         "tags": [
@@ -538,7 +487,9 @@
             "description": "Internal Server error for Students Update operation - unexpected server error",
             "$ref": "#/components/responses/Error500ResponseBody"
           }
-        }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "update"
       }
     },
     "/students/_search": {
@@ -629,7 +580,74 @@
           "outputs": {
             "results": "$.data.resultArray"
           }
-        }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "search"
+      }
+    },
+    "/students/bulk-import": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Bulk Import Students",
+        "description": "Import multiple students from a CSV file or structured data",
+        "operationId": "StudentsBulkImport",
+        "parameters": [
+          {
+            "name": "validateOnly",
+            "in": "query",
+            "description": "Only validate data without importing",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsBulkImport"
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully imported students",
+            "$ref": "#/components/responses/StudentsBulkImport"
+          },
+          "400": {
+            "description": "Bad Request error for Students BulkImport operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students BulkImport operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students BulkImport operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students BulkImport operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students BulkImport operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students BulkImport operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsBulkImport422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students BulkImport operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students BulkImport operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "bulkImport"
       }
     }
   },
@@ -969,29 +987,47 @@
         ],
         "description": "Student management resource"
       },
-      "ContactRequestError": {
+      "AddressRequestError": {
         "type": "object",
         "properties": {
-          "email": {
+          "street": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
-            "description": "Email address",
+            "description": "Street address",
             "nullable": true
           },
-          "phone": {
+          "city": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
-            "description": "Phone number",
+            "description": "City",
+            "nullable": true
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "State or province",
+            "nullable": true
+          },
+          "zipCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "ZIP or postal code",
             "nullable": true
           }
         },
-        "description": "Request error object for Contact"
+        "description": "Request error object for Address"
       },
       "StudentRequestError": {
         "type": "object",
@@ -1044,47 +1080,29 @@
         },
         "description": "Request error object for Student"
       },
-      "AddressRequestError": {
+      "ContactRequestError": {
         "type": "object",
         "properties": {
-          "street": {
+          "email": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
-            "description": "Street address",
+            "description": "Email address",
             "nullable": true
           },
-          "city": {
+          "phone": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
-            "description": "City",
-            "nullable": true
-          },
-          "state": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "State or province",
-            "nullable": true
-          },
-          "zipCode": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "ZIP or postal code",
+            "description": "Phone number",
             "nullable": true
           }
         },
-        "description": "Request error object for Address"
+        "description": "Request error object for Contact"
       },
       "StudentsBulkImportRequestError": {
         "type": "object",
@@ -2099,6 +2117,25 @@
                 "error",
                 "errorFields"
               ]
+            },
+            "example": {
+              "error": "UnprocessableEntity",
+              "errorFields": {
+                "students": {
+                  "firstName": {
+                    "code": "Required",
+                    "message": "firstName is required"
+                  },
+                  "lastName": {
+                    "code": "Required",
+                    "message": "lastName is required"
+                  }
+                },
+                "overwriteExisting": {
+                  "code": "Required",
+                  "message": "overwriteExisting is required"
+                }
+              }
             }
           }
         }
@@ -2156,6 +2193,19 @@
                 "error",
                 "errorFields"
               ]
+            },
+            "example": {
+              "error": "UnprocessableEntity",
+              "errorFields": {
+                "gradeLevel": {
+                  "code": "Required",
+                  "message": "gradeLevel is required"
+                },
+                "status": {
+                  "code": "Required",
+                  "message": "status is required"
+                }
+              }
             }
           }
         }
@@ -2217,6 +2267,19 @@
                 "error",
                 "errorFields"
               ]
+            },
+            "example": {
+              "error": "UnprocessableEntity",
+              "errorFields": {
+                "nameQuery": {
+                  "code": "Required",
+                  "message": "nameQuery is required"
+                },
+                "gradeLevel": {
+                  "code": "Required",
+                  "message": "gradeLevel is required"
+                }
+              }
             }
           }
         }
@@ -2270,6 +2333,19 @@
                 "error",
                 "errorFields"
               ]
+            },
+            "example": {
+              "error": "UnprocessableEntity",
+              "errorFields": {
+                "firstName": {
+                  "code": "Required",
+                  "message": "firstName is required"
+                },
+                "lastName": {
+                  "code": "Required",
+                  "message": "lastName is required"
+                }
+              }
             }
           }
         }
@@ -2323,6 +2399,19 @@
                 "error",
                 "errorFields"
               ]
+            },
+            "example": {
+              "error": "UnprocessableEntity",
+              "errorFields": {
+                "firstName": {
+                  "code": "Required",
+                  "message": "firstName is required"
+                },
+                "lastName": {
+                  "code": "Required",
+                  "message": "lastName is required"
+                }
+              }
             }
           }
         }
@@ -2474,6 +2563,15 @@
                 "error",
                 "errorFields"
               ]
+            },
+            "example": {
+              "error": "UnprocessableEntity",
+              "errorFields": {
+                "filter": {
+                  "code": "Required",
+                  "message": "Filter is required"
+                }
+              }
             }
           }
         }
