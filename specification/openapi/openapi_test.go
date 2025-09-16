@@ -2128,7 +2128,7 @@ func TestResponseBodyExamples(t *testing.T) {
 	jsonString := string(jsonBytes)
 
 	// Verify that examples exist in response bodies
-	assert.Contains(t, jsonString, "\"example\"", "Response bodies should contain examples")
+	assert.Contains(t, jsonString, "\"examples\"", "Response bodies should contain examples")
 
 	// Verify string types are quoted in response examples
 	assert.Contains(t, jsonString, "\"John Doe\"", "Should contain string field example with quotes in response")
@@ -3048,17 +3048,22 @@ func TestStringFieldsWithNumericExamples(t *testing.T) {
 	generatedJSONStr := string(generatedJSON)
 	t.Logf("Generated OpenAPI JSON for string field example verification:\n%s", generatedJSONStr)
 
-	// Verify the fix: Examples should have proper YAML tags indicating correct type
-	// This is the key evidence that our createTypedExampleNode fix is working
+	// Verify the fix: Examples should be structured using the new Examples format
+	// and contain proper typing for different field types
 
-	// municipalityCode should have string tag !!str with value "184"
-	assert.Contains(t, generatedJSONStr, `"Tag":"!!str","Value":"184"`, "municipalityCode example should be properly typed as string with !!str tag")
+	// Verify examples structure is used (not the old example structure)
+	assert.Contains(t, generatedJSONStr, `"examples"`, "Should use examples (plural) structure for complex objects")
+	assert.Contains(t, generatedJSONStr, `"requestExample"`, "Should contain requestExample key")
+	assert.Contains(t, generatedJSONStr, `"responseExample"`, "Should contain responseExample key")
 
-	// zipCode should have string tag !!str with value "12345"
-	assert.Contains(t, generatedJSONStr, `"Tag":"!!str","Value":"12345"`, "zipCode example should be properly typed as string with !!str tag")
+	// municipalityCode should be a string value "184" in the example
+	assert.Contains(t, generatedJSONStr, `"municipalityCode":"184"`, "municipalityCode example should be properly typed as string")
 
-	// houseNumber should have integer tag !!int with value "42" (for contrast)
-	assert.Contains(t, generatedJSONStr, `"Tag":"!!int","Value":"42"`, "houseNumber example should be properly typed as integer with !!int tag")
+	// zipCode should be a string value "12345" in the example
+	assert.Contains(t, generatedJSONStr, `"zipCode":"12345"`, "zipCode example should be properly typed as string")
+
+	// houseNumber should be an integer value 42 in the example (no quotes for integers)
+	assert.Contains(t, generatedJSONStr, `"houseNumber":42`, "houseNumber example should be properly typed as integer")
 
 	// Verify that municipalityCode field is present
 	assert.Contains(t, generatedJSONStr, `"municipalityCode"`, "Should contain municipalityCode field")

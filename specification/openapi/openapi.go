@@ -1170,7 +1170,13 @@ func (g *Generator) createComponentRequestBody(bodyParams []specification.Field,
 
 	// Generate examples for the request body
 	if example := g.generateRequestBodyExample(bodyParams, service); example != nil {
-		mediaType.Example = example
+		// Use Examples (plural) for complex objects per OpenAPI 3.0+ specification
+		examples := orderedmap.New[string, *base.Example]()
+		examples.Set("requestExample", &base.Example{
+			Summary: "Request body example",
+			Value:   example,
+		})
+		mediaType.Examples = examples
 	}
 
 	content := orderedmap.New[string, *v3.MediaType]()
@@ -1319,7 +1325,13 @@ func (g *Generator) createComponentResponse(response specification.EndpointRespo
 
 			// Generate response example
 			if responseExample := g.generateResponseBodyExample(response, service); responseExample != nil {
-				mediaType.Example = responseExample
+				// Use Examples (plural) for complex objects per OpenAPI 3.0+ specification
+				examples := orderedmap.New[string, *base.Example]()
+				examples.Set("responseExample", &base.Example{
+					Summary: "Response body example",
+					Value:   responseExample,
+				})
+				mediaType.Examples = examples
 			}
 
 			content.Set(contentTypeJSON, mediaType)
@@ -1560,7 +1572,13 @@ func (g *Generator) createEndpointSpecific422ErrorResponse(resourceName, endpoin
 
 	// Generate 422 error response example
 	if errorExample := g.generate422ErrorExample(resourceName, endpointName, service); errorExample != nil {
-		mediaType.Example = errorExample
+		// Use Examples (plural) for complex objects per OpenAPI 3.0+ specification
+		examples := orderedmap.New[string, *base.Example]()
+		examples.Set("validationError", &base.Example{
+			Summary: "Validation error example",
+			Value:   errorExample,
+		})
+		mediaType.Examples = examples
 	}
 
 	content.Set(contentTypeJSON, mediaType)
@@ -1715,7 +1733,13 @@ func (g *Generator) createResponse(response specification.EndpointResponse, reso
 
 			// Generate response example
 			if responseExample := g.generateResponseBodyExample(response, service); responseExample != nil {
-				mediaType.Example = responseExample
+				// Use Examples (plural) for complex objects per OpenAPI 3.0+ specification
+				examples := orderedmap.New[string, *base.Example]()
+				examples.Set("responseExample", &base.Example{
+					Summary: "Response body example",
+					Value:   responseExample,
+				})
+				mediaType.Examples = examples
 			}
 
 			content.Set(contentTypeJSON, mediaType)
