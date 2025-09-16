@@ -3160,3 +3160,161 @@ func TestArrayFieldExamples(t *testing.T) {
 
 	t.Logf("Generated OpenAPI JSON for array field example test:\n%s", jsonString)
 }
+
+// TestNullableFieldExamples tests that nullable fields with examples include null in the examples array.
+func TestNullableFieldExamples(t *testing.T) {
+	// Create test service with nullable fields that have examples
+	testService := &specification.Service{
+		Name: "NullableExampleService",
+		Objects: []specification.Object{
+			{
+				Name:        "TestObject",
+				Description: "Test object with nullable fields",
+				Fields: []specification.Field{
+					{
+						Name:        "endDate",
+						Type:        specification.FieldTypeDate,
+						Description: "The end date of the placement",
+						Modifiers:   []string{specification.ModifierNullable},
+						Example:     "2025-08-01",
+					},
+					{
+						Name:        "municipalityCode",
+						Type:        specification.FieldTypeString,
+						Description: "The municipality code",
+						Modifiers:   []string{specification.ModifierNullable},
+						Example:     "184",
+					},
+					{
+						Name:        "regularField",
+						Type:        specification.FieldTypeString,
+						Description: "A regular non-nullable field",
+						Example:     "test-value",
+					},
+				},
+			},
+		},
+		Resources: []specification.Resource{
+			{
+				Name:        "TestResource",
+				Description: "Test resource with nullable fields",
+				Operations:  []string{specification.OperationCreate, specification.OperationRead},
+				Fields: []specification.ResourceField{
+					{
+						Field: specification.Field{
+							Name:        "endDate",
+							Type:        specification.FieldTypeDate,
+							Description: "The end date of the placement",
+							Modifiers:   []string{specification.ModifierNullable},
+							Example:     "2025-08-01",
+						},
+						Operations: []string{specification.OperationCreate, specification.OperationRead},
+					},
+					{
+						Field: specification.Field{
+							Name:        "municipalityCode",
+							Type:        specification.FieldTypeString,
+							Description: "The municipality code",
+							Modifiers:   []string{specification.ModifierNullable},
+							Example:     "184",
+						},
+						Operations: []string{specification.OperationCreate, specification.OperationRead},
+					},
+					{
+						Field: specification.Field{
+							Name:        "regularField",
+							Type:        specification.FieldTypeString,
+							Description: "A regular non-nullable field",
+							Example:     "test-value",
+						},
+						Operations: []string{specification.OperationCreate, specification.OperationRead},
+					},
+				},
+				Endpoints: []specification.Endpoint{
+					{
+						Name:        "Create",
+						Title:       "Create Test Resource",
+						Description: "Create a new test resource",
+						Method:      "POST",
+						Path:        "",
+						Request: specification.EndpointRequest{
+							ContentType: "application/json",
+							BodyParams: []specification.Field{
+								{
+									Name:        "endDate",
+									Type:        specification.FieldTypeDate,
+									Description: "The end date of the placement",
+									Modifiers:   []string{specification.ModifierNullable},
+									Example:     "2025-08-01",
+								},
+								{
+									Name:        "municipalityCode",
+									Type:        specification.FieldTypeString,
+									Description: "The municipality code",
+									Modifiers:   []string{specification.ModifierNullable},
+									Example:     "184",
+								},
+							},
+						},
+						Response: specification.EndpointResponse{
+							ContentType: "application/json",
+							StatusCode:  201,
+							BodyFields: []specification.Field{
+								{
+									Name:        "id",
+									Type:        specification.FieldTypeUUID,
+									Description: "Resource identifier",
+								},
+								{
+									Name:        "endDate",
+									Type:        specification.FieldTypeDate,
+									Description: "The end date of the placement",
+									Modifiers:   []string{specification.ModifierNullable},
+									Example:     "2025-08-01",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Generate OpenAPI document
+	generator := newGenerator()
+	generator.Title = "Nullable Examples Test API"
+	generator.Description = "Test API for nullable field examples"
+	generator.Version = "1.0.0"
+	generator.ServerURL = "https://api.test.com"
+
+	document, err := generator.GenerateFromService(testService)
+	assert.NoError(t, err, "Should generate document without error")
+	assert.NotNil(t, document, "Document should not be nil")
+
+	// Convert to YAML for easier inspection
+	yamlBytes, err := document.Render()
+	assert.NoError(t, err, "Should render document to YAML without error")
+
+	yamlString := string(yamlBytes)
+
+	// Verify that nullable fields have null included in their examples
+	// For endDate field (nullable with example)
+	assert.Contains(t, yamlString, "endDate:", "Should contain endDate field")
+	assert.Contains(t, yamlString, "nullable: true", "endDate should be marked as nullable")
+
+	// The key verification: nullable fields with examples should include both the example and null
+	// Look for the examples array containing both the date and null
+	assert.Contains(t, yamlString, "examples:", "Should contain examples array")
+	assert.Contains(t, yamlString, "2025-08-01", "Should contain the original example value")
+	assert.Contains(t, yamlString, "null", "Should contain null as an example for nullable fields")
+
+	// Verify municipalityCode also has null in examples
+	assert.Contains(t, yamlString, "municipalityCode:", "Should contain municipalityCode field")
+	assert.Contains(t, yamlString, "184", "Should contain municipalityCode example")
+
+	// Verify that non-nullable fields don't get null added to their examples
+	assert.Contains(t, yamlString, "regularField:", "Should contain regularField")
+	assert.Contains(t, yamlString, "test-value", "Should contain regularField example")
+
+	t.Logf("Generated OpenAPI YAML for nullable field example test:\n%s", yamlString)
+}

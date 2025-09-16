@@ -717,7 +717,16 @@ func (g *Generator) createFieldSchema(field specification.Field, service *specif
 			exampleNode = arrayNode
 		}
 
-		schema.Examples = []*yaml.Node{exampleNode}
+		// Create examples array - include the regular example
+		examples := []*yaml.Node{exampleNode}
+
+		// If the field is nullable, add null as an additional example
+		if field.IsNullable() {
+			nullNode := g.createNullExampleNode()
+			examples = append(examples, nullNode)
+		}
+
+		schema.Examples = examples
 	}
 
 	return schema
@@ -773,7 +782,16 @@ func (g *Generator) createParameterSchema(field specification.Field, service *sp
 			exampleNode = arrayNode
 		}
 
-		schema.Examples = []*yaml.Node{exampleNode}
+		// Create examples array - include the regular example
+		examples := []*yaml.Node{exampleNode}
+
+		// If the field is nullable, add null as an additional example
+		if field.IsNullable() {
+			nullNode := g.createNullExampleNode()
+			examples = append(examples, nullNode)
+		}
+
+		schema.Examples = examples
 	}
 
 	return schema
@@ -993,6 +1011,15 @@ func (g *Generator) createTypedExampleNode(fieldType, exampleValue string) *yaml
 			Tag:   "!!str",
 			Value: exampleValue,
 		}
+	}
+}
+
+// createNullExampleNode creates a YAML node representing a null value.
+func (g *Generator) createNullExampleNode() *yaml.Node {
+	return &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!null",
+		Value: "null",
 	}
 }
 

@@ -884,7 +884,8 @@
           "createdBy": {
             "type": "string",
             "examples": [
-              "987fcdeb-51a2-43d1-b567-123456789abc"
+              "987fcdeb-51a2-43d1-b567-123456789abc",
+              null
             ],
             "format": "uuid",
             "description": "User who created the resource",
@@ -901,7 +902,8 @@
           "updatedBy": {
             "type": "string",
             "examples": [
-              "987fcdeb-51a2-43d1-b567-123456789abc"
+              "987fcdeb-51a2-43d1-b567-123456789abc",
+              null
             ],
             "format": "uuid",
             "description": "User who last updated the resource",
