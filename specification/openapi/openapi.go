@@ -705,10 +705,7 @@ func (g *Generator) createFieldSchema(field specification.Field, service *specif
 
 	// Add example if present
 	if field.Example != "" {
-		exampleNode := &yaml.Node{
-			Kind:  yaml.ScalarNode,
-			Value: field.Example,
-		}
+		exampleNode := g.createTypedExampleNode(field.Type, field.Example)
 		schema.Examples = []*yaml.Node{exampleNode}
 	}
 
@@ -754,10 +751,7 @@ func (g *Generator) createParameterSchema(field specification.Field, service *sp
 
 	// Add example if present
 	if field.Example != "" {
-		exampleNode := &yaml.Node{
-			Kind:  yaml.ScalarNode,
-			Value: field.Example,
-		}
+		exampleNode := g.createTypedExampleNode(field.Type, field.Example)
 		schema.Examples = []*yaml.Node{exampleNode}
 	}
 
