@@ -2938,3 +2938,128 @@ func TestGenerator_GenerateFromServiceSecurityYAML(t *testing.T) {
 
 	t.Logf("Generated Security YAML:\n%s", yamlStr)
 }
+
+// TestStringFieldsWithNumericExamples tests that string fields with numeric examples are properly typed as strings.
+func TestStringFieldsWithNumericExamples(t *testing.T) {
+	generator := newGenerator()
+	generator.Title = "Test API"
+	generator.Version = "1.0.0"
+
+	service := &specification.Service{
+		Name: "TestService",
+		Resources: []specification.Resource{
+			{
+				Name:        "Address",
+				Description: "Address resource",
+				Operations:  []string{"Create"},
+				Fields: []specification.ResourceField{
+					{
+						Field: specification.Field{
+							Name:        "municipalityCode",
+							Description: "The municipality code of the address",
+							Type:        "String",
+							Example:     "184",
+							Modifiers:   []string{"nullable"},
+						},
+						Operations: []string{"Create"},
+					},
+					{
+						Field: specification.Field{
+							Name:        "zipCode",
+							Description: "The zip code",
+							Type:        "String",
+							Example:     "12345",
+						},
+						Operations: []string{"Create"},
+					},
+					{
+						Field: specification.Field{
+							Name:        "houseNumber",
+							Description: "The house number",
+							Type:        "Int",
+							Example:     "42",
+						},
+						Operations: []string{"Create"},
+					},
+				},
+				Endpoints: []specification.Endpoint{
+					{
+						Name:        "Create",
+						Title:       "Create Address",
+						Description: "Create a new address",
+						Method:      "POST",
+						Path:        "",
+						Request: specification.EndpointRequest{
+							ContentType: "application/json",
+							BodyParams: []specification.Field{
+								{
+									Name:        "municipalityCode",
+									Description: "The municipality code of the address",
+									Type:        "String",
+									Example:     "184",
+									Modifiers:   []string{"nullable"},
+								},
+								{
+									Name:        "zipCode",
+									Description: "The zip code",
+									Type:        "String",
+									Example:     "12345",
+								},
+								{
+									Name:        "houseNumber",
+									Description: "The house number",
+									Type:        "Int",
+									Example:     "42",
+								},
+							},
+						},
+						Response: specification.EndpointResponse{
+							ContentType: "application/json",
+							StatusCode:  201,
+							BodyFields: []specification.Field{
+								{
+									Name:        "id",
+									Description: "Address identifier",
+									Type:        "UUID",
+								},
+								{
+									Name:        "municipalityCode",
+									Description: "The municipality code of the address",
+									Type:        "String",
+									Example:     "184",
+									Modifiers:   []string{"nullable"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	document, err := generator.GenerateFromService(service)
+
+	assert.NoError(t, err, "Should generate document without error")
+	assert.NotNil(t, document, "Document should not be nil")
+
+	generatedJSON, err := json.Marshal(document)
+	assert.NoError(t, err, "Should marshal to JSON without error")
+
+	generatedJSONStr := string(generatedJSON)
+	t.Logf("Generated OpenAPI JSON for string field example verification:\n%s", generatedJSONStr)
+
+	// Verify the fix: Examples should have proper YAML tags indicating correct type
+	// This is the key evidence that our createTypedExampleNode fix is working
+
+	// municipalityCode should have string tag !!str with value "184"
+	assert.Contains(t, generatedJSONStr, `"Tag":"!!str","Value":"184"`, "municipalityCode example should be properly typed as string with !!str tag")
+
+	// zipCode should have string tag !!str with value "12345"
+	assert.Contains(t, generatedJSONStr, `"Tag":"!!str","Value":"12345"`, "zipCode example should be properly typed as string with !!str tag")
+
+	// houseNumber should have integer tag !!int with value "42" (for contrast)
+	assert.Contains(t, generatedJSONStr, `"Tag":"!!int","Value":"42"`, "houseNumber example should be properly typed as integer with !!int tag")
+
+	// Verify that municipalityCode field is present
+	assert.Contains(t, generatedJSONStr, `"municipalityCode"`, "Should contain municipalityCode field")
+}
