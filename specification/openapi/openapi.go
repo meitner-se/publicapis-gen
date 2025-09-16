@@ -1852,52 +1852,60 @@ func (g *Generator) addErrorResponseBodiesToComponents(components *v3.Components
 
 	// Define common error responses with examples in deterministic order
 	errorResponses := []struct {
-		description string
-		statusCode  string
-		errorCode   string
-		message     string
+		description    string
+		statusCode     string
+		errorCode      string
+		message        string
+		exampleSummary string
 	}{
 		{
 			badRequestDescription,
 			httpStatus400,
 			errorCodeBadRequest,
 			"The request contains invalid parameters or malformed data",
+			"Bad Request error example",
 		},
 		{
 			unauthorizedDescription,
 			httpStatus401,
 			errorCodeUnauthorized,
 			"Authentication credentials are missing or invalid",
+			"Unauthorized error example",
 		},
 		{
 			"Forbidden - Request is authenticated, but the user is not allowed to perform the operation",
 			httpStatus403,
 			errorCodeForbidden,
 			"You do not have permission to perform this operation",
+			"Forbidden error example",
 		},
 		{
 			notFoundDescription,
 			httpStatus404,
 			errorCodeNotFound,
 			"The requested resource could not be found",
+			"Not Found error example",
 		},
 		{
 			"Conflict - The request could not be completed due to a conflict",
 			httpStatus409,
 			errorCodeConflict,
 			"The request conflicts with the current state of the resource",
+			"Conflict error example",
 		},
 		{
 			"Too Many Requests - When the rate limit has been exceeded",
 			httpStatus429,
 			errorCodeRateLimited,
 			"Too many requests - rate limit exceeded",
+			"Rate Limited error example",
 		},
 		{
 			internalErrorDescription,
 			httpStatus500,
 			errorCodeInternal,
 			"An unexpected server error occurred",
+			"Internal Server error example",
 		},
 	}
 
@@ -1914,7 +1922,7 @@ func (g *Generator) addErrorResponseBodiesToComponents(components *v3.Components
 			// Use Examples (plural) for complex objects per OpenAPI 3.0+ specification
 			examples := orderedmap.New[string, *base.Example]()
 			examples.Set("errorExample", &base.Example{
-				Summary: "Error response example",
+				Summary: errorResponse.exampleSummary,
 				Value:   errorExample,
 			})
 			mediaType.Examples = examples

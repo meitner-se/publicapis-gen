@@ -2813,7 +2813,7 @@
           "application/json": {
             "examples": {
               "errorExample": {
-                "summary": "Error response example",
+                "summary": "Bad Request error example",
                 "value": {
                   "error": {
                     "code": "BadRequest",
@@ -2846,7 +2846,7 @@
           "application/json": {
             "examples": {
               "errorExample": {
-                "summary": "Error response example",
+                "summary": "Unauthorized error example",
                 "value": {
                   "error": {
                     "code": "Unauthorized",
@@ -2879,7 +2879,7 @@
           "application/json": {
             "examples": {
               "errorExample": {
-                "summary": "Error response example",
+                "summary": "Forbidden error example",
                 "value": {
                   "error": {
                     "code": "Forbidden",
@@ -2912,7 +2912,7 @@
           "application/json": {
             "examples": {
               "errorExample": {
-                "summary": "Error response example",
+                "summary": "Not Found error example",
                 "value": {
                   "error": {
                     "code": "NotFound",
@@ -2945,7 +2945,7 @@
           "application/json": {
             "examples": {
               "errorExample": {
-                "summary": "Error response example",
+                "summary": "Conflict error example",
                 "value": {
                   "error": {
                     "code": "Conflict",
@@ -2978,7 +2978,7 @@
           "application/json": {
             "examples": {
               "errorExample": {
-                "summary": "Error response example",
+                "summary": "Rate Limited error example",
                 "value": {
                   "error": {
                     "code": "RateLimited",
@@ -3011,7 +3011,7 @@
           "application/json": {
             "examples": {
               "errorExample": {
-                "summary": "Error response example",
+                "summary": "Internal Server error example",
                 "value": {
                   "error": {
                     "code": "Internal",
