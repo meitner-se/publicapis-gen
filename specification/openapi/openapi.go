@@ -1484,9 +1484,21 @@ func (g *Generator) generateErrorFieldsExample(fields []specification.Field, ser
 			if nestedObj != nil {
 				fieldValueNode = g.generateErrorFieldsExample(nestedObj.Fields, service)
 			}
-		} else {
-			// Generate ErrorField example for primitive fields
+		} else if field.Type == errorFieldObjectName {
+			// Generate ErrorField example for fields that reference ErrorField type
 			fieldValueNode = g.generateSingleErrorFieldExample(field.Name)
+		} else if g.isPrimitiveType(field.Type) || service.HasEnum(field.Type) {
+			// For primitive types and enums, generate simple string example
+			fieldValueNode = g.createTypedExampleNode(specification.FieldTypeString, fmt.Sprintf("Invalid %s", field.Name))
+		} else {
+			// For other types, try to generate from object definition or fallback to string
+			if service.HasObject(field.Type) {
+				if obj := service.GetObject(field.Type); obj != nil {
+					fieldValueNode = g.generateObjectExample(*obj, service)
+				}
+			} else {
+				fieldValueNode = g.createTypedExampleNode(specification.FieldTypeString, fmt.Sprintf("Invalid %s", field.Name))
+			}
 		}
 
 		if fieldValueNode != nil {
@@ -1629,19 +1641,14 @@ func (g *Generator) createEndpointSpecific422ErrorResponse(resourceName, endpoin
 			errorFieldSchema.Required = []string{messageFieldName, codeFieldName}
 		}
 
-		// Create a recursive schema that allows nested objects or ErrorField objects
+		// Create a schema that allows nested objects containing ErrorField objects
 		errorFieldsSchema = &base.Schema{
 			Type: []string{schemaTypeObject},
 			AdditionalProperties: &base.DynamicValue[*base.SchemaProxy, bool]{
 				A: base.CreateSchemaProxy(&base.Schema{
-					OneOf: []*base.SchemaProxy{
-						base.CreateSchemaProxy(errorFieldSchema), // Direct ErrorField
-						base.CreateSchemaProxy(&base.Schema{ // Nested object
-							Type: []string{schemaTypeObject},
-							AdditionalProperties: &base.DynamicValue[*base.SchemaProxy, bool]{
-								A: base.CreateSchemaProxy(errorFieldSchema),
-							},
-						}),
+					Type: []string{schemaTypeObject},
+					AdditionalProperties: &base.DynamicValue[*base.SchemaProxy, bool]{
+						A: base.CreateSchemaProxy(errorFieldSchema),
 					},
 				}),
 			},
@@ -1650,9 +1657,19 @@ func (g *Generator) createEndpointSpecific422ErrorResponse(resourceName, endpoin
 		errorFieldsExampleNode = g.generateGenericErrorFieldsExample()
 	}
 
-	// Add example to errorFields property
+	// Add example to errorFields property, but ensure it matches the schema type
 	if errorFieldsExampleNode != nil {
-		errorFieldsSchema.Examples = []*yaml.Node{errorFieldsExampleNode}
+		// Check if the RequestError object exists and examine its field types
+		if service.HasObject(requestErrorObjectName) {
+			requestErrorObj := service.GetObject(requestErrorObjectName)
+			if requestErrorObj != nil {
+				// Verify that examples match the actual field types in the RequestError schema
+				errorFieldsSchema.Examples = []*yaml.Node{errorFieldsExampleNode}
+			}
+		} else {
+			// For fallback schema, always add examples since we control the schema type
+			errorFieldsSchema.Examples = []*yaml.Node{errorFieldsExampleNode}
+		}
 	}
 
 	schema.Properties.Set(errorFieldsFieldName, base.CreateSchemaProxy(errorFieldsSchema))

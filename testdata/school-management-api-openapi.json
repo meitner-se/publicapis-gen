@@ -18,99 +18,6 @@
     }
   ],
   "paths": {
-    "/students/_search": {
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Search Students",
-        "description": "Search for `Students` with filtering capabilities.",
-        "operationId": "StudentsSearch",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of Students to return (default: 50) when searching Students",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 50
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "The number of Students to skip before starting to return results (default: 0) when searching Students",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 0
-            }
-          }
-        ],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsSearch"
-        },
-        "responses": {
-          "200": {
-            "description": "Response for Students Search operation - returns filtered Students results",
-            "$ref": "#/components/responses/StudentsSearch"
-          },
-          "400": {
-            "description": "Bad Request error for Students Search operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students Search operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students Search operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students Search operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students Search operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "Validation error for Students Search operation - request data failed validation",
-            "$ref": "#/components/responses/StudentsSearch422ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students Search operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students Search operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-pagination": {
-          "type": "offsetLimit",
-          "inputs": [
-            {
-              "name": "offset",
-              "in": "parameters",
-              "type": "offset"
-            },
-            {
-              "name": "limit",
-              "in": "parameters",
-              "type": "limit"
-            }
-          ],
-          "outputs": {
-            "results": "$.data.resultArray"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "search"
-      }
-    },
     "/students/bulk-import": {
       "post": {
         "tags": [
@@ -649,6 +556,99 @@
         "x-speakeasy-group": "students",
         "x-speakeasy-name-override": "update"
       }
+    },
+    "/students/_search": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Search Students",
+        "description": "Search for `Students` with filtering capabilities.",
+        "operationId": "StudentsSearch",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of Students to return (default: 50) when searching Students",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "The number of Students to skip before starting to return results (default: 0) when searching Students",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsSearch"
+        },
+        "responses": {
+          "200": {
+            "description": "Response for Students Search operation - returns filtered Students results",
+            "$ref": "#/components/responses/StudentsSearch"
+          },
+          "400": {
+            "description": "Bad Request error for Students Search operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Search operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Search operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Search operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Search operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students Search operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsSearch422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Search operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Search operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-pagination": {
+          "type": "offsetLimit",
+          "inputs": [
+            {
+              "name": "offset",
+              "in": "parameters",
+              "type": "offset"
+            },
+            {
+              "name": "limit",
+              "in": "parameters",
+              "type": "limit"
+            }
+          ],
+          "outputs": {
+            "results": "$.data.resultArray"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "search"
+      }
     }
   },
   "components": {
@@ -987,48 +987,6 @@
         ],
         "description": "Student management resource"
       },
-      "AddressRequestError": {
-        "type": "object",
-        "properties": {
-          "street": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Street address",
-            "nullable": true
-          },
-          "city": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "City",
-            "nullable": true
-          },
-          "state": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "State or province",
-            "nullable": true
-          },
-          "zipCode": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "ZIP or postal code",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Address"
-      },
       "StudentRequestError": {
         "type": "object",
         "properties": {
@@ -1103,6 +1061,48 @@
           }
         },
         "description": "Request error object for Contact"
+      },
+      "AddressRequestError": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Street address",
+            "nullable": true
+          },
+          "city": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "City",
+            "nullable": true
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "State or province",
+            "nullable": true
+          },
+          "zipCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "ZIP or postal code",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Address"
       },
       "StudentsBulkImportRequestError": {
         "type": "object",
@@ -2766,10 +2766,7 @@
                   ],
                   "examples": [
                     {
-                      "filter": {
-                        "code": "Required",
-                        "message": "Filter is required"
-                      }
+                      "filter": "Invalid Filter"
                     }
                   ]
                 }
@@ -2788,10 +2785,7 @@
                     "message": "Validation failed for Students Search endpoint"
                   },
                   "errorFields": {
-                    "filter": {
-                      "code": "Required",
-                      "message": "Filter is required"
-                    }
+                    "filter": "Invalid Filter"
                   }
                 }
               }
