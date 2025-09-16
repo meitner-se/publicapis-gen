@@ -1759,6 +1759,42 @@ func (g *Generator) createResponseReference(response specification.EndpointRespo
 	return g.createResponse(response, resourceName, endpointName, service)
 }
 
+// generateStandardErrorObjectExample generates an error object example YAML node (without wrapper) for standard error responses.
+func (g *Generator) generateStandardErrorObjectExample(errorCode, message string) *yaml.Node {
+	// Create the error object node
+	errorObjectNode := &yaml.Node{
+		Kind: yaml.MappingNode,
+	}
+
+	// Add code field
+	codeKeyNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: codeFieldName,
+	}
+	codeValueNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: errorCode,
+	}
+	errorObjectNode.Content = append(errorObjectNode.Content, codeKeyNode, codeValueNode)
+
+	// Add message field
+	messageKeyNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: messageFieldName,
+	}
+	messageValueNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: message,
+	}
+	errorObjectNode.Content = append(errorObjectNode.Content, messageKeyNode, messageValueNode)
+
+	return errorObjectNode
+}
+
 // createWrappedErrorSchema creates an error response schema with the error wrapped in an "error" object.
 func (g *Generator) createWrappedErrorSchema(service *specification.Service) *base.Schema {
 	// Create the inner error object schema
@@ -1769,6 +1805,12 @@ func (g *Generator) createWrappedErrorSchema(service *specification.Service) *ba
 		refProxy := base.CreateSchemaProxyRef(refString)
 		innerErrorSchema = &base.Schema{
 			AllOf: []*base.SchemaProxy{refProxy},
+		}
+
+		// Add example to the inner error schema to satisfy linter requirements
+		errorObjectExample := g.generateStandardErrorObjectExample(errorCodeBadRequest, "The request contains invalid parameters or malformed data")
+		if errorObjectExample != nil {
+			innerErrorSchema.Examples = []*yaml.Node{errorObjectExample}
 		}
 	} else {
 		// Fallback generic error schema
@@ -1781,6 +1823,12 @@ func (g *Generator) createWrappedErrorSchema(service *specification.Service) *ba
 		innerErrorSchema.Properties.Set(messageFieldName, base.CreateSchemaProxy(messageSchema))
 		innerErrorSchema.Properties.Set(codeFieldName, base.CreateSchemaProxy(codeSchema))
 		innerErrorSchema.Required = []string{messageFieldName, codeFieldName}
+
+		// Add example to the fallback schema as well
+		errorObjectExample := g.generateStandardErrorObjectExample(errorCodeBadRequest, "The request contains invalid parameters or malformed data")
+		if errorObjectExample != nil {
+			innerErrorSchema.Examples = []*yaml.Node{errorObjectExample}
+		}
 	}
 
 	// Create the wrapper schema with "error" field
