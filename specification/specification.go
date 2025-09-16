@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"sort"
 	"strings"
 
 	"github.com/aarondl/strmangle"
@@ -1083,15 +1082,8 @@ func generateRequestErrorObjectsForBodyParams(service *Service) {
 	// Collect all types used in body parameters
 	usedTypes := collectTypesUsedInBodyParams(service)
 
-	// Sort type names for deterministic ordering
-	sortedTypeNames := make([]string, 0, len(usedTypes))
+	// Generate RequestError objects for each used type
 	for typeName := range usedTypes {
-		sortedTypeNames = append(sortedTypeNames, typeName)
-	}
-	sort.Strings(sortedTypeNames)
-
-	// Generate RequestError objects for each used type in sorted order
-	for _, typeName := range sortedTypeNames {
 		// Skip primitive types - they don't need their own RequestError objects
 		if isPrimitiveType(typeName) {
 			continue
