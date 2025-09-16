@@ -1794,36 +1794,148 @@ func (g *Generator) createWrappedErrorSchema(service *specification.Service) *ba
 	return wrapperSchema
 }
 
+// generateStandardErrorExample generates a wrapped error example YAML node for standard error responses.
+func (g *Generator) generateStandardErrorExample(errorCode, message string) *yaml.Node {
+	// Create the wrapper object node (contains the "error" field)
+	wrapperNode := &yaml.Node{
+		Kind: yaml.MappingNode,
+	}
+
+	// Add error field key
+	errorKeyNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: errorFieldName,
+	}
+
+	// Create the error object node
+	errorObjectNode := &yaml.Node{
+		Kind: yaml.MappingNode,
+	}
+
+	// Add code field
+	codeKeyNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: codeFieldName,
+	}
+	codeValueNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: errorCode,
+	}
+	errorObjectNode.Content = append(errorObjectNode.Content, codeKeyNode, codeValueNode)
+
+	// Add message field
+	messageKeyNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: messageFieldName,
+	}
+	messageValueNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: message,
+	}
+	errorObjectNode.Content = append(errorObjectNode.Content, messageKeyNode, messageValueNode)
+
+	// Add the error object to the wrapper
+	wrapperNode.Content = append(wrapperNode.Content, errorKeyNode, errorObjectNode)
+
+	return wrapperNode
+}
+
 // addErrorResponseBodiesToComponents adds common error response bodies to the components section.
 func (g *Generator) addErrorResponseBodiesToComponents(components *v3.Components, service *specification.Service) {
 	// Create standard wrapped error schema
 	standardErrorSchema := g.createWrappedErrorSchema(service)
-	standardErrorContent := orderedmap.New[string, *v3.MediaType]()
-	standardMediaType := &v3.MediaType{
-		Schema: base.CreateSchemaProxy(standardErrorSchema),
-	}
-	standardErrorContent.Set(contentTypeJSON, standardMediaType)
 
-	// Define common error responses in deterministic order
+	// Define common error responses with examples in deterministic order
 	errorResponses := []struct {
-		description string
-		statusCode  string
+		description    string
+		statusCode     string
+		errorCode      string
+		message        string
+		exampleSummary string
 	}{
-		{badRequestDescription, httpStatus400},
-		{unauthorizedDescription, httpStatus401},
-		{"Forbidden - Request is authenticated, but the user is not allowed to perform the operation", httpStatus403},
-		{notFoundDescription, httpStatus404},
-		{"Conflict - The request could not be completed due to a conflict", httpStatus409},
-		{"Too Many Requests - When the rate limit has been exceeded", httpStatus429},
-		{internalErrorDescription, httpStatus500},
+		{
+			badRequestDescription,
+			httpStatus400,
+			errorCodeBadRequest,
+			"The request contains invalid parameters or malformed data",
+			"Bad Request error example",
+		},
+		{
+			unauthorizedDescription,
+			httpStatus401,
+			errorCodeUnauthorized,
+			"Authentication credentials are missing or invalid",
+			"Unauthorized error example",
+		},
+		{
+			"Forbidden - Request is authenticated, but the user is not allowed to perform the operation",
+			httpStatus403,
+			errorCodeForbidden,
+			"You do not have permission to perform this operation",
+			"Forbidden error example",
+		},
+		{
+			notFoundDescription,
+			httpStatus404,
+			errorCodeNotFound,
+			"The requested resource could not be found",
+			"Not Found error example",
+		},
+		{
+			"Conflict - The request could not be completed due to a conflict",
+			httpStatus409,
+			errorCodeConflict,
+			"The request conflicts with the current state of the resource",
+			"Conflict error example",
+		},
+		{
+			"Too Many Requests - When the rate limit has been exceeded",
+			httpStatus429,
+			errorCodeRateLimited,
+			"Too many requests - rate limit exceeded",
+			"Rate Limited error example",
+		},
+		{
+			internalErrorDescription,
+			httpStatus500,
+			errorCodeInternal,
+			"An unexpected server error occurred",
+			"Internal Server error example",
+		},
 	}
 
 	for _, errorResponse := range errorResponses {
+		// Generate error example using YAML nodes
+		errorExample := g.generateStandardErrorExample(errorResponse.errorCode, errorResponse.message)
+
+		// Create MediaType with schema and examples
+		mediaType := &v3.MediaType{
+			Schema: base.CreateSchemaProxy(standardErrorSchema),
+		}
+
+		if errorExample != nil {
+			// Use Examples (plural) for complex objects per OpenAPI 3.0+ specification
+			examples := orderedmap.New[string, *base.Example]()
+			examples.Set("errorExample", &base.Example{
+				Summary: errorResponse.exampleSummary,
+				Value:   errorExample,
+			})
+			mediaType.Examples = examples
+		}
+
+		content := orderedmap.New[string, *v3.MediaType]()
+		content.Set(contentTypeJSON, mediaType)
+
 		// Add standard error response
 		standardResponseBodyName := errorResponseBodyPrefix + errorResponse.statusCode + responseBodySuffix
 		standardResponse := &v3.Response{
 			Description: errorResponse.description,
-			Content:     standardErrorContent,
+			Content:     content,
 		}
 		components.Responses.Set(standardResponseBodyName, standardResponse)
 	}
