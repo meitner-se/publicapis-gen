@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -847,8 +848,16 @@ func (g *Generator) addResourceToPaths(resource specification.Resource, paths *o
 		pathGroups[fullPath] = append(pathGroups[fullPath], &endpoint)
 	}
 
-	// Create PathItem for each unique path
-	for path, endpoints := range pathGroups {
+	// Sort paths for deterministic output
+	sortedPaths := make([]string, 0, len(pathGroups))
+	for path := range pathGroups {
+		sortedPaths = append(sortedPaths, path)
+	}
+	sort.Strings(sortedPaths)
+
+	// Create PathItem for each unique path in sorted order
+	for _, path := range sortedPaths {
+		endpoints := pathGroups[path]
 		pathItem := &v3.PathItem{}
 
 		for _, endpoint := range endpoints {
@@ -946,6 +955,9 @@ func (g *Generator) addRequestBodiesToComponents(components *v3.Components, serv
 	// Track unique request bodies to avoid duplicates
 	requestBodyMap := make(map[string]*v3.RequestBody)
 
+	// Collect all request body names first for deterministic ordering
+	var requestBodyNames []string
+
 	// Iterate through all resources and endpoints to collect request bodies
 	for _, resource := range service.Resources {
 		for _, endpoint := range resource.Endpoints {
@@ -956,10 +968,18 @@ func (g *Generator) addRequestBodiesToComponents(components *v3.Components, serv
 				if _, exists := requestBodyMap[requestBodyName]; !exists {
 					requestBody := g.createComponentRequestBody(endpoint.Request.BodyParams, service)
 					requestBodyMap[requestBodyName] = requestBody
-					components.RequestBodies.Set(requestBodyName, requestBody)
+					requestBodyNames = append(requestBodyNames, requestBodyName)
 				}
 			}
 		}
+	}
+
+	// Sort request body names for deterministic output
+	sort.Strings(requestBodyNames)
+
+	// Add request bodies to components in sorted order
+	for _, requestBodyName := range requestBodyNames {
+		components.RequestBodies.Set(requestBodyName, requestBodyMap[requestBodyName])
 	}
 }
 
@@ -1222,6 +1242,9 @@ func (g *Generator) addResponseBodiesToComponents(components *v3.Components, ser
 	// Track unique response bodies to avoid duplicates
 	responseBodyMap := make(map[string]*v3.Response)
 
+	// Collect all response body names first for deterministic ordering
+	var responseBodyNames []string
+
 	// Iterate through all resources and endpoints to collect response bodies
 	for _, resource := range service.Resources {
 		for _, endpoint := range resource.Endpoints {
@@ -1233,7 +1256,7 @@ func (g *Generator) addResponseBodiesToComponents(components *v3.Components, ser
 				if _, exists := responseBodyMap[responseBodyName]; !exists {
 					responseBody := g.createComponentResponse(endpoint.Response, resource.Name, endpoint.Name, service)
 					responseBodyMap[responseBodyName] = responseBody
-					components.Responses.Set(responseBodyName, responseBody)
+					responseBodyNames = append(responseBodyNames, responseBodyName)
 				}
 			}
 
@@ -1244,10 +1267,18 @@ func (g *Generator) addResponseBodiesToComponents(components *v3.Components, ser
 					// Create 422 validation error response using RequestError schema
 					response422 := g.createEndpointSpecific422ErrorResponse(resource.Name, endpoint.Name, service)
 					responseBodyMap[response422Name] = response422
-					components.Responses.Set(response422Name, response422)
+					responseBodyNames = append(responseBodyNames, response422Name)
 				}
 			}
 		}
+	}
+
+	// Sort response body names for deterministic output
+	sort.Strings(responseBodyNames)
+
+	// Add response bodies to components in sorted order
+	for _, responseBodyName := range responseBodyNames {
+		components.Responses.Set(responseBodyName, responseBodyMap[responseBodyName])
 	}
 
 	// Add common error response bodies
@@ -2285,7 +2316,16 @@ func (g *Generator) addSecuritySchemesToComponents(components *v3.Components, se
 		return
 	}
 
-	for schemeName, scheme := range service.SecuritySchemes {
+	// Sort security scheme names for deterministic output
+	sortedNames := make([]string, 0, len(service.SecuritySchemes))
+	for schemeName := range service.SecuritySchemes {
+		sortedNames = append(sortedNames, schemeName)
+	}
+	sort.Strings(sortedNames)
+
+	// Process security schemes in sorted order
+	for _, schemeName := range sortedNames {
+		scheme := service.SecuritySchemes[schemeName]
 		securityScheme := g.createSecurityScheme(scheme)
 		components.SecuritySchemes.Set(schemeName, securityScheme)
 	}
