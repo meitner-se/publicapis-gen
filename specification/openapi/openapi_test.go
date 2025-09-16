@@ -3063,3 +3063,95 @@ func TestStringFieldsWithNumericExamples(t *testing.T) {
 	// Verify that municipalityCode field is present
 	assert.Contains(t, generatedJSONStr, `"municipalityCode"`, "Should contain municipalityCode field")
 }
+
+// TestArrayFieldExamples tests that array fields with examples are properly wrapped in arrays.
+func TestArrayFieldExamples(t *testing.T) {
+	// Create test service with an object containing an array field with example
+	testService := &specification.Service{
+		Name: "ArrayExampleService",
+		Objects: []specification.Object{
+			{
+				Name:        "TestObject",
+				Description: "Test object with array field",
+				Fields: []specification.Field{
+					{
+						Name:        "tags",
+						Type:        "GroupType", // Enum type
+						Description: "List of tags",
+						Modifiers:   []string{specification.ModifierArray},
+						Example:     "Class", // This should be wrapped in an array
+					},
+				},
+			},
+		},
+		Enums: []specification.Enum{
+			{
+				Name:        "GroupType",
+				Description: "Type of group",
+				Values: []specification.EnumValue{
+					{Name: "Class", Description: "Class group"},
+					{Name: "Team", Description: "Team group"},
+				},
+			},
+		},
+		Resources: []specification.Resource{
+			{
+				Name:        "TestResource",
+				Description: "Test resource",
+				Operations:  []string{specification.OperationRead},
+				Fields: []specification.ResourceField{
+					{
+						Field: specification.Field{
+							Name:        "tags",
+							Type:        "GroupType", // Enum type
+							Description: "List of tags",
+							Modifiers:   []string{specification.ModifierArray},
+							Example:     "Class", // This should be wrapped in an array
+						},
+						Operations: []string{specification.OperationRead},
+					},
+				},
+			},
+		},
+	}
+
+	// Generate OpenAPI document
+	generator := newGenerator()
+	generator.Title = "Array Examples Test API"
+	generator.Description = "Test API for array field examples"
+	generator.Version = "1.0.0"
+	generator.ServerURL = "https://api.test.com"
+
+	document, err := generator.GenerateFromService(testService)
+	assert.NoError(t, err, "Should generate document without error")
+	assert.NotNil(t, document, "Document should not be nil")
+
+	// Convert to JSON for easier inspection
+	jsonBytes, err := document.Render()
+	assert.NoError(t, err, "Should render document to JSON without error")
+
+	jsonString := string(jsonBytes)
+
+	// Verify that the array field example is properly wrapped in an array
+	// The example should be ["Class"] not just "Class"
+
+	// Look for the tags field definition in components/schemas
+	assert.Contains(t, jsonString, "tags:", "Should contain tags field")
+	assert.Contains(t, jsonString, "type: array", "tags field should have array type")
+
+	// The key verification: the example should be an array containing the string, not just a string
+	// This is the fix for INF-308: array examples should be arrays, not scalars
+
+	// Look for the proper array example format in YAML - this indicates the fix is working
+	arrayExamplePattern := "- - Class" // This means an array containing the value "Class"
+	assert.Contains(t, jsonString, arrayExamplePattern,
+		"Array field example should be properly wrapped in an array: '- - Class'")
+
+	// Additional verification: ensure we don't have the old broken behavior
+	// where it would be just a scalar string example
+	brokenPatternCheck := "- Class\n                            items:" // Direct scalar under examples
+	assert.NotContains(t, jsonString, brokenPatternCheck,
+		"Should not have scalar string example directly under examples (this was the bug)")
+
+	t.Logf("Generated OpenAPI JSON for array field example test:\n%s", jsonString)
+}
