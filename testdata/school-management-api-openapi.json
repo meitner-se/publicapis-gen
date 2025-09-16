@@ -2101,7 +2101,13 @@
                 "error": {
                   "allOf": [
                     {
-                      "$ref": "#/components/schemas/ErrorCode"
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "UnprocessableEntity",
+                      "message": "Validation failed for Students BulkImport endpoint"
                     }
                   ]
                 },
@@ -2109,6 +2115,24 @@
                   "allOf": [
                     {
                       "$ref": "#/components/schemas/StudentsBulkImportRequestError"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "students": {
+                        "firstName": {
+                          "code": "Required",
+                          "message": "firstName is required"
+                        },
+                        "lastName": {
+                          "code": "Required",
+                          "message": "lastName is required"
+                        }
+                      },
+                      "overwriteExisting": {
+                        "code": "Required",
+                        "message": "overwriteExisting is required"
+                      }
                     }
                   ]
                 }
@@ -2118,25 +2142,30 @@
                 "errorFields"
               ]
             },
-            "example": {
-              "error": {
-                "code": "UnprocessableEntity",
-                "message": "Validation failed for Students BulkImport endpoint"
-              },
-              "errorFields": {
-                "students": {
-                  "firstName": {
-                    "code": "Required",
-                    "message": "firstName is required"
+            "examples": {
+              "validationError": {
+                "summary": "Validation error example",
+                "value": {
+                  "error": {
+                    "code": "UnprocessableEntity",
+                    "message": "Validation failed for Students BulkImport endpoint"
                   },
-                  "lastName": {
-                    "code": "Required",
-                    "message": "lastName is required"
+                  "errorFields": {
+                    "students": {
+                      "firstName": {
+                        "code": "Required",
+                        "message": "firstName is required"
+                      },
+                      "lastName": {
+                        "code": "Required",
+                        "message": "lastName is required"
+                      }
+                    },
+                    "overwriteExisting": {
+                      "code": "Required",
+                      "message": "overwriteExisting is required"
+                    }
                   }
-                },
-                "overwriteExisting": {
-                  "code": "Required",
-                  "message": "overwriteExisting is required"
                 }
               }
             }
@@ -2180,7 +2209,13 @@
                 "error": {
                   "allOf": [
                     {
-                      "$ref": "#/components/schemas/ErrorCode"
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "UnprocessableEntity",
+                      "message": "Validation failed for Students GenerateReport endpoint"
                     }
                   ]
                 },
@@ -2188,6 +2223,18 @@
                   "allOf": [
                     {
                       "$ref": "#/components/schemas/StudentsGenerateReportRequestError"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "gradeLevel": {
+                        "code": "Required",
+                        "message": "gradeLevel is required"
+                      },
+                      "status": {
+                        "code": "Required",
+                        "message": "status is required"
+                      }
                     }
                   ]
                 }
@@ -2197,19 +2244,24 @@
                 "errorFields"
               ]
             },
-            "example": {
-              "error": {
-                "code": "UnprocessableEntity",
-                "message": "Validation failed for Students GenerateReport endpoint"
-              },
-              "errorFields": {
-                "gradeLevel": {
-                  "code": "Required",
-                  "message": "gradeLevel is required"
-                },
-                "status": {
-                  "code": "Required",
-                  "message": "status is required"
+            "examples": {
+              "validationError": {
+                "summary": "Validation error example",
+                "value": {
+                  "error": {
+                    "code": "UnprocessableEntity",
+                    "message": "Validation failed for Students GenerateReport endpoint"
+                  },
+                  "errorFields": {
+                    "gradeLevel": {
+                      "code": "Required",
+                      "message": "gradeLevel is required"
+                    },
+                    "status": {
+                      "code": "Required",
+                      "message": "status is required"
+                    }
+                  }
                 }
               }
             }
@@ -2257,7 +2309,13 @@
                 "error": {
                   "allOf": [
                     {
-                      "$ref": "#/components/schemas/ErrorCode"
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "UnprocessableEntity",
+                      "message": "Validation failed for Students AdvancedSearch endpoint"
                     }
                   ]
                 },
@@ -2265,6 +2323,18 @@
                   "allOf": [
                     {
                       "$ref": "#/components/schemas/StudentsAdvancedSearchRequestError"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "nameQuery": {
+                        "code": "Required",
+                        "message": "nameQuery is required"
+                      },
+                      "gradeLevel": {
+                        "code": "Required",
+                        "message": "gradeLevel is required"
+                      }
                     }
                   ]
                 }
@@ -2274,19 +2344,24 @@
                 "errorFields"
               ]
             },
-            "example": {
-              "error": {
-                "code": "UnprocessableEntity",
-                "message": "Validation failed for Students AdvancedSearch endpoint"
-              },
-              "errorFields": {
-                "nameQuery": {
-                  "code": "Required",
-                  "message": "nameQuery is required"
-                },
-                "gradeLevel": {
-                  "code": "Required",
-                  "message": "gradeLevel is required"
+            "examples": {
+              "validationError": {
+                "summary": "Validation error example",
+                "value": {
+                  "error": {
+                    "code": "UnprocessableEntity",
+                    "message": "Validation failed for Students AdvancedSearch endpoint"
+                  },
+                  "errorFields": {
+                    "nameQuery": {
+                      "code": "Required",
+                      "message": "nameQuery is required"
+                    },
+                    "gradeLevel": {
+                      "code": "Required",
+                      "message": "gradeLevel is required"
+                    }
+                  }
                 }
               }
             }
@@ -2304,13 +2379,18 @@
                 }
               ]
             },
-            "example": {
-              "id": "123e4567-e89b-12d3-a456-426614174000",
-              "meta": {
-                "createdAt": "2024-01-15T10:30:00Z",
-                "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
-                "updatedAt": "2024-01-15T14:45:00Z",
-                "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+            "examples": {
+              "responseExample": {
+                "summary": "Response body example",
+                "value": {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "meta": {
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                    "updatedAt": "2024-01-15T14:45:00Z",
+                    "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                  }
+                }
               }
             }
           }
@@ -2326,7 +2406,13 @@
                 "error": {
                   "allOf": [
                     {
-                      "$ref": "#/components/schemas/ErrorCode"
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "UnprocessableEntity",
+                      "message": "Validation failed for Students Create endpoint"
                     }
                   ]
                 },
@@ -2334,6 +2420,18 @@
                   "allOf": [
                     {
                       "$ref": "#/components/schemas/StudentsCreateRequestError"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "firstName": {
+                        "code": "Required",
+                        "message": "firstName is required"
+                      },
+                      "lastName": {
+                        "code": "Required",
+                        "message": "lastName is required"
+                      }
                     }
                   ]
                 }
@@ -2343,19 +2441,24 @@
                 "errorFields"
               ]
             },
-            "example": {
-              "error": {
-                "code": "UnprocessableEntity",
-                "message": "Validation failed for Students Create endpoint"
-              },
-              "errorFields": {
-                "firstName": {
-                  "code": "Required",
-                  "message": "firstName is required"
-                },
-                "lastName": {
-                  "code": "Required",
-                  "message": "lastName is required"
+            "examples": {
+              "validationError": {
+                "summary": "Validation error example",
+                "value": {
+                  "error": {
+                    "code": "UnprocessableEntity",
+                    "message": "Validation failed for Students Create endpoint"
+                  },
+                  "errorFields": {
+                    "firstName": {
+                      "code": "Required",
+                      "message": "firstName is required"
+                    },
+                    "lastName": {
+                      "code": "Required",
+                      "message": "lastName is required"
+                    }
+                  }
                 }
               }
             }
@@ -2373,13 +2476,18 @@
                 }
               ]
             },
-            "example": {
-              "id": "123e4567-e89b-12d3-a456-426614174000",
-              "meta": {
-                "createdAt": "2024-01-15T10:30:00Z",
-                "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
-                "updatedAt": "2024-01-15T14:45:00Z",
-                "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+            "examples": {
+              "responseExample": {
+                "summary": "Response body example",
+                "value": {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "meta": {
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                    "updatedAt": "2024-01-15T14:45:00Z",
+                    "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                  }
+                }
               }
             }
           }
@@ -2395,7 +2503,13 @@
                 "error": {
                   "allOf": [
                     {
-                      "$ref": "#/components/schemas/ErrorCode"
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "UnprocessableEntity",
+                      "message": "Validation failed for Students Update endpoint"
                     }
                   ]
                 },
@@ -2403,6 +2517,18 @@
                   "allOf": [
                     {
                       "$ref": "#/components/schemas/StudentsUpdateRequestError"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "firstName": {
+                        "code": "Required",
+                        "message": "firstName is required"
+                      },
+                      "lastName": {
+                        "code": "Required",
+                        "message": "lastName is required"
+                      }
                     }
                   ]
                 }
@@ -2412,19 +2538,24 @@
                 "errorFields"
               ]
             },
-            "example": {
-              "error": {
-                "code": "UnprocessableEntity",
-                "message": "Validation failed for Students Update endpoint"
-              },
-              "errorFields": {
-                "firstName": {
-                  "code": "Required",
-                  "message": "firstName is required"
-                },
-                "lastName": {
-                  "code": "Required",
-                  "message": "lastName is required"
+            "examples": {
+              "validationError": {
+                "summary": "Validation error example",
+                "value": {
+                  "error": {
+                    "code": "UnprocessableEntity",
+                    "message": "Validation failed for Students Update endpoint"
+                  },
+                  "errorFields": {
+                    "firstName": {
+                      "code": "Required",
+                      "message": "firstName is required"
+                    },
+                    "lastName": {
+                      "code": "Required",
+                      "message": "lastName is required"
+                    }
+                  }
                 }
               }
             }
@@ -2442,13 +2573,18 @@
                 }
               ]
             },
-            "example": {
-              "id": "123e4567-e89b-12d3-a456-426614174000",
-              "meta": {
-                "createdAt": "2024-01-15T10:30:00Z",
-                "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
-                "updatedAt": "2024-01-15T14:45:00Z",
-                "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+            "examples": {
+              "responseExample": {
+                "summary": "Response body example",
+                "value": {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "meta": {
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                    "updatedAt": "2024-01-15T14:45:00Z",
+                    "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                  }
+                }
               }
             }
           }
@@ -2463,6 +2599,19 @@
               "properties": {
                 "data": {
                   "type": "array",
+                  "examples": [
+                    [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "meta": {
+                          "createdAt": "2024-01-15T10:30:00Z",
+                          "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                          "updatedAt": "2024-01-15T14:45:00Z",
+                          "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                        }
+                      }
+                    ]
+                  ],
                   "items": {
                     "allOf": [
                       {
@@ -2478,26 +2627,38 @@
                       "$ref": "#/components/schemas/Pagination"
                     }
                   ],
+                  "examples": [
+                    {
+                      "offset": 0,
+                      "limit": 1,
+                      "total": 100
+                    }
+                  ],
                   "description": "Pagination information"
                 }
               }
             },
-            "example": {
-              "data": [
-                {
-                  "id": "123e4567-e89b-12d3-a456-426614174000",
-                  "meta": {
-                    "createdAt": "2024-01-15T10:30:00Z",
-                    "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
-                    "updatedAt": "2024-01-15T14:45:00Z",
-                    "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+            "examples": {
+              "responseExample": {
+                "summary": "Response body example",
+                "value": {
+                  "data": [
+                    {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "meta": {
+                        "createdAt": "2024-01-15T10:30:00Z",
+                        "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                        "updatedAt": "2024-01-15T14:45:00Z",
+                        "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                      }
+                    }
+                  ],
+                  "pagination": {
+                    "offset": 0,
+                    "limit": 1,
+                    "total": 100
                   }
                 }
-              ],
-              "pagination": {
-                "offset": 0,
-                "limit": 1,
-                "total": 100
               }
             }
           }
@@ -2512,6 +2673,19 @@
               "properties": {
                 "data": {
                   "type": "array",
+                  "examples": [
+                    [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "meta": {
+                          "createdAt": "2024-01-15T10:30:00Z",
+                          "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                          "updatedAt": "2024-01-15T14:45:00Z",
+                          "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                        }
+                      }
+                    ]
+                  ],
                   "items": {
                     "allOf": [
                       {
@@ -2527,26 +2701,38 @@
                       "$ref": "#/components/schemas/Pagination"
                     }
                   ],
+                  "examples": [
+                    {
+                      "offset": 0,
+                      "limit": 1,
+                      "total": 100
+                    }
+                  ],
                   "description": "Pagination information"
                 }
               }
             },
-            "example": {
-              "data": [
-                {
-                  "id": "123e4567-e89b-12d3-a456-426614174000",
-                  "meta": {
-                    "createdAt": "2024-01-15T10:30:00Z",
-                    "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
-                    "updatedAt": "2024-01-15T14:45:00Z",
-                    "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+            "examples": {
+              "responseExample": {
+                "summary": "Response body example",
+                "value": {
+                  "data": [
+                    {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "meta": {
+                        "createdAt": "2024-01-15T10:30:00Z",
+                        "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                        "updatedAt": "2024-01-15T14:45:00Z",
+                        "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                      }
+                    }
+                  ],
+                  "pagination": {
+                    "offset": 0,
+                    "limit": 1,
+                    "total": 100
                   }
                 }
-              ],
-              "pagination": {
-                "offset": 0,
-                "limit": 1,
-                "total": 100
               }
             }
           }
@@ -2562,7 +2748,13 @@
                 "error": {
                   "allOf": [
                     {
-                      "$ref": "#/components/schemas/ErrorCode"
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "UnprocessableEntity",
+                      "message": "Validation failed for Students Search endpoint"
                     }
                   ]
                 },
@@ -2570,6 +2762,11 @@
                   "allOf": [
                     {
                       "$ref": "#/components/schemas/StudentsSearchRequestError"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "filter": "Invalid Filter"
                     }
                   ]
                 }
@@ -2579,15 +2776,17 @@
                 "errorFields"
               ]
             },
-            "example": {
-              "error": {
-                "code": "UnprocessableEntity",
-                "message": "Validation failed for Students Search endpoint"
-              },
-              "errorFields": {
-                "filter": {
-                  "code": "Required",
-                  "message": "Filter is required"
+            "examples": {
+              "validationError": {
+                "summary": "Validation error example",
+                "value": {
+                  "error": {
+                    "code": "UnprocessableEntity",
+                    "message": "Validation failed for Students Search endpoint"
+                  },
+                  "errorFields": {
+                    "filter": "Invalid Filter"
+                  }
                 }
               }
             }
