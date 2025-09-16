@@ -3,6 +3,7 @@ package specification
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"slices"
@@ -1549,6 +1550,7 @@ func getDefaultExample(fieldType string) string {
 	case FieldTypeBool:
 		return defaultExampleBool
 	default:
+		slog.Warn("no default example available for field type, consider adding support", "fieldType", fieldType)
 		return ""
 	}
 }
