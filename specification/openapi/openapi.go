@@ -1548,17 +1548,30 @@ func (g *Generator) createEndpointSpecific422ErrorResponse(resourceName, endpoin
 		errorSchema.Properties.Set(codeFieldName, base.CreateSchemaProxy(codeSchema))
 		errorSchema.Required = []string{messageFieldName, codeFieldName}
 	}
+
+	// Add example to error property
+	if errorExampleNode := g.generateErrorObjectExample(resourceName, endpointName); errorExampleNode != nil {
+		errorSchema.Examples = []*yaml.Node{errorExampleNode}
+	}
+
 	schema.Properties.Set(errorFieldName, base.CreateSchemaProxy(errorSchema))
 
 	// Add errorFields field using RequestError type
 	requestErrorObjectName := resourceName + endpointName + requestErrorSuffix
 	var errorFieldsSchema *base.Schema
+	var errorFieldsExampleNode *yaml.Node
+
 	if service.HasObject(requestErrorObjectName) {
 		// Reference the RequestError object
 		refString := schemaReferencePrefix + requestErrorObjectName
 		refProxy := base.CreateSchemaProxyRef(refString)
 		errorFieldsSchema = &base.Schema{
 			AllOf: []*base.SchemaProxy{refProxy},
+		}
+		// Generate example from RequestError object definition
+		requestErrorObj := service.GetObject(requestErrorObjectName)
+		if requestErrorObj != nil {
+			errorFieldsExampleNode = g.generateErrorFieldsExample(requestErrorObj.Fields, service)
 		}
 	} else {
 		// Fallback to generic object with ErrorField objects as additional properties
@@ -1600,7 +1613,15 @@ func (g *Generator) createEndpointSpecific422ErrorResponse(resourceName, endpoin
 				}),
 			},
 		}
+		// Generate fallback example
+		errorFieldsExampleNode = g.generateGenericErrorFieldsExample()
 	}
+
+	// Add example to errorFields property
+	if errorFieldsExampleNode != nil {
+		errorFieldsSchema.Examples = []*yaml.Node{errorFieldsExampleNode}
+	}
+
 	schema.Properties.Set(errorFieldsFieldName, base.CreateSchemaProxy(errorFieldsSchema))
 
 	// Set required fields
