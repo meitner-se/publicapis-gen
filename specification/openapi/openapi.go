@@ -1546,7 +1546,7 @@ func (g *Generator) createEndpointSpecific422ErrorResponse(resourceName, endpoin
 	content.Set(contentTypeJSON, mediaType)
 
 	return &v3.Response{
-		Description: "Unprocessable Entity - The request was well-formed but failed validation",
+		Description: g.generateAutoErrorDescription(resourceName, endpointName, httpStatus422),
 		Content:     content,
 	}
 }

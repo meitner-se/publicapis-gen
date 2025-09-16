@@ -2092,7 +2092,7 @@
         }
       },
       "StudentsBulkImport422ResponseBody": {
-        "description": "Unprocessable Entity - The request was well-formed but failed validation",
+        "description": "Validation error for Students BulkImport operation - request data failed validation",
         "content": {
           "application/json": {
             "schema": {
@@ -2171,7 +2171,7 @@
         }
       },
       "StudentsGenerateReport422ResponseBody": {
-        "description": "Unprocessable Entity - The request was well-formed but failed validation",
+        "description": "Validation error for Students GenerateReport operation - request data failed validation",
         "content": {
           "application/json": {
             "schema": {
@@ -2248,7 +2248,7 @@
         }
       },
       "StudentsAdvancedSearch422ResponseBody": {
-        "description": "Unprocessable Entity - The request was well-formed but failed validation",
+        "description": "Validation error for Students AdvancedSearch operation - request data failed validation",
         "content": {
           "application/json": {
             "schema": {
@@ -2317,7 +2317,7 @@
         }
       },
       "StudentsCreate422ResponseBody": {
-        "description": "Unprocessable Entity - The request was well-formed but failed validation",
+        "description": "Validation error for Students Create operation - request data failed validation",
         "content": {
           "application/json": {
             "schema": {
@@ -2386,7 +2386,7 @@
         }
       },
       "StudentsUpdate422ResponseBody": {
-        "description": "Unprocessable Entity - The request was well-formed but failed validation",
+        "description": "Validation error for Students Update operation - request data failed validation",
         "content": {
           "application/json": {
             "schema": {
@@ -2553,7 +2553,7 @@
         }
       },
       "StudentsSearch422ResponseBody": {
-        "description": "Unprocessable Entity - The request was well-formed but failed validation",
+        "description": "Validation error for Students Search operation - request data failed validation",
         "content": {
           "application/json": {
             "schema": {
