@@ -2811,6 +2811,17 @@
         "description": "Bad Request - The request was malformed or contained invalid parameters",
         "content": {
           "application/json": {
+            "examples": {
+              "errorExample": {
+                "summary": "Error response example",
+                "value": {
+                  "error": {
+                    "code": "BadRequest",
+                    "message": "The request contains invalid parameters or malformed data"
+                  }
+                }
+              }
+            },
             "schema": {
               "type": "object",
               "properties": {
@@ -2833,6 +2844,17 @@
         "description": "Unauthorized - The request is missing valid authentication credentials",
         "content": {
           "application/json": {
+            "examples": {
+              "errorExample": {
+                "summary": "Error response example",
+                "value": {
+                  "error": {
+                    "code": "Unauthorized",
+                    "message": "Authentication credentials are missing or invalid"
+                  }
+                }
+              }
+            },
             "schema": {
               "type": "object",
               "properties": {
@@ -2855,6 +2877,17 @@
         "description": "Forbidden - Request is authenticated, but the user is not allowed to perform the operation",
         "content": {
           "application/json": {
+            "examples": {
+              "errorExample": {
+                "summary": "Error response example",
+                "value": {
+                  "error": {
+                    "code": "Forbidden",
+                    "message": "You do not have permission to perform this operation"
+                  }
+                }
+              }
+            },
             "schema": {
               "type": "object",
               "properties": {
@@ -2877,6 +2910,17 @@
         "description": "Not Found - The requested resource does not exist",
         "content": {
           "application/json": {
+            "examples": {
+              "errorExample": {
+                "summary": "Error response example",
+                "value": {
+                  "error": {
+                    "code": "NotFound",
+                    "message": "The requested resource could not be found"
+                  }
+                }
+              }
+            },
             "schema": {
               "type": "object",
               "properties": {
@@ -2899,6 +2943,17 @@
         "description": "Conflict - The request could not be completed due to a conflict",
         "content": {
           "application/json": {
+            "examples": {
+              "errorExample": {
+                "summary": "Error response example",
+                "value": {
+                  "error": {
+                    "code": "Conflict",
+                    "message": "The request conflicts with the current state of the resource"
+                  }
+                }
+              }
+            },
             "schema": {
               "type": "object",
               "properties": {
@@ -2921,6 +2976,17 @@
         "description": "Too Many Requests - When the rate limit has been exceeded",
         "content": {
           "application/json": {
+            "examples": {
+              "errorExample": {
+                "summary": "Error response example",
+                "value": {
+                  "error": {
+                    "code": "RateLimited",
+                    "message": "Too many requests - rate limit exceeded"
+                  }
+                }
+              }
+            },
             "schema": {
               "type": "object",
               "properties": {
@@ -2943,6 +3009,17 @@
         "description": "Internal Server Error - An unexpected server error occurred",
         "content": {
           "application/json": {
+            "examples": {
+              "errorExample": {
+                "summary": "Error response example",
+                "value": {
+                  "error": {
+                    "code": "Internal",
+                    "message": "An unexpected server error occurred"
+                  }
+                }
+              }
+            },
             "schema": {
               "type": "object",
               "properties": {
