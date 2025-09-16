@@ -1323,17 +1323,13 @@ func (g *Generator) generate422ErrorExample(resourceName, endpointName string, s
 		Kind: yaml.MappingNode,
 	}
 
-	// Add error field with UnprocessableEntity value
+	// Add error field as Error object with code and message
 	errorKeyNode := &yaml.Node{
 		Kind:  yaml.ScalarNode,
 		Tag:   "!!str",
 		Value: errorFieldName,
 	}
-	errorValueNode := &yaml.Node{
-		Kind:  yaml.ScalarNode,
-		Tag:   "!!str",
-		Value: errorCodeUnprocessableEntity,
-	}
+	errorValueNode := g.generateErrorObjectExample(resourceName, endpointName)
 	rootNode.Content = append(rootNode.Content, errorKeyNode, errorValueNode)
 
 	// Add errorFields field with validation examples
@@ -1362,6 +1358,41 @@ func (g *Generator) generate422ErrorExample(resourceName, endpointName string, s
 	rootNode.Content = append(rootNode.Content, errorFieldsKeyNode, errorFieldsValueNode)
 
 	return rootNode
+}
+
+// generateErrorObjectExample generates an Error object example with code and message fields.
+func (g *Generator) generateErrorObjectExample(resourceName, endpointName string) *yaml.Node {
+	errorObjectNode := &yaml.Node{
+		Kind: yaml.MappingNode,
+	}
+
+	// Add code field
+	codeKeyNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: codeFieldName,
+	}
+	codeValueNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: errorCodeUnprocessableEntity,
+	}
+	errorObjectNode.Content = append(errorObjectNode.Content, codeKeyNode, codeValueNode)
+
+	// Add message field
+	messageKeyNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: messageFieldName,
+	}
+	messageValueNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: fmt.Sprintf("Validation failed for %s %s endpoint", resourceName, endpointName),
+	}
+	errorObjectNode.Content = append(errorObjectNode.Content, messageKeyNode, messageValueNode)
+
+	return errorObjectNode
 }
 
 // generateErrorFieldsExample generates errorFields examples from RequestError object fields.
