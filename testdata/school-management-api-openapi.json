@@ -987,29 +987,47 @@
         ],
         "description": "Student management resource"
       },
-      "ContactRequestError": {
+      "AddressRequestError": {
         "type": "object",
         "properties": {
-          "email": {
+          "street": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
-            "description": "Email address",
+            "description": "Street address",
             "nullable": true
           },
-          "phone": {
+          "city": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
-            "description": "Phone number",
+            "description": "City",
+            "nullable": true
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "State or province",
+            "nullable": true
+          },
+          "zipCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "ZIP or postal code",
             "nullable": true
           }
         },
-        "description": "Request error object for Contact"
+        "description": "Request error object for Address"
       },
       "StudentRequestError": {
         "type": "object",
@@ -1062,47 +1080,29 @@
         },
         "description": "Request error object for Student"
       },
-      "AddressRequestError": {
+      "ContactRequestError": {
         "type": "object",
         "properties": {
-          "street": {
+          "email": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
-            "description": "Street address",
+            "description": "Email address",
             "nullable": true
           },
-          "city": {
+          "phone": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
-            "description": "City",
-            "nullable": true
-          },
-          "state": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "State or province",
-            "nullable": true
-          },
-          "zipCode": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "ZIP or postal code",
+            "description": "Phone number",
             "nullable": true
           }
         },
-        "description": "Request error object for Address"
+        "description": "Request error object for Contact"
       },
       "StudentsBulkImportRequestError": {
         "type": "object",
@@ -2599,6 +2599,19 @@
               "properties": {
                 "data": {
                   "type": "array",
+                  "examples": [
+                    [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "meta": {
+                          "createdAt": "2024-01-15T10:30:00Z",
+                          "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                          "updatedAt": "2024-01-15T14:45:00Z",
+                          "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                        }
+                      }
+                    ]
+                  ],
                   "items": {
                     "allOf": [
                       {
@@ -2612,6 +2625,13 @@
                   "allOf": [
                     {
                       "$ref": "#/components/schemas/Pagination"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "offset": 0,
+                      "limit": 1,
+                      "total": 100
                     }
                   ],
                   "description": "Pagination information"
@@ -2653,6 +2673,19 @@
               "properties": {
                 "data": {
                   "type": "array",
+                  "examples": [
+                    [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "meta": {
+                          "createdAt": "2024-01-15T10:30:00Z",
+                          "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                          "updatedAt": "2024-01-15T14:45:00Z",
+                          "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                        }
+                      }
+                    ]
+                  ],
                   "items": {
                     "allOf": [
                       {
@@ -2666,6 +2699,13 @@
                   "allOf": [
                     {
                       "$ref": "#/components/schemas/Pagination"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "offset": 0,
+                      "limit": 1,
+                      "total": 100
                     }
                   ],
                   "description": "Pagination information"

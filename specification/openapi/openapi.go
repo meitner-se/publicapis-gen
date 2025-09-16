@@ -1314,6 +1314,39 @@ func (g *Generator) createComponentResponse(response specification.EndpointRespo
 
 			for _, field := range response.BodyFields {
 				fieldSchema := g.createFieldSchema(field, service)
+
+				// Add example to field property if field has example
+				if field.Example != "" {
+					exampleNode := g.createTypedExampleNode(field.Type, field.Example)
+					// Handle array modifier - wrap the value in an array if needed
+					if field.IsArray() {
+						arrayNode := &yaml.Node{
+							Kind: yaml.SequenceNode,
+						}
+						arrayNode.Content = append(arrayNode.Content, exampleNode)
+						exampleNode = arrayNode
+					}
+					fieldSchema.Examples = []*yaml.Node{exampleNode}
+				} else if field.IsArray() && service.HasObject(field.Type) {
+					// Generate example array from object definition
+					if obj := service.GetObject(field.Type); obj != nil {
+						if objectExample := g.generateObjectExample(*obj, service); objectExample != nil {
+							arrayNode := &yaml.Node{
+								Kind: yaml.SequenceNode,
+							}
+							arrayNode.Content = append(arrayNode.Content, objectExample)
+							fieldSchema.Examples = []*yaml.Node{arrayNode}
+						}
+					}
+				} else if service.HasObject(field.Type) {
+					// Generate example from object definition
+					if obj := service.GetObject(field.Type); obj != nil {
+						if objectExample := g.generateObjectExample(*obj, service); objectExample != nil {
+							fieldSchema.Examples = []*yaml.Node{objectExample}
+						}
+					}
+				}
+
 				proxy := base.CreateSchemaProxy(fieldSchema)
 				schema.Properties.Set(field.TagJSON(), proxy)
 			}
@@ -1783,6 +1816,39 @@ func (g *Generator) createResponse(response specification.EndpointResponse, reso
 
 			for _, field := range response.BodyFields {
 				fieldSchema := g.createFieldSchema(field, service)
+
+				// Add example to field property if field has example
+				if field.Example != "" {
+					exampleNode := g.createTypedExampleNode(field.Type, field.Example)
+					// Handle array modifier - wrap the value in an array if needed
+					if field.IsArray() {
+						arrayNode := &yaml.Node{
+							Kind: yaml.SequenceNode,
+						}
+						arrayNode.Content = append(arrayNode.Content, exampleNode)
+						exampleNode = arrayNode
+					}
+					fieldSchema.Examples = []*yaml.Node{exampleNode}
+				} else if field.IsArray() && service.HasObject(field.Type) {
+					// Generate example array from object definition
+					if obj := service.GetObject(field.Type); obj != nil {
+						if objectExample := g.generateObjectExample(*obj, service); objectExample != nil {
+							arrayNode := &yaml.Node{
+								Kind: yaml.SequenceNode,
+							}
+							arrayNode.Content = append(arrayNode.Content, objectExample)
+							fieldSchema.Examples = []*yaml.Node{arrayNode}
+						}
+					}
+				} else if service.HasObject(field.Type) {
+					// Generate example from object definition
+					if obj := service.GetObject(field.Type); obj != nil {
+						if objectExample := g.generateObjectExample(*obj, service); objectExample != nil {
+							fieldSchema.Examples = []*yaml.Node{objectExample}
+						}
+					}
+				}
+
 				proxy := base.CreateSchemaProxy(fieldSchema)
 				schema.Properties.Set(field.TagJSON(), proxy)
 			}
