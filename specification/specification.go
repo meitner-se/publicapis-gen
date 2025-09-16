@@ -3,6 +3,7 @@ package specification
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"slices"
@@ -31,6 +32,16 @@ const (
 	FieldTypeString    = "String"
 	FieldTypeInt       = "Int"
 	FieldTypeBool      = "Bool"
+)
+
+// Default field examples for primitive types
+const (
+	defaultExampleUUID      = "123e4567-e89b-12d3-a456-426614174000"
+	defaultExampleDate      = "2024-01-15"
+	defaultExampleTimestamp = "2024-01-15T10:30:00Z"
+	defaultExampleString    = "example"
+	defaultExampleInt       = "42"
+	defaultExampleBool      = "true"
 )
 
 // Field Modifiers
@@ -1523,6 +1534,35 @@ func (f Field) IsRequired(service *Service) bool {
 	return true
 }
 
+// getDefaultExample returns the default example for a primitive field type.
+func getDefaultExample(fieldType string) string {
+	switch fieldType {
+	case FieldTypeUUID:
+		return defaultExampleUUID
+	case FieldTypeDate:
+		return defaultExampleDate
+	case FieldTypeTimestamp:
+		return defaultExampleTimestamp
+	case FieldTypeString:
+		return defaultExampleString
+	case FieldTypeInt:
+		return defaultExampleInt
+	case FieldTypeBool:
+		return defaultExampleBool
+	default:
+		slog.Warn("no default example available for field type, consider adding support", "fieldType", fieldType)
+		return ""
+	}
+}
+
+// ensureExample ensures that the field has an example, setting a default one for primitive types if none exists.
+func (f *Field) ensureExample() {
+	// Only set default examples for primitive types and only if no example already exists
+	if f.Example == "" && isPrimitiveType(f.Type) {
+		f.Example = getDefaultExample(f.Type)
+	}
+}
+
 // EndpointRequest methods
 
 // GetRequiredBodyParams returns the names of required body parameters.
@@ -1617,6 +1657,7 @@ func (r Resource) convertResourceFieldToField(resourceField ResourceField) Field
 		Modifiers:   make([]string, len(resourceField.Modifiers)),
 	}
 	copy(field.Modifiers, resourceField.Modifiers)
+	field.ensureExample()
 	return field
 }
 
@@ -2534,6 +2575,50 @@ func parseServiceFromBytes(data []byte, fileExtension string) (*Service, error) 
 	return &service, nil
 }
 
+// ensureAllFieldsHaveExamples ensures that all fields in the service have examples set.
+// This applies default examples to primitive field types that don't already have examples.
+func ensureAllFieldsHaveExamples(service *Service) {
+	if service == nil {
+		return
+	}
+
+	// Apply to object fields
+	for i := range service.Objects {
+		for j := range service.Objects[i].Fields {
+			service.Objects[i].Fields[j].ensureExample()
+		}
+	}
+
+	// Apply to resource fields
+	for i := range service.Resources {
+		for j := range service.Resources[i].Fields {
+			service.Resources[i].Fields[j].Field.ensureExample()
+		}
+		// Also apply to endpoint fields
+		for j := range service.Resources[i].Endpoints {
+			endpoint := &service.Resources[i].Endpoints[j]
+			for k := range endpoint.Request.PathParams {
+				endpoint.Request.PathParams[k].ensureExample()
+			}
+			for k := range endpoint.Request.QueryParams {
+				endpoint.Request.QueryParams[k].ensureExample()
+			}
+			for k := range endpoint.Request.BodyParams {
+				endpoint.Request.BodyParams[k].ensureExample()
+			}
+			for k := range endpoint.Request.Headers {
+				endpoint.Request.Headers[k].ensureExample()
+			}
+			for k := range endpoint.Response.BodyFields {
+				endpoint.Response.BodyFields[k].ensureExample()
+			}
+			for k := range endpoint.Response.Headers {
+				endpoint.Response.Headers[k].ensureExample()
+			}
+		}
+	}
+}
+
 // applyDefaultOverlays applies the standard overlays to a service to ensure
 // resource objects and CRUD endpoints are generated.
 func applyDefaultOverlays(service *Service) *Service {
@@ -2550,6 +2635,9 @@ func applyDefaultOverlays(service *Service) *Service {
 		// If filter overlay application fails, return overlayed service
 		return overlayedService
 	}
+
+	// Ensure all fields have examples
+	ensureAllFieldsHaveExamples(finalService)
 
 	return finalService
 }

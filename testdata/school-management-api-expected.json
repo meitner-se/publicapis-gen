@@ -18,281 +18,6 @@
     }
   ],
   "paths": {
-    "/students/{id}": {
-      "get": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Retrieve an existing Students",
-        "description": "Retrieves the `Students` with the given ID.",
-        "operationId": "StudentsGet",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "The unique identifier of the Students to retrieve",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Response for Students Get operation - returns the requested Students",
-            "$ref": "#/components/responses/StudentsGet"
-          },
-          "400": {
-            "description": "Bad Request error for Students Get operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students Get operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students Get operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students Get operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students Get operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students Get operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students Get operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "get"
-      },
-      "delete": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Delete Students",
-        "description": "Delete a Students",
-        "operationId": "StudentsDelete",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "The unique identifier of the Students to delete",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Response for Students Delete operation - confirms successful deletion"
-          },
-          "400": {
-            "description": "Bad Request error for Students Delete operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students Delete operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students Delete operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students Delete operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students Delete operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students Delete operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students Delete operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "delete"
-      },
-      "patch": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Update Students",
-        "description": "Update a Students",
-        "operationId": "StudentsUpdate",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "The unique identifier of the Students to update",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsUpdate"
-        },
-        "responses": {
-          "200": {
-            "description": "Response for Students Update operation - returns the updated Students",
-            "$ref": "#/components/responses/StudentsUpdate"
-          },
-          "400": {
-            "description": "Bad Request error for Students Update operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students Update operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students Update operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students Update operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students Update operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "Validation error for Students Update operation - request data failed validation",
-            "$ref": "#/components/responses/StudentsUpdate422ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students Update operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students Update operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "update"
-      }
-    },
-    "/students/_search": {
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Search Students",
-        "description": "Search for `Students` with filtering capabilities.",
-        "operationId": "StudentsSearch",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of Students to return (default: 50) when searching Students",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "examples": [
-                1
-              ],
-              "default": 50
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "The number of Students to skip before starting to return results (default: 0) when searching Students",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "examples": [
-                0
-              ],
-              "default": 0
-            }
-          }
-        ],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsSearch"
-        },
-        "responses": {
-          "200": {
-            "description": "Response for Students Search operation - returns filtered Students results",
-            "$ref": "#/components/responses/StudentsSearch"
-          },
-          "400": {
-            "description": "Bad Request error for Students Search operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students Search operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students Search operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students Search operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students Search operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "Validation error for Students Search operation - request data failed validation",
-            "$ref": "#/components/responses/StudentsSearch422ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students Search operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students Search operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-pagination": {
-          "type": "offsetLimit",
-          "inputs": [
-            {
-              "name": "offset",
-              "in": "parameters",
-              "type": "offset"
-            },
-            {
-              "name": "limit",
-              "in": "parameters",
-              "type": "limit"
-            }
-          ],
-          "outputs": {
-            "results": "$.data.resultArray"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "search"
-      }
-    },
     "/students/bulk-import": {
       "post": {
         "tags": [
@@ -309,6 +34,9 @@
             "required": false,
             "schema": {
               "type": "boolean",
+              "examples": [
+                true
+              ],
               "default": false
             }
           }
@@ -374,6 +102,9 @@
             "required": false,
             "schema": {
               "type": "string",
+              "examples": [
+                "example"
+              ],
               "default": "pdf"
             }
           }
@@ -439,6 +170,9 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "examples": [
+                42
+              ],
               "default": 50
             }
           },
@@ -449,6 +183,9 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "examples": [
+                42
+              ],
               "default": 0
             }
           },
@@ -459,6 +196,9 @@
             "required": false,
             "schema": {
               "type": "string",
+              "examples": [
+                "example"
+              ],
               "default": "lastName"
             }
           },
@@ -469,6 +209,9 @@
             "required": false,
             "schema": {
               "type": "string",
+              "examples": [
+                "example"
+              ],
               "default": "asc"
             }
           }
@@ -661,6 +404,290 @@
         "x-speakeasy-group": "students",
         "x-speakeasy-name-override": "create"
       }
+    },
+    "/students/{id}": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Retrieve an existing Students",
+        "description": "Retrieves the `Students` with the given ID.",
+        "operationId": "StudentsGet",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Students to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "examples": [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ],
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for Students Get operation - returns the requested Students",
+            "$ref": "#/components/responses/StudentsGet"
+          },
+          "400": {
+            "description": "Bad Request error for Students Get operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Get operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Get operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Get operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Get operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Get operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Get operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "get"
+      },
+      "delete": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Delete Students",
+        "description": "Delete a Students",
+        "operationId": "StudentsDelete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Students to delete",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "examples": [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ],
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Response for Students Delete operation - confirms successful deletion"
+          },
+          "400": {
+            "description": "Bad Request error for Students Delete operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Delete operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Delete operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Delete operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Delete operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Delete operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Delete operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "delete"
+      },
+      "patch": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Update Students",
+        "description": "Update a Students",
+        "operationId": "StudentsUpdate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Students to update",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "examples": [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ],
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsUpdate"
+        },
+        "responses": {
+          "200": {
+            "description": "Response for Students Update operation - returns the updated Students",
+            "$ref": "#/components/responses/StudentsUpdate"
+          },
+          "400": {
+            "description": "Bad Request error for Students Update operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Update operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Update operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Update operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Update operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students Update operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsUpdate422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Update operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Update operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "update"
+      }
+    },
+    "/students/_search": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Search Students",
+        "description": "Search for `Students` with filtering capabilities.",
+        "operationId": "StudentsSearch",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of Students to return (default: 50) when searching Students",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "examples": [
+                1
+              ],
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "The number of Students to skip before starting to return results (default: 0) when searching Students",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "examples": [
+                0
+              ],
+              "default": 0
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsSearch"
+        },
+        "responses": {
+          "200": {
+            "description": "Response for Students Search operation - returns filtered Students results",
+            "$ref": "#/components/responses/StudentsSearch"
+          },
+          "400": {
+            "description": "Bad Request error for Students Search operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Search operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Search operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Search operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Search operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students Search operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsSearch422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Search operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Search operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-pagination": {
+          "type": "offsetLimit",
+          "inputs": [
+            {
+              "name": "offset",
+              "in": "parameters",
+              "type": "offset"
+            },
+            {
+              "name": "limit",
+              "in": "parameters",
+              "type": "limit"
+            }
+          ],
+          "outputs": {
+            "results": "$.data.resultArray"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "search"
+      }
     }
   },
   "components": {
@@ -712,10 +739,17 @@
         "properties": {
           "email": {
             "type": "string",
+            "examples": [
+              "example"
+            ],
             "description": "Email address"
           },
           "phone": {
             "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
             "description": "Phone number",
             "nullable": true
           }
@@ -730,18 +764,30 @@
         "properties": {
           "street": {
             "type": "string",
+            "examples": [
+              "example"
+            ],
             "description": "Street address"
           },
           "city": {
             "type": "string",
+            "examples": [
+              "example"
+            ],
             "description": "City"
           },
           "state": {
             "type": "string",
+            "examples": [
+              "example"
+            ],
             "description": "State or province"
           },
           "zipCode": {
             "type": "string",
+            "examples": [
+              "example"
+            ],
             "description": "ZIP or postal code"
           }
         },
@@ -758,14 +804,23 @@
         "properties": {
           "firstName": {
             "type": "string",
+            "examples": [
+              "example"
+            ],
             "description": "Student's first name"
           },
           "lastName": {
             "type": "string",
+            "examples": [
+              "example"
+            ],
             "description": "Student's last name"
           },
           "studentId": {
             "type": "string",
+            "examples": [
+              "example"
+            ],
             "description": "School-assigned student ID"
           },
           "status": {
@@ -807,6 +862,9 @@
           },
           "message": {
             "type": "string",
+            "examples": [
+              "example"
+            ],
             "description": "Human-readable error message providing additional details"
           }
         },
@@ -829,6 +887,9 @@
           },
           "message": {
             "type": "string",
+            "examples": [
+              "example"
+            ],
             "description": "Human-readable error message providing details about the field validation error"
           }
         },
@@ -921,6 +982,9 @@
         "properties": {
           "id": {
             "type": "string",
+            "examples": [
+              "123e4567-e89b-12d3-a456-426614174000"
+            ],
             "format": "uuid",
             "description": "Unique student identifier"
           },
@@ -934,14 +998,23 @@
           },
           "firstName": {
             "type": "string",
+            "examples": [
+              "example"
+            ],
             "description": "Student's first name"
           },
           "lastName": {
             "type": "string",
+            "examples": [
+              "example"
+            ],
             "description": "Student's last name"
           },
           "studentId": {
             "type": "string",
+            "examples": [
+              "example"
+            ],
             "description": "School-assigned student ID"
           },
           "status": {
@@ -980,11 +1053,18 @@
           },
           "enrollmentDate": {
             "type": "string",
+            "examples": [
+              "2024-01-15"
+            ],
             "format": "date",
             "description": "Date when student was enrolled"
           },
           "graduationDate": {
             "type": "string",
+            "examples": [
+              "2024-01-15",
+              null
+            ],
             "format": "date",
             "description": "Expected or actual graduation date",
             "nullable": true
@@ -1000,6 +1080,57 @@
           "enrollmentDate"
         ],
         "description": "Student management resource"
+      },
+      "StudentRequestError": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Student's first name",
+            "nullable": true
+          },
+          "lastName": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Student's last name",
+            "nullable": true
+          },
+          "studentId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "School-assigned student ID",
+            "nullable": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Current status of the student",
+            "nullable": true
+          },
+          "gradeLevel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Current grade level",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Student"
       },
       "ContactRequestError": {
         "type": "object",
@@ -1066,57 +1197,6 @@
           }
         },
         "description": "Request error object for Address"
-      },
-      "StudentRequestError": {
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Student's first name",
-            "nullable": true
-          },
-          "lastName": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Student's last name",
-            "nullable": true
-          },
-          "studentId": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "School-assigned student ID",
-            "nullable": true
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Current status of the student",
-            "nullable": true
-          },
-          "gradeLevel": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Current grade level",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Student"
       },
       "StudentsBulkImportRequestError": {
         "type": "object",
@@ -1515,6 +1595,9 @@
           },
           "orCondition": {
             "type": "boolean",
+            "examples": [
+              true
+            ],
             "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
           },
           "nestedFilters": {
@@ -1539,11 +1622,19 @@
         "properties": {
           "email": {
             "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
             "description": "Email address",
             "nullable": true
           },
           "phone": {
             "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
             "description": "Phone number",
             "nullable": true
           }
@@ -1559,6 +1650,11 @@
         "properties": {
           "email": {
             "type": "array",
+            "examples": [
+              [
+                "example"
+              ]
+            ],
             "items": {
               "type": "string"
             },
@@ -1566,6 +1662,11 @@
           },
           "phone": {
             "type": "array",
+            "examples": [
+              [
+                "example"
+              ]
+            ],
             "items": {
               "type": "string"
             },
@@ -1579,11 +1680,19 @@
         "properties": {
           "email": {
             "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
             "description": "Email address",
             "nullable": true
           },
           "phone": {
             "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
             "description": "Phone number",
             "nullable": true
           }
@@ -1595,6 +1704,10 @@
         "properties": {
           "phone": {
             "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
             "description": "Phone number",
             "nullable": true
           }
@@ -1714,6 +1827,9 @@
           },
           "orCondition": {
             "type": "boolean",
+            "examples": [
+              true
+            ],
             "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
           },
           "nestedFilters": {
@@ -1738,21 +1854,37 @@
         "properties": {
           "street": {
             "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
             "description": "Street address",
             "nullable": true
           },
           "city": {
             "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
             "description": "City",
             "nullable": true
           },
           "state": {
             "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
             "description": "State or province",
             "nullable": true
           },
           "zipCode": {
             "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
             "description": "ZIP or postal code",
             "nullable": true
           }
@@ -1768,6 +1900,11 @@
         "properties": {
           "street": {
             "type": "array",
+            "examples": [
+              [
+                "example"
+              ]
+            ],
             "items": {
               "type": "string"
             },
@@ -1775,6 +1912,11 @@
           },
           "city": {
             "type": "array",
+            "examples": [
+              [
+                "example"
+              ]
+            ],
             "items": {
               "type": "string"
             },
@@ -1782,6 +1924,11 @@
           },
           "state": {
             "type": "array",
+            "examples": [
+              [
+                "example"
+              ]
+            ],
             "items": {
               "type": "string"
             },
@@ -1789,6 +1936,11 @@
           },
           "zipCode": {
             "type": "array",
+            "examples": [
+              [
+                "example"
+              ]
+            ],
             "items": {
               "type": "string"
             },
@@ -1802,21 +1954,37 @@
         "properties": {
           "street": {
             "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
             "description": "Street address",
             "nullable": true
           },
           "city": {
             "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
             "description": "City",
             "nullable": true
           },
           "state": {
             "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
             "description": "State or province",
             "nullable": true
           },
           "zipCode": {
             "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
             "description": "ZIP or postal code",
             "nullable": true
           }
@@ -1940,6 +2108,9 @@
           },
           "orCondition": {
             "type": "boolean",
+            "examples": [
+              true
+            ],
             "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
           },
           "nestedFilters": {
@@ -1964,16 +2135,28 @@
         "properties": {
           "firstName": {
             "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
             "description": "Student's first name",
             "nullable": true
           },
           "lastName": {
             "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
             "description": "Student's last name",
             "nullable": true
           },
           "studentId": {
             "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
             "description": "School-assigned student ID",
             "nullable": true
           },
@@ -2007,6 +2190,11 @@
         "properties": {
           "firstName": {
             "type": "array",
+            "examples": [
+              [
+                "example"
+              ]
+            ],
             "items": {
               "type": "string"
             },
@@ -2014,6 +2202,11 @@
           },
           "lastName": {
             "type": "array",
+            "examples": [
+              [
+                "example"
+              ]
+            ],
             "items": {
               "type": "string"
             },
@@ -2021,6 +2214,11 @@
           },
           "studentId": {
             "type": "array",
+            "examples": [
+              [
+                "example"
+              ]
+            ],
             "items": {
               "type": "string"
             },
@@ -2056,16 +2254,28 @@
         "properties": {
           "firstName": {
             "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
             "description": "Student's first name",
             "nullable": true
           },
           "lastName": {
             "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
             "description": "Student's last name",
             "nullable": true
           },
           "studentId": {
             "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
             "description": "School-assigned student ID",
             "nullable": true
           }
@@ -2087,18 +2297,41 @@
               "properties": {
                 "imported": {
                   "type": "integer",
+                  "examples": [
+                    42
+                  ],
                   "description": "Number of students successfully imported"
                 },
                 "failed": {
                   "type": "integer",
+                  "examples": [
+                    42
+                  ],
                   "description": "Number of students that failed to import"
                 },
                 "errors": {
                   "type": "array",
+                  "examples": [
+                    [
+                      "example"
+                    ]
+                  ],
                   "items": {
                     "type": "string"
                   },
                   "description": "List of import error messages"
+                }
+              }
+            },
+            "examples": {
+              "responseExample": {
+                "summary": "Response body example",
+                "value": {
+                  "imported": 42,
+                  "failed": 42,
+                  "errors": [
+                    "example"
+                  ]
                 }
               }
             }
@@ -2195,18 +2428,37 @@
               "properties": {
                 "reportId": {
                   "type": "string",
+                  "examples": [
+                    "123e4567-e89b-12d3-a456-426614174000"
+                  ],
                   "format": "uuid",
                   "description": "Unique identifier for the generated report"
                 },
                 "estimatedCompletionTime": {
                   "type": "string",
+                  "examples": [
+                    "2024-01-15T10:30:00Z"
+                  ],
                   "format": "date-time",
                   "description": "When the report is expected to be ready"
                 },
                 "downloadUrl": {
                   "type": "string",
+                  "examples": [
+                    "example"
+                  ],
                   "description": "URL to download the report once ready",
                   "nullable": true
+                }
+              }
+            },
+            "examples": {
+              "responseExample": {
+                "summary": "Response body example",
+                "value": {
+                  "reportId": "123e4567-e89b-12d3-a456-426614174000",
+                  "estimatedCompletionTime": "2024-01-15T10:30:00Z",
+                  "downloadUrl": "example"
                 }
               }
             }
@@ -2291,6 +2543,15 @@
               "properties": {
                 "students": {
                   "type": "array",
+                  "examples": [
+                    [
+                      {
+                        "firstName": "example",
+                        "lastName": "example",
+                        "studentId": "example"
+                      }
+                    ]
+                  ],
                   "items": {
                     "allOf": [
                       {
@@ -2302,11 +2563,33 @@
                 },
                 "totalCount": {
                   "type": "integer",
+                  "examples": [
+                    42
+                  ],
                   "description": "Total number of matching students"
                 },
                 "facets": {
                   "type": "string",
+                  "examples": [
+                    "example"
+                  ],
                   "description": "Search facets and counts"
+                }
+              }
+            },
+            "examples": {
+              "responseExample": {
+                "summary": "Response body example",
+                "value": {
+                  "students": [
+                    {
+                      "firstName": "example",
+                      "lastName": "example",
+                      "studentId": "example"
+                    }
+                  ],
+                  "totalCount": 42,
+                  "facets": "example"
                 }
               }
             }
@@ -2403,7 +2686,22 @@
                     "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
                     "updatedAt": "2024-01-15T14:45:00Z",
                     "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
-                  }
+                  },
+                  "firstName": "example",
+                  "lastName": "example",
+                  "studentId": "example",
+                  "contact": {
+                    "email": "example",
+                    "phone": "example"
+                  },
+                  "address": {
+                    "street": "example",
+                    "city": "example",
+                    "state": "example",
+                    "zipCode": "example"
+                  },
+                  "enrollmentDate": "2024-01-15",
+                  "graduationDate": "2024-01-15"
                 }
               }
             }
@@ -2500,7 +2798,22 @@
                     "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
                     "updatedAt": "2024-01-15T14:45:00Z",
                     "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
-                  }
+                  },
+                  "firstName": "example",
+                  "lastName": "example",
+                  "studentId": "example",
+                  "contact": {
+                    "email": "example",
+                    "phone": "example"
+                  },
+                  "address": {
+                    "street": "example",
+                    "city": "example",
+                    "state": "example",
+                    "zipCode": "example"
+                  },
+                  "enrollmentDate": "2024-01-15",
+                  "graduationDate": "2024-01-15"
                 }
               }
             }
@@ -2597,7 +2910,22 @@
                     "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
                     "updatedAt": "2024-01-15T14:45:00Z",
                     "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
-                  }
+                  },
+                  "firstName": "example",
+                  "lastName": "example",
+                  "studentId": "example",
+                  "contact": {
+                    "email": "example",
+                    "phone": "example"
+                  },
+                  "address": {
+                    "street": "example",
+                    "city": "example",
+                    "state": "example",
+                    "zipCode": "example"
+                  },
+                  "enrollmentDate": "2024-01-15",
+                  "graduationDate": "2024-01-15"
                 }
               }
             }
@@ -2622,7 +2950,22 @@
                           "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
                           "updatedAt": "2024-01-15T14:45:00Z",
                           "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
-                        }
+                        },
+                        "firstName": "example",
+                        "lastName": "example",
+                        "studentId": "example",
+                        "contact": {
+                          "email": "example",
+                          "phone": "example"
+                        },
+                        "address": {
+                          "street": "example",
+                          "city": "example",
+                          "state": "example",
+                          "zipCode": "example"
+                        },
+                        "enrollmentDate": "2024-01-15",
+                        "graduationDate": "2024-01-15"
                       }
                     ]
                   ],
@@ -2664,7 +3007,22 @@
                         "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
                         "updatedAt": "2024-01-15T14:45:00Z",
                         "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
-                      }
+                      },
+                      "firstName": "example",
+                      "lastName": "example",
+                      "studentId": "example",
+                      "contact": {
+                        "email": "example",
+                        "phone": "example"
+                      },
+                      "address": {
+                        "street": "example",
+                        "city": "example",
+                        "state": "example",
+                        "zipCode": "example"
+                      },
+                      "enrollmentDate": "2024-01-15",
+                      "graduationDate": "2024-01-15"
                     }
                   ],
                   "pagination": {
@@ -2696,7 +3054,22 @@
                           "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
                           "updatedAt": "2024-01-15T14:45:00Z",
                           "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
-                        }
+                        },
+                        "firstName": "example",
+                        "lastName": "example",
+                        "studentId": "example",
+                        "contact": {
+                          "email": "example",
+                          "phone": "example"
+                        },
+                        "address": {
+                          "street": "example",
+                          "city": "example",
+                          "state": "example",
+                          "zipCode": "example"
+                        },
+                        "enrollmentDate": "2024-01-15",
+                        "graduationDate": "2024-01-15"
                       }
                     ]
                   ],
@@ -2738,7 +3111,22 @@
                         "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
                         "updatedAt": "2024-01-15T14:45:00Z",
                         "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
-                      }
+                      },
+                      "firstName": "example",
+                      "lastName": "example",
+                      "studentId": "example",
+                      "contact": {
+                        "email": "example",
+                        "phone": "example"
+                      },
+                      "address": {
+                        "street": "example",
+                        "city": "example",
+                        "state": "example",
+                        "zipCode": "example"
+                      },
+                      "enrollmentDate": "2024-01-15",
+                      "graduationDate": "2024-01-15"
                     }
                   ],
                   "pagination": {
@@ -3060,8 +3448,26 @@
                 },
                 "overwriteExisting": {
                   "type": "boolean",
+                  "examples": [
+                    true
+                  ],
                   "description": "Whether to overwrite existing student records",
                   "default": false
+                }
+              }
+            },
+            "examples": {
+              "requestExample": {
+                "summary": "Request body example",
+                "value": {
+                  "students": [
+                    {
+                      "firstName": "example",
+                      "lastName": "example",
+                      "studentId": "example"
+                    }
+                  ],
+                  "overwriteExisting": true
                 }
               }
             }
@@ -3096,20 +3502,41 @@
                 },
                 "enrollmentDateFrom": {
                   "type": "string",
+                  "examples": [
+                    "2024-01-15",
+                    null
+                  ],
                   "format": "date",
                   "description": "Filter students enrolled after this date",
                   "nullable": true
                 },
                 "enrollmentDateTo": {
                   "type": "string",
+                  "examples": [
+                    "2024-01-15",
+                    null
+                  ],
                   "format": "date",
                   "description": "Filter students enrolled before this date",
                   "nullable": true
                 },
                 "includeInactive": {
                   "type": "boolean",
+                  "examples": [
+                    true
+                  ],
                   "description": "Include inactive students in report",
                   "default": false
+                }
+              }
+            },
+            "examples": {
+              "requestExample": {
+                "summary": "Request body example",
+                "value": {
+                  "enrollmentDateFrom": "2024-01-15",
+                  "enrollmentDateTo": "2024-01-15",
+                  "includeInactive": true
                 }
               }
             }
@@ -3126,6 +3553,10 @@
               "properties": {
                 "nameQuery": {
                   "type": "string",
+                  "examples": [
+                    "example",
+                    null
+                  ],
                   "description": "Search in first name and last name",
                   "nullable": true
                 },
@@ -3155,6 +3586,12 @@
                 },
                 "enrollmentDateRange": {
                   "type": "array",
+                  "examples": [
+                    [
+                      "2024-01-15"
+                    ],
+                    null
+                  ],
                   "items": {
                     "type": "string",
                     "format": "date"
@@ -3164,8 +3601,24 @@
                 },
                 "hasGraduationDate": {
                   "type": "boolean",
+                  "examples": [
+                    true,
+                    null
+                  ],
                   "description": "Filter students with or without graduation date",
                   "nullable": true
+                }
+              }
+            },
+            "examples": {
+              "requestExample": {
+                "summary": "Request body example",
+                "value": {
+                  "nameQuery": "example",
+                  "enrollmentDateRange": [
+                    "2024-01-15"
+                  ],
+                  "hasGraduationDate": true
                 }
               }
             }
@@ -3182,14 +3635,23 @@
               "properties": {
                 "firstName": {
                   "type": "string",
+                  "examples": [
+                    "example"
+                  ],
                   "description": "Student's first name"
                 },
                 "lastName": {
                   "type": "string",
+                  "examples": [
+                    "example"
+                  ],
                   "description": "Student's last name"
                 },
                 "studentId": {
                   "type": "string",
+                  "examples": [
+                    "example"
+                  ],
                   "description": "School-assigned student ID"
                 },
                 "status": {
@@ -3228,6 +3690,9 @@
                 },
                 "enrollmentDate": {
                   "type": "string",
+                  "examples": [
+                    "2024-01-15"
+                  ],
                   "format": "date",
                   "description": "Date when student was enrolled"
                 }
@@ -3239,6 +3704,27 @@
                 "gradeLevel",
                 "enrollmentDate"
               ]
+            },
+            "examples": {
+              "requestExample": {
+                "summary": "Request body example",
+                "value": {
+                  "firstName": "example",
+                  "lastName": "example",
+                  "studentId": "example",
+                  "contact": {
+                    "email": "example",
+                    "phone": "example"
+                  },
+                  "address": {
+                    "street": "example",
+                    "city": "example",
+                    "state": "example",
+                    "zipCode": "example"
+                  },
+                  "enrollmentDate": "2024-01-15"
+                }
+              }
             }
           }
         },
@@ -3253,10 +3739,16 @@
               "properties": {
                 "firstName": {
                   "type": "string",
+                  "examples": [
+                    "example"
+                  ],
                   "description": "Student's first name"
                 },
                 "lastName": {
                   "type": "string",
+                  "examples": [
+                    "example"
+                  ],
                   "description": "Student's last name"
                 },
                 "status": {
@@ -3295,6 +3787,10 @@
                 },
                 "graduationDate": {
                   "type": "string",
+                  "examples": [
+                    "2024-01-15",
+                    null
+                  ],
                   "format": "date",
                   "description": "Expected or actual graduation date",
                   "nullable": true
@@ -3305,6 +3801,26 @@
                 "lastName",
                 "gradeLevel"
               ]
+            },
+            "examples": {
+              "requestExample": {
+                "summary": "Request body example",
+                "value": {
+                  "firstName": "example",
+                  "lastName": "example",
+                  "contact": {
+                    "email": "example",
+                    "phone": "example"
+                  },
+                  "address": {
+                    "street": "example",
+                    "city": "example",
+                    "state": "example",
+                    "zipCode": "example"
+                  },
+                  "graduationDate": "2024-01-15"
+                }
+              }
             }
           }
         },
