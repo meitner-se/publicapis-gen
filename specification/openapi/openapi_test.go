@@ -3134,21 +3134,21 @@ func TestArrayFieldExamples(t *testing.T) {
 
 	// Verify that the array field example is properly wrapped in an array
 	// The example should be ["Class"] not just "Class"
-	
+
 	// Look for the tags field definition in components/schemas
 	assert.Contains(t, jsonString, "tags:", "Should contain tags field")
 	assert.Contains(t, jsonString, "type: array", "tags field should have array type")
-	
+
 	// The key verification: the example should be an array containing the string, not just a string
 	// This is the fix for INF-308: array examples should be arrays, not scalars
-	
+
 	// Look for the proper array example format in YAML - this indicates the fix is working
 	arrayExamplePattern := "- - Class" // This means an array containing the value "Class"
-	assert.Contains(t, jsonString, arrayExamplePattern, 
+	assert.Contains(t, jsonString, arrayExamplePattern,
 		"Array field example should be properly wrapped in an array: '- - Class'")
 
 	// Additional verification: ensure we don't have the old broken behavior
-	// where it would be just a scalar string example  
+	// where it would be just a scalar string example
 	brokenPatternCheck := "- Class\n                            items:" // Direct scalar under examples
 	assert.NotContains(t, jsonString, brokenPatternCheck,
 		"Should not have scalar string example directly under examples (this was the bug)")
