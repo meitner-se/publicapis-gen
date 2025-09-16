@@ -967,6 +967,116 @@ func generateListEndpoint(result *Service, resource Resource) {
 	}
 }
 
+// generateFilterExample creates a dynamic filter example based on the resource's available fields.
+func generateFilterExample(resource Resource, service *Service) string {
+	readableFields := resource.GetReadableFields()
+	if len(readableFields) == 0 {
+		return `{"orCondition": false, "equals": {}}`
+	}
+
+	// Get a subset of fields to use in the example (limit for readability)
+	fieldsForSimpleExample := readableFields
+	if len(fieldsForSimpleExample) > 2 {
+		fieldsForSimpleExample = fieldsForSimpleExample[:2]
+	}
+
+	// Build equals maps for both simple and nested examples
+	simpleEqualsMap := make(map[string]interface{})
+	nestedEqualsMap := make(map[string]interface{})
+
+	for i, field := range readableFields {
+		if i >= 3 { // Limit to first 3 fields for the example
+			break
+		}
+
+		var exampleValue interface{}
+		var alternativeValue interface{}
+
+		switch field.Type {
+		case FieldTypeString:
+			if field.Name == "firstName" {
+				exampleValue = "John"
+				alternativeValue = "Jane"
+			} else if field.Name == "lastName" {
+				exampleValue = "Doe"
+				alternativeValue = "Smith"
+			} else if field.Name == "name" {
+				exampleValue = "Example Name"
+				alternativeValue = "Another Name"
+			} else {
+				exampleValue = "example"
+				alternativeValue = "alternative"
+			}
+		case FieldTypeInt:
+			if field.Name == "age" {
+				exampleValue = 25
+				alternativeValue = 30
+			} else {
+				exampleValue = 42
+				alternativeValue = 100
+			}
+		case FieldTypeBool:
+			exampleValue = true
+			alternativeValue = false
+		case FieldTypeUUID:
+			exampleValue = defaultExampleUUID
+			alternativeValue = "987fcdeb-51a2-43d1-b567-123456789abc"
+		case FieldTypeDate:
+			exampleValue = defaultExampleDate
+			alternativeValue = "2024-12-31"
+		case FieldTypeTimestamp:
+			exampleValue = defaultExampleTimestamp
+			alternativeValue = "2024-12-31T23:59:59Z"
+		default:
+			// For custom types (enums, objects), use the field's example or a default
+			if field.Example != "" {
+				exampleValue = field.Example
+				alternativeValue = field.Example
+			} else if service.HasEnum(field.Type) {
+				exampleValue = "Active"
+				alternativeValue = "Inactive"
+			} else {
+				exampleValue = "example"
+				alternativeValue = "alternative"
+			}
+		}
+
+		// Add to simple example for first 2 fields
+		if i < 2 {
+			simpleEqualsMap[field.TagJSON()] = exampleValue
+		}
+
+		// Add to nested example
+		nestedEqualsMap[field.TagJSON()] = alternativeValue
+	}
+
+	// Create nested filter structure to demonstrate complex filtering
+	nestedFilter := map[string]interface{}{
+		"orCondition": false,
+		"equals":      nestedEqualsMap,
+	}
+
+	// Create the complete filter structure with nested filters
+	filterExample := map[string]interface{}{
+		"orCondition": true,
+		"nestedFilters": []interface{}{
+			map[string]interface{}{
+				"orCondition": false,
+				"equals":      simpleEqualsMap,
+			},
+			nestedFilter,
+		},
+	}
+
+	// Convert to JSON string
+	jsonBytes, err := json.MarshalIndent(filterExample, "", "  ")
+	if err != nil {
+		return `{"orCondition": false, "equals": {}}`
+	}
+
+	return string(jsonBytes)
+}
+
 // generateSearchEndpoint generates a Search endpoint for resources that have Read operations.
 func generateSearchEndpoint(result *Service, resource Resource) {
 	if resource.HasReadOperation() && !resource.HasEndpoint(searchEndpointName) {
@@ -976,6 +1086,7 @@ func generateSearchEndpoint(result *Service, resource Resource) {
 			Name:        searchFilterParamName,
 			Description: searchFilterParamDesc,
 			Type:        resource.Name + filterSuffix,
+			Example:     generateFilterExample(resource, result),
 		}
 		paginationField := createPaginationField()
 		dataField := createDataField(resource.Name)

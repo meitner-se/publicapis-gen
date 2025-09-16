@@ -3877,6 +3877,9 @@
               "properties": {
                 "filter": {
                   "type": "string",
+                  "examples": [
+                    "{\n  \"nestedFilters\": [\n    {\n      \"equals\": {\n        \"firstName\": \"John\",\n        \"id\": \"123e4567-e89b-12d3-a456-426614174000\"\n      },\n      \"orCondition\": false\n    },\n    {\n      \"equals\": {\n        \"firstName\": \"Jane\",\n        \"id\": \"987fcdeb-51a2-43d1-b567-123456789abc\",\n        \"lastName\": \"Smith\"\n      },\n      \"orCondition\": false\n    }\n  ],\n  \"orCondition\": true\n}"
+                  ],
                   "description": "Filter criteria to search for specific records"
                 }
               },
