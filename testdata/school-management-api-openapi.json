@@ -1081,57 +1081,6 @@
         ],
         "description": "Student management resource"
       },
-      "StudentRequestError": {
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Student's first name",
-            "nullable": true
-          },
-          "lastName": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Student's last name",
-            "nullable": true
-          },
-          "studentId": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "School-assigned student ID",
-            "nullable": true
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Current status of the student",
-            "nullable": true
-          },
-          "gradeLevel": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Current grade level",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Student"
-      },
       "ContactRequestError": {
         "type": "object",
         "properties": {
@@ -1197,6 +1146,57 @@
           }
         },
         "description": "Request error object for Address"
+      },
+      "StudentRequestError": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Student's first name",
+            "nullable": true
+          },
+          "lastName": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Student's last name",
+            "nullable": true
+          },
+          "studentId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "School-assigned student ID",
+            "nullable": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Current status of the student",
+            "nullable": true
+          },
+          "gradeLevel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Current grade level",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Student"
       },
       "StudentsBulkImportRequestError": {
         "type": "object",
@@ -3877,9 +3877,6 @@
               "properties": {
                 "filter": {
                   "type": "string",
-                  "examples": [
-                    "{\"equals\": {\"firstName\": \"John\", \"gradeLevel\": 10}, \"orCondition\": false}"
-                  ],
                   "description": "Filter criteria to search for specific records"
                 }
               },

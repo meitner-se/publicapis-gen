@@ -3877,9 +3877,6 @@
               "properties": {
                 "filter": {
                   "type": "string",
-                  "examples": [
-                    "{\"equals\": {\"firstName\": \"John\", \"gradeLevel\": 10}, \"orCondition\": false}"
-                  ],
                   "description": "Filter criteria to search for specific records"
                 }
               },
