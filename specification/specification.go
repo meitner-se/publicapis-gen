@@ -976,6 +976,7 @@ func generateSearchEndpoint(result *Service, resource Resource) {
 			Name:        searchFilterParamName,
 			Description: searchFilterParamDesc,
 			Type:        resource.Name + filterSuffix,
+			Example:     "firstName:John AND gradeLevel:10",
 		}
 		paginationField := createPaginationField()
 		dataField := createDataField(resource.Name)
