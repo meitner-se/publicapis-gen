@@ -3878,7 +3878,7 @@
                 "filter": {
                   "type": "string",
                   "examples": [
-                    "firstName:John AND gradeLevel:10"
+                    "{\"equals\": {\"firstName\": \"John\", \"gradeLevel\": 10}, \"orCondition\": false}"
                   ],
                   "description": "Filter criteria to search for specific records"
                 }
