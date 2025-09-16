@@ -2117,6 +2117,28 @@
                 "error",
                 "errorFields"
               ]
+            },
+            "example": {
+              "error": {
+                "code": "UnprocessableEntity",
+                "message": "Validation failed for Students BulkImport endpoint"
+              },
+              "errorFields": {
+                "students": {
+                  "firstName": {
+                    "code": "Required",
+                    "message": "firstName is required"
+                  },
+                  "lastName": {
+                    "code": "Required",
+                    "message": "lastName is required"
+                  }
+                },
+                "overwriteExisting": {
+                  "code": "Required",
+                  "message": "overwriteExisting is required"
+                }
+              }
             }
           }
         }
@@ -2174,6 +2196,22 @@
                 "error",
                 "errorFields"
               ]
+            },
+            "example": {
+              "error": {
+                "code": "UnprocessableEntity",
+                "message": "Validation failed for Students GenerateReport endpoint"
+              },
+              "errorFields": {
+                "gradeLevel": {
+                  "code": "Required",
+                  "message": "gradeLevel is required"
+                },
+                "status": {
+                  "code": "Required",
+                  "message": "status is required"
+                }
+              }
             }
           }
         }
@@ -2235,6 +2273,22 @@
                 "error",
                 "errorFields"
               ]
+            },
+            "example": {
+              "error": {
+                "code": "UnprocessableEntity",
+                "message": "Validation failed for Students AdvancedSearch endpoint"
+              },
+              "errorFields": {
+                "nameQuery": {
+                  "code": "Required",
+                  "message": "nameQuery is required"
+                },
+                "gradeLevel": {
+                  "code": "Required",
+                  "message": "gradeLevel is required"
+                }
+              }
             }
           }
         }
@@ -2288,6 +2342,22 @@
                 "error",
                 "errorFields"
               ]
+            },
+            "example": {
+              "error": {
+                "code": "UnprocessableEntity",
+                "message": "Validation failed for Students Create endpoint"
+              },
+              "errorFields": {
+                "firstName": {
+                  "code": "Required",
+                  "message": "firstName is required"
+                },
+                "lastName": {
+                  "code": "Required",
+                  "message": "lastName is required"
+                }
+              }
             }
           }
         }
@@ -2341,6 +2411,22 @@
                 "error",
                 "errorFields"
               ]
+            },
+            "example": {
+              "error": {
+                "code": "UnprocessableEntity",
+                "message": "Validation failed for Students Update endpoint"
+              },
+              "errorFields": {
+                "firstName": {
+                  "code": "Required",
+                  "message": "firstName is required"
+                },
+                "lastName": {
+                  "code": "Required",
+                  "message": "lastName is required"
+                }
+              }
             }
           }
         }
@@ -2492,6 +2578,18 @@
                 "error",
                 "errorFields"
               ]
+            },
+            "example": {
+              "error": {
+                "code": "UnprocessableEntity",
+                "message": "Validation failed for Students Search endpoint"
+              },
+              "errorFields": {
+                "filter": {
+                  "code": "Required",
+                  "message": "Filter is required"
+                }
+              }
             }
           }
         }
