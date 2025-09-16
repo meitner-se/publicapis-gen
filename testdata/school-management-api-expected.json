@@ -3877,6 +3877,9 @@
               "properties": {
                 "filter": {
                   "type": "string",
+                  "examples": [
+                    "firstName:John AND gradeLevel:10"
+                  ],
                   "description": "Filter criteria to search for specific records"
                 }
               },
