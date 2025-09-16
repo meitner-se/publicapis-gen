@@ -180,6 +180,7 @@ const (
 // Object and field names
 const (
 	errorObjectName         = "Error"
+	errorFieldObjectName    = "ErrorField"
 	messageFieldName        = "message"
 	codeFieldName           = "code"
 	errorFieldName          = "error"
@@ -1526,18 +1527,26 @@ func (g *Generator) createEndpointSpecific422ErrorResponse(resourceName, endpoin
 		Properties: orderedmap.New[string, *base.SchemaProxy](),
 	}
 
-	// Add error field using ErrorCode enum
+	// Add error field using Error object
 	var errorSchema *base.Schema
-	if service.HasEnum(errorCodeEnumName) {
-		// Reference the ErrorCode enum
-		refString := schemaReferencePrefix + errorCodeEnumName
+	if service.HasObject(errorObjectName) {
+		// Reference the Error object
+		refString := schemaReferencePrefix + errorObjectName
 		refProxy := base.CreateSchemaProxyRef(refString)
 		errorSchema = &base.Schema{
 			AllOf: []*base.SchemaProxy{refProxy},
 		}
 	} else {
-		// Fallback to string if ErrorCode enum not found
-		errorSchema = &base.Schema{Type: []string{schemaTypeString}}
+		// Fallback to generic error object schema
+		errorSchema = &base.Schema{
+			Type:       []string{schemaTypeObject},
+			Properties: orderedmap.New[string, *base.SchemaProxy](),
+		}
+		messageSchema := &base.Schema{Type: []string{schemaTypeString}}
+		codeSchema := &base.Schema{Type: []string{schemaTypeString}}
+		errorSchema.Properties.Set(messageFieldName, base.CreateSchemaProxy(messageSchema))
+		errorSchema.Properties.Set(codeFieldName, base.CreateSchemaProxy(codeSchema))
+		errorSchema.Required = []string{messageFieldName, codeFieldName}
 	}
 	schema.Properties.Set(errorFieldName, base.CreateSchemaProxy(errorSchema))
 
@@ -1552,11 +1561,43 @@ func (g *Generator) createEndpointSpecific422ErrorResponse(resourceName, endpoin
 			AllOf: []*base.SchemaProxy{refProxy},
 		}
 	} else {
-		// Fallback to generic object with additional properties
+		// Fallback to generic object with ErrorField objects as additional properties
+		var errorFieldSchema *base.Schema
+		if service.HasObject(errorFieldObjectName) {
+			// Reference the ErrorField object
+			refString := schemaReferencePrefix + errorFieldObjectName
+			refProxy := base.CreateSchemaProxyRef(refString)
+			errorFieldSchema = &base.Schema{
+				AllOf: []*base.SchemaProxy{refProxy},
+			}
+		} else {
+			// Fallback to generic ErrorField schema
+			errorFieldSchema = &base.Schema{
+				Type:       []string{schemaTypeObject},
+				Properties: orderedmap.New[string, *base.SchemaProxy](),
+			}
+			messageSchema := &base.Schema{Type: []string{schemaTypeString}}
+			codeSchema := &base.Schema{Type: []string{schemaTypeString}}
+			errorFieldSchema.Properties.Set(messageFieldName, base.CreateSchemaProxy(messageSchema))
+			errorFieldSchema.Properties.Set(codeFieldName, base.CreateSchemaProxy(codeSchema))
+			errorFieldSchema.Required = []string{messageFieldName, codeFieldName}
+		}
+
+		// Create a recursive schema that allows nested objects or ErrorField objects
 		errorFieldsSchema = &base.Schema{
 			Type: []string{schemaTypeObject},
 			AdditionalProperties: &base.DynamicValue[*base.SchemaProxy, bool]{
-				A: base.CreateSchemaProxy(&base.Schema{Type: []string{schemaTypeString}}),
+				A: base.CreateSchemaProxy(&base.Schema{
+					OneOf: []*base.SchemaProxy{
+						base.CreateSchemaProxy(errorFieldSchema), // Direct ErrorField
+						base.CreateSchemaProxy(&base.Schema{ // Nested object
+							Type: []string{schemaTypeObject},
+							AdditionalProperties: &base.DynamicValue[*base.SchemaProxy, bool]{
+								A: base.CreateSchemaProxy(errorFieldSchema),
+							},
+						}),
+					},
+				}),
 			},
 		}
 	}

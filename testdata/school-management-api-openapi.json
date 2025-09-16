@@ -18,6 +18,71 @@
     }
   ],
   "paths": {
+    "/students/bulk-import": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Bulk Import Students",
+        "description": "Import multiple students from a CSV file or structured data",
+        "operationId": "StudentsBulkImport",
+        "parameters": [
+          {
+            "name": "validateOnly",
+            "in": "query",
+            "description": "Only validate data without importing",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsBulkImport"
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully imported students",
+            "$ref": "#/components/responses/StudentsBulkImport"
+          },
+          "400": {
+            "description": "Bad Request error for Students BulkImport operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students BulkImport operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students BulkImport operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students BulkImport operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students BulkImport operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students BulkImport operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsBulkImport422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students BulkImport operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students BulkImport operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "bulkImport"
+      }
+    },
     "/students/reports/generate": {
       "post": {
         "tags": [
@@ -584,71 +649,6 @@
         "x-speakeasy-group": "students",
         "x-speakeasy-name-override": "search"
       }
-    },
-    "/students/bulk-import": {
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Bulk Import Students",
-        "description": "Import multiple students from a CSV file or structured data",
-        "operationId": "StudentsBulkImport",
-        "parameters": [
-          {
-            "name": "validateOnly",
-            "in": "query",
-            "description": "Only validate data without importing",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          }
-        ],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsBulkImport"
-        },
-        "responses": {
-          "200": {
-            "description": "Successfully imported students",
-            "$ref": "#/components/responses/StudentsBulkImport"
-          },
-          "400": {
-            "description": "Bad Request error for Students BulkImport operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students BulkImport operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students BulkImport operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students BulkImport operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students BulkImport operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "Validation error for Students BulkImport operation - request data failed validation",
-            "$ref": "#/components/responses/StudentsBulkImport422ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students BulkImport operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students BulkImport operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "bulkImport"
-      }
     }
   },
   "components": {
@@ -987,57 +987,6 @@
         ],
         "description": "Student management resource"
       },
-      "StudentRequestError": {
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Student's first name",
-            "nullable": true
-          },
-          "lastName": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Student's last name",
-            "nullable": true
-          },
-          "studentId": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "School-assigned student ID",
-            "nullable": true
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Current status of the student",
-            "nullable": true
-          },
-          "gradeLevel": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Current grade level",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Student"
-      },
       "ContactRequestError": {
         "type": "object",
         "properties": {
@@ -1103,6 +1052,57 @@
           }
         },
         "description": "Request error object for Address"
+      },
+      "StudentRequestError": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Student's first name",
+            "nullable": true
+          },
+          "lastName": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Student's last name",
+            "nullable": true
+          },
+          "studentId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "School-assigned student ID",
+            "nullable": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Current status of the student",
+            "nullable": true
+          },
+          "gradeLevel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Current grade level",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Student"
       },
       "StudentsBulkImportRequestError": {
         "type": "object",
@@ -2101,7 +2101,7 @@
                 "error": {
                   "allOf": [
                     {
-                      "$ref": "#/components/schemas/ErrorCode"
+                      "$ref": "#/components/schemas/Error"
                     }
                   ]
                 },
@@ -2185,7 +2185,7 @@
                 "error": {
                   "allOf": [
                     {
-                      "$ref": "#/components/schemas/ErrorCode"
+                      "$ref": "#/components/schemas/Error"
                     }
                   ]
                 },
@@ -2267,7 +2267,7 @@
                 "error": {
                   "allOf": [
                     {
-                      "$ref": "#/components/schemas/ErrorCode"
+                      "$ref": "#/components/schemas/Error"
                     }
                   ]
                 },
@@ -2346,7 +2346,7 @@
                 "error": {
                   "allOf": [
                     {
-                      "$ref": "#/components/schemas/ErrorCode"
+                      "$ref": "#/components/schemas/Error"
                     }
                   ]
                 },
@@ -2425,7 +2425,7 @@
                 "error": {
                   "allOf": [
                     {
-                      "$ref": "#/components/schemas/ErrorCode"
+                      "$ref": "#/components/schemas/Error"
                     }
                   ]
                 },
@@ -2612,7 +2612,7 @@
                 "error": {
                   "allOf": [
                     {
-                      "$ref": "#/components/schemas/ErrorCode"
+                      "$ref": "#/components/schemas/Error"
                     }
                   ]
                 },
