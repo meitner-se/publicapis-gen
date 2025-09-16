@@ -269,10 +269,12 @@ const (
 	listLimitParamDesc          = "The maximum number of items to return (default: 50)"
 	listLimitParamDescTemplate  = "The maximum number of %s to return (default: 50) when listing %s"
 	listLimitDefaultValue       = "50"
+	listLimitExampleValue       = "1"
 	listOffsetParamName         = "offset"
 	listOffsetParamDesc         = "The number of items to skip before starting to return results (default: 0)"
 	listOffsetParamDescTemplate = "The number of %s to skip before starting to return results (default: 0) when listing %s"
 	listOffsetDefaultValue      = "0"
+	listOffsetExampleValue      = "0"
 )
 
 // Search Endpoint Constants
@@ -1696,6 +1698,7 @@ func createLimitParam() Field {
 		Description: listLimitParamDesc,
 		Type:        FieldTypeInt,
 		Default:     listLimitDefaultValue,
+		Example:     listLimitExampleValue,
 	}
 }
 
@@ -1708,6 +1711,7 @@ func createListLimitParamForResource(resource Resource) Field {
 		Description: resourceSpecificDescription,
 		Type:        FieldTypeInt,
 		Default:     listLimitDefaultValue,
+		Example:     listLimitExampleValue,
 	}
 }
 
@@ -1720,6 +1724,7 @@ func createSearchLimitParamForResource(resource Resource) Field {
 		Description: resourceSpecificDescription,
 		Type:        FieldTypeInt,
 		Default:     listLimitDefaultValue,
+		Example:     listLimitExampleValue,
 	}
 }
 
@@ -1730,6 +1735,7 @@ func createOffsetParam() Field {
 		Description: listOffsetParamDesc,
 		Type:        FieldTypeInt,
 		Default:     listOffsetDefaultValue,
+		Example:     listOffsetExampleValue,
 	}
 }
 
@@ -1742,6 +1748,7 @@ func createListOffsetParamForResource(resource Resource) Field {
 		Description: resourceSpecificDescription,
 		Type:        FieldTypeInt,
 		Default:     listOffsetDefaultValue,
+		Example:     listOffsetExampleValue,
 	}
 }
 
@@ -1754,6 +1761,7 @@ func createSearchOffsetParamForResource(resource Resource) Field {
 		Description: resourceSpecificDescription,
 		Type:        FieldTypeInt,
 		Default:     listOffsetDefaultValue,
+		Example:     listOffsetExampleValue,
 	}
 }
 

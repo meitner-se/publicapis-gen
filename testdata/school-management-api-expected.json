@@ -18,6 +18,281 @@
     }
   ],
   "paths": {
+    "/students/{id}": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Retrieve an existing Students",
+        "description": "Retrieves the `Students` with the given ID.",
+        "operationId": "StudentsGet",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Students to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for Students Get operation - returns the requested Students",
+            "$ref": "#/components/responses/StudentsGet"
+          },
+          "400": {
+            "description": "Bad Request error for Students Get operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Get operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Get operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Get operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Get operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Get operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Get operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "get"
+      },
+      "delete": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Delete Students",
+        "description": "Delete a Students",
+        "operationId": "StudentsDelete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Students to delete",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Response for Students Delete operation - confirms successful deletion"
+          },
+          "400": {
+            "description": "Bad Request error for Students Delete operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Delete operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Delete operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Delete operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Delete operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Delete operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Delete operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "delete"
+      },
+      "patch": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Update Students",
+        "description": "Update a Students",
+        "operationId": "StudentsUpdate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Students to update",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsUpdate"
+        },
+        "responses": {
+          "200": {
+            "description": "Response for Students Update operation - returns the updated Students",
+            "$ref": "#/components/responses/StudentsUpdate"
+          },
+          "400": {
+            "description": "Bad Request error for Students Update operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Update operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Update operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Update operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Update operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students Update operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsUpdate422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Update operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Update operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "update"
+      }
+    },
+    "/students/_search": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Search Students",
+        "description": "Search for `Students` with filtering capabilities.",
+        "operationId": "StudentsSearch",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of Students to return (default: 50) when searching Students",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "examples": [
+                1
+              ],
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "The number of Students to skip before starting to return results (default: 0) when searching Students",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "examples": [
+                0
+              ],
+              "default": 0
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsSearch"
+        },
+        "responses": {
+          "200": {
+            "description": "Response for Students Search operation - returns filtered Students results",
+            "$ref": "#/components/responses/StudentsSearch"
+          },
+          "400": {
+            "description": "Bad Request error for Students Search operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Search operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Search operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Search operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Search operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students Search operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsSearch422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Search operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Search operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-pagination": {
+          "type": "offsetLimit",
+          "inputs": [
+            {
+              "name": "offset",
+              "in": "parameters",
+              "type": "offset"
+            },
+            {
+              "name": "limit",
+              "in": "parameters",
+              "type": "limit"
+            }
+          ],
+          "outputs": {
+            "results": "$.data.resultArray"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "search"
+      }
+    },
     "/students/bulk-import": {
       "post": {
         "tags": [
@@ -259,6 +534,9 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "examples": [
+                1
+              ],
               "default": 50
             }
           },
@@ -269,6 +547,9 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "examples": [
+                0
+              ],
               "default": 0
             }
           }
@@ -379,275 +660,6 @@
         },
         "x-speakeasy-group": "students",
         "x-speakeasy-name-override": "create"
-      }
-    },
-    "/students/{id}": {
-      "get": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Retrieve an existing Students",
-        "description": "Retrieves the `Students` with the given ID.",
-        "operationId": "StudentsGet",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "The unique identifier of the Students to retrieve",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Response for Students Get operation - returns the requested Students",
-            "$ref": "#/components/responses/StudentsGet"
-          },
-          "400": {
-            "description": "Bad Request error for Students Get operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students Get operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students Get operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students Get operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students Get operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students Get operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students Get operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "get"
-      },
-      "delete": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Delete Students",
-        "description": "Delete a Students",
-        "operationId": "StudentsDelete",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "The unique identifier of the Students to delete",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Response for Students Delete operation - confirms successful deletion"
-          },
-          "400": {
-            "description": "Bad Request error for Students Delete operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students Delete operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students Delete operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students Delete operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students Delete operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students Delete operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students Delete operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "delete"
-      },
-      "patch": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Update Students",
-        "description": "Update a Students",
-        "operationId": "StudentsUpdate",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "The unique identifier of the Students to update",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsUpdate"
-        },
-        "responses": {
-          "200": {
-            "description": "Response for Students Update operation - returns the updated Students",
-            "$ref": "#/components/responses/StudentsUpdate"
-          },
-          "400": {
-            "description": "Bad Request error for Students Update operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students Update operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students Update operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students Update operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students Update operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "Validation error for Students Update operation - request data failed validation",
-            "$ref": "#/components/responses/StudentsUpdate422ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students Update operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students Update operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "update"
-      }
-    },
-    "/students/_search": {
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Search Students",
-        "description": "Search for `Students` with filtering capabilities.",
-        "operationId": "StudentsSearch",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of Students to return (default: 50) when searching Students",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 50
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "The number of Students to skip before starting to return results (default: 0) when searching Students",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 0
-            }
-          }
-        ],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsSearch"
-        },
-        "responses": {
-          "200": {
-            "description": "Response for Students Search operation - returns filtered Students results",
-            "$ref": "#/components/responses/StudentsSearch"
-          },
-          "400": {
-            "description": "Bad Request error for Students Search operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students Search operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students Search operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students Search operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students Search operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "Validation error for Students Search operation - request data failed validation",
-            "$ref": "#/components/responses/StudentsSearch422ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students Search operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students Search operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-pagination": {
-          "type": "offsetLimit",
-          "inputs": [
-            {
-              "name": "offset",
-              "in": "parameters",
-              "type": "offset"
-            },
-            {
-              "name": "limit",
-              "in": "parameters",
-              "type": "limit"
-            }
-          ],
-          "outputs": {
-            "results": "$.data.resultArray"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "search"
       }
     }
   },
@@ -987,57 +999,6 @@
         ],
         "description": "Student management resource"
       },
-      "StudentRequestError": {
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Student's first name",
-            "nullable": true
-          },
-          "lastName": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Student's last name",
-            "nullable": true
-          },
-          "studentId": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "School-assigned student ID",
-            "nullable": true
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Current status of the student",
-            "nullable": true
-          },
-          "gradeLevel": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Current grade level",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Student"
-      },
       "ContactRequestError": {
         "type": "object",
         "properties": {
@@ -1103,6 +1064,57 @@
           }
         },
         "description": "Request error object for Address"
+      },
+      "StudentRequestError": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Student's first name",
+            "nullable": true
+          },
+          "lastName": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Student's last name",
+            "nullable": true
+          },
+          "studentId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "School-assigned student ID",
+            "nullable": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Current status of the student",
+            "nullable": true
+          },
+          "gradeLevel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "description": "Current grade level",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Student"
       },
       "StudentsBulkImportRequestError": {
         "type": "object",
