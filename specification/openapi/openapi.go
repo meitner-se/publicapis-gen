@@ -250,7 +250,7 @@ func (g *Generator) addSpeakeasyRetryExtension(document *v3.Document, service *s
 	strategyValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: retryConfig.Strategy}
 
 	backoffKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: retryFieldBackoff}
-	backoffValueNode := &yaml.Node{Kind: yaml.MappingNode}
+	backoffValueNode := &yaml.Node{Kind: yaml.MappingNode, Tag: "!!map"}
 
 	// Backoff sub-nodes
 	initialIntervalKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: retryFieldInitialInterval}
@@ -270,7 +270,7 @@ func (g *Generator) addSpeakeasyRetryExtension(document *v3.Document, service *s
 	}
 
 	statusCodesKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: retryFieldStatusCodes}
-	statusCodesValueNode := &yaml.Node{Kind: yaml.SequenceNode}
+	statusCodesValueNode := &yaml.Node{Kind: yaml.SequenceNode, Tag: "!!seq"}
 	statusCodesNodes := make([]*yaml.Node, len(retryConfig.StatusCodes))
 	for i, statusCode := range retryConfig.StatusCodes {
 		statusCodesNodes[i] = &yaml.Node{
@@ -337,10 +337,10 @@ func (g *Generator) addSpeakeasyPaginationExtension(operation *v3.Operation) {
 
 	// Create the inputs array
 	inputsKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "inputs"}
-	inputsArrayNode := &yaml.Node{Kind: yaml.SequenceNode}
+	inputsArrayNode := &yaml.Node{Kind: yaml.SequenceNode, Tag: "!!seq"}
 
 	// Create offset input object
-	offsetInputNode := &yaml.Node{Kind: yaml.MappingNode}
+	offsetInputNode := &yaml.Node{Kind: yaml.MappingNode, Tag: "!!map"}
 	offsetNameKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "name"}
 	offsetNameValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyOffsetParamName}
 	offsetInKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "in"}
@@ -354,7 +354,7 @@ func (g *Generator) addSpeakeasyPaginationExtension(operation *v3.Operation) {
 	}
 
 	// Create limit input object
-	limitInputNode := &yaml.Node{Kind: yaml.MappingNode}
+	limitInputNode := &yaml.Node{Kind: yaml.MappingNode, Tag: "!!map"}
 	limitNameKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "name"}
 	limitNameValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyLimitParamName}
 	limitInKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "in"}
@@ -372,7 +372,7 @@ func (g *Generator) addSpeakeasyPaginationExtension(operation *v3.Operation) {
 
 	// Create the outputs object
 	outputsKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "outputs"}
-	outputsObjectNode := &yaml.Node{Kind: yaml.MappingNode}
+	outputsObjectNode := &yaml.Node{Kind: yaml.MappingNode, Tag: "!!map"}
 	resultsKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "results"}
 	resultsValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyResultsFieldPath}
 	outputsObjectNode.Content = []*yaml.Node{
@@ -712,6 +712,7 @@ func (g *Generator) createFieldSchema(field specification.Field, service *specif
 		if field.IsArray() {
 			arrayNode := &yaml.Node{
 				Kind: yaml.SequenceNode,
+				Tag:  "!!seq",
 			}
 			arrayNode.Content = append(arrayNode.Content, exampleNode)
 			exampleNode = arrayNode
@@ -730,7 +731,8 @@ func (g *Generator) createFieldSchema(field specification.Field, service *specif
 	} else if field.IsArray() && service.HasObject(field.Type) {
 		// Generate example array from object definition when no explicit example is provided
 		if obj := service.GetObject(field.Type); obj != nil {
-			if objectExample := g.generateObjectExample(*obj, service); objectExample != nil {
+			visited := make(map[string]bool)
+			if objectExample := g.generateObjectExampleWithVisited(*obj, service, visited); objectExample != nil {
 				arrayNode := &yaml.Node{
 					Kind: yaml.SequenceNode,
 				}
@@ -750,7 +752,8 @@ func (g *Generator) createFieldSchema(field specification.Field, service *specif
 	} else if service.HasObject(field.Type) {
 		// Generate example from object definition when no explicit example is provided
 		if obj := service.GetObject(field.Type); obj != nil {
-			if objectExample := g.generateObjectExample(*obj, service); objectExample != nil {
+			visited := make(map[string]bool)
+			if objectExample := g.generateObjectExampleWithVisited(*obj, service, visited); objectExample != nil {
 				examples := []*yaml.Node{objectExample}
 
 				// If the field is nullable, add null as an additional example
@@ -812,6 +815,7 @@ func (g *Generator) createParameterSchema(field specification.Field, service *sp
 		if field.IsArray() {
 			arrayNode := &yaml.Node{
 				Kind: yaml.SequenceNode,
+				Tag:  "!!seq",
 			}
 			arrayNode.Content = append(arrayNode.Content, exampleNode)
 			exampleNode = arrayNode
@@ -1095,11 +1099,35 @@ func (g *Generator) generateRequestBodyExample(bodyParams []specification.Field,
 
 // generateObjectExample generates an example from an object definition.
 func (g *Generator) generateObjectExample(obj specification.Object, service *specification.Service) *yaml.Node {
-	return g.generateObjectExampleFromFields(obj.Fields, service)
+	visited := make(map[string]bool)
+	return g.generateObjectExampleWithVisited(obj, service, visited)
+}
+
+// generateObjectExampleWithVisited generates an example from an object definition with circular reference protection.
+func (g *Generator) generateObjectExampleWithVisited(obj specification.Object, service *specification.Service, visited map[string]bool) *yaml.Node {
+	// Check for circular reference
+	if visited[obj.Name] {
+		return nil
+	}
+
+	// Mark this object as visited
+	visited[obj.Name] = true
+	defer func() {
+		// Unmark when done (allows the same object to be used in different branches)
+		delete(visited, obj.Name)
+	}()
+
+	return g.generateObjectExampleFromFieldsWithVisited(obj.Fields, service, visited)
 }
 
 // generateObjectExampleFromFields generates an example object from a slice of fields.
 func (g *Generator) generateObjectExampleFromFields(fields []specification.Field, service *specification.Service) *yaml.Node {
+	visited := make(map[string]bool)
+	return g.generateObjectExampleFromFieldsWithVisited(fields, service, visited)
+}
+
+// generateObjectExampleFromFieldsWithVisited generates an example object from a slice of fields with circular reference protection.
+func (g *Generator) generateObjectExampleFromFieldsWithVisited(fields []specification.Field, service *specification.Service, visited map[string]bool) *yaml.Node {
 	if len(fields) == 0 {
 		return nil
 	}
@@ -1107,6 +1135,7 @@ func (g *Generator) generateObjectExampleFromFields(fields []specification.Field
 	// Create object node
 	objNode := &yaml.Node{
 		Kind: yaml.MappingNode,
+		Tag:  "!!map",
 	}
 
 	hasAnyExample := false
@@ -1120,10 +1149,10 @@ func (g *Generator) generateObjectExampleFromFields(fields []specification.Field
 				valueNode = g.createTypedExampleNode(field.Type, field.Example)
 			}
 		} else if service.HasObject(field.Type) {
-			// For object types, recursively generate example from object definition
+			// For object types, recursively generate example from object definition with circular reference protection
 			obj := service.GetObject(field.Type)
-			if obj != nil {
-				valueNode = g.generateObjectExample(*obj, service)
+			if obj != nil && !visited[field.Type] {
+				valueNode = g.generateObjectExampleWithVisited(*obj, service, visited)
 			}
 		}
 
@@ -1131,6 +1160,7 @@ func (g *Generator) generateObjectExampleFromFields(fields []specification.Field
 		if valueNode != nil && field.IsArray() {
 			arrayNode := &yaml.Node{
 				Kind: yaml.SequenceNode,
+				Tag:  "!!seq",
 			}
 			arrayNode.Content = append(arrayNode.Content, valueNode)
 			valueNode = arrayNode
@@ -1141,6 +1171,7 @@ func (g *Generator) generateObjectExampleFromFields(fields []specification.Field
 			// Add field name
 			keyNode := &yaml.Node{
 				Kind:  yaml.ScalarNode,
+				Tag:   "!!str",
 				Value: field.TagJSON(),
 			}
 			objNode.Content = append(objNode.Content, keyNode)

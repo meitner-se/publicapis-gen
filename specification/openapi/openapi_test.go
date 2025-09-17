@@ -3424,3 +3424,107 @@ func TestAllOfSchemaExamples(t *testing.T) {
 
 	t.Logf("Generated JSON for allOf schema examples test:\n%s", jsonString)
 }
+
+func TestCircularReferenceHandling(t *testing.T) {
+	generator := newGenerator()
+	service := &specification.Service{
+		Name: "CircularTestAPI",
+		Objects: []specification.Object{
+			{
+				Name:        "PersonA",
+				Description: "Person A object",
+				Fields: []specification.Field{
+					{
+						Name:        "name",
+						Description: "Person name",
+						Type:        specification.FieldTypeString,
+						Example:     "John Doe",
+					},
+					{
+						Name:        "friend",
+						Description: "Friend reference",
+						Type:        "PersonB",
+					},
+				},
+			},
+			{
+				Name:        "PersonB",
+				Description: "Person B object",
+				Fields: []specification.Field{
+					{
+						Name:        "name",
+						Description: "Person name",
+						Type:        specification.FieldTypeString,
+						Example:     "Jane Smith",
+					},
+					{
+						Name:        "bestFriend",
+						Description: "Best friend reference - creates circular reference",
+						Type:        "PersonA",
+					},
+				},
+			},
+		},
+		Resources: []specification.Resource{
+			{
+				Name:        "TestResource",
+				Description: "Test resource with circular reference",
+				Operations:  []string{specification.OperationCreate},
+				Fields: []specification.ResourceField{
+					{
+						Field: specification.Field{
+							Name:        "person",
+							Description: "Person field that could trigger circular reference",
+							Type:        "PersonA",
+						},
+						Operations: []string{specification.OperationCreate},
+					},
+				},
+				Endpoints: []specification.Endpoint{
+					{
+						Name:        "Create",
+						Title:       "Create Test Resource",
+						Description: "Create a new test resource",
+						Method:      "POST",
+						Path:        "",
+						Request: specification.EndpointRequest{
+							ContentType: "application/json",
+							BodyParams: []specification.Field{
+								{
+									Name:        "person",
+									Description: "Person field that could trigger circular reference",
+									Type:        "PersonA",
+								},
+							},
+						},
+						Response: specification.EndpointResponse{
+							ContentType: "application/json",
+							StatusCode:  201,
+							Description: "Resource created successfully",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// This should not hang or cause infinite recursion
+	document, err := generator.GenerateFromService(service)
+	assert.NoError(t, err, "Should generate document successfully without infinite recursion")
+	assert.NotNil(t, document, "Document should not be nil")
+
+	// Convert to JSON to verify it contains the expected structure
+	jsonBytes, err := generator.ToJSON(document)
+	assert.NoError(t, err, "Should convert to JSON successfully")
+	jsonString := string(jsonBytes)
+
+	// Verify that circular references don't cause infinite loops
+	// PersonA should have name example but friend field should be omitted due to circular reference protection
+	assert.Contains(t, jsonString, "John Doe", "PersonA name example should be present")
+	assert.Contains(t, jsonString, "Jane Smith", "PersonB name example should be present") 
+
+	// Verify the request body example is generated successfully
+	assert.Contains(t, jsonString, "\"requestExample\"", "Request body should contain examples")
+
+	t.Logf("Generated JSON for circular reference test (should not hang):\n%s", jsonString)
+}
