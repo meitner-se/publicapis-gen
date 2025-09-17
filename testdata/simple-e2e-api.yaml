@@ -1,0 +1,22 @@
+name: "E2E Test API"
+version: "1.0.0"
+
+objects:
+  - name: "SimpleItem"
+    description: "A simple item for testing"
+    fields:
+      - name: "name"
+        type: "String"
+        description: "Item name"
+        example: "test-item"
+
+resources:
+  - name: "Item" 
+    description: "Simple item resource for e2e testing"
+    operations: ["Read"]
+    fields:
+      - name: "name"
+        type: "String"
+        description: "Item name"
+        operations: ["Read"]
+        example: "test-item"

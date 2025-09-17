@@ -1,0 +1,4981 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "E2E Test API API",
+    "description": "Generated API documentation",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/item/{id}": {
+      "get": {
+        "tags": [
+          "Item"
+        ],
+        "summary": "Get a Item",
+        "description": "Retrieves the `Item` with the given ID.",
+        "operationId": "ItemGet",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Item to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "examples": [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ],
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for Item Get operation - returns the requested Item",
+            "$ref": "#/components/responses/ItemGet"
+          },
+          "400": {
+            "description": "Bad Request error for Item Get operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Item Get operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Item Get operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Item Get operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Item Get operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Item Get operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Item Get operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "items",
+        "x-speakeasy-name-override": "get"
+      }
+    },
+    "/item": {
+      "get": {
+        "tags": [
+          "Item"
+        ],
+        "summary": "List Items",
+        "description": "Returns a paginated list of all `Items` in your organization.",
+        "operationId": "ItemList",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of Items to return (default: 50) when listing Items",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "examples": [
+                1
+              ],
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "The number of Items to skip before starting to return results (default: 0) when listing Items",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "examples": [
+                0
+              ],
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for Item List operation - returns a paginated list of Item",
+            "$ref": "#/components/responses/ItemList"
+          },
+          "400": {
+            "description": "Bad Request error for Item List operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Item List operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Item List operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Item List operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Item List operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Item List operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Item List operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-pagination": {
+          "type": "offsetLimit",
+          "inputs": [
+            {
+              "name": "offset",
+              "in": "parameters",
+              "type": "offset"
+            },
+            {
+              "name": "limit",
+              "in": "parameters",
+              "type": "limit"
+            }
+          ],
+          "outputs": {
+            "results": "$.data.resultArray"
+          }
+        },
+        "x-speakeasy-group": "items",
+        "x-speakeasy-name-override": "list"
+      }
+    },
+    "/item/_search": {
+      "post": {
+        "tags": [
+          "Item"
+        ],
+        "summary": "Search Items",
+        "description": "Search for `Items` with filtering capabilities.",
+        "operationId": "ItemSearch",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of Items to return (default: 50) when searching Items",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "examples": [
+                1
+              ],
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "The number of Items to skip before starting to return results (default: 0) when searching Items",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "examples": [
+                0
+              ],
+              "default": 0
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/ItemSearch"
+        },
+        "responses": {
+          "200": {
+            "description": "Response for Item Search operation - returns filtered Item results",
+            "$ref": "#/components/responses/ItemSearch"
+          },
+          "400": {
+            "description": "Bad Request error for Item Search operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Item Search operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Item Search operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Item Search operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Item Search operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Item Search operation - request data failed validation",
+            "$ref": "#/components/responses/ItemSearch422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Item Search operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Item Search operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-pagination": {
+          "type": "offsetLimit",
+          "inputs": [
+            {
+              "name": "offset",
+              "in": "parameters",
+              "type": "offset"
+            },
+            {
+              "name": "limit",
+              "in": "parameters",
+              "type": "limit"
+            }
+          ],
+          "outputs": {
+            "results": "$.data.resultArray"
+          }
+        },
+        "x-speakeasy-group": "items",
+        "x-speakeasy-name-override": "search"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorCode": {
+        "type": "string",
+        "enum": [
+          "BadRequest",
+          "Unauthorized",
+          "Forbidden",
+          "NotFound",
+          "Conflict",
+          "UnprocessableEntity",
+          "RateLimited",
+          "Internal"
+        ],
+        "description": "Standard error codes used in API responses"
+      },
+      "ErrorFieldCode": {
+        "type": "string",
+        "enum": [
+          "AlreadyExists",
+          "Required",
+          "NotFound",
+          "InvalidValue"
+        ],
+        "description": "Error codes for field-level validation errors"
+      },
+      "SimpleItem": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "examples": [
+              "test-item"
+            ],
+            "description": "Item name"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "description": "A simple item for testing"
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorCode"
+              }
+            ],
+            "description": "The specific error code indicating the type of error"
+          },
+          "message": {
+            "type": "string",
+            "examples": [
+              "example"
+            ],
+            "description": "Human-readable error message providing additional details"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "description": "Standard error response object containing error code and message"
+      },
+      "ErrorField": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorFieldCode"
+              }
+            ],
+            "description": "The specific error code indicating the type of field validation error"
+          },
+          "message": {
+            "type": "string",
+            "examples": [
+              "example"
+            ],
+            "description": "Human-readable error message providing details about the field validation error"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "description": "Field-specific error information containing error code and message for validation errors"
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "offset": {
+            "type": "integer",
+            "examples": [
+              0
+            ],
+            "description": "Number of items to skip from the beginning of the result set"
+          },
+          "limit": {
+            "type": "integer",
+            "examples": [
+              1
+            ],
+            "description": "Maximum number of items to return in the result set"
+          },
+          "total": {
+            "type": "integer",
+            "examples": [
+              100
+            ],
+            "description": "Total number of items available for pagination"
+          }
+        },
+        "required": [
+          "offset",
+          "limit",
+          "total"
+        ],
+        "description": "Pagination parameters for controlling result sets in list operations"
+      },
+      "Meta": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "type": "string",
+            "examples": [
+              "2024-01-15T10:30:00Z"
+            ],
+            "format": "date-time",
+            "description": "Timestamp when the resource was created"
+          },
+          "createdBy": {
+            "type": "string",
+            "examples": [
+              "987fcdeb-51a2-43d1-b567-123456789abc",
+              null
+            ],
+            "format": "uuid",
+            "description": "User who created the resource",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "examples": [
+              "2024-01-15T14:45:00Z"
+            ],
+            "format": "date-time",
+            "description": "Timestamp when the resource was last updated"
+          },
+          "updatedBy": {
+            "type": "string",
+            "examples": [
+              "987fcdeb-51a2-43d1-b567-123456789abc",
+              null
+            ],
+            "format": "uuid",
+            "description": "User who last updated the resource",
+            "nullable": true
+          }
+        },
+        "required": [
+          "createdAt",
+          "updatedAt"
+        ],
+        "description": "Meta contains information about the creation and modification of a resource for auditing purposes"
+      },
+      "Item": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "examples": [
+              "123e4567-e89b-12d3-a456-426614174000"
+            ],
+            "format": "uuid",
+            "description": "Unique identifier for the Item"
+          },
+          "meta": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Meta"
+              }
+            ],
+            "examples": [
+              {
+                "createdAt": "2024-01-15T10:30:00Z",
+                "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                "updatedAt": "2024-01-15T14:45:00Z",
+                "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+              }
+            ],
+            "description": "Metadata information for the Item"
+          },
+          "name": {
+            "type": "string",
+            "examples": [
+              "test-item"
+            ],
+            "description": "Item name"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "description": "Simple item resource for e2e testing"
+      },
+      "ItemFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "id": "123e4567-e89b-12d3-a456-426614174000",
+                "name": "example"
+              },
+              null
+            ],
+            "description": "Equality filters for Item",
+            "nullable": true
+          },
+          "notEquals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "id": "123e4567-e89b-12d3-a456-426614174000",
+                "name": "example"
+              },
+              null
+            ],
+            "description": "Inequality filters for Item",
+            "nullable": true
+          },
+          "greaterThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRange"
+              }
+            ],
+            "description": "Greater than filters for Item",
+            "nullable": true
+          },
+          "smallerThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRange"
+              }
+            ],
+            "description": "Smaller than filters for Item",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRange"
+              }
+            ],
+            "description": "Greater than or equal filters for Item",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRange"
+              }
+            ],
+            "description": "Smaller than or equal filters for Item",
+            "nullable": true
+          },
+          "contains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "id": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ],
+                "name": [
+                  "example"
+                ]
+              },
+              null
+            ],
+            "description": "Contains filters for Item",
+            "nullable": true
+          },
+          "notContains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "id": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ],
+                "name": [
+                  "example"
+                ]
+              },
+              null
+            ],
+            "description": "Not contains filters for Item",
+            "nullable": true
+          },
+          "like": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "name": "example"
+              },
+              null
+            ],
+            "description": "LIKE filters for Item",
+            "nullable": true
+          },
+          "notLike": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "name": "example"
+              },
+              null
+            ],
+            "description": "NOT LIKE filters for Item",
+            "nullable": true
+          },
+          "null": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNull"
+              }
+            ],
+            "description": "Null filters for Item",
+            "nullable": true
+          },
+          "notNull": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNull"
+              }
+            ],
+            "description": "Not null filters for Item",
+            "nullable": true
+          },
+          "orCondition": {
+            "type": "boolean",
+            "examples": [
+              true
+            ],
+            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
+          },
+          "nestedFilters": {
+            "type": "array",
+            "examples": [
+              [
+                {
+                  "equals": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "name": "example"
+                  },
+                  "notEquals": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "name": "example"
+                  },
+                  "contains": {
+                    "id": [
+                      "123e4567-e89b-12d3-a456-426614174000"
+                    ],
+                    "name": [
+                      "example"
+                    ]
+                  },
+                  "notContains": {
+                    "id": [
+                      "123e4567-e89b-12d3-a456-426614174000"
+                    ],
+                    "name": [
+                      "example"
+                    ]
+                  },
+                  "like": {
+                    "name": "example"
+                  },
+                  "notLike": {
+                    "name": "example"
+                  },
+                  "orCondition": true
+                }
+              ]
+            ],
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ItemFilter"
+                }
+              ]
+            },
+            "description": "NestedFilters of the Item, useful for more complex filters"
+          }
+        },
+        "required": [
+          "orCondition"
+        ],
+        "description": "Filter object for Item"
+      },
+      "ItemFilterEquals": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "examples": [
+              "123e4567-e89b-12d3-a456-426614174000",
+              null
+            ],
+            "format": "uuid",
+            "description": "Unique identifier for the Item",
+            "nullable": true
+          },
+          "meta": {
+            "type": "string",
+            "description": "Metadata information for the Item",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "Item name",
+            "nullable": true
+          }
+        },
+        "description": "Equality/Inequality filter fields for Item"
+      },
+      "ItemFilterRange": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "type": "string",
+            "description": "Metadata information for the Item",
+            "nullable": true
+          }
+        },
+        "description": "Range filter fields for Item"
+      },
+      "ItemFilterContains": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "array",
+            "examples": [
+              [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ]
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Unique identifier for the Item"
+          },
+          "meta": {
+            "type": "string",
+            "description": "Metadata information for the Item",
+            "nullable": true
+          },
+          "name": {
+            "type": "array",
+            "examples": [
+              [
+                "example"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Item name"
+          }
+        },
+        "description": "Contains filter fields for Item"
+      },
+      "ItemFilterLike": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "type": "string",
+            "description": "Metadata information for the Item",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "Item name",
+            "nullable": true
+          }
+        },
+        "description": "LIKE filter fields for Item"
+      },
+      "ItemFilterNull": {
+        "type": "object",
+        "description": "Null filter fields for Item"
+      },
+      "ItemFilterRequestError": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEqualsRequestError"
+              }
+            ],
+            "examples": [
+              {
+                "id": {
+                  "code": "InvalidValue",
+                  "message": "ID is required"
+                },
+                "meta": {
+                  "code": "InvalidValue",
+                  "message": "Meta is required"
+                },
+                "name": {
+                  "code": "InvalidValue",
+                  "message": "name is required"
+                }
+              },
+              null
+            ],
+            "description": "Equality filters for Item",
+            "nullable": true
+          },
+          "notEquals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEqualsRequestError"
+              }
+            ],
+            "examples": [
+              {
+                "id": {
+                  "code": "InvalidValue",
+                  "message": "ID is required"
+                },
+                "meta": {
+                  "code": "InvalidValue",
+                  "message": "Meta is required"
+                },
+                "name": {
+                  "code": "InvalidValue",
+                  "message": "name is required"
+                }
+              },
+              null
+            ],
+            "description": "Inequality filters for Item",
+            "nullable": true
+          },
+          "greaterThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeRequestError"
+              }
+            ],
+            "examples": [
+              {
+                "meta": {
+                  "code": "InvalidValue",
+                  "message": "Meta is required"
+                }
+              },
+              null
+            ],
+            "description": "Greater than filters for Item",
+            "nullable": true
+          },
+          "smallerThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeRequestError"
+              }
+            ],
+            "examples": [
+              {
+                "meta": {
+                  "code": "InvalidValue",
+                  "message": "Meta is required"
+                }
+              },
+              null
+            ],
+            "description": "Smaller than filters for Item",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeRequestError"
+              }
+            ],
+            "examples": [
+              {
+                "meta": {
+                  "code": "InvalidValue",
+                  "message": "Meta is required"
+                }
+              },
+              null
+            ],
+            "description": "Greater than or equal filters for Item",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeRequestError"
+              }
+            ],
+            "examples": [
+              {
+                "meta": {
+                  "code": "InvalidValue",
+                  "message": "Meta is required"
+                }
+              },
+              null
+            ],
+            "description": "Smaller than or equal filters for Item",
+            "nullable": true
+          },
+          "contains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContainsRequestError"
+              }
+            ],
+            "examples": [
+              {
+                "id": {
+                  "code": "InvalidValue",
+                  "message": "ID is required"
+                },
+                "meta": {
+                  "code": "InvalidValue",
+                  "message": "Meta is required"
+                },
+                "name": {
+                  "code": "InvalidValue",
+                  "message": "name is required"
+                }
+              },
+              null
+            ],
+            "description": "Contains filters for Item",
+            "nullable": true
+          },
+          "notContains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContainsRequestError"
+              }
+            ],
+            "examples": [
+              {
+                "id": {
+                  "code": "InvalidValue",
+                  "message": "ID is required"
+                },
+                "meta": {
+                  "code": "InvalidValue",
+                  "message": "Meta is required"
+                },
+                "name": {
+                  "code": "InvalidValue",
+                  "message": "name is required"
+                }
+              },
+              null
+            ],
+            "description": "Not contains filters for Item",
+            "nullable": true
+          },
+          "like": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLikeRequestError"
+              }
+            ],
+            "examples": [
+              {
+                "meta": {
+                  "code": "InvalidValue",
+                  "message": "Meta is required"
+                },
+                "name": {
+                  "code": "InvalidValue",
+                  "message": "name is required"
+                }
+              },
+              null
+            ],
+            "description": "LIKE filters for Item",
+            "nullable": true
+          },
+          "notLike": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLikeRequestError"
+              }
+            ],
+            "examples": [
+              {
+                "meta": {
+                  "code": "InvalidValue",
+                  "message": "Meta is required"
+                },
+                "name": {
+                  "code": "InvalidValue",
+                  "message": "name is required"
+                }
+              },
+              null
+            ],
+            "description": "NOT LIKE filters for Item",
+            "nullable": true
+          },
+          "null": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNullRequestError"
+              }
+            ],
+            "description": "Null filters for Item",
+            "nullable": true
+          },
+          "notNull": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNullRequestError"
+              }
+            ],
+            "description": "Not null filters for Item",
+            "nullable": true
+          },
+          "orCondition": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "OrCondition is required"
+              },
+              null
+            ],
+            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition",
+            "nullable": true
+          },
+          "nestedFilters": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRequestError"
+              }
+            ],
+            "examples": [
+              {
+                "equals": {
+                  "id": {
+                    "code": "InvalidValue",
+                    "message": "ID is required"
+                  },
+                  "meta": {
+                    "code": "InvalidValue",
+                    "message": "Meta is required"
+                  },
+                  "name": {
+                    "code": "InvalidValue",
+                    "message": "name is required"
+                  }
+                },
+                "notEquals": {
+                  "id": {
+                    "code": "InvalidValue",
+                    "message": "ID is required"
+                  },
+                  "meta": {
+                    "code": "InvalidValue",
+                    "message": "Meta is required"
+                  },
+                  "name": {
+                    "code": "InvalidValue",
+                    "message": "name is required"
+                  }
+                },
+                "greaterThan": {
+                  "meta": {
+                    "code": "InvalidValue",
+                    "message": "Meta is required"
+                  }
+                },
+                "smallerThan": {
+                  "meta": {
+                    "code": "InvalidValue",
+                    "message": "Meta is required"
+                  }
+                },
+                "greaterOrEqual": {
+                  "meta": {
+                    "code": "InvalidValue",
+                    "message": "Meta is required"
+                  }
+                },
+                "smallerOrEqual": {
+                  "meta": {
+                    "code": "InvalidValue",
+                    "message": "Meta is required"
+                  }
+                },
+                "contains": {
+                  "id": {
+                    "code": "InvalidValue",
+                    "message": "ID is required"
+                  },
+                  "meta": {
+                    "code": "InvalidValue",
+                    "message": "Meta is required"
+                  },
+                  "name": {
+                    "code": "InvalidValue",
+                    "message": "name is required"
+                  }
+                },
+                "notContains": {
+                  "id": {
+                    "code": "InvalidValue",
+                    "message": "ID is required"
+                  },
+                  "meta": {
+                    "code": "InvalidValue",
+                    "message": "Meta is required"
+                  },
+                  "name": {
+                    "code": "InvalidValue",
+                    "message": "name is required"
+                  }
+                },
+                "like": {
+                  "meta": {
+                    "code": "InvalidValue",
+                    "message": "Meta is required"
+                  },
+                  "name": {
+                    "code": "InvalidValue",
+                    "message": "name is required"
+                  }
+                },
+                "notLike": {
+                  "meta": {
+                    "code": "InvalidValue",
+                    "message": "Meta is required"
+                  },
+                  "name": {
+                    "code": "InvalidValue",
+                    "message": "name is required"
+                  }
+                },
+                "orCondition": {
+                  "code": "InvalidValue",
+                  "message": "OrCondition is required"
+                }
+              },
+              null
+            ],
+            "description": "NestedFilters of the Item, useful for more complex filters",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for ItemFilter"
+      },
+      "ItemFilterEqualsRequestError": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "ID is required"
+              },
+              null
+            ],
+            "description": "Unique identifier for the Item",
+            "nullable": true
+          },
+          "meta": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "Meta is required"
+              },
+              null
+            ],
+            "description": "Metadata information for the Item",
+            "nullable": true
+          },
+          "name": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "name is required"
+              },
+              null
+            ],
+            "description": "Item name",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for ItemFilterEquals"
+      },
+      "ItemFilterNullRequestError": {
+        "type": "object",
+        "description": "Request error object for ItemFilterNull"
+      },
+      "ItemFilterRangeRequestError": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "Meta is required"
+              },
+              null
+            ],
+            "description": "Metadata information for the Item",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for ItemFilterRange"
+      },
+      "ItemFilterContainsRequestError": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "ID is required"
+              },
+              null
+            ],
+            "description": "Unique identifier for the Item",
+            "nullable": true
+          },
+          "meta": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "Meta is required"
+              },
+              null
+            ],
+            "description": "Metadata information for the Item",
+            "nullable": true
+          },
+          "name": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "name is required"
+              },
+              null
+            ],
+            "description": "Item name",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for ItemFilterContains"
+      },
+      "ItemFilterLikeRequestError": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "Meta is required"
+              },
+              null
+            ],
+            "description": "Metadata information for the Item",
+            "nullable": true
+          },
+          "name": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "name is required"
+              },
+              null
+            ],
+            "description": "Item name",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for ItemFilterLike"
+      },
+      "ItemSearchRequestError": {
+        "type": "object",
+        "properties": {
+          "filter": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRequestError"
+              }
+            ],
+            "examples": [
+              {
+                "equals": {
+                  "id": {
+                    "code": "InvalidValue",
+                    "message": "ID is required"
+                  },
+                  "meta": {
+                    "code": "InvalidValue",
+                    "message": "Meta is required"
+                  },
+                  "name": {
+                    "code": "InvalidValue",
+                    "message": "name is required"
+                  }
+                },
+                "notEquals": {
+                  "id": {
+                    "code": "InvalidValue",
+                    "message": "ID is required"
+                  },
+                  "meta": {
+                    "code": "InvalidValue",
+                    "message": "Meta is required"
+                  },
+                  "name": {
+                    "code": "InvalidValue",
+                    "message": "name is required"
+                  }
+                },
+                "greaterThan": {
+                  "meta": {
+                    "code": "InvalidValue",
+                    "message": "Meta is required"
+                  }
+                },
+                "smallerThan": {
+                  "meta": {
+                    "code": "InvalidValue",
+                    "message": "Meta is required"
+                  }
+                },
+                "greaterOrEqual": {
+                  "meta": {
+                    "code": "InvalidValue",
+                    "message": "Meta is required"
+                  }
+                },
+                "smallerOrEqual": {
+                  "meta": {
+                    "code": "InvalidValue",
+                    "message": "Meta is required"
+                  }
+                },
+                "contains": {
+                  "id": {
+                    "code": "InvalidValue",
+                    "message": "ID is required"
+                  },
+                  "meta": {
+                    "code": "InvalidValue",
+                    "message": "Meta is required"
+                  },
+                  "name": {
+                    "code": "InvalidValue",
+                    "message": "name is required"
+                  }
+                },
+                "notContains": {
+                  "id": {
+                    "code": "InvalidValue",
+                    "message": "ID is required"
+                  },
+                  "meta": {
+                    "code": "InvalidValue",
+                    "message": "Meta is required"
+                  },
+                  "name": {
+                    "code": "InvalidValue",
+                    "message": "name is required"
+                  }
+                },
+                "like": {
+                  "meta": {
+                    "code": "InvalidValue",
+                    "message": "Meta is required"
+                  },
+                  "name": {
+                    "code": "InvalidValue",
+                    "message": "name is required"
+                  }
+                },
+                "notLike": {
+                  "meta": {
+                    "code": "InvalidValue",
+                    "message": "Meta is required"
+                  },
+                  "name": {
+                    "code": "InvalidValue",
+                    "message": "name is required"
+                  }
+                },
+                "orCondition": {
+                  "code": "InvalidValue",
+                  "message": "OrCondition is required"
+                }
+              },
+              null
+            ],
+            "description": "Filter criteria to search for specific records",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Item Search endpoint"
+      },
+      "ItemFilterFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "equals": {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "name": "example"
+                },
+                "notEquals": {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "name": "example"
+                },
+                "contains": {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "name": "example"
+                },
+                "notContains": {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "name": "example"
+                },
+                "like": {
+                  "name": "example"
+                },
+                "notLike": {
+                  "name": "example"
+                },
+                "orCondition": true
+              },
+              null
+            ],
+            "description": "Equality filters for ItemFilter",
+            "nullable": true
+          },
+          "notEquals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "equals": {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "name": "example"
+                },
+                "notEquals": {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "name": "example"
+                },
+                "contains": {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "name": "example"
+                },
+                "notContains": {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "name": "example"
+                },
+                "like": {
+                  "name": "example"
+                },
+                "notLike": {
+                  "name": "example"
+                },
+                "orCondition": true
+              },
+              null
+            ],
+            "description": "Inequality filters for ItemFilter",
+            "nullable": true
+          },
+          "greaterThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterFilterRange"
+              }
+            ],
+            "description": "Greater than filters for ItemFilter",
+            "nullable": true
+          },
+          "smallerThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterFilterRange"
+              }
+            ],
+            "description": "Smaller than filters for ItemFilter",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterFilterRange"
+              }
+            ],
+            "description": "Greater than or equal filters for ItemFilter",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterFilterRange"
+              }
+            ],
+            "description": "Smaller than or equal filters for ItemFilter",
+            "nullable": true
+          },
+          "contains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "equals": {
+                  "id": [
+                    "123e4567-e89b-12d3-a456-426614174000"
+                  ],
+                  "name": [
+                    "example"
+                  ]
+                },
+                "notEquals": {
+                  "id": [
+                    "123e4567-e89b-12d3-a456-426614174000"
+                  ],
+                  "name": [
+                    "example"
+                  ]
+                },
+                "contains": {
+                  "id": [
+                    "123e4567-e89b-12d3-a456-426614174000"
+                  ],
+                  "name": [
+                    "example"
+                  ]
+                },
+                "notContains": {
+                  "id": [
+                    "123e4567-e89b-12d3-a456-426614174000"
+                  ],
+                  "name": [
+                    "example"
+                  ]
+                },
+                "like": {
+                  "name": [
+                    "example"
+                  ]
+                },
+                "notLike": {
+                  "name": [
+                    "example"
+                  ]
+                },
+                "orCondition": [
+                  true
+                ]
+              },
+              null
+            ],
+            "description": "Contains filters for ItemFilter",
+            "nullable": true
+          },
+          "notContains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "equals": {
+                  "id": [
+                    "123e4567-e89b-12d3-a456-426614174000"
+                  ],
+                  "name": [
+                    "example"
+                  ]
+                },
+                "notEquals": {
+                  "id": [
+                    "123e4567-e89b-12d3-a456-426614174000"
+                  ],
+                  "name": [
+                    "example"
+                  ]
+                },
+                "contains": {
+                  "id": [
+                    "123e4567-e89b-12d3-a456-426614174000"
+                  ],
+                  "name": [
+                    "example"
+                  ]
+                },
+                "notContains": {
+                  "id": [
+                    "123e4567-e89b-12d3-a456-426614174000"
+                  ],
+                  "name": [
+                    "example"
+                  ]
+                },
+                "like": {
+                  "name": [
+                    "example"
+                  ]
+                },
+                "notLike": {
+                  "name": [
+                    "example"
+                  ]
+                },
+                "orCondition": [
+                  true
+                ]
+              },
+              null
+            ],
+            "description": "Not contains filters for ItemFilter",
+            "nullable": true
+          },
+          "like": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "equals": {
+                  "name": "example"
+                },
+                "notEquals": {
+                  "name": "example"
+                },
+                "contains": {
+                  "name": "example"
+                },
+                "notContains": {
+                  "name": "example"
+                },
+                "like": {
+                  "name": "example"
+                },
+                "notLike": {
+                  "name": "example"
+                }
+              },
+              null
+            ],
+            "description": "LIKE filters for ItemFilter",
+            "nullable": true
+          },
+          "notLike": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "equals": {
+                  "name": "example"
+                },
+                "notEquals": {
+                  "name": "example"
+                },
+                "contains": {
+                  "name": "example"
+                },
+                "notContains": {
+                  "name": "example"
+                },
+                "like": {
+                  "name": "example"
+                },
+                "notLike": {
+                  "name": "example"
+                }
+              },
+              null
+            ],
+            "description": "NOT LIKE filters for ItemFilter",
+            "nullable": true
+          },
+          "null": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterFilterNull"
+              }
+            ],
+            "examples": [
+              {
+                "equals": true,
+                "notEquals": true,
+                "greaterThan": true,
+                "smallerThan": true,
+                "greaterOrEqual": true,
+                "smallerOrEqual": true,
+                "contains": true,
+                "notContains": true,
+                "like": true,
+                "notLike": true,
+                "null": true,
+                "notNull": true,
+                "nestedFilters": true
+              },
+              null
+            ],
+            "description": "Null filters for ItemFilter",
+            "nullable": true
+          },
+          "notNull": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterFilterNull"
+              }
+            ],
+            "examples": [
+              {
+                "equals": true,
+                "notEquals": true,
+                "greaterThan": true,
+                "smallerThan": true,
+                "greaterOrEqual": true,
+                "smallerOrEqual": true,
+                "contains": true,
+                "notContains": true,
+                "like": true,
+                "notLike": true,
+                "null": true,
+                "notNull": true,
+                "nestedFilters": true
+              },
+              null
+            ],
+            "description": "Not null filters for ItemFilter",
+            "nullable": true
+          },
+          "orCondition": {
+            "type": "boolean",
+            "examples": [
+              true
+            ],
+            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
+          },
+          "nestedFilters": {
+            "type": "array",
+            "examples": [
+              [
+                {
+                  "equals": {
+                    "equals": {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "name": "example"
+                    },
+                    "notEquals": {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "name": "example"
+                    },
+                    "contains": {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "name": "example"
+                    },
+                    "notContains": {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "name": "example"
+                    },
+                    "like": {
+                      "name": "example"
+                    },
+                    "notLike": {
+                      "name": "example"
+                    },
+                    "orCondition": true
+                  },
+                  "notEquals": {
+                    "equals": {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "name": "example"
+                    },
+                    "notEquals": {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "name": "example"
+                    },
+                    "contains": {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "name": "example"
+                    },
+                    "notContains": {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "name": "example"
+                    },
+                    "like": {
+                      "name": "example"
+                    },
+                    "notLike": {
+                      "name": "example"
+                    },
+                    "orCondition": true
+                  },
+                  "contains": {
+                    "equals": {
+                      "id": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ],
+                      "name": [
+                        "example"
+                      ]
+                    },
+                    "notEquals": {
+                      "id": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ],
+                      "name": [
+                        "example"
+                      ]
+                    },
+                    "contains": {
+                      "id": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ],
+                      "name": [
+                        "example"
+                      ]
+                    },
+                    "notContains": {
+                      "id": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ],
+                      "name": [
+                        "example"
+                      ]
+                    },
+                    "like": {
+                      "name": [
+                        "example"
+                      ]
+                    },
+                    "notLike": {
+                      "name": [
+                        "example"
+                      ]
+                    },
+                    "orCondition": [
+                      true
+                    ]
+                  },
+                  "notContains": {
+                    "equals": {
+                      "id": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ],
+                      "name": [
+                        "example"
+                      ]
+                    },
+                    "notEquals": {
+                      "id": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ],
+                      "name": [
+                        "example"
+                      ]
+                    },
+                    "contains": {
+                      "id": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ],
+                      "name": [
+                        "example"
+                      ]
+                    },
+                    "notContains": {
+                      "id": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ],
+                      "name": [
+                        "example"
+                      ]
+                    },
+                    "like": {
+                      "name": [
+                        "example"
+                      ]
+                    },
+                    "notLike": {
+                      "name": [
+                        "example"
+                      ]
+                    },
+                    "orCondition": [
+                      true
+                    ]
+                  },
+                  "like": {
+                    "equals": {
+                      "name": "example"
+                    },
+                    "notEquals": {
+                      "name": "example"
+                    },
+                    "contains": {
+                      "name": "example"
+                    },
+                    "notContains": {
+                      "name": "example"
+                    },
+                    "like": {
+                      "name": "example"
+                    },
+                    "notLike": {
+                      "name": "example"
+                    }
+                  },
+                  "notLike": {
+                    "equals": {
+                      "name": "example"
+                    },
+                    "notEquals": {
+                      "name": "example"
+                    },
+                    "contains": {
+                      "name": "example"
+                    },
+                    "notContains": {
+                      "name": "example"
+                    },
+                    "like": {
+                      "name": "example"
+                    },
+                    "notLike": {
+                      "name": "example"
+                    }
+                  },
+                  "null": {
+                    "equals": true,
+                    "notEquals": true,
+                    "greaterThan": true,
+                    "smallerThan": true,
+                    "greaterOrEqual": true,
+                    "smallerOrEqual": true,
+                    "contains": true,
+                    "notContains": true,
+                    "like": true,
+                    "notLike": true,
+                    "null": true,
+                    "notNull": true,
+                    "nestedFilters": true
+                  },
+                  "notNull": {
+                    "equals": true,
+                    "notEquals": true,
+                    "greaterThan": true,
+                    "smallerThan": true,
+                    "greaterOrEqual": true,
+                    "smallerOrEqual": true,
+                    "contains": true,
+                    "notContains": true,
+                    "like": true,
+                    "notLike": true,
+                    "null": true,
+                    "notNull": true,
+                    "nestedFilters": true
+                  },
+                  "orCondition": true
+                }
+              ]
+            ],
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ItemFilterFilter"
+                }
+              ]
+            },
+            "description": "NestedFilters of the ItemFilter, useful for more complex filters"
+          }
+        },
+        "required": [
+          "orCondition"
+        ],
+        "description": "Filter object for ItemFilter"
+      },
+      "ItemFilterFilterEquals": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEqualsFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "id": "123e4567-e89b-12d3-a456-426614174000",
+                "name": "example"
+              },
+              null
+            ],
+            "description": "Equality filters for Item",
+            "nullable": true
+          },
+          "notEquals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEqualsFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "id": "123e4567-e89b-12d3-a456-426614174000",
+                "name": "example"
+              },
+              null
+            ],
+            "description": "Inequality filters for Item",
+            "nullable": true
+          },
+          "greaterThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterEquals"
+              }
+            ],
+            "description": "Greater than filters for Item",
+            "nullable": true
+          },
+          "smallerThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterEquals"
+              }
+            ],
+            "description": "Smaller than filters for Item",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterEquals"
+              }
+            ],
+            "description": "Greater than or equal filters for Item",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterEquals"
+              }
+            ],
+            "description": "Smaller than or equal filters for Item",
+            "nullable": true
+          },
+          "contains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContainsFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "id": "123e4567-e89b-12d3-a456-426614174000",
+                "name": "example"
+              },
+              null
+            ],
+            "description": "Contains filters for Item",
+            "nullable": true
+          },
+          "notContains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContainsFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "id": "123e4567-e89b-12d3-a456-426614174000",
+                "name": "example"
+              },
+              null
+            ],
+            "description": "Not contains filters for Item",
+            "nullable": true
+          },
+          "like": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLikeFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "name": "example"
+              },
+              null
+            ],
+            "description": "LIKE filters for Item",
+            "nullable": true
+          },
+          "notLike": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLikeFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "name": "example"
+              },
+              null
+            ],
+            "description": "NOT LIKE filters for Item",
+            "nullable": true
+          },
+          "null": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNullFilterEquals"
+              }
+            ],
+            "description": "Null filters for Item",
+            "nullable": true
+          },
+          "notNull": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNullFilterEquals"
+              }
+            ],
+            "description": "Not null filters for Item",
+            "nullable": true
+          },
+          "orCondition": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition",
+            "nullable": true
+          },
+          "nestedFilters": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "equals": {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "name": "example"
+                },
+                "notEquals": {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "name": "example"
+                },
+                "contains": {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "name": "example"
+                },
+                "notContains": {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "name": "example"
+                },
+                "like": {
+                  "name": "example"
+                },
+                "notLike": {
+                  "name": "example"
+                },
+                "orCondition": true
+              },
+              null
+            ],
+            "description": "NestedFilters of the Item, useful for more complex filters",
+            "nullable": true
+          }
+        },
+        "description": "Equality/Inequality filter fields for ItemFilter"
+      },
+      "ItemFilterFilterRange": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEqualsFilterRange"
+              }
+            ],
+            "description": "Equality filters for Item",
+            "nullable": true
+          },
+          "notEquals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEqualsFilterRange"
+              }
+            ],
+            "description": "Inequality filters for Item",
+            "nullable": true
+          },
+          "greaterThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterRange"
+              }
+            ],
+            "description": "Greater than filters for Item",
+            "nullable": true
+          },
+          "smallerThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterRange"
+              }
+            ],
+            "description": "Smaller than filters for Item",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterRange"
+              }
+            ],
+            "description": "Greater than or equal filters for Item",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterRange"
+              }
+            ],
+            "description": "Smaller than or equal filters for Item",
+            "nullable": true
+          },
+          "contains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContainsFilterRange"
+              }
+            ],
+            "description": "Contains filters for Item",
+            "nullable": true
+          },
+          "notContains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContainsFilterRange"
+              }
+            ],
+            "description": "Not contains filters for Item",
+            "nullable": true
+          },
+          "like": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLikeFilterRange"
+              }
+            ],
+            "description": "LIKE filters for Item",
+            "nullable": true
+          },
+          "notLike": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLikeFilterRange"
+              }
+            ],
+            "description": "NOT LIKE filters for Item",
+            "nullable": true
+          },
+          "null": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNullFilterRange"
+              }
+            ],
+            "description": "Null filters for Item",
+            "nullable": true
+          },
+          "notNull": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNullFilterRange"
+              }
+            ],
+            "description": "Not null filters for Item",
+            "nullable": true
+          },
+          "nestedFilters": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterFilterRange"
+              }
+            ],
+            "description": "NestedFilters of the Item, useful for more complex filters",
+            "nullable": true
+          }
+        },
+        "description": "Range filter fields for ItemFilter"
+      },
+      "ItemFilterFilterContains": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEqualsFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "id": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ],
+                "name": [
+                  "example"
+                ]
+              },
+              null
+            ],
+            "description": "Equality filters for Item",
+            "nullable": true
+          },
+          "notEquals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEqualsFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "id": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ],
+                "name": [
+                  "example"
+                ]
+              },
+              null
+            ],
+            "description": "Inequality filters for Item",
+            "nullable": true
+          },
+          "greaterThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterContains"
+              }
+            ],
+            "description": "Greater than filters for Item",
+            "nullable": true
+          },
+          "smallerThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterContains"
+              }
+            ],
+            "description": "Smaller than filters for Item",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterContains"
+              }
+            ],
+            "description": "Greater than or equal filters for Item",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterContains"
+              }
+            ],
+            "description": "Smaller than or equal filters for Item",
+            "nullable": true
+          },
+          "contains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContainsFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "id": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ],
+                "name": [
+                  "example"
+                ]
+              },
+              null
+            ],
+            "description": "Contains filters for Item",
+            "nullable": true
+          },
+          "notContains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContainsFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "id": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ],
+                "name": [
+                  "example"
+                ]
+              },
+              null
+            ],
+            "description": "Not contains filters for Item",
+            "nullable": true
+          },
+          "like": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLikeFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "name": [
+                  "example"
+                ]
+              },
+              null
+            ],
+            "description": "LIKE filters for Item",
+            "nullable": true
+          },
+          "notLike": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLikeFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "name": [
+                  "example"
+                ]
+              },
+              null
+            ],
+            "description": "NOT LIKE filters for Item",
+            "nullable": true
+          },
+          "null": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNullFilterContains"
+              }
+            ],
+            "description": "Null filters for Item",
+            "nullable": true
+          },
+          "notNull": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNullFilterContains"
+              }
+            ],
+            "description": "Not null filters for Item",
+            "nullable": true
+          },
+          "orCondition": {
+            "type": "array",
+            "examples": [
+              [
+                true
+              ]
+            ],
+            "items": {
+              "type": "boolean"
+            },
+            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
+          },
+          "nestedFilters": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "equals": {
+                  "id": [
+                    "123e4567-e89b-12d3-a456-426614174000"
+                  ],
+                  "name": [
+                    "example"
+                  ]
+                },
+                "notEquals": {
+                  "id": [
+                    "123e4567-e89b-12d3-a456-426614174000"
+                  ],
+                  "name": [
+                    "example"
+                  ]
+                },
+                "contains": {
+                  "id": [
+                    "123e4567-e89b-12d3-a456-426614174000"
+                  ],
+                  "name": [
+                    "example"
+                  ]
+                },
+                "notContains": {
+                  "id": [
+                    "123e4567-e89b-12d3-a456-426614174000"
+                  ],
+                  "name": [
+                    "example"
+                  ]
+                },
+                "like": {
+                  "name": [
+                    "example"
+                  ]
+                },
+                "notLike": {
+                  "name": [
+                    "example"
+                  ]
+                },
+                "orCondition": [
+                  true
+                ]
+              },
+              null
+            ],
+            "description": "NestedFilters of the Item, useful for more complex filters",
+            "nullable": true
+          }
+        },
+        "description": "Contains filter fields for ItemFilter"
+      },
+      "ItemFilterFilterLike": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEqualsFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "name": "example"
+              },
+              null
+            ],
+            "description": "Equality filters for Item",
+            "nullable": true
+          },
+          "notEquals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEqualsFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "name": "example"
+              },
+              null
+            ],
+            "description": "Inequality filters for Item",
+            "nullable": true
+          },
+          "greaterThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterLike"
+              }
+            ],
+            "description": "Greater than filters for Item",
+            "nullable": true
+          },
+          "smallerThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterLike"
+              }
+            ],
+            "description": "Smaller than filters for Item",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterLike"
+              }
+            ],
+            "description": "Greater than or equal filters for Item",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterLike"
+              }
+            ],
+            "description": "Smaller than or equal filters for Item",
+            "nullable": true
+          },
+          "contains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContainsFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "name": "example"
+              },
+              null
+            ],
+            "description": "Contains filters for Item",
+            "nullable": true
+          },
+          "notContains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContainsFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "name": "example"
+              },
+              null
+            ],
+            "description": "Not contains filters for Item",
+            "nullable": true
+          },
+          "like": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLikeFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "name": "example"
+              },
+              null
+            ],
+            "description": "LIKE filters for Item",
+            "nullable": true
+          },
+          "notLike": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLikeFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "name": "example"
+              },
+              null
+            ],
+            "description": "NOT LIKE filters for Item",
+            "nullable": true
+          },
+          "null": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNullFilterLike"
+              }
+            ],
+            "description": "Null filters for Item",
+            "nullable": true
+          },
+          "notNull": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNullFilterLike"
+              }
+            ],
+            "description": "Not null filters for Item",
+            "nullable": true
+          },
+          "nestedFilters": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "equals": {
+                  "name": "example"
+                },
+                "notEquals": {
+                  "name": "example"
+                },
+                "contains": {
+                  "name": "example"
+                },
+                "notContains": {
+                  "name": "example"
+                },
+                "like": {
+                  "name": "example"
+                },
+                "notLike": {
+                  "name": "example"
+                }
+              },
+              null
+            ],
+            "description": "NestedFilters of the Item, useful for more complex filters",
+            "nullable": true
+          }
+        },
+        "description": "LIKE filter fields for ItemFilter"
+      },
+      "ItemFilterFilterNull": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "Equality filters for Item",
+            "nullable": true
+          },
+          "notEquals": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "Inequality filters for Item",
+            "nullable": true
+          },
+          "greaterThan": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "Greater than filters for Item",
+            "nullable": true
+          },
+          "smallerThan": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "Smaller than filters for Item",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "Greater than or equal filters for Item",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "Smaller than or equal filters for Item",
+            "nullable": true
+          },
+          "contains": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "Contains filters for Item",
+            "nullable": true
+          },
+          "notContains": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "Not contains filters for Item",
+            "nullable": true
+          },
+          "like": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "LIKE filters for Item",
+            "nullable": true
+          },
+          "notLike": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "NOT LIKE filters for Item",
+            "nullable": true
+          },
+          "null": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "Null filters for Item",
+            "nullable": true
+          },
+          "notNull": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "Not null filters for Item",
+            "nullable": true
+          },
+          "nestedFilters": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "NestedFilters of the Item, useful for more complex filters",
+            "nullable": true
+          }
+        },
+        "description": "Null filter fields for ItemFilter"
+      },
+      "ItemFilterEqualsFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEqualsFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "id": "123e4567-e89b-12d3-a456-426614174000",
+                "name": "example"
+              },
+              null
+            ],
+            "description": "Equality filters for ItemFilterEquals",
+            "nullable": true
+          },
+          "notEquals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEqualsFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "id": "123e4567-e89b-12d3-a456-426614174000",
+                "name": "example"
+              },
+              null
+            ],
+            "description": "Inequality filters for ItemFilterEquals",
+            "nullable": true
+          },
+          "greaterThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEqualsFilterRange"
+              }
+            ],
+            "description": "Greater than filters for ItemFilterEquals",
+            "nullable": true
+          },
+          "smallerThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEqualsFilterRange"
+              }
+            ],
+            "description": "Smaller than filters for ItemFilterEquals",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEqualsFilterRange"
+              }
+            ],
+            "description": "Greater than or equal filters for ItemFilterEquals",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEqualsFilterRange"
+              }
+            ],
+            "description": "Smaller than or equal filters for ItemFilterEquals",
+            "nullable": true
+          },
+          "contains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEqualsFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "id": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ],
+                "name": [
+                  "example"
+                ]
+              },
+              null
+            ],
+            "description": "Contains filters for ItemFilterEquals",
+            "nullable": true
+          },
+          "notContains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEqualsFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "id": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ],
+                "name": [
+                  "example"
+                ]
+              },
+              null
+            ],
+            "description": "Not contains filters for ItemFilterEquals",
+            "nullable": true
+          },
+          "like": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEqualsFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "name": "example"
+              },
+              null
+            ],
+            "description": "LIKE filters for ItemFilterEquals",
+            "nullable": true
+          },
+          "notLike": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEqualsFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "name": "example"
+              },
+              null
+            ],
+            "description": "NOT LIKE filters for ItemFilterEquals",
+            "nullable": true
+          },
+          "null": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEqualsFilterNull"
+              }
+            ],
+            "examples": [
+              {
+                "id": true,
+                "meta": true,
+                "name": true
+              },
+              null
+            ],
+            "description": "Null filters for ItemFilterEquals",
+            "nullable": true
+          },
+          "notNull": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterEqualsFilterNull"
+              }
+            ],
+            "examples": [
+              {
+                "id": true,
+                "meta": true,
+                "name": true
+              },
+              null
+            ],
+            "description": "Not null filters for ItemFilterEquals",
+            "nullable": true
+          },
+          "orCondition": {
+            "type": "boolean",
+            "examples": [
+              true
+            ],
+            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
+          },
+          "nestedFilters": {
+            "type": "array",
+            "examples": [
+              [
+                {
+                  "equals": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "name": "example"
+                  },
+                  "notEquals": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "name": "example"
+                  },
+                  "contains": {
+                    "id": [
+                      "123e4567-e89b-12d3-a456-426614174000"
+                    ],
+                    "name": [
+                      "example"
+                    ]
+                  },
+                  "notContains": {
+                    "id": [
+                      "123e4567-e89b-12d3-a456-426614174000"
+                    ],
+                    "name": [
+                      "example"
+                    ]
+                  },
+                  "like": {
+                    "name": "example"
+                  },
+                  "notLike": {
+                    "name": "example"
+                  },
+                  "null": {
+                    "id": true,
+                    "meta": true,
+                    "name": true
+                  },
+                  "notNull": {
+                    "id": true,
+                    "meta": true,
+                    "name": true
+                  },
+                  "orCondition": true
+                }
+              ]
+            ],
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ItemFilterEqualsFilter"
+                }
+              ]
+            },
+            "description": "NestedFilters of the ItemFilterEquals, useful for more complex filters"
+          }
+        },
+        "required": [
+          "orCondition"
+        ],
+        "description": "Filter object for ItemFilterEquals"
+      },
+      "ItemFilterEqualsFilterEquals": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "examples": [
+              "123e4567-e89b-12d3-a456-426614174000",
+              null
+            ],
+            "format": "uuid",
+            "description": "Unique identifier for the Item",
+            "nullable": true
+          },
+          "meta": {
+            "type": "string",
+            "description": "Metadata information for the Item",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "Item name",
+            "nullable": true
+          }
+        },
+        "description": "Equality/Inequality filter fields for ItemFilterEquals"
+      },
+      "ItemFilterEqualsFilterRange": {
+        "type": "object",
+        "description": "Range filter fields for ItemFilterEquals"
+      },
+      "ItemFilterEqualsFilterContains": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "array",
+            "examples": [
+              [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ]
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Unique identifier for the Item"
+          },
+          "meta": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Metadata information for the Item"
+          },
+          "name": {
+            "type": "array",
+            "examples": [
+              [
+                "example"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Item name"
+          }
+        },
+        "description": "Contains filter fields for ItemFilterEquals"
+      },
+      "ItemFilterEqualsFilterLike": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "Item name",
+            "nullable": true
+          }
+        },
+        "description": "LIKE filter fields for ItemFilterEquals"
+      },
+      "ItemFilterEqualsFilterNull": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "Unique identifier for the Item",
+            "nullable": true
+          },
+          "meta": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "Metadata information for the Item",
+            "nullable": true
+          },
+          "name": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "Item name",
+            "nullable": true
+          }
+        },
+        "description": "Null filter fields for ItemFilterEquals"
+      },
+      "ItemFilterRangeFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterEquals"
+              }
+            ],
+            "description": "Equality filters for ItemFilterRange",
+            "nullable": true
+          },
+          "notEquals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterEquals"
+              }
+            ],
+            "description": "Inequality filters for ItemFilterRange",
+            "nullable": true
+          },
+          "greaterThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterRange"
+              }
+            ],
+            "description": "Greater than filters for ItemFilterRange",
+            "nullable": true
+          },
+          "smallerThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterRange"
+              }
+            ],
+            "description": "Smaller than filters for ItemFilterRange",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterRange"
+              }
+            ],
+            "description": "Greater than or equal filters for ItemFilterRange",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterRange"
+              }
+            ],
+            "description": "Smaller than or equal filters for ItemFilterRange",
+            "nullable": true
+          },
+          "contains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterContains"
+              }
+            ],
+            "description": "Contains filters for ItemFilterRange",
+            "nullable": true
+          },
+          "notContains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterContains"
+              }
+            ],
+            "description": "Not contains filters for ItemFilterRange",
+            "nullable": true
+          },
+          "like": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterLike"
+              }
+            ],
+            "description": "LIKE filters for ItemFilterRange",
+            "nullable": true
+          },
+          "notLike": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterLike"
+              }
+            ],
+            "description": "NOT LIKE filters for ItemFilterRange",
+            "nullable": true
+          },
+          "null": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterNull"
+              }
+            ],
+            "examples": [
+              {
+                "meta": true
+              },
+              null
+            ],
+            "description": "Null filters for ItemFilterRange",
+            "nullable": true
+          },
+          "notNull": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterRangeFilterNull"
+              }
+            ],
+            "examples": [
+              {
+                "meta": true
+              },
+              null
+            ],
+            "description": "Not null filters for ItemFilterRange",
+            "nullable": true
+          },
+          "orCondition": {
+            "type": "boolean",
+            "examples": [
+              true
+            ],
+            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
+          },
+          "nestedFilters": {
+            "type": "array",
+            "examples": [
+              [
+                {
+                  "null": {
+                    "meta": true
+                  },
+                  "notNull": {
+                    "meta": true
+                  },
+                  "orCondition": true
+                }
+              ]
+            ],
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ItemFilterRangeFilter"
+                }
+              ]
+            },
+            "description": "NestedFilters of the ItemFilterRange, useful for more complex filters"
+          }
+        },
+        "required": [
+          "orCondition"
+        ],
+        "description": "Filter object for ItemFilterRange"
+      },
+      "ItemFilterRangeFilterEquals": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "type": "string",
+            "description": "Metadata information for the Item",
+            "nullable": true
+          }
+        },
+        "description": "Equality/Inequality filter fields for ItemFilterRange"
+      },
+      "ItemFilterRangeFilterRange": {
+        "type": "object",
+        "description": "Range filter fields for ItemFilterRange"
+      },
+      "ItemFilterRangeFilterContains": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Metadata information for the Item"
+          }
+        },
+        "description": "Contains filter fields for ItemFilterRange"
+      },
+      "ItemFilterRangeFilterLike": {
+        "type": "object",
+        "description": "LIKE filter fields for ItemFilterRange"
+      },
+      "ItemFilterRangeFilterNull": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "Metadata information for the Item",
+            "nullable": true
+          }
+        },
+        "description": "Null filter fields for ItemFilterRange"
+      },
+      "ItemFilterContainsFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContainsFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "id": "123e4567-e89b-12d3-a456-426614174000",
+                "name": "example"
+              },
+              null
+            ],
+            "description": "Equality filters for ItemFilterContains",
+            "nullable": true
+          },
+          "notEquals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContainsFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "id": "123e4567-e89b-12d3-a456-426614174000",
+                "name": "example"
+              },
+              null
+            ],
+            "description": "Inequality filters for ItemFilterContains",
+            "nullable": true
+          },
+          "greaterThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContainsFilterRange"
+              }
+            ],
+            "description": "Greater than filters for ItemFilterContains",
+            "nullable": true
+          },
+          "smallerThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContainsFilterRange"
+              }
+            ],
+            "description": "Smaller than filters for ItemFilterContains",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContainsFilterRange"
+              }
+            ],
+            "description": "Greater than or equal filters for ItemFilterContains",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContainsFilterRange"
+              }
+            ],
+            "description": "Smaller than or equal filters for ItemFilterContains",
+            "nullable": true
+          },
+          "contains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContainsFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "id": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ],
+                "name": [
+                  "example"
+                ]
+              },
+              null
+            ],
+            "description": "Contains filters for ItemFilterContains",
+            "nullable": true
+          },
+          "notContains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContainsFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "id": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ],
+                "name": [
+                  "example"
+                ]
+              },
+              null
+            ],
+            "description": "Not contains filters for ItemFilterContains",
+            "nullable": true
+          },
+          "like": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContainsFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "name": "example"
+              },
+              null
+            ],
+            "description": "LIKE filters for ItemFilterContains",
+            "nullable": true
+          },
+          "notLike": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContainsFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "name": "example"
+              },
+              null
+            ],
+            "description": "NOT LIKE filters for ItemFilterContains",
+            "nullable": true
+          },
+          "null": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContainsFilterNull"
+              }
+            ],
+            "examples": [
+              {
+                "id": true,
+                "meta": true,
+                "name": true
+              },
+              null
+            ],
+            "description": "Null filters for ItemFilterContains",
+            "nullable": true
+          },
+          "notNull": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterContainsFilterNull"
+              }
+            ],
+            "examples": [
+              {
+                "id": true,
+                "meta": true,
+                "name": true
+              },
+              null
+            ],
+            "description": "Not null filters for ItemFilterContains",
+            "nullable": true
+          },
+          "orCondition": {
+            "type": "boolean",
+            "examples": [
+              true
+            ],
+            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
+          },
+          "nestedFilters": {
+            "type": "array",
+            "examples": [
+              [
+                {
+                  "equals": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "name": "example"
+                  },
+                  "notEquals": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "name": "example"
+                  },
+                  "contains": {
+                    "id": [
+                      "123e4567-e89b-12d3-a456-426614174000"
+                    ],
+                    "name": [
+                      "example"
+                    ]
+                  },
+                  "notContains": {
+                    "id": [
+                      "123e4567-e89b-12d3-a456-426614174000"
+                    ],
+                    "name": [
+                      "example"
+                    ]
+                  },
+                  "like": {
+                    "name": "example"
+                  },
+                  "notLike": {
+                    "name": "example"
+                  },
+                  "null": {
+                    "id": true,
+                    "meta": true,
+                    "name": true
+                  },
+                  "notNull": {
+                    "id": true,
+                    "meta": true,
+                    "name": true
+                  },
+                  "orCondition": true
+                }
+              ]
+            ],
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ItemFilterContainsFilter"
+                }
+              ]
+            },
+            "description": "NestedFilters of the ItemFilterContains, useful for more complex filters"
+          }
+        },
+        "required": [
+          "orCondition"
+        ],
+        "description": "Filter object for ItemFilterContains"
+      },
+      "ItemFilterContainsFilterEquals": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "examples": [
+              "123e4567-e89b-12d3-a456-426614174000",
+              null
+            ],
+            "format": "uuid",
+            "description": "Unique identifier for the Item",
+            "nullable": true
+          },
+          "meta": {
+            "type": "string",
+            "description": "Metadata information for the Item",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "Item name",
+            "nullable": true
+          }
+        },
+        "description": "Equality/Inequality filter fields for ItemFilterContains"
+      },
+      "ItemFilterContainsFilterRange": {
+        "type": "object",
+        "description": "Range filter fields for ItemFilterContains"
+      },
+      "ItemFilterContainsFilterContains": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "array",
+            "examples": [
+              [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ]
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Unique identifier for the Item"
+          },
+          "meta": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Metadata information for the Item"
+          },
+          "name": {
+            "type": "array",
+            "examples": [
+              [
+                "example"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Item name"
+          }
+        },
+        "description": "Contains filter fields for ItemFilterContains"
+      },
+      "ItemFilterContainsFilterLike": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "Item name",
+            "nullable": true
+          }
+        },
+        "description": "LIKE filter fields for ItemFilterContains"
+      },
+      "ItemFilterContainsFilterNull": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "Unique identifier for the Item",
+            "nullable": true
+          },
+          "meta": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "Metadata information for the Item",
+            "nullable": true
+          },
+          "name": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "Item name",
+            "nullable": true
+          }
+        },
+        "description": "Null filter fields for ItemFilterContains"
+      },
+      "ItemFilterLikeFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLikeFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "name": "example"
+              },
+              null
+            ],
+            "description": "Equality filters for ItemFilterLike",
+            "nullable": true
+          },
+          "notEquals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLikeFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "name": "example"
+              },
+              null
+            ],
+            "description": "Inequality filters for ItemFilterLike",
+            "nullable": true
+          },
+          "greaterThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLikeFilterRange"
+              }
+            ],
+            "description": "Greater than filters for ItemFilterLike",
+            "nullable": true
+          },
+          "smallerThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLikeFilterRange"
+              }
+            ],
+            "description": "Smaller than filters for ItemFilterLike",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLikeFilterRange"
+              }
+            ],
+            "description": "Greater than or equal filters for ItemFilterLike",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLikeFilterRange"
+              }
+            ],
+            "description": "Smaller than or equal filters for ItemFilterLike",
+            "nullable": true
+          },
+          "contains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLikeFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "name": [
+                  "example"
+                ]
+              },
+              null
+            ],
+            "description": "Contains filters for ItemFilterLike",
+            "nullable": true
+          },
+          "notContains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLikeFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "name": [
+                  "example"
+                ]
+              },
+              null
+            ],
+            "description": "Not contains filters for ItemFilterLike",
+            "nullable": true
+          },
+          "like": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLikeFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "name": "example"
+              },
+              null
+            ],
+            "description": "LIKE filters for ItemFilterLike",
+            "nullable": true
+          },
+          "notLike": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLikeFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "name": "example"
+              },
+              null
+            ],
+            "description": "NOT LIKE filters for ItemFilterLike",
+            "nullable": true
+          },
+          "null": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLikeFilterNull"
+              }
+            ],
+            "examples": [
+              {
+                "meta": true,
+                "name": true
+              },
+              null
+            ],
+            "description": "Null filters for ItemFilterLike",
+            "nullable": true
+          },
+          "notNull": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterLikeFilterNull"
+              }
+            ],
+            "examples": [
+              {
+                "meta": true,
+                "name": true
+              },
+              null
+            ],
+            "description": "Not null filters for ItemFilterLike",
+            "nullable": true
+          },
+          "orCondition": {
+            "type": "boolean",
+            "examples": [
+              true
+            ],
+            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
+          },
+          "nestedFilters": {
+            "type": "array",
+            "examples": [
+              [
+                {
+                  "equals": {
+                    "name": "example"
+                  },
+                  "notEquals": {
+                    "name": "example"
+                  },
+                  "contains": {
+                    "name": [
+                      "example"
+                    ]
+                  },
+                  "notContains": {
+                    "name": [
+                      "example"
+                    ]
+                  },
+                  "like": {
+                    "name": "example"
+                  },
+                  "notLike": {
+                    "name": "example"
+                  },
+                  "null": {
+                    "meta": true,
+                    "name": true
+                  },
+                  "notNull": {
+                    "meta": true,
+                    "name": true
+                  },
+                  "orCondition": true
+                }
+              ]
+            ],
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ItemFilterLikeFilter"
+                }
+              ]
+            },
+            "description": "NestedFilters of the ItemFilterLike, useful for more complex filters"
+          }
+        },
+        "required": [
+          "orCondition"
+        ],
+        "description": "Filter object for ItemFilterLike"
+      },
+      "ItemFilterLikeFilterEquals": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "type": "string",
+            "description": "Metadata information for the Item",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "Item name",
+            "nullable": true
+          }
+        },
+        "description": "Equality/Inequality filter fields for ItemFilterLike"
+      },
+      "ItemFilterLikeFilterRange": {
+        "type": "object",
+        "description": "Range filter fields for ItemFilterLike"
+      },
+      "ItemFilterLikeFilterContains": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Metadata information for the Item"
+          },
+          "name": {
+            "type": "array",
+            "examples": [
+              [
+                "example"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Item name"
+          }
+        },
+        "description": "Contains filter fields for ItemFilterLike"
+      },
+      "ItemFilterLikeFilterLike": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "Item name",
+            "nullable": true
+          }
+        },
+        "description": "LIKE filter fields for ItemFilterLike"
+      },
+      "ItemFilterLikeFilterNull": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "Metadata information for the Item",
+            "nullable": true
+          },
+          "name": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "Item name",
+            "nullable": true
+          }
+        },
+        "description": "Null filter fields for ItemFilterLike"
+      },
+      "ItemFilterNullFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNullFilterEquals"
+              }
+            ],
+            "description": "Equality filters for ItemFilterNull",
+            "nullable": true
+          },
+          "notEquals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNullFilterEquals"
+              }
+            ],
+            "description": "Inequality filters for ItemFilterNull",
+            "nullable": true
+          },
+          "greaterThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNullFilterRange"
+              }
+            ],
+            "description": "Greater than filters for ItemFilterNull",
+            "nullable": true
+          },
+          "smallerThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNullFilterRange"
+              }
+            ],
+            "description": "Smaller than filters for ItemFilterNull",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNullFilterRange"
+              }
+            ],
+            "description": "Greater than or equal filters for ItemFilterNull",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNullFilterRange"
+              }
+            ],
+            "description": "Smaller than or equal filters for ItemFilterNull",
+            "nullable": true
+          },
+          "contains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNullFilterContains"
+              }
+            ],
+            "description": "Contains filters for ItemFilterNull",
+            "nullable": true
+          },
+          "notContains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNullFilterContains"
+              }
+            ],
+            "description": "Not contains filters for ItemFilterNull",
+            "nullable": true
+          },
+          "like": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNullFilterLike"
+              }
+            ],
+            "description": "LIKE filters for ItemFilterNull",
+            "nullable": true
+          },
+          "notLike": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNullFilterLike"
+              }
+            ],
+            "description": "NOT LIKE filters for ItemFilterNull",
+            "nullable": true
+          },
+          "null": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNullFilterNull"
+              }
+            ],
+            "description": "Null filters for ItemFilterNull",
+            "nullable": true
+          },
+          "notNull": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemFilterNullFilterNull"
+              }
+            ],
+            "description": "Not null filters for ItemFilterNull",
+            "nullable": true
+          },
+          "orCondition": {
+            "type": "boolean",
+            "examples": [
+              true
+            ],
+            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
+          },
+          "nestedFilters": {
+            "type": "array",
+            "examples": [
+              [
+                {
+                  "orCondition": true
+                }
+              ]
+            ],
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ItemFilterNullFilter"
+                }
+              ]
+            },
+            "description": "NestedFilters of the ItemFilterNull, useful for more complex filters"
+          }
+        },
+        "required": [
+          "orCondition"
+        ],
+        "description": "Filter object for ItemFilterNull"
+      },
+      "ItemFilterNullFilterEquals": {
+        "type": "object",
+        "description": "Equality/Inequality filter fields for ItemFilterNull"
+      },
+      "ItemFilterNullFilterRange": {
+        "type": "object",
+        "description": "Range filter fields for ItemFilterNull"
+      },
+      "ItemFilterNullFilterContains": {
+        "type": "object",
+        "description": "Contains filter fields for ItemFilterNull"
+      },
+      "ItemFilterNullFilterLike": {
+        "type": "object",
+        "description": "LIKE filter fields for ItemFilterNull"
+      },
+      "ItemFilterNullFilterNull": {
+        "type": "object",
+        "description": "Null filter fields for ItemFilterNull"
+      }
+    },
+    "responses": {
+      "ItemGet": {
+        "description": "Response for Item Get operation - returns the requested Item",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Item"
+                }
+              ]
+            },
+            "examples": {
+              "responseExample": {
+                "summary": "Response body example",
+                "value": {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "meta": {
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                    "updatedAt": "2024-01-15T14:45:00Z",
+                    "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                  },
+                  "name": "test-item"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ItemList": {
+        "description": "Response for Item List operation - returns a paginated list of Item",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "examples": [
+                    [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "meta": {
+                          "createdAt": "2024-01-15T10:30:00Z",
+                          "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                          "updatedAt": "2024-01-15T14:45:00Z",
+                          "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                        },
+                        "name": "test-item"
+                      }
+                    ]
+                  ],
+                  "items": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Item"
+                      }
+                    ]
+                  },
+                  "description": "Array of Item objects"
+                },
+                "pagination": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "offset": 0,
+                      "limit": 1,
+                      "total": 100
+                    }
+                  ],
+                  "description": "Pagination information"
+                }
+              }
+            },
+            "examples": {
+              "responseExample": {
+                "summary": "Response body example",
+                "value": {
+                  "data": [
+                    {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "meta": {
+                        "createdAt": "2024-01-15T10:30:00Z",
+                        "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                        "updatedAt": "2024-01-15T14:45:00Z",
+                        "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                      },
+                      "name": "test-item"
+                    }
+                  ],
+                  "pagination": {
+                    "offset": 0,
+                    "limit": 1,
+                    "total": 100
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ItemSearch": {
+        "description": "Response for Item Search operation - returns filtered Item results",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "examples": [
+                    [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "meta": {
+                          "createdAt": "2024-01-15T10:30:00Z",
+                          "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                          "updatedAt": "2024-01-15T14:45:00Z",
+                          "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                        },
+                        "name": "test-item"
+                      }
+                    ]
+                  ],
+                  "items": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Item"
+                      }
+                    ]
+                  },
+                  "description": "Array of Item objects"
+                },
+                "pagination": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "offset": 0,
+                      "limit": 1,
+                      "total": 100
+                    }
+                  ],
+                  "description": "Pagination information"
+                }
+              }
+            },
+            "examples": {
+              "responseExample": {
+                "summary": "Response body example",
+                "value": {
+                  "data": [
+                    {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "meta": {
+                        "createdAt": "2024-01-15T10:30:00Z",
+                        "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                        "updatedAt": "2024-01-15T14:45:00Z",
+                        "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                      },
+                      "name": "test-item"
+                    }
+                  ],
+                  "pagination": {
+                    "offset": 0,
+                    "limit": 1,
+                    "total": 100
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ItemSearch422ResponseBody": {
+        "description": "Validation error for Item Search operation - request data failed validation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "UnprocessableEntity",
+                      "message": "Validation failed for Item Search endpoint"
+                    }
+                  ]
+                },
+                "errorFields": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ItemSearchRequestError"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "filter": {
+                        "equals": {
+                          "id": {
+                            "code": "InvalidValue",
+                            "message": "ID is required"
+                          },
+                          "meta": {
+                            "code": "InvalidValue",
+                            "message": "Meta is required"
+                          }
+                        },
+                        "notEquals": {
+                          "id": {
+                            "code": "InvalidValue",
+                            "message": "ID is required"
+                          },
+                          "meta": {
+                            "code": "InvalidValue",
+                            "message": "Meta is required"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error",
+                "errorFields"
+              ]
+            },
+            "examples": {
+              "validationError": {
+                "summary": "Validation error example",
+                "value": {
+                  "error": {
+                    "code": "UnprocessableEntity",
+                    "message": "Validation failed for Item Search endpoint"
+                  },
+                  "errorFields": {
+                    "filter": {
+                      "equals": {
+                        "id": {
+                          "code": "InvalidValue",
+                          "message": "ID is required"
+                        },
+                        "meta": {
+                          "code": "InvalidValue",
+                          "message": "Meta is required"
+                        }
+                      },
+                      "notEquals": {
+                        "id": {
+                          "code": "InvalidValue",
+                          "message": "ID is required"
+                        },
+                        "meta": {
+                          "code": "InvalidValue",
+                          "message": "Meta is required"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error400ResponseBody": {
+        "description": "Bad Request - The request was malformed or contained invalid parameters",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "BadRequest",
+                      "message": "The request contains invalid parameters or malformed data"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            },
+            "examples": {
+              "errorExample": {
+                "summary": "Bad Request error example",
+                "value": {
+                  "error": {
+                    "code": "BadRequest",
+                    "message": "The request contains invalid parameters or malformed data"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error401ResponseBody": {
+        "description": "Unauthorized - The request is missing valid authentication credentials",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "BadRequest",
+                      "message": "The request contains invalid parameters or malformed data"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            },
+            "examples": {
+              "errorExample": {
+                "summary": "Unauthorized error example",
+                "value": {
+                  "error": {
+                    "code": "Unauthorized",
+                    "message": "Authentication credentials are missing or invalid"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error403ResponseBody": {
+        "description": "Forbidden - Request is authenticated, but the user is not allowed to perform the operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "BadRequest",
+                      "message": "The request contains invalid parameters or malformed data"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            },
+            "examples": {
+              "errorExample": {
+                "summary": "Forbidden error example",
+                "value": {
+                  "error": {
+                    "code": "Forbidden",
+                    "message": "You do not have permission to perform this operation"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error404ResponseBody": {
+        "description": "Not Found - The requested resource does not exist",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "BadRequest",
+                      "message": "The request contains invalid parameters or malformed data"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            },
+            "examples": {
+              "errorExample": {
+                "summary": "Not Found error example",
+                "value": {
+                  "error": {
+                    "code": "NotFound",
+                    "message": "The requested resource could not be found"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error409ResponseBody": {
+        "description": "Conflict - The request could not be completed due to a conflict",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "BadRequest",
+                      "message": "The request contains invalid parameters or malformed data"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            },
+            "examples": {
+              "errorExample": {
+                "summary": "Conflict error example",
+                "value": {
+                  "error": {
+                    "code": "Conflict",
+                    "message": "The request conflicts with the current state of the resource"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error429ResponseBody": {
+        "description": "Too Many Requests - When the rate limit has been exceeded",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "BadRequest",
+                      "message": "The request contains invalid parameters or malformed data"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            },
+            "examples": {
+              "errorExample": {
+                "summary": "Rate Limited error example",
+                "value": {
+                  "error": {
+                    "code": "RateLimited",
+                    "message": "Too many requests - rate limit exceeded"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error500ResponseBody": {
+        "description": "Internal Server Error - An unexpected server error occurred",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "BadRequest",
+                      "message": "The request contains invalid parameters or malformed data"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            },
+            "examples": {
+              "errorExample": {
+                "summary": "Internal Server error example",
+                "value": {
+                  "error": {
+                    "code": "Internal",
+                    "message": "An unexpected server error occurred"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "requestBodies": {
+      "ItemSearch": {
+        "description": "Request body",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ItemFilter"
+                }
+              ],
+              "description": "Filter criteria to search for specific records"
+            },
+            "examples": {
+              "requestExample": {
+                "summary": "Request body example",
+                "value": {
+                  "equals": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "name": "example"
+                  },
+                  "notEquals": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "name": "example"
+                  },
+                  "contains": {
+                    "id": [
+                      "123e4567-e89b-12d3-a456-426614174000"
+                    ],
+                    "name": [
+                      "example"
+                    ]
+                  },
+                  "notContains": {
+                    "id": [
+                      "123e4567-e89b-12d3-a456-426614174000"
+                    ],
+                    "name": [
+                      "example"
+                    ]
+                  },
+                  "like": {
+                    "name": "example"
+                  },
+                  "notLike": {
+                    "name": "example"
+                  },
+                  "orCondition": true
+                }
+              }
+            }
+          }
+        },
+        "required": false
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Item",
+      "description": "Simple item resource for e2e testing"
+    }
+  ],
+  "x-speakeasy-retries": {
+    "strategy": "backoff",
+    "backoff": {
+      "initialInterval": 500,
+      "maxInterval": 60000,
+      "maxElapsedTime": 3600000,
+      "exponent": 1.5
+    },
+    "statusCodes": [
+      "5XX"
+    ],
+    "retryConnectionErrors": true
+  },
+  "x-speakeasy-timeout": 30000
+}
