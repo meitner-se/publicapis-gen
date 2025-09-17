@@ -21,7 +21,7 @@ func TestNewGenerator(t *testing.T) {
 	generator := newGenerator()
 
 	assert.NotNil(t, generator, "Generator should not be nil")
-	assert.Equal(t, "3.1.0", generator.Version, "Generator version should be 3.1.0")
+	assert.Equal(t, "3.0.3", generator.Version, "Generator version should be 3.0.3")
 	assert.Equal(t, "", generator.Title, "Generator title should be empty by default")
 	assert.Equal(t, "", generator.Description, "Generator description should be empty by default")
 	assert.Equal(t, "", generator.ServerURL, "Generator server URL should be empty by default")
@@ -54,7 +54,7 @@ func TestGenerator_GenerateFromService(t *testing.T) {
 
 		assert.NotNil(t, document, "Document should not be nil with valid service")
 		assert.NoError(t, err, "Should not return error with valid service")
-		assert.Equal(t, "3.1.0", document.Version, "Document version should be 3.1.0")
+		assert.Equal(t, "3.0.3", document.Version, "Document version should be 3.0.3")
 		assert.Equal(t, "TestService", document.Info.Title, "Document title should match service name")
 	})
 
@@ -307,7 +307,7 @@ func TestGenerator_ToYAML(t *testing.T) {
 		assert.NoError(t, err, "Should convert document to YAML successfully")
 		assert.NotNil(t, yamlBytes, "YAML bytes should not be nil")
 		assert.Contains(t, string(yamlBytes), "TestService", "YAML should contain service name")
-		assert.Contains(t, string(yamlBytes), "3.1.0", "YAML should contain OpenAPI version")
+		assert.Contains(t, string(yamlBytes), "3.0.3", "YAML should contain OpenAPI version")
 	})
 }
 
@@ -338,14 +338,14 @@ func TestGenerator_ToJSON(t *testing.T) {
 		assert.NoError(t, err, "Should convert document to JSON successfully")
 		assert.NotNil(t, jsonBytes, "JSON bytes should not be nil")
 		assert.Contains(t, string(jsonBytes), "TestService", "JSON should contain service name")
-		assert.Contains(t, string(jsonBytes), "3.1.0", "JSON should contain OpenAPI version")
+		assert.Contains(t, string(jsonBytes), "3.0.3", "JSON should contain OpenAPI version")
 	})
 }
 
 // TestGeneratorConfiguration tests generator configuration options.
 func TestGeneratorConfiguration(t *testing.T) {
 	generator := &Generator{
-		Version:     "3.1.0",
+		Version:     "3.0.3",
 		Title:       "Custom API",
 		Description: "Custom API Description",
 		ServerURL:   "https://custom.example.com",
@@ -1281,7 +1281,7 @@ func TestGenerateFromSpecificationToJSON(t *testing.T) {
 		// Verify it's valid JSON by checking basic structure
 		jsonString := string(jsonData)
 		assert.Contains(t, jsonString, "openapi", "Should contain OpenAPI version field")
-		assert.Contains(t, jsonString, "3.1.0", "Should contain OpenAPI 3.1.0 version")
+		assert.Contains(t, jsonString, "3.0.3", "Should contain OpenAPI 3.0.3 version")
 		assert.Contains(t, jsonString, "TestService API", "Should contain service name with API suffix")
 		assert.Contains(t, jsonString, "Generated API documentation", "Should contain default description")
 	})

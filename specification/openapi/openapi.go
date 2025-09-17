@@ -198,9 +198,9 @@ const (
 	securityTypeAPIKey = "apiKey"
 )
 
-// Generator handles OpenAPI 3.1 specification generation from specification.Service.
+// Generator handles OpenAPI specification generation from specification.Service.
 type Generator struct {
-	// Version specifies the OpenAPI version to generate (default: "3.1.0")
+	// Version specifies the OpenAPI version to generate (default: "3.0.3")
 	Version string
 
 	// Title specifies the API title (defaults to service name if not set)
@@ -220,7 +220,7 @@ func newGenerator() *Generator {
 	}
 }
 
-// GenerateFromService generates an OpenAPI 3.1 document from a specification.Service.
+// GenerateFromService generates an OpenAPI document from a specification.Service.
 func (g *Generator) GenerateFromService(service *specification.Service) (*v3.Document, error) {
 	if service == nil {
 		return nil, errors.New(errorInvalidService)

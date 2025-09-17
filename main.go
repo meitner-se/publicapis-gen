@@ -558,25 +558,13 @@ func generateSchema(ctx context.Context, service *specification.Service, inputFi
 func generateServer(ctx context.Context, service *specification.Service, inputFile, outputFile string) error {
 	slog.InfoContext(ctx, "Generating Go server code", logKeyMode, modeServer)
 
-	// Generate OpenAPI document using the same method as standard OpenAPI generation
-	openapiGenerator := &openapi.Generator{
-		Version:     "3.0.3", // Use 3.0.3 for better compatibility with code generators
-		Title:       service.Name + " API",
-		Description: "Generated API documentation",
-	}
-
-	document, err := openapiGenerator.GenerateFromService(service)
-	if err != nil {
-		return fmt.Errorf("failed to generate OpenAPI document: %w", err)
-	}
-
 	// Create server generator with default configuration
 	serverConfig := server.NewDefaultConfig()
 	serverConfig.PackageName = "api"
 	serverGenerator := server.NewGenerator(serverConfig)
 
-	// Generate server code
-	serverCode, err := serverGenerator.GenerateFromDocument(document)
+	// Generate server code directly from service
+	serverCode, err := serverGenerator.GenerateFromService(service)
 	if err != nil {
 		return fmt.Errorf("failed to generate server code: %w", err)
 	}

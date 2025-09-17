@@ -7,8 +7,9 @@ import (
 	"io"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/meitner-se/publicapis-gen/specification"
+	"github.com/meitner-se/publicapis-gen/specification/openapi"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
-	"github.com/pb33f/libopenapi/datamodel/high/v3"
 )
 
 // Error constants
@@ -25,6 +26,11 @@ const (
 	defaultOutputFile  = "server.go"
 )
 
+// OpenAPI version constants
+const (
+	serverCompatibleOpenAPIVersion = "3.0.3" // Use 3.0.3 for better compatibility with code generators
+)
+
 // GeneratorConfig holds configuration for server code generation.
 type GeneratorConfig struct {
 	// PackageName specifies the Go package name for generated code
@@ -32,15 +38,6 @@ type GeneratorConfig struct {
 
 	// OutputFile specifies the output file name for generated server code
 	OutputFile string
-
-	// GenerateEchoServer enables Echo framework server generation
-	GenerateEchoServer bool
-
-	// GenerateChiServer enables Chi framework server generation
-	GenerateChiServer bool
-
-	// GenerateGinServer enables Gin framework server generation
-	GenerateGinServer bool
 
 	// GenerateTypes enables type definitions generation
 	GenerateTypes bool
@@ -52,11 +49,10 @@ type GeneratorConfig struct {
 // NewDefaultConfig creates a GeneratorConfig with sensible defaults.
 func NewDefaultConfig() GeneratorConfig {
 	return GeneratorConfig{
-		PackageName:        defaultPackageName,
-		OutputFile:         defaultOutputFile,
-		GenerateEchoServer: true, // Echo is commonly used
-		GenerateTypes:      true, // Always generate types
-		GenerateSpec:       true, // Include spec for documentation
+		PackageName:   defaultPackageName,
+		OutputFile:    defaultOutputFile,
+		GenerateTypes: true, // Always generate types
+		GenerateSpec:  true, // Include spec for documentation
 	}
 }
 
@@ -72,16 +68,10 @@ func NewGenerator(config GeneratorConfig) *Generator {
 	}
 }
 
-// GenerateFromDocument generates Go server code from an OpenAPI v3 document.
-func (g *Generator) GenerateFromDocument(document *v3.Document) ([]byte, error) {
-	if document == nil {
+// GenerateFromDocument generates Go server code from OpenAPI document bytes.
+func (g *Generator) GenerateFromDocument(docBytes []byte) ([]byte, error) {
+	if docBytes == nil {
 		return nil, errors.New(errorInvalidDocument)
-	}
-
-	// Render the OpenAPI document to JSON (which is more reliable than YAML for parsing)
-	docBytes, err := document.RenderJSON("  ")
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", errorDocumentRendering, err)
 	}
 
 	// Load the OpenAPI document from JSON data
@@ -117,9 +107,7 @@ func (g *Generator) createCodegenConfig() (codegen.Configuration, error) {
 	config := codegen.Configuration{
 		PackageName: g.config.PackageName,
 		Generate: codegen.GenerateOptions{
-			EchoServer:   g.config.GenerateEchoServer,
-			ChiServer:    g.config.GenerateChiServer,
-			GinServer:    g.config.GenerateGinServer,
+			GinServer:    true, // Hardcoded to use Gin framework
 			Models:       g.config.GenerateTypes,
 			EmbeddedSpec: g.config.GenerateSpec,
 		},
@@ -134,18 +122,12 @@ func (g *Generator) createCodegenConfig() (codegen.Configuration, error) {
 		return config, errors.New("package name cannot be empty")
 	}
 
-	// Ensure at least one generation option is enabled
-	if !config.Generate.EchoServer && !config.Generate.ChiServer &&
-		!config.Generate.GinServer && !config.Generate.Models {
-		return config, errors.New("at least one generation option must be enabled")
-	}
-
 	return config, nil
 }
 
 // GenerateToWriter generates Go server code and writes it to the provided writer.
-func (g *Generator) GenerateToWriter(document *v3.Document, writer io.Writer) error {
-	code, err := g.GenerateFromDocument(document)
+func (g *Generator) GenerateToWriter(docBytes []byte, writer io.Writer) error {
+	code, err := g.GenerateFromDocument(docBytes)
 	if err != nil {
 		return err
 	}
@@ -155,8 +137,8 @@ func (g *Generator) GenerateToWriter(document *v3.Document, writer io.Writer) er
 }
 
 // GenerateToBuffer generates Go server code and writes it to a bytes buffer.
-func (g *Generator) GenerateToBuffer(document *v3.Document) (*bytes.Buffer, error) {
-	code, err := g.GenerateFromDocument(document)
+func (g *Generator) GenerateToBuffer(docBytes []byte) (*bytes.Buffer, error) {
+	code, err := g.GenerateFromDocument(docBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -175,11 +157,35 @@ func (g *Generator) ValidateConfig() error {
 		return errors.New("output file cannot be empty")
 	}
 
-	// Ensure at least one generation option is enabled
-	if !g.config.GenerateEchoServer && !g.config.GenerateChiServer &&
-		!g.config.GenerateGinServer && !g.config.GenerateTypes {
-		return errors.New("at least one generation option must be enabled")
+	return nil
+}
+
+// GenerateFromService generates Go server code from a specification.Service.
+// This is the main entry point that handles the complete flow:
+// Service -> OpenAPI document -> Server code.
+func (g *Generator) GenerateFromService(service *specification.Service) ([]byte, error) {
+	if service == nil {
+		return nil, errors.New("invalid service: service cannot be nil")
 	}
 
-	return nil
+	// Generate OpenAPI document using the same method as standard OpenAPI generation
+	openapiGenerator := &openapi.Generator{
+		Version:     serverCompatibleOpenAPIVersion,
+		Title:       service.Name + " API",
+		Description: "Generated API documentation",
+	}
+
+	document, err := openapiGenerator.GenerateFromService(service)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate OpenAPI document: %w", err)
+	}
+
+	// Render the document to bytes
+	docBytes, err := document.RenderJSON("  ")
+	if err != nil {
+		return nil, fmt.Errorf("failed to render OpenAPI document: %w", err)
+	}
+
+	// Generate server code from the document bytes
+	return g.GenerateFromDocument(docBytes)
 }
