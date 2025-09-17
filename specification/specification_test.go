@@ -2729,6 +2729,86 @@ func TestApplyOverlay_UpdateDeleteOperations(t *testing.T) {
 	})
 }
 
+func TestApplyOverlay_SearchEndpointFilterObjects(t *testing.T) {
+	t.Run("should generate filter objects before search endpoints", func(t *testing.T) {
+		input := &Service{
+			Name:  "TestService",
+			Enums: []Enum{},
+			Objects: []Object{
+				{
+					Name:        "School",
+					Description: "School object",
+					Fields: []Field{
+						{
+							Name:        "Name",
+							Type:        FieldTypeString,
+							Description: "School name",
+						},
+						{
+							Name:        "Location",
+							Type:        FieldTypeString,
+							Description: "School location",
+						},
+					},
+				},
+			},
+			Resources: []Resource{
+				{
+					Name:        "School",
+					Description: "School management",
+					Operations:  []string{OperationRead}, // Read operation should trigger search endpoint generation
+					Fields:      []ResourceField{},
+					Endpoints:   []Endpoint{},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Verify that filter objects were generated
+		schoolFilterExists := false
+		for _, obj := range result.Objects {
+			if obj.Name == "SchoolFilter" {
+				schoolFilterExists = true
+				break
+			}
+		}
+		assert.True(t, schoolFilterExists, "SchoolFilter object should exist")
+
+		// Verify that search endpoint was generated
+		schoolResource := result.Resources[0]
+		assert.True(t, schoolResource.HasEndpoint("Search"), "Should have generated Search endpoint")
+
+		// Verify that the search endpoint has the correct filter field type
+		var searchEndpoint *Endpoint
+		for _, endpoint := range schoolResource.Endpoints {
+			if endpoint.Name == "Search" {
+				searchEndpoint = &endpoint
+				break
+			}
+		}
+		require.NotNil(t, searchEndpoint, "Search endpoint should exist")
+
+		// Find the filter parameter in the body params
+		var filterParam *Field
+		for _, param := range searchEndpoint.Request.BodyParams {
+			if param.Name == "Filter" {
+				filterParam = &param
+				break
+			}
+		}
+		require.NotNil(t, filterParam, "Search endpoint should have Filter body parameter")
+
+		// Verify the filter parameter has the correct type
+		assert.Equal(t, "SchoolFilter", filterParam.Type, "Filter parameter should have type SchoolFilter")
+
+		// Verify that the service recognizes SchoolFilter as an existing object
+		assert.True(t, result.HasObject("SchoolFilter"), "Service should recognize SchoolFilter as existing object")
+	})
+
+}
+
 func TestApplyFilterOverlay_NestedObjects(t *testing.T) {
 	t.Run("service with nested object types", func(t *testing.T) {
 		input := &Service{
