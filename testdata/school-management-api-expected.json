@@ -18,6 +18,335 @@
     }
   ],
   "paths": {
+    "/students": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "List all Students",
+        "description": "Returns a paginated list of all `Students` in your organization.",
+        "operationId": "StudentsList",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of Students to return (default: 50) when listing Students",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "examples": [
+                1
+              ],
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "The number of Students to skip before starting to return results (default: 0) when listing Students",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "examples": [
+                0
+              ],
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for Students List operation - returns a paginated list of Students",
+            "$ref": "#/components/responses/StudentsList"
+          },
+          "400": {
+            "description": "Bad Request error for Students List operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students List operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students List operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students List operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students List operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students List operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students List operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-pagination": {
+          "type": "offsetLimit",
+          "inputs": [
+            {
+              "name": "offset",
+              "in": "parameters",
+              "type": "offset"
+            },
+            {
+              "name": "limit",
+              "in": "parameters",
+              "type": "limit"
+            }
+          ],
+          "outputs": {
+            "results": "$.data.resultArray"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "list"
+      },
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Create Students",
+        "description": "Create a new Students",
+        "operationId": "StudentsCreate",
+        "parameters": [],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsCreate"
+        },
+        "responses": {
+          "201": {
+            "description": "Response for Students Create operation - returns the created Students",
+            "$ref": "#/components/responses/StudentsCreate"
+          },
+          "400": {
+            "description": "Bad Request error for Students Create operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Create operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Create operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Create operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Create operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students Create operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsCreate422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Create operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Create operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "create"
+      }
+    },
+    "/students/{id}": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Retrieve an existing Students",
+        "description": "Retrieves the `Students` with the given ID.",
+        "operationId": "StudentsGet",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Students to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "examples": [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ],
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for Students Get operation - returns the requested Students",
+            "$ref": "#/components/responses/StudentsGet"
+          },
+          "400": {
+            "description": "Bad Request error for Students Get operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Get operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Get operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Get operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Get operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Get operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Get operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "get"
+      },
+      "delete": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Delete Students",
+        "description": "Delete a Students",
+        "operationId": "StudentsDelete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Students to delete",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "examples": [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ],
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Response for Students Delete operation - confirms successful deletion"
+          },
+          "400": {
+            "description": "Bad Request error for Students Delete operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Delete operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Delete operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Delete operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Delete operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Delete operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Delete operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "delete"
+      },
+      "patch": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Update Students",
+        "description": "Update a Students",
+        "operationId": "StudentsUpdate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Students to update",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "examples": [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ],
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsUpdate"
+        },
+        "responses": {
+          "200": {
+            "description": "Response for Students Update operation - returns the updated Students",
+            "$ref": "#/components/responses/StudentsUpdate"
+          },
+          "400": {
+            "description": "Bad Request error for Students Update operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Update operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Update operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Update operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Update operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students Update operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsUpdate422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Update operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Update operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "update"
+      }
+    },
     "/students/_search": {
       "post": {
         "tags": [
@@ -358,335 +687,6 @@
         },
         "x-speakeasy-group": "students",
         "x-speakeasy-name-override": "advancedSearch"
-      }
-    },
-    "/students": {
-      "get": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "List all Students",
-        "description": "Returns a paginated list of all `Students` in your organization.",
-        "operationId": "StudentsList",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of Students to return (default: 50) when listing Students",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "examples": [
-                1
-              ],
-              "default": 50
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "The number of Students to skip before starting to return results (default: 0) when listing Students",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "examples": [
-                0
-              ],
-              "default": 0
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Response for Students List operation - returns a paginated list of Students",
-            "$ref": "#/components/responses/StudentsList"
-          },
-          "400": {
-            "description": "Bad Request error for Students List operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students List operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students List operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students List operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students List operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students List operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students List operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-pagination": {
-          "type": "offsetLimit",
-          "inputs": [
-            {
-              "name": "offset",
-              "in": "parameters",
-              "type": "offset"
-            },
-            {
-              "name": "limit",
-              "in": "parameters",
-              "type": "limit"
-            }
-          ],
-          "outputs": {
-            "results": "$.data.resultArray"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "list"
-      },
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Create Students",
-        "description": "Create a new Students",
-        "operationId": "StudentsCreate",
-        "parameters": [],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsCreate"
-        },
-        "responses": {
-          "201": {
-            "description": "Response for Students Create operation - returns the created Students",
-            "$ref": "#/components/responses/StudentsCreate"
-          },
-          "400": {
-            "description": "Bad Request error for Students Create operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students Create operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students Create operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students Create operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students Create operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "Validation error for Students Create operation - request data failed validation",
-            "$ref": "#/components/responses/StudentsCreate422ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students Create operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students Create operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "create"
-      }
-    },
-    "/students/{id}": {
-      "get": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Retrieve an existing Students",
-        "description": "Retrieves the `Students` with the given ID.",
-        "operationId": "StudentsGet",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "The unique identifier of the Students to retrieve",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "examples": [
-                "123e4567-e89b-12d3-a456-426614174000"
-              ],
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Response for Students Get operation - returns the requested Students",
-            "$ref": "#/components/responses/StudentsGet"
-          },
-          "400": {
-            "description": "Bad Request error for Students Get operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students Get operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students Get operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students Get operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students Get operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students Get operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students Get operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "get"
-      },
-      "delete": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Delete Students",
-        "description": "Delete a Students",
-        "operationId": "StudentsDelete",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "The unique identifier of the Students to delete",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "examples": [
-                "123e4567-e89b-12d3-a456-426614174000"
-              ],
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Response for Students Delete operation - confirms successful deletion"
-          },
-          "400": {
-            "description": "Bad Request error for Students Delete operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students Delete operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students Delete operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students Delete operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students Delete operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students Delete operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students Delete operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "delete"
-      },
-      "patch": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Update Students",
-        "description": "Update a Students",
-        "operationId": "StudentsUpdate",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "The unique identifier of the Students to update",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "examples": [
-                "123e4567-e89b-12d3-a456-426614174000"
-              ],
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsUpdate"
-        },
-        "responses": {
-          "200": {
-            "description": "Response for Students Update operation - returns the updated Students",
-            "$ref": "#/components/responses/StudentsUpdate"
-          },
-          "400": {
-            "description": "Bad Request error for Students Update operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students Update operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students Update operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students Update operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students Update operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "Validation error for Students Update operation - request data failed validation",
-            "$ref": "#/components/responses/StudentsUpdate422ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students Update operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students Update operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "update"
       }
     }
   },
@@ -1104,6 +1104,44 @@
         ],
         "description": "Student management resource"
       },
+      "ContactRequestError": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "email is required"
+              },
+              null
+            ],
+            "description": "Email address",
+            "nullable": true
+          },
+          "phone": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "phone is required"
+              },
+              null
+            ],
+            "description": "Phone number",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Contact"
+      },
       "StudentRequestError": {
         "type": "object",
         "properties": {
@@ -1115,7 +1153,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "firstName is required"
               },
               null
             ],
@@ -1130,7 +1169,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "lastName is required"
               },
               null
             ],
@@ -1145,7 +1185,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "studentId is required"
               },
               null
             ],
@@ -1160,7 +1201,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "status is required"
               },
               null
             ],
@@ -1175,7 +1217,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "gradeLevel is required"
               },
               null
             ],
@@ -1196,7 +1239,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "street is required"
               },
               null
             ],
@@ -1211,7 +1255,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "city is required"
               },
               null
             ],
@@ -1226,7 +1271,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "state is required"
               },
               null
             ],
@@ -1241,7 +1287,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "zipCode is required"
               },
               null
             ],
@@ -1250,42 +1297,6 @@
           }
         },
         "description": "Request error object for Address"
-      },
-      "ContactRequestError": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Email address",
-            "nullable": true
-          },
-          "phone": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Phone number",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Contact"
       },
       "StudentsBulkImportRequestError": {
         "type": "object",
@@ -1299,19 +1310,24 @@
             "examples": [
               {
                 "firstName": {
-                  "message": "example"
+                  "code": "InvalidValue",
+                  "message": "firstName is required"
                 },
                 "lastName": {
-                  "message": "example"
+                  "code": "InvalidValue",
+                  "message": "lastName is required"
                 },
                 "studentId": {
-                  "message": "example"
+                  "code": "InvalidValue",
+                  "message": "studentId is required"
                 },
                 "status": {
-                  "message": "example"
+                  "code": "InvalidValue",
+                  "message": "status is required"
                 },
                 "gradeLevel": {
-                  "message": "example"
+                  "code": "InvalidValue",
+                  "message": "gradeLevel is required"
                 }
               },
               null
@@ -1327,7 +1343,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "overwriteExisting is required"
               },
               null
             ],
@@ -1348,7 +1365,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "gradeLevel is required"
               },
               null
             ],
@@ -1363,7 +1381,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "status is required"
               },
               null
             ],
@@ -1378,7 +1397,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "enrollmentDateFrom is required"
               },
               null
             ],
@@ -1393,7 +1413,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "enrollmentDateTo is required"
               },
               null
             ],
@@ -1408,7 +1429,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "includeInactive is required"
               },
               null
             ],
@@ -1429,7 +1451,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "nameQuery is required"
               },
               null
             ],
@@ -1444,7 +1467,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "gradeLevel is required"
               },
               null
             ],
@@ -1459,7 +1483,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "status is required"
               },
               null
             ],
@@ -1474,7 +1499,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "enrollmentDateRange is required"
               },
               null
             ],
@@ -1489,7 +1515,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "hasGraduationDate is required"
               },
               null
             ],
@@ -1510,7 +1537,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "firstName is required"
               },
               null
             ],
@@ -1525,7 +1553,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "lastName is required"
               },
               null
             ],
@@ -1540,7 +1569,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "studentId is required"
               },
               null
             ],
@@ -1555,7 +1585,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "status is required"
               },
               null
             ],
@@ -1570,7 +1601,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "gradeLevel is required"
               },
               null
             ],
@@ -1586,10 +1618,12 @@
             "examples": [
               {
                 "email": {
-                  "message": "example"
+                  "code": "InvalidValue",
+                  "message": "email is required"
                 },
                 "phone": {
-                  "message": "example"
+                  "code": "InvalidValue",
+                  "message": "phone is required"
                 }
               },
               null
@@ -1606,16 +1640,20 @@
             "examples": [
               {
                 "street": {
-                  "message": "example"
+                  "code": "InvalidValue",
+                  "message": "street is required"
                 },
                 "city": {
-                  "message": "example"
+                  "code": "InvalidValue",
+                  "message": "city is required"
                 },
                 "state": {
-                  "message": "example"
+                  "code": "InvalidValue",
+                  "message": "state is required"
                 },
                 "zipCode": {
-                  "message": "example"
+                  "code": "InvalidValue",
+                  "message": "zipCode is required"
                 }
               },
               null
@@ -1631,7 +1669,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "enrollmentDate is required"
               },
               null
             ],
@@ -1652,7 +1691,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "firstName is required"
               },
               null
             ],
@@ -1667,7 +1707,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "lastName is required"
               },
               null
             ],
@@ -1682,7 +1723,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "status is required"
               },
               null
             ],
@@ -1697,7 +1739,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "gradeLevel is required"
               },
               null
             ],
@@ -1713,10 +1756,12 @@
             "examples": [
               {
                 "email": {
-                  "message": "example"
+                  "code": "InvalidValue",
+                  "message": "email is required"
                 },
                 "phone": {
-                  "message": "example"
+                  "code": "InvalidValue",
+                  "message": "phone is required"
                 }
               },
               null
@@ -1733,16 +1778,20 @@
             "examples": [
               {
                 "street": {
-                  "message": "example"
+                  "code": "InvalidValue",
+                  "message": "street is required"
                 },
                 "city": {
-                  "message": "example"
+                  "code": "InvalidValue",
+                  "message": "city is required"
                 },
                 "state": {
-                  "message": "example"
+                  "code": "InvalidValue",
+                  "message": "state is required"
                 },
                 "zipCode": {
-                  "message": "example"
+                  "code": "InvalidValue",
+                  "message": "zipCode is required"
                 }
               },
               null
@@ -1758,7 +1807,8 @@
             ],
             "examples": [
               {
-                "message": "example"
+                "code": "InvalidValue",
+                "message": "graduationDate is required"
               },
               null
             ],
@@ -3010,16 +3060,16 @@
                     {
                       "students": {
                         "firstName": {
-                          "code": "Required",
+                          "code": "InvalidValue",
                           "message": "firstName is required"
                         },
                         "lastName": {
-                          "code": "Required",
+                          "code": "InvalidValue",
                           "message": "lastName is required"
                         }
                       },
                       "overwriteExisting": {
-                        "code": "Required",
+                        "code": "InvalidValue",
                         "message": "overwriteExisting is required"
                       }
                     }
@@ -3042,16 +3092,16 @@
                   "errorFields": {
                     "students": {
                       "firstName": {
-                        "code": "Required",
+                        "code": "InvalidValue",
                         "message": "firstName is required"
                       },
                       "lastName": {
-                        "code": "Required",
+                        "code": "InvalidValue",
                         "message": "lastName is required"
                       }
                     },
                     "overwriteExisting": {
-                      "code": "Required",
+                      "code": "InvalidValue",
                       "message": "overwriteExisting is required"
                     }
                   }
@@ -3136,11 +3186,11 @@
                   "examples": [
                     {
                       "gradeLevel": {
-                        "code": "Required",
+                        "code": "InvalidValue",
                         "message": "gradeLevel is required"
                       },
                       "status": {
-                        "code": "Required",
+                        "code": "InvalidValue",
                         "message": "status is required"
                       }
                     }
@@ -3162,11 +3212,11 @@
                   },
                   "errorFields": {
                     "gradeLevel": {
-                      "code": "Required",
+                      "code": "InvalidValue",
                       "message": "gradeLevel is required"
                     },
                     "status": {
-                      "code": "Required",
+                      "code": "InvalidValue",
                       "message": "status is required"
                     }
                   }
@@ -3267,11 +3317,11 @@
                   "examples": [
                     {
                       "nameQuery": {
-                        "code": "Required",
+                        "code": "InvalidValue",
                         "message": "nameQuery is required"
                       },
                       "gradeLevel": {
-                        "code": "Required",
+                        "code": "InvalidValue",
                         "message": "gradeLevel is required"
                       }
                     }
@@ -3293,11 +3343,11 @@
                   },
                   "errorFields": {
                     "nameQuery": {
-                      "code": "Required",
+                      "code": "InvalidValue",
                       "message": "nameQuery is required"
                     },
                     "gradeLevel": {
-                      "code": "Required",
+                      "code": "InvalidValue",
                       "message": "gradeLevel is required"
                     }
                   }
@@ -3379,11 +3429,11 @@
                   "examples": [
                     {
                       "firstName": {
-                        "code": "Required",
+                        "code": "InvalidValue",
                         "message": "firstName is required"
                       },
                       "lastName": {
-                        "code": "Required",
+                        "code": "InvalidValue",
                         "message": "lastName is required"
                       }
                     }
@@ -3405,11 +3455,11 @@
                   },
                   "errorFields": {
                     "firstName": {
-                      "code": "Required",
+                      "code": "InvalidValue",
                       "message": "firstName is required"
                     },
                     "lastName": {
-                      "code": "Required",
+                      "code": "InvalidValue",
                       "message": "lastName is required"
                     }
                   }
@@ -3491,11 +3541,11 @@
                   "examples": [
                     {
                       "firstName": {
-                        "code": "Required",
+                        "code": "InvalidValue",
                         "message": "firstName is required"
                       },
                       "lastName": {
-                        "code": "Required",
+                        "code": "InvalidValue",
                         "message": "lastName is required"
                       }
                     }
@@ -3517,11 +3567,11 @@
                   },
                   "errorFields": {
                     "firstName": {
-                      "code": "Required",
+                      "code": "InvalidValue",
                       "message": "firstName is required"
                     },
                     "lastName": {
-                      "code": "Required",
+                      "code": "InvalidValue",
                       "message": "lastName is required"
                     }
                   }

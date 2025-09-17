@@ -738,32 +738,48 @@ func (g *Generator) createFieldSchema(field specification.Field, service *specif
 					Tag:  "!!seq",
 				}
 				arrayNode.Content = append(arrayNode.Content, objectExample)
-				
+
 				examples := []*yaml.Node{arrayNode}
-				
+
 				// If the field is nullable, add null as an additional example
 				if field.IsNullable() {
 					nullNode := g.createNullExampleNode()
 					examples = append(examples, nullNode)
 				}
-				
+
 				schema.Examples = examples
 			}
 		}
 	} else if service.HasObject(field.Type) {
-		// Generate example from object definition when no explicit example is provided
-		if obj := service.GetObject(field.Type); obj != nil {
-			visited := make(map[string]bool)
-			if objectExample := g.generateObjectExampleWithVisited(*obj, service, visited); objectExample != nil {
-				examples := []*yaml.Node{objectExample}
-				
+		// Special handling for ErrorField objects
+		if field.Type == errorFieldObjectName {
+			errorFieldExample := g.generateSingleErrorFieldExample(field.Name)
+			if errorFieldExample != nil {
+				examples := []*yaml.Node{errorFieldExample}
+
 				// If the field is nullable, add null as an additional example
 				if field.IsNullable() {
 					nullNode := g.createNullExampleNode()
 					examples = append(examples, nullNode)
 				}
-				
+
 				schema.Examples = examples
+			}
+		} else {
+			// Generate example from object definition when no explicit example is provided
+			if obj := service.GetObject(field.Type); obj != nil {
+				visited := make(map[string]bool)
+				if objectExample := g.generateObjectExampleWithVisited(*obj, service, visited); objectExample != nil {
+					examples := []*yaml.Node{objectExample}
+
+					// If the field is nullable, add null as an additional example
+					if field.IsNullable() {
+						nullNode := g.createNullExampleNode()
+						examples = append(examples, nullNode)
+					}
+
+					schema.Examples = examples
+				}
 			}
 		}
 	}
@@ -1112,6 +1128,11 @@ func (g *Generator) generateObjectExampleWithVisited(obj specification.Object, s
 		return nil
 	}
 
+	// Special handling for ErrorField objects - use specialized example generation
+	if obj.Name == errorFieldObjectName {
+		return g.generateSingleErrorFieldExample("example")
+	}
+
 	// Mark this object as visited
 	visited[obj.Name] = true
 	defer func() {
@@ -1151,10 +1172,15 @@ func (g *Generator) generateObjectExampleFromFieldsWithVisited(fields []specific
 				valueNode = g.createTypedExampleNode(field.Type, field.Example)
 			}
 		} else if service.HasObject(field.Type) {
-			// For object types, recursively generate example from object definition with circular reference protection
-			obj := service.GetObject(field.Type)
-			if obj != nil && !visited[field.Type] {
-				valueNode = g.generateObjectExampleWithVisited(*obj, service, visited)
+			// Special handling for ErrorField objects
+			if field.Type == errorFieldObjectName {
+				valueNode = g.generateSingleErrorFieldExample(field.Name)
+			} else {
+				// For other object types, recursively generate example from object definition with circular reference protection
+				obj := service.GetObject(field.Type)
+				if obj != nil && !visited[field.Type] {
+					valueNode = g.generateObjectExampleWithVisited(*obj, service, visited)
+				}
 			}
 		}
 
@@ -1624,7 +1650,7 @@ func (g *Generator) generateSingleErrorFieldExample(fieldName string) *yaml.Node
 	codeValueNode := &yaml.Node{
 		Kind:  yaml.ScalarNode,
 		Tag:   "!!str",
-		Value: "Required", // Use "Required" as default example
+		Value: "InvalidValue", // Use "InvalidValue" for field validation errors
 	}
 	errorFieldNode.Content = append(errorFieldNode.Content, codeKeyNode, codeValueNode)
 
