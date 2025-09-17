@@ -263,6 +263,220 @@ func Test_run(t *testing.T) {
 		require.Error(t, err, "run() should return an error for nonexistent config file")
 		assert.Contains(t, err.Error(), errorInvalidConfig, "Error should mention invalid config")
 	})
+
+	t.Run("uses default publicapis.yaml when available and no flags provided", func(t *testing.T) {
+		// Save original working directory
+		origDir, err := os.Getwd()
+		require.NoError(t, err)
+
+		// Create temporary directory and change to it
+		tmpDir, err := os.CreateTemp("", "test-default-config-*")
+		require.NoError(t, err)
+		defer os.Remove(tmpDir.Name())
+		tmpDir.Close()
+
+		tmpDirPath := tmpDir.Name()
+		os.Remove(tmpDirPath) // Remove the file, we want the directory
+		err = os.Mkdir(tmpDirPath, 0755)
+		require.NoError(t, err)
+		defer os.RemoveAll(tmpDirPath)
+
+		err = os.Chdir(tmpDirPath)
+		require.NoError(t, err)
+		defer os.Chdir(origDir)
+
+		// Create a test default config file (publicapis.yaml)
+		testConfig := Config{
+			{
+				Specification: origDir + "/testdata/school-management-api.yaml",
+				OpenAPIJSON:   "test-default-openapi.json",
+			},
+		}
+
+		yamlData, err := yaml.Marshal(&testConfig)
+		require.NoError(t, err)
+
+		err = os.WriteFile(defaultConfigYAML, yamlData, 0644)
+		require.NoError(t, err)
+		defer os.Remove("test-default-openapi.json")
+
+		// Reset flag package for this test
+		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+
+		// Arrange command line arguments with no flags (should use default config)
+		os.Args = []string{"publicapis-gen"}
+		ctx := context.Background()
+
+		// Act
+		err = run(ctx)
+
+		// Assert
+		require.NoError(t, err, "run() should succeed when using default config file")
+
+		// Verify output file was created
+		_, err = os.Stat("test-default-openapi.json")
+		require.NoError(t, err, "OpenAPI JSON file should be created from default config")
+	})
+
+	t.Run("uses default publicapis.yml when publicapis.yaml not available", func(t *testing.T) {
+		// Save original working directory
+		origDir, err := os.Getwd()
+		require.NoError(t, err)
+
+		// Create temporary directory and change to it
+		tmpDir, err := os.CreateTemp("", "test-default-yml-config-*")
+		require.NoError(t, err)
+		defer os.Remove(tmpDir.Name())
+		tmpDir.Close()
+
+		tmpDirPath := tmpDir.Name()
+		os.Remove(tmpDirPath) // Remove the file, we want the directory
+		err = os.Mkdir(tmpDirPath, 0755)
+		require.NoError(t, err)
+		defer os.RemoveAll(tmpDirPath)
+
+		err = os.Chdir(tmpDirPath)
+		require.NoError(t, err)
+		defer os.Chdir(origDir)
+
+		// Create a test default config file (publicapis.yml)
+		testConfig := Config{
+			{
+				Specification: origDir + "/testdata/school-management-api.yaml",
+				OpenAPIJSON:   "test-default-yml-openapi.json",
+			},
+		}
+
+		yamlData, err := yaml.Marshal(&testConfig)
+		require.NoError(t, err)
+
+		err = os.WriteFile(defaultConfigYML, yamlData, 0644)
+		require.NoError(t, err)
+		defer os.Remove("test-default-yml-openapi.json")
+
+		// Reset flag package for this test
+		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+
+		// Arrange command line arguments with no flags (should use default config)
+		os.Args = []string{"publicapis-gen"}
+		ctx := context.Background()
+
+		// Act
+		err = run(ctx)
+
+		// Assert
+		require.NoError(t, err, "run() should succeed when using default .yml config file")
+
+		// Verify output file was created
+		_, err = os.Stat("test-default-yml-openapi.json")
+		require.NoError(t, err, "OpenAPI JSON file should be created from default .yml config")
+	})
+
+	t.Run("prefers publicapis.yaml over publicapis.yml when both exist", func(t *testing.T) {
+		// Save original working directory
+		origDir, err := os.Getwd()
+		require.NoError(t, err)
+
+		// Create temporary directory and change to it
+		tmpDir, err := os.CreateTemp("", "test-preference-config-*")
+		require.NoError(t, err)
+		defer os.Remove(tmpDir.Name())
+		tmpDir.Close()
+
+		tmpDirPath := tmpDir.Name()
+		os.Remove(tmpDirPath) // Remove the file, we want the directory
+		err = os.Mkdir(tmpDirPath, 0755)
+		require.NoError(t, err)
+		defer os.RemoveAll(tmpDirPath)
+
+		err = os.Chdir(tmpDirPath)
+		require.NoError(t, err)
+		defer os.Chdir(origDir)
+
+		// Create both config files with different outputs to test preference
+		testConfigYAML := Config{
+			{
+				Specification: origDir + "/testdata/school-management-api.yaml",
+				OpenAPIJSON:   "test-preference-yaml-openapi.json",
+			},
+		}
+		testConfigYML := Config{
+			{
+				Specification: origDir + "/testdata/school-management-api.yaml",
+				OpenAPIJSON:   "test-preference-yml-openapi.json",
+			},
+		}
+
+		yamlData, err := yaml.Marshal(&testConfigYAML)
+		require.NoError(t, err)
+		err = os.WriteFile(defaultConfigYAML, yamlData, 0644)
+		require.NoError(t, err)
+
+		ymlData, err := yaml.Marshal(&testConfigYML)
+		require.NoError(t, err)
+		err = os.WriteFile(defaultConfigYML, ymlData, 0644)
+		require.NoError(t, err)
+
+		defer os.Remove("test-preference-yaml-openapi.json")
+		defer os.Remove("test-preference-yml-openapi.json")
+
+		// Reset flag package for this test
+		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+
+		// Arrange command line arguments with no flags (should use default config)
+		os.Args = []string{"publicapis-gen"}
+		ctx := context.Background()
+
+		// Act
+		err = run(ctx)
+
+		// Assert
+		require.NoError(t, err, "run() should succeed when using default config file")
+
+		// Verify the .yaml config was used (not the .yml)
+		_, err = os.Stat("test-preference-yaml-openapi.json")
+		require.NoError(t, err, "OpenAPI JSON file from .yaml config should be created")
+
+		// Verify the .yml config was NOT used
+		_, err = os.Stat("test-preference-yml-openapi.json")
+		require.Error(t, err, "OpenAPI JSON file from .yml config should NOT be created")
+	})
+
+	t.Run("no default config and no flags returns error", func(t *testing.T) {
+		// Save original working directory
+		origDir, err := os.Getwd()
+		require.NoError(t, err)
+
+		// Create temporary directory and change to it (with no default config)
+		tmpDir, err := os.CreateTemp("", "test-no-default-config-*")
+		require.NoError(t, err)
+		defer os.Remove(tmpDir.Name())
+		tmpDir.Close()
+
+		tmpDirPath := tmpDir.Name()
+		os.Remove(tmpDirPath) // Remove the file, we want the directory
+		err = os.Mkdir(tmpDirPath, 0755)
+		require.NoError(t, err)
+		defer os.RemoveAll(tmpDirPath)
+
+		err = os.Chdir(tmpDirPath)
+		require.NoError(t, err)
+		defer os.Chdir(origDir)
+
+		// Reset flag package for this test
+		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+
+		// Arrange command line arguments with no flags and no default config
+		os.Args = []string{"publicapis-gen"}
+		ctx := context.Background()
+
+		// Act
+		err = run(ctx)
+
+		// Assert
+		require.Error(t, err, "run() should return an error when no config and no flags provided")
+		assert.Contains(t, err.Error(), errorInvalidFile, "Error should mention invalid file")
+	})
 }
 
 func Test_readSpecificationFile(t *testing.T) {
@@ -540,6 +754,126 @@ func Test_configureLogging(t *testing.T) {
 			}
 		})
 	}
+}
+
+// ============================================================================
+// Default Config File Tests
+// ============================================================================
+
+func Test_findDefaultConfigFile(t *testing.T) {
+	// Save original working directory
+	origDir, err := os.Getwd()
+	require.NoError(t, err)
+
+	t.Run("returns empty string when no default config files exist", func(t *testing.T) {
+		// Create temporary directory and change to it
+		tmpDir, err := os.CreateTemp("", "test-no-defaults-*")
+		require.NoError(t, err)
+		defer os.Remove(tmpDir.Name())
+		tmpDir.Close()
+
+		tmpDirPath := tmpDir.Name()
+		os.Remove(tmpDirPath) // Remove the file, we want the directory
+		err = os.Mkdir(tmpDirPath, 0755)
+		require.NoError(t, err)
+		defer os.RemoveAll(tmpDirPath)
+
+		err = os.Chdir(tmpDirPath)
+		require.NoError(t, err)
+		defer os.Chdir(origDir)
+
+		// Act
+		result := findDefaultConfigFile()
+
+		// Assert
+		assert.Empty(t, result, "Should return empty string when no default config files exist")
+	})
+
+	t.Run("returns publicapis.yaml when it exists", func(t *testing.T) {
+		// Create temporary directory and change to it
+		tmpDir, err := os.CreateTemp("", "test-yaml-exists-*")
+		require.NoError(t, err)
+		defer os.Remove(tmpDir.Name())
+		tmpDir.Close()
+
+		tmpDirPath := tmpDir.Name()
+		os.Remove(tmpDirPath) // Remove the file, we want the directory
+		err = os.Mkdir(tmpDirPath, 0755)
+		require.NoError(t, err)
+		defer os.RemoveAll(tmpDirPath)
+
+		err = os.Chdir(tmpDirPath)
+		require.NoError(t, err)
+		defer os.Chdir(origDir)
+
+		// Create publicapis.yaml
+		err = os.WriteFile(defaultConfigYAML, []byte("# test config"), 0644)
+		require.NoError(t, err)
+
+		// Act
+		result := findDefaultConfigFile()
+
+		// Assert
+		assert.Equal(t, defaultConfigYAML, result, "Should return publicapis.yaml when it exists")
+	})
+
+	t.Run("returns publicapis.yml when only it exists", func(t *testing.T) {
+		// Create temporary directory and change to it
+		tmpDir, err := os.CreateTemp("", "test-yml-exists-*")
+		require.NoError(t, err)
+		defer os.Remove(tmpDir.Name())
+		tmpDir.Close()
+
+		tmpDirPath := tmpDir.Name()
+		os.Remove(tmpDirPath) // Remove the file, we want the directory
+		err = os.Mkdir(tmpDirPath, 0755)
+		require.NoError(t, err)
+		defer os.RemoveAll(tmpDirPath)
+
+		err = os.Chdir(tmpDirPath)
+		require.NoError(t, err)
+		defer os.Chdir(origDir)
+
+		// Create publicapis.yml
+		err = os.WriteFile(defaultConfigYML, []byte("# test config"), 0644)
+		require.NoError(t, err)
+
+		// Act
+		result := findDefaultConfigFile()
+
+		// Assert
+		assert.Equal(t, defaultConfigYML, result, "Should return publicapis.yml when only it exists")
+	})
+
+	t.Run("prefers publicapis.yaml over publicapis.yml when both exist", func(t *testing.T) {
+		// Create temporary directory and change to it
+		tmpDir, err := os.CreateTemp("", "test-both-exist-*")
+		require.NoError(t, err)
+		defer os.Remove(tmpDir.Name())
+		tmpDir.Close()
+
+		tmpDirPath := tmpDir.Name()
+		os.Remove(tmpDirPath) // Remove the file, we want the directory
+		err = os.Mkdir(tmpDirPath, 0755)
+		require.NoError(t, err)
+		defer os.RemoveAll(tmpDirPath)
+
+		err = os.Chdir(tmpDirPath)
+		require.NoError(t, err)
+		defer os.Chdir(origDir)
+
+		// Create both files
+		err = os.WriteFile(defaultConfigYAML, []byte("# test yaml config"), 0644)
+		require.NoError(t, err)
+		err = os.WriteFile(defaultConfigYML, []byte("# test yml config"), 0644)
+		require.NoError(t, err)
+
+		// Act
+		result := findDefaultConfigFile()
+
+		// Assert
+		assert.Equal(t, defaultConfigYAML, result, "Should prefer publicapis.yaml when both exist")
+	})
 }
 
 // ============================================================================
