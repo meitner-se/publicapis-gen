@@ -18,142 +18,6 @@
     }
   ],
   "paths": {
-    "/students/bulk-import": {
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Bulk Import Students",
-        "description": "Import multiple students from a CSV file or structured data",
-        "operationId": "StudentsBulkImport",
-        "parameters": [
-          {
-            "name": "validateOnly",
-            "in": "query",
-            "description": "Only validate data without importing",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "examples": [
-                true
-              ],
-              "default": false
-            }
-          }
-        ],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsBulkImport"
-        },
-        "responses": {
-          "200": {
-            "description": "Successfully imported students",
-            "$ref": "#/components/responses/StudentsBulkImport"
-          },
-          "400": {
-            "description": "Bad Request error for Students BulkImport operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students BulkImport operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students BulkImport operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students BulkImport operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students BulkImport operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "Validation error for Students BulkImport operation - request data failed validation",
-            "$ref": "#/components/responses/StudentsBulkImport422ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students BulkImport operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students BulkImport operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "bulkImport"
-      }
-    },
-    "/students/reports/generate": {
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Generate Student Report",
-        "description": "Generate a comprehensive report for students based on filters",
-        "operationId": "StudentsGenerateReport",
-        "parameters": [
-          {
-            "name": "format",
-            "in": "query",
-            "description": "Report format (pdf, excel, csv)",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "examples": [
-                "example"
-              ],
-              "default": "pdf"
-            }
-          }
-        ],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsGenerateReport"
-        },
-        "responses": {
-          "202": {
-            "description": "Successfully queued report generation",
-            "$ref": "#/components/responses/StudentsGenerateReport"
-          },
-          "400": {
-            "description": "Bad Request error for Students GenerateReport operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students GenerateReport operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students GenerateReport operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students GenerateReport operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students GenerateReport operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "Validation error for Students GenerateReport operation - request data failed validation",
-            "$ref": "#/components/responses/StudentsGenerateReport422ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students GenerateReport operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students GenerateReport operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "generateReport"
-      }
-    },
     "/students/advanced-search": {
       "post": {
         "tags": [
@@ -266,7 +130,7 @@
         "tags": [
           "Students"
         ],
-        "summary": "List all Students",
+        "summary": "List Students",
         "description": "Returns a paginated list of all `Students` in your organization.",
         "operationId": "StudentsList",
         "parameters": [
@@ -356,7 +220,7 @@
         "tags": [
           "Students"
         ],
-        "summary": "Create Students",
+        "summary": "Create a new Students",
         "description": "Create a new Students",
         "operationId": "StudentsCreate",
         "parameters": [],
@@ -410,7 +274,7 @@
         "tags": [
           "Students"
         ],
-        "summary": "Retrieve an existing Students",
+        "summary": "Get a Students",
         "description": "Retrieves the `Students` with the given ID.",
         "operationId": "StudentsGet",
         "parameters": [
@@ -469,7 +333,7 @@
         "tags": [
           "Students"
         ],
-        "summary": "Delete Students",
+        "summary": "Delete a Students",
         "description": "Delete a Students",
         "operationId": "StudentsDelete",
         "parameters": [
@@ -527,7 +391,7 @@
         "tags": [
           "Students"
         ],
-        "summary": "Update Students",
+        "summary": "Update a Students",
         "description": "Update a Students",
         "operationId": "StudentsUpdate",
         "parameters": [
@@ -687,6 +551,142 @@
         },
         "x-speakeasy-group": "students",
         "x-speakeasy-name-override": "search"
+      }
+    },
+    "/students/bulk-import": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Bulk Import Students",
+        "description": "Import multiple students from a CSV file or structured data",
+        "operationId": "StudentsBulkImport",
+        "parameters": [
+          {
+            "name": "validateOnly",
+            "in": "query",
+            "description": "Only validate data without importing",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "examples": [
+                true
+              ],
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsBulkImport"
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully imported students",
+            "$ref": "#/components/responses/StudentsBulkImport"
+          },
+          "400": {
+            "description": "Bad Request error for Students BulkImport operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students BulkImport operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students BulkImport operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students BulkImport operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students BulkImport operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students BulkImport operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsBulkImport422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students BulkImport operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students BulkImport operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "bulkImport"
+      }
+    },
+    "/students/reports/generate": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Generate Student Report",
+        "description": "Generate a comprehensive report for students based on filters",
+        "operationId": "StudentsGenerateReport",
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "description": "Report format (pdf, excel, csv)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "examples": [
+                "example"
+              ],
+              "default": "pdf"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsGenerateReport"
+        },
+        "responses": {
+          "202": {
+            "description": "Successfully queued report generation",
+            "$ref": "#/components/responses/StudentsGenerateReport"
+          },
+          "400": {
+            "description": "Bad Request error for Students GenerateReport operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students GenerateReport operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students GenerateReport operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students GenerateReport operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students GenerateReport operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students GenerateReport operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsGenerateReport422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students GenerateReport operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students GenerateReport operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "generateReport"
       }
     }
   },
@@ -2049,10 +2049,10 @@
         },
         "description": "Null filter fields for Students"
       },
-      "ContactRequestError": {
+      "StudentsFilterContainsRequestError": {
         "type": "object",
         "properties": {
-          "email": {
+          "id": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/ErrorField"
@@ -2061,14 +2061,14 @@
             "examples": [
               {
                 "code": "InvalidValue",
-                "message": "email is required"
+                "message": "id is required"
               },
               null
             ],
-            "description": "Email address",
+            "description": "Unique student identifier",
             "nullable": true
           },
-          "phone": {
+          "meta": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/ErrorField"
@@ -2077,15 +2077,245 @@
             "examples": [
               {
                 "code": "InvalidValue",
-                "message": "phone is required"
+                "message": "Meta is required"
               },
               null
             ],
-            "description": "Phone number",
+            "description": "Metadata information for the Students",
+            "nullable": true
+          },
+          "firstName": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "firstName is required"
+              },
+              null
+            ],
+            "description": "Student's first name",
+            "nullable": true
+          },
+          "lastName": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "lastName is required"
+              },
+              null
+            ],
+            "description": "Student's last name",
+            "nullable": true
+          },
+          "studentId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "studentId is required"
+              },
+              null
+            ],
+            "description": "School-assigned student ID",
+            "nullable": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "status is required"
+              },
+              null
+            ],
+            "description": "Current status of the student",
+            "nullable": true
+          },
+          "gradeLevel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "gradeLevel is required"
+              },
+              null
+            ],
+            "description": "Current grade level",
+            "nullable": true
+          },
+          "contact": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "contact is required"
+              },
+              null
+            ],
+            "description": "Student contact information",
+            "nullable": true
+          },
+          "address": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "address is required"
+              },
+              null
+            ],
+            "description": "Student home address",
+            "nullable": true
+          },
+          "enrollmentDate": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "enrollmentDate is required"
+              },
+              null
+            ],
+            "description": "Date when student was enrolled",
+            "nullable": true
+          },
+          "graduationDate": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "graduationDate is required"
+              },
+              null
+            ],
+            "description": "Expected or actual graduation date",
             "nullable": true
           }
         },
-        "description": "Request error object for Contact"
+        "description": "Request error object for StudentsFilterContains"
+      },
+      "StudentRequestError": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "firstName is required"
+              },
+              null
+            ],
+            "description": "Student's first name",
+            "nullable": true
+          },
+          "lastName": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "lastName is required"
+              },
+              null
+            ],
+            "description": "Student's last name",
+            "nullable": true
+          },
+          "studentId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "studentId is required"
+              },
+              null
+            ],
+            "description": "School-assigned student ID",
+            "nullable": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "status is required"
+              },
+              null
+            ],
+            "description": "Current status of the student",
+            "nullable": true
+          },
+          "gradeLevel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "gradeLevel is required"
+              },
+              null
+            ],
+            "description": "Current grade level",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Student"
       },
       "StudentsFilterRequestError": {
         "type": "object",
@@ -2959,114 +3189,6 @@
         },
         "description": "Request error object for StudentsFilter"
       },
-      "StudentsFilterNullRequestError": {
-        "type": "object",
-        "properties": {
-          "address": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "address is required"
-              },
-              null
-            ],
-            "description": "Student home address",
-            "nullable": true
-          },
-          "graduationDate": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "graduationDate is required"
-              },
-              null
-            ],
-            "description": "Expected or actual graduation date",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for StudentsFilterNull"
-      },
-      "AddressRequestError": {
-        "type": "object",
-        "properties": {
-          "street": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "street is required"
-              },
-              null
-            ],
-            "description": "Street address",
-            "nullable": true
-          },
-          "city": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "city is required"
-              },
-              null
-            ],
-            "description": "City",
-            "nullable": true
-          },
-          "state": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "state is required"
-              },
-              null
-            ],
-            "description": "State or province",
-            "nullable": true
-          },
-          "zipCode": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "zipCode is required"
-              },
-              null
-            ],
-            "description": "ZIP or postal code",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Address"
-      },
       "StudentsFilterLikeRequestError": {
         "type": "object",
         "properties": {
@@ -3168,92 +3290,6 @@
           }
         },
         "description": "Request error object for StudentsFilterLike"
-      },
-      "StudentRequestError": {
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "firstName is required"
-              },
-              null
-            ],
-            "description": "Student's first name",
-            "nullable": true
-          },
-          "lastName": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "lastName is required"
-              },
-              null
-            ],
-            "description": "Student's last name",
-            "nullable": true
-          },
-          "studentId": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "studentId is required"
-              },
-              null
-            ],
-            "description": "School-assigned student ID",
-            "nullable": true
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "status is required"
-              },
-              null
-            ],
-            "description": "Current status of the student",
-            "nullable": true
-          },
-          "gradeLevel": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "gradeLevel is required"
-              },
-              null
-            ],
-            "description": "Current grade level",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Student"
       },
       "StudentsFilterEqualsRequestError": {
         "type": "object",
@@ -3437,6 +3473,82 @@
         },
         "description": "Request error object for StudentsFilterEquals"
       },
+      "StudentsFilterNullRequestError": {
+        "type": "object",
+        "properties": {
+          "address": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "address is required"
+              },
+              null
+            ],
+            "description": "Student home address",
+            "nullable": true
+          },
+          "graduationDate": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "graduationDate is required"
+              },
+              null
+            ],
+            "description": "Expected or actual graduation date",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for StudentsFilterNull"
+      },
+      "ContactRequestError": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "email is required"
+              },
+              null
+            ],
+            "description": "Email address",
+            "nullable": true
+          },
+          "phone": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "phone is required"
+              },
+              null
+            ],
+            "description": "Phone number",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Contact"
+      },
       "StudentsFilterRangeRequestError": {
         "type": "object",
         "properties": {
@@ -3523,10 +3635,10 @@
         },
         "description": "Request error object for StudentsFilterRange"
       },
-      "StudentsFilterContainsRequestError": {
+      "AddressRequestError": {
         "type": "object",
         "properties": {
-          "id": {
+          "street": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/ErrorField"
@@ -3535,14 +3647,14 @@
             "examples": [
               {
                 "code": "InvalidValue",
-                "message": "id is required"
+                "message": "street is required"
               },
               null
             ],
-            "description": "Unique student identifier",
+            "description": "Street address",
             "nullable": true
           },
-          "meta": {
+          "city": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/ErrorField"
@@ -3551,14 +3663,14 @@
             "examples": [
               {
                 "code": "InvalidValue",
-                "message": "Meta is required"
+                "message": "city is required"
               },
               null
             ],
-            "description": "Metadata information for the Students",
+            "description": "City",
             "nullable": true
           },
-          "firstName": {
+          "state": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/ErrorField"
@@ -3567,14 +3679,14 @@
             "examples": [
               {
                 "code": "InvalidValue",
-                "message": "firstName is required"
+                "message": "state is required"
               },
               null
             ],
-            "description": "Student's first name",
+            "description": "State or province",
             "nullable": true
           },
-          "lastName": {
+          "zipCode": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/ErrorField"
@@ -3583,127 +3695,15 @@
             "examples": [
               {
                 "code": "InvalidValue",
-                "message": "lastName is required"
+                "message": "zipCode is required"
               },
               null
             ],
-            "description": "Student's last name",
-            "nullable": true
-          },
-          "studentId": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "studentId is required"
-              },
-              null
-            ],
-            "description": "School-assigned student ID",
-            "nullable": true
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "status is required"
-              },
-              null
-            ],
-            "description": "Current status of the student",
-            "nullable": true
-          },
-          "gradeLevel": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "gradeLevel is required"
-              },
-              null
-            ],
-            "description": "Current grade level",
-            "nullable": true
-          },
-          "contact": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "contact is required"
-              },
-              null
-            ],
-            "description": "Student contact information",
-            "nullable": true
-          },
-          "address": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "address is required"
-              },
-              null
-            ],
-            "description": "Student home address",
-            "nullable": true
-          },
-          "enrollmentDate": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "enrollmentDate is required"
-              },
-              null
-            ],
-            "description": "Date when student was enrolled",
-            "nullable": true
-          },
-          "graduationDate": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "graduationDate is required"
-              },
-              null
-            ],
-            "description": "Expected or actual graduation date",
+            "description": "ZIP or postal code",
             "nullable": true
           }
         },
-        "description": "Request error object for StudentsFilterContains"
+        "description": "Request error object for Address"
       },
       "StudentsBulkImportRequestError": {
         "type": "object",
