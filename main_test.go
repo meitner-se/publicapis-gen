@@ -187,6 +187,82 @@ func Test_run(t *testing.T) {
 		// Assert exact JSON match
 		assert.JSONEq(t, string(expectedOutputData), string(actualOutputData), "Generated OpenAPI JSON should exactly match expected output")
 	})
+
+	t.Run("config file with valid jobs succeeds", func(t *testing.T) {
+		// Reset flag package for this test
+		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+
+		// Create a test config file
+		testConfig := Config{
+			{
+				Specification: "testdata/school-management-api.yaml",
+				OpenAPIJSON:   "test-config-openapi.json",
+				SchemaJSON:    "test-config-schema.json",
+			},
+		}
+
+		yamlData, err := yaml.Marshal(&testConfig)
+		require.NoError(t, err)
+
+		tmpConfigFile, err := os.CreateTemp("", "test-config-*.yaml")
+		require.NoError(t, err)
+		defer os.Remove(tmpConfigFile.Name())
+		defer os.Remove("test-config-openapi.json")
+		defer os.Remove("test-config-schema.json")
+
+		_, err = tmpConfigFile.Write(yamlData)
+		require.NoError(t, err)
+		tmpConfigFile.Close()
+
+		// Arrange command line arguments for config mode
+		os.Args = []string{"publicapis-gen", "-config=" + tmpConfigFile.Name()}
+		ctx := context.Background()
+
+		// Act - run the command
+		err = run(ctx)
+
+		// Assert - command should succeed
+		require.NoError(t, err, "run() should not return an error for valid config file")
+
+		// Verify output files were created
+		_, err = os.Stat("test-config-openapi.json")
+		require.NoError(t, err, "OpenAPI JSON file should be created from config")
+
+		_, err = os.Stat("test-config-schema.json")
+		require.NoError(t, err, "Schema JSON file should be created from config")
+	})
+
+	t.Run("mixing config and legacy flags returns error", func(t *testing.T) {
+		// Reset flag package for this test
+		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+
+		// Arrange command line arguments with both config and legacy flags
+		os.Args = []string{"publicapis-gen", "-config=test.yaml", "-file=spec.yaml"}
+		ctx := context.Background()
+
+		// Act
+		err := run(ctx)
+
+		// Assert
+		require.Error(t, err, "run() should return an error when mixing config and legacy flags")
+		assert.Contains(t, err.Error(), errorInvalidConfig, "Error should mention invalid config")
+	})
+
+	t.Run("nonexistent config file returns error", func(t *testing.T) {
+		// Reset flag package for this test
+		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+
+		// Arrange command line arguments for nonexistent config
+		os.Args = []string{"publicapis-gen", "-config=nonexistent-config.yaml"}
+		ctx := context.Background()
+
+		// Act
+		err := run(ctx)
+
+		// Assert
+		require.Error(t, err, "run() should return an error for nonexistent config file")
+		assert.Contains(t, err.Error(), errorInvalidConfig, "Error should mention invalid config")
+	})
 }
 
 func Test_readSpecificationFile(t *testing.T) {
@@ -462,6 +538,250 @@ func Test_configureLogging(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+// ============================================================================
+// Config File Tests
+// ============================================================================
+
+func Test_parseConfigFile(t *testing.T) {
+	t.Run("parses valid config file", func(t *testing.T) {
+		// Create a test config file
+		testConfig := Config{
+			{
+				Specification: "spec1.yaml",
+				OpenAPIJSON:   "output1.json",
+				SchemaJSON:    "schema1.json",
+			},
+			{
+				Specification: "spec2.yaml",
+				OpenAPIYAML:   "output2.yaml",
+				OverlayYAML:   "overlay2.yaml",
+			},
+		}
+
+		yamlData, err := yaml.Marshal(&testConfig)
+		require.NoError(t, err)
+
+		tmpConfigFile, err := os.CreateTemp("", "test-config-*.yaml")
+		require.NoError(t, err)
+		defer os.Remove(tmpConfigFile.Name())
+
+		_, err = tmpConfigFile.Write(yamlData)
+		require.NoError(t, err)
+		tmpConfigFile.Close()
+
+		// Act
+		config, err := parseConfigFile(tmpConfigFile.Name())
+
+		// Assert
+		require.NoError(t, err, "parseConfigFile should succeed for valid config")
+		assert.Len(t, config, 2, "Config should have 2 jobs")
+		assert.Equal(t, "spec1.yaml", config[0].Specification, "First job specification should match")
+		assert.Equal(t, "output1.json", config[0].OpenAPIJSON, "First job OpenAPI JSON should match")
+		assert.Equal(t, "spec2.yaml", config[1].Specification, "Second job specification should match")
+		assert.Equal(t, "output2.yaml", config[1].OpenAPIYAML, "Second job OpenAPI YAML should match")
+	})
+
+	t.Run("returns error for nonexistent file", func(t *testing.T) {
+		// Act
+		config, err := parseConfigFile("nonexistent-config.yaml")
+
+		// Assert
+		require.Error(t, err, "parseConfigFile should return error for nonexistent file")
+		assert.Nil(t, config, "Config should be nil on error")
+		assert.Contains(t, err.Error(), errorInvalidConfig, "Error should mention invalid config")
+	})
+
+	t.Run("returns error for invalid YAML", func(t *testing.T) {
+		// Create invalid YAML file
+		tmpConfigFile, err := os.CreateTemp("", "test-invalid-*.yaml")
+		require.NoError(t, err)
+		defer os.Remove(tmpConfigFile.Name())
+
+		_, err = tmpConfigFile.Write([]byte("invalid: yaml: content: [unclosed"))
+		require.NoError(t, err)
+		tmpConfigFile.Close()
+
+		// Act
+		config, err := parseConfigFile(tmpConfigFile.Name())
+
+		// Assert
+		require.Error(t, err, "parseConfigFile should return error for invalid YAML")
+		assert.Nil(t, config, "Config should be nil on error")
+		assert.Contains(t, err.Error(), errorConfigParsing, "Error should mention config parsing")
+	})
+
+	t.Run("returns error for empty config", func(t *testing.T) {
+		// Create empty config file
+		tmpConfigFile, err := os.CreateTemp("", "test-empty-*.yaml")
+		require.NoError(t, err)
+		defer os.Remove(tmpConfigFile.Name())
+
+		_, err = tmpConfigFile.Write([]byte("[]"))
+		require.NoError(t, err)
+		tmpConfigFile.Close()
+
+		// Act
+		config, err := parseConfigFile(tmpConfigFile.Name())
+
+		// Assert
+		require.Error(t, err, "parseConfigFile should return error for empty config")
+		assert.Nil(t, config, "Config should be nil on error")
+		assert.Contains(t, err.Error(), errorInvalidConfig, "Error should mention invalid config")
+		assert.Contains(t, err.Error(), "at least one job", "Error should mention missing jobs")
+	})
+
+	t.Run("returns error for job missing specification", func(t *testing.T) {
+		// Create config with job missing specification
+		testConfig := Config{
+			{
+				OpenAPIJSON: "output.json",
+			},
+		}
+
+		yamlData, err := yaml.Marshal(&testConfig)
+		require.NoError(t, err)
+
+		tmpConfigFile, err := os.CreateTemp("", "test-missing-spec-*.yaml")
+		require.NoError(t, err)
+		defer os.Remove(tmpConfigFile.Name())
+
+		_, err = tmpConfigFile.Write(yamlData)
+		require.NoError(t, err)
+		tmpConfigFile.Close()
+
+		// Act
+		config, err := parseConfigFile(tmpConfigFile.Name())
+
+		// Assert
+		require.Error(t, err, "parseConfigFile should return error for job missing specification")
+		assert.Nil(t, config, "Config should be nil on error")
+		assert.Contains(t, err.Error(), errorInvalidConfig, "Error should mention invalid config")
+		assert.Contains(t, err.Error(), "missing required 'specification' field", "Error should mention missing specification")
+	})
+
+	t.Run("returns error for job with no outputs", func(t *testing.T) {
+		// Create config with job that has no output formats
+		testConfig := Config{
+			{
+				Specification: "spec.yaml",
+			},
+		}
+
+		yamlData, err := yaml.Marshal(&testConfig)
+		require.NoError(t, err)
+
+		tmpConfigFile, err := os.CreateTemp("", "test-no-outputs-*.yaml")
+		require.NoError(t, err)
+		defer os.Remove(tmpConfigFile.Name())
+
+		_, err = tmpConfigFile.Write(yamlData)
+		require.NoError(t, err)
+		tmpConfigFile.Close()
+
+		// Act
+		config, err := parseConfigFile(tmpConfigFile.Name())
+
+		// Assert
+		require.Error(t, err, "parseConfigFile should return error for job with no outputs")
+		assert.Nil(t, config, "Config should be nil on error")
+		assert.Contains(t, err.Error(), errorInvalidConfig, "Error should mention invalid config")
+		assert.Contains(t, err.Error(), "at least one output format", "Error should mention missing output formats")
+	})
+}
+
+func Test_generateOpenAPIYAMLOutputPath(t *testing.T) {
+	testCases := []struct {
+		name      string
+		inputFile string
+		expected  string
+	}{
+		{
+			name:      "YAML file generates YAML OpenAPI",
+			inputFile: "spec.yaml",
+			expected:  "spec-openapi.yaml",
+		},
+		{
+			name:      "JSON file generates YAML OpenAPI",
+			inputFile: "api.json",
+			expected:  "api-openapi.yaml",
+		},
+		{
+			name:      "File with path generates YAML OpenAPI",
+			inputFile: "/path/to/spec.yml",
+			expected:  "/path/to/spec-openapi.yaml",
+		},
+		{
+			name:      "File without extension generates YAML OpenAPI",
+			inputFile: "spec",
+			expected:  "spec-openapi.yaml",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Act
+			result := generateOpenAPIYAMLOutputPath(tc.inputFile)
+
+			// Assert
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func Test_ensureYAMLExtension(t *testing.T) {
+	testCases := []struct {
+		name       string
+		outputPath string
+		expected   string
+	}{
+		{
+			name:       "YAML extension unchanged",
+			outputPath: "api-spec.yaml",
+			expected:   "api-spec.yaml",
+		},
+		{
+			name:       "YML extension unchanged",
+			outputPath: "api-spec.yml",
+			expected:   "api-spec.yml",
+		},
+		{
+			name:       "JSON extension changed to YAML",
+			outputPath: "api-spec.json",
+			expected:   "api-spec.yaml",
+		},
+		{
+			name:       "No extension gets YAML extension",
+			outputPath: "api-spec",
+			expected:   "api-spec.yaml",
+		},
+		{
+			name:       "Other extension changed to YAML",
+			outputPath: "api-spec.xml",
+			expected:   "api-spec.yaml",
+		},
+		{
+			name:       "Path with YAML extension unchanged",
+			outputPath: "/path/to/api-spec.yaml",
+			expected:   "/path/to/api-spec.yaml",
+		},
+		{
+			name:       "Path with JSON extension changed to YAML",
+			outputPath: "/path/to/api-spec.json",
+			expected:   "/path/to/api-spec.yaml",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Act
+			result := ensureYAMLExtension(tc.outputPath)
+
+			// Assert
+			assert.Equal(t, tc.expected, result)
 		})
 	}
 }
