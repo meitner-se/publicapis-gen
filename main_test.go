@@ -66,7 +66,7 @@ func Test_run(t *testing.T) {
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 
 		// Arrange
-		os.Args = []string{"publicapis-gen"}
+		os.Args = []string{"publicapis-gen", "generate"}
 		ctx := context.Background()
 
 		// Act
@@ -82,7 +82,7 @@ func Test_run(t *testing.T) {
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 
 		// Arrange
-		os.Args = []string{"publicapis-gen", "-file=test.yaml"}
+		os.Args = []string{"publicapis-gen", "generate", "-file=test.yaml"}
 		ctx := context.Background()
 
 		// Act
@@ -98,7 +98,7 @@ func Test_run(t *testing.T) {
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 
 		// Arrange
-		os.Args = []string{"publicapis-gen", "-file=test.yaml", "-mode=invalid"}
+		os.Args = []string{"publicapis-gen", "generate", "-file=test.yaml", "-mode=invalid"}
 		ctx := context.Background()
 
 		// Act
@@ -114,7 +114,7 @@ func Test_run(t *testing.T) {
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 
 		// Arrange
-		os.Args = []string{"publicapis-gen", "-file=test.yaml", "-mode=overlay", "-log-level=invalid"}
+		os.Args = []string{"publicapis-gen", "generate", "-file=test.yaml", "-mode=overlay", "-log-level=invalid"}
 		ctx := context.Background()
 
 		// Act
@@ -130,7 +130,7 @@ func Test_run(t *testing.T) {
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 
 		// Arrange
-		os.Args = []string{"publicapis-gen", "-file=nonexistent.yaml", "-mode=overlay"}
+		os.Args = []string{"publicapis-gen", "generate", "-file=nonexistent.yaml", "-mode=overlay"}
 		ctx := context.Background()
 
 		// Act
@@ -156,7 +156,7 @@ func Test_run(t *testing.T) {
 		tmpOutputFile.Close()
 
 		// Arrange command line arguments for OpenAPI generation
-		os.Args = []string{"publicapis-gen", "-file=" + inputSpecFile, "-mode=openapi", "-output=" + tmpOutputFile.Name()}
+		os.Args = []string{"publicapis-gen", "generate", "-file=" + inputSpecFile, "-mode=openapi", "-output=" + tmpOutputFile.Name()}
 		ctx := context.Background()
 
 		// Act - run the command
@@ -215,7 +215,7 @@ func Test_run(t *testing.T) {
 		tmpConfigFile.Close()
 
 		// Arrange command line arguments for config mode
-		os.Args = []string{"publicapis-gen", "-config=" + tmpConfigFile.Name()}
+		os.Args = []string{"publicapis-gen", "generate", "-config=" + tmpConfigFile.Name()}
 		ctx := context.Background()
 
 		// Act - run the command
@@ -237,7 +237,7 @@ func Test_run(t *testing.T) {
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 
 		// Arrange command line arguments with both config and legacy flags
-		os.Args = []string{"publicapis-gen", "-config=test.yaml", "-file=spec.yaml"}
+		os.Args = []string{"publicapis-gen", "generate", "-config=test.yaml", "-file=spec.yaml"}
 		ctx := context.Background()
 
 		// Act
@@ -253,7 +253,7 @@ func Test_run(t *testing.T) {
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 
 		// Arrange command line arguments for nonexistent config
-		os.Args = []string{"publicapis-gen", "-config=nonexistent-config.yaml"}
+		os.Args = []string{"publicapis-gen", "generate", "-config=nonexistent-config.yaml"}
 		ctx := context.Background()
 
 		// Act
@@ -304,7 +304,7 @@ func Test_run(t *testing.T) {
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 
 		// Arrange command line arguments with no flags (should use default config)
-		os.Args = []string{"publicapis-gen"}
+		os.Args = []string{"publicapis-gen", "generate"}
 		ctx := context.Background()
 
 		// Act
@@ -358,7 +358,7 @@ func Test_run(t *testing.T) {
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 
 		// Arrange command line arguments with no flags (should use default config)
-		os.Args = []string{"publicapis-gen"}
+		os.Args = []string{"publicapis-gen", "generate"}
 		ctx := context.Background()
 
 		// Act
@@ -424,7 +424,7 @@ func Test_run(t *testing.T) {
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 
 		// Arrange command line arguments with no flags (should use default config)
-		os.Args = []string{"publicapis-gen"}
+		os.Args = []string{"publicapis-gen", "generate"}
 		ctx := context.Background()
 
 		// Act
@@ -467,7 +467,7 @@ func Test_run(t *testing.T) {
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 
 		// Arrange command line arguments with no flags and no default config
-		os.Args = []string{"publicapis-gen"}
+		os.Args = []string{"publicapis-gen", "generate"}
 		ctx := context.Background()
 
 		// Act
