@@ -1,0 +1,362 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Test API API",
+    "description": "Generated API documentation",
+    "version": "1.0.0"
+  },
+  "paths": {},
+  "components": {
+    "responses": {
+      "Error400ResponseBody": {
+        "description": "Bad Request - The request was malformed or contained invalid parameters",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "examples": [
+                    {
+                      "code": "BadRequest",
+                      "message": "The request contains invalid parameters or malformed data"
+                    }
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message",
+                    "code"
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            },
+            "examples": {
+              "errorExample": {
+                "summary": "Bad Request error example",
+                "value": {
+                  "error": {
+                    "code": "BadRequest",
+                    "message": "The request contains invalid parameters or malformed data"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error401ResponseBody": {
+        "description": "Unauthorized - The request is missing valid authentication credentials",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "examples": [
+                    {
+                      "code": "BadRequest",
+                      "message": "The request contains invalid parameters or malformed data"
+                    }
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message",
+                    "code"
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            },
+            "examples": {
+              "errorExample": {
+                "summary": "Unauthorized error example",
+                "value": {
+                  "error": {
+                    "code": "Unauthorized",
+                    "message": "Authentication credentials are missing or invalid"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error403ResponseBody": {
+        "description": "Forbidden - Request is authenticated, but the user is not allowed to perform the operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "examples": [
+                    {
+                      "code": "BadRequest",
+                      "message": "The request contains invalid parameters or malformed data"
+                    }
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message",
+                    "code"
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            },
+            "examples": {
+              "errorExample": {
+                "summary": "Forbidden error example",
+                "value": {
+                  "error": {
+                    "code": "Forbidden",
+                    "message": "You do not have permission to perform this operation"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error404ResponseBody": {
+        "description": "Not Found - The requested resource does not exist",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "examples": [
+                    {
+                      "code": "BadRequest",
+                      "message": "The request contains invalid parameters or malformed data"
+                    }
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message",
+                    "code"
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            },
+            "examples": {
+              "errorExample": {
+                "summary": "Not Found error example",
+                "value": {
+                  "error": {
+                    "code": "NotFound",
+                    "message": "The requested resource could not be found"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error409ResponseBody": {
+        "description": "Conflict - The request could not be completed due to a conflict",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "examples": [
+                    {
+                      "code": "BadRequest",
+                      "message": "The request contains invalid parameters or malformed data"
+                    }
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message",
+                    "code"
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            },
+            "examples": {
+              "errorExample": {
+                "summary": "Conflict error example",
+                "value": {
+                  "error": {
+                    "code": "Conflict",
+                    "message": "The request conflicts with the current state of the resource"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error429ResponseBody": {
+        "description": "Too Many Requests - When the rate limit has been exceeded",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "examples": [
+                    {
+                      "code": "BadRequest",
+                      "message": "The request contains invalid parameters or malformed data"
+                    }
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message",
+                    "code"
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            },
+            "examples": {
+              "errorExample": {
+                "summary": "Rate Limited error example",
+                "value": {
+                  "error": {
+                    "code": "RateLimited",
+                    "message": "Too many requests - rate limit exceeded"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error500ResponseBody": {
+        "description": "Internal Server Error - An unexpected server error occurred",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "examples": [
+                    {
+                      "code": "BadRequest",
+                      "message": "The request contains invalid parameters or malformed data"
+                    }
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message",
+                    "code"
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            },
+            "examples": {
+              "errorExample": {
+                "summary": "Internal Server error example",
+                "value": {
+                  "error": {
+                    "code": "Internal",
+                    "message": "An unexpected server error occurred"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "User",
+      "description": "User management resource"
+    }
+  ],
+  "x-speakeasy-retries": {
+    "strategy": "backoff",
+    "backoff": {
+      "initialInterval": 500,
+      "maxInterval": 60000,
+      "maxElapsedTime": 3600000,
+      "exponent": 1.5
+    },
+    "statusCodes": [
+      "5XX"
+    ],
+    "retryConnectionErrors": true
+  },
+  "x-speakeasy-timeout": 30000
+}

@@ -34,7 +34,7 @@ const (
 
 // OpenAPI version constants
 const (
-	defaultOpenAPIVersion = "3.1.0"
+	defaultOpenAPIVersion = "3.0.3" // Use 3.0.3 for better compatibility with code generators
 	defaultServiceVersion = "1.0.0"
 )
 
