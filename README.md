@@ -106,9 +106,66 @@ Common errors and solutions:
 
 ## Installation
 
+### Using the Go library
 ```bash
 go get github.com/meitner-se/publicapis-gen
 ```
+
+### Using the CLI tool
+```bash
+go install github.com/meitner-se/publicapis-gen@latest
+```
+
+## CLI Usage
+
+The CLI tool provides a `generate` command to process specification files and create OpenAPI documents, JSON schemas, and overlays.
+
+### Basic Usage
+```bash
+# Show available commands
+publicapis-gen help
+
+# Show help for generate command
+publicapis-gen help generate
+publicapis-gen generate -help
+
+# Generate from specification file (legacy mode)
+publicapis-gen generate -file=api-spec.yaml -mode=openapi -output=openapi.json
+publicapis-gen generate -file=api-spec.yaml -mode=schema -output=schemas.json
+publicapis-gen generate -file=api-spec.yaml -mode=overlay -output=complete-spec.yaml
+
+# Using config file (recommended)
+publicapis-gen generate -config=build-config.yaml
+
+# Auto-detect default config file
+publicapis-gen generate  # Looks for publicapis.yaml or publicapis.yml
+```
+
+### Configuration File Example
+Create a `publicapis.yaml` config file to process multiple specifications:
+
+```yaml
+- specification: "users-api.yaml"
+  openapi_json: "dist/users-openapi.json"
+  schema_json: "dist/users-schema.json"
+  overlay_yaml: "dist/users-complete.yaml"
+
+- specification: "products-api.yaml"  
+  openapi_yaml: "dist/products-openapi.yaml"
+  schema_json: "dist/products-schema.json"
+```
+
+### Available Modes
+- **`openapi`** - Generate OpenAPI 3.1 specification (JSON)
+- **`schema`** - Generate JSON schemas for validation  
+- **`overlay`** - Generate complete specification with overlays applied
+
+### Options
+- **`-file`** - Path to input specification file (YAML or JSON)
+- **`-mode`** - Operation mode (openapi, schema, overlay)
+- **`-output`** - Output file path (optional, auto-generated if not specified)
+- **`-config`** - Path to YAML config file for batch processing
+- **`-log-level`** - Logging verbosity (debug, info, warn, error, off)
 
 ## Running Tests
 

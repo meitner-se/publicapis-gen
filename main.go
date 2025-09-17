@@ -61,7 +61,7 @@ const (
 // Usage messages
 const (
 	usageDescription = "publicapis-gen - Generate API specifications and OpenAPI documents"
-	usageExample     = "\nExamples:\n  # Using command line flags (legacy)\n  publicapis-gen -file=spec.yaml -mode=overlay\n  publicapis-gen -file=spec.json -mode=openapi\n  publicapis-gen -file=spec.yaml -mode=schema\n  publicapis-gen -file=spec.yaml -mode=openapi -output=api-spec.json\n  publicapis-gen -file=spec.yaml -mode=schema -output=schemas.json\n  publicapis-gen -file=spec.yaml -mode=openapi -log-level=info\n\n  # Using config file (recommended)\n  publicapis-gen -config=build-config.yaml\n  publicapis-gen -config=build-config.yaml -log-level=info\n\n  # Using default config file (automatically detects publicapis.yaml or publicapis.yml)\n  publicapis-gen\n  publicapis-gen -log-level=info"
+	usageExample     = "\nExamples:\n  # Using command line flags (legacy)\n  publicapis-gen generate -file=spec.yaml -mode=overlay\n  publicapis-gen generate -file=spec.json -mode=openapi\n  publicapis-gen generate -file=spec.yaml -mode=schema\n  publicapis-gen generate -file=spec.yaml -mode=openapi -output=api-spec.json\n  publicapis-gen generate -file=spec.yaml -mode=schema -output=schemas.json\n  publicapis-gen generate -file=spec.yaml -mode=openapi -log-level=info\n\n  # Using config file (recommended)\n  publicapis-gen generate -config=build-config.yaml\n  publicapis-gen generate -config=build-config.yaml -log-level=info\n\n  # Using default config file (automatically detects publicapis.yaml or publicapis.yml)\n  publicapis-gen generate\n  publicapis-gen generate -log-level=info"
 )
 
 // Config file constants
@@ -71,6 +71,21 @@ const (
 	errorConfigParsing = "failed to parse config file"
 	defaultConfigYAML  = "publicapis.yaml"
 	defaultConfigYML   = "publicapis.yml"
+)
+
+// Command constants
+const (
+	commandGenerate     = "generate"
+	commandHelp         = "help"
+	errorInvalidCommand = "invalid command"
+	errorMissingCommand = "missing command"
+)
+
+// Command usage messages
+const (
+	mainUsageDescription     = "publicapis-gen - Generate API specifications and OpenAPI documents"
+	mainUsageCommands        = "\nAvailable Commands:\n  generate    Generate API specifications and OpenAPI documents\n  help        Show help for commands\n\nUse \"publicapis-gen [command] --help\" for more information about a command."
+	generateUsageDescription = "Generate API specifications and OpenAPI documents from specification files"
 )
 
 // Job represents a single generation job in the config file
@@ -96,25 +111,80 @@ func main() {
 }
 
 func run(ctx context.Context) error {
-	// Parse command line flags
-	var (
-		fileFlag     = flag.String("file", "", "Path to input specification file (YAML or JSON) - legacy mode")
-		modeFlag     = flag.String("mode", "", "Operation mode: 'overlay', 'openapi', or 'schema' - legacy mode")
-		outputFlag   = flag.String("output", "", "Output file path (optional, defaults to input name with suffix) - legacy mode")
-		configFlag   = flag.String(configFileFlag, "", "Path to YAML config file containing multiple jobs")
-		logLevelFlag = flag.String("log-level", logLevelOff, "Log level: 'debug', 'info', 'warn', 'error', or 'off' (default: off)")
-		helpFlag     = flag.Bool("help", false, "Show help message")
-	)
-
-	// Set custom usage function
-	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "%s\n\n", usageDescription)
-		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [options]\n\n", os.Args[0])
-		flag.PrintDefaults()
-		fmt.Fprintf(flag.CommandLine.Output(), "%s\n", usageExample)
+	// Parse command line to get the subcommand
+	if len(os.Args) < 2 {
+		showMainUsage()
+		return fmt.Errorf("%s: must specify a command", errorMissingCommand)
 	}
 
-	flag.Parse()
+	command := os.Args[1]
+
+	switch command {
+	case commandGenerate:
+		return runGenerateCommand(ctx, os.Args[2:])
+	case commandHelp:
+		if len(os.Args) >= 3 {
+			return showCommandHelp(os.Args[2])
+		}
+		showMainUsage()
+		return nil
+	case "-help", "--help", "-h":
+		showMainUsage()
+		return nil
+	default:
+		showMainUsage()
+		return fmt.Errorf("%s: unknown command '%s'", errorInvalidCommand, command)
+	}
+}
+
+func showMainUsage() {
+	fmt.Fprintf(os.Stderr, "%s\n\n", mainUsageDescription)
+	fmt.Fprintf(os.Stderr, "Usage: %s <command> [options]\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "%s\n", mainUsageCommands)
+}
+
+func showCommandHelp(command string) error {
+	switch command {
+	case commandGenerate:
+		showGenerateUsage()
+		return nil
+	default:
+		showMainUsage()
+		return fmt.Errorf("%s: unknown command '%s'", errorInvalidCommand, command)
+	}
+}
+
+func showGenerateUsage() {
+	fmt.Fprintf(os.Stderr, "%s\n\n", generateUsageDescription)
+	fmt.Fprintf(os.Stderr, "Usage: %s generate [options]\n\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "Options:\n")
+	fmt.Fprintf(os.Stderr, "  -file string\n        Path to input specification file (YAML or JSON) - legacy mode\n")
+	fmt.Fprintf(os.Stderr, "  -mode string\n        Operation mode: 'overlay', 'openapi', or 'schema' - legacy mode\n")
+	fmt.Fprintf(os.Stderr, "  -output string\n        Output file path (optional, defaults to input name with suffix) - legacy mode\n")
+	fmt.Fprintf(os.Stderr, "  -config string\n        Path to YAML config file containing multiple jobs\n")
+	fmt.Fprintf(os.Stderr, "  -log-level string\n        Log level: 'debug', 'info', 'warn', 'error', or 'off' (default: off)\n")
+	fmt.Fprintf(os.Stderr, "  -help\n        Show this help message\n")
+	fmt.Fprintf(os.Stderr, "%s\n", usageExample)
+}
+
+func runGenerateCommand(ctx context.Context, args []string) error {
+	// Create a new FlagSet for the generate command
+	generateFlags := flag.NewFlagSet(commandGenerate, flag.ContinueOnError)
+	generateFlags.Usage = showGenerateUsage
+
+	// Parse command line flags for generate command
+	var (
+		fileFlag     = generateFlags.String("file", "", "Path to input specification file (YAML or JSON) - legacy mode")
+		modeFlag     = generateFlags.String("mode", "", "Operation mode: 'overlay', 'openapi', or 'schema' - legacy mode")
+		outputFlag   = generateFlags.String("output", "", "Output file path (optional, defaults to input name with suffix) - legacy mode")
+		configFlag   = generateFlags.String(configFileFlag, "", "Path to YAML config file containing multiple jobs")
+		logLevelFlag = generateFlags.String("log-level", logLevelOff, "Log level: 'debug', 'info', 'warn', 'error', or 'off' (default: off)")
+		helpFlag     = generateFlags.Bool("help", false, "Show help message")
+	)
+
+	if err := generateFlags.Parse(args); err != nil {
+		return err
+	}
 
 	// Configure logging
 	if err := configureLogging(*logLevelFlag); err != nil {
@@ -123,7 +193,7 @@ func run(ctx context.Context) error {
 
 	// Show help if requested
 	if *helpFlag {
-		flag.Usage()
+		showGenerateUsage()
 		return nil
 	}
 
@@ -132,7 +202,7 @@ func run(ctx context.Context) error {
 	usingLegacy := *fileFlag != "" || *modeFlag != ""
 
 	if usingConfig && usingLegacy {
-		flag.Usage()
+		showGenerateUsage()
 		return fmt.Errorf("%s: cannot use both config file and legacy flags (file/mode) at the same time", errorInvalidConfig)
 	}
 
@@ -145,7 +215,7 @@ func run(ctx context.Context) error {
 		}
 
 		// No default config file found, require explicit configuration
-		flag.Usage()
+		showGenerateUsage()
 		return fmt.Errorf("%s: either config file or legacy flags (file and mode) are required", errorInvalidFile)
 	}
 
@@ -155,12 +225,12 @@ func run(ctx context.Context) error {
 
 	// Legacy mode - validate required flags
 	if *fileFlag == "" {
-		flag.Usage()
+		showGenerateUsage()
 		return fmt.Errorf("%s: file flag is required", errorInvalidFile)
 	}
 
 	if *modeFlag == "" {
-		flag.Usage()
+		showGenerateUsage()
 		return fmt.Errorf("%s: mode flag is required", errorInvalidMode)
 	}
 
