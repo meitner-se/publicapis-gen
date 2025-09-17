@@ -983,6 +983,7 @@ func TestValidateEndpoint(t *testing.T) {
 	validEndpointJSON := `{
 		"name": "GetUser",
 		"title": "Get User",
+		"summary": "Get User",
 		"description": "Get user by ID",
 		"method": "GET",
 		"path": "/users/{id}",
@@ -1168,6 +1169,7 @@ func TestParseServiceFromJSON(t *testing.T) {
 					{
 						"name": "GetUser",
 						"title": "Get User",
+						"summary": "Get User",
 						"description": "Get user by ID",
 						"method": "GET",
 						"path": "/users/{id}",
@@ -1260,6 +1262,7 @@ resources:
     endpoints:
       - name: GetUser
         title: Get User
+        summary: Get User
         description: Get user by ID
         method: GET
         path: /users/{id}
@@ -1460,6 +1463,7 @@ func TestParseResourceFromJSON(t *testing.T) {
 			{
 				"name": "GetUser",
 				"title": "Get User",
+				"summary": "Get User",
 				"description": "Get user by ID",
 				"method": "GET",
 				"path": "/users/{id}",
@@ -1521,6 +1525,7 @@ fields:
 endpoints:
   - name: GetUser
     title: Get User
+    summary: Get User
     description: Get user by ID
     method: GET
     path: /users/{id}
@@ -1643,6 +1648,7 @@ func TestValidationWithComplexStructures(t *testing.T) {
 					{
 						"name": "CreateUser",
 						"title": "Create New User",
+						"summary": "Create New User",
 						"description": "Create a new user account",
 						"method": "POST",
 						"path": "/",
