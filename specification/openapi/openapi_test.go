@@ -3521,7 +3521,7 @@ func TestCircularReferenceHandling(t *testing.T) {
 	// Verify that circular references don't cause infinite loops
 	// PersonA should have name example but friend field should be omitted due to circular reference protection
 	assert.Contains(t, jsonString, "John Doe", "PersonA name example should be present")
-	assert.Contains(t, jsonString, "Jane Smith", "PersonB name example should be present") 
+	assert.Contains(t, jsonString, "Jane Smith", "PersonB name example should be present")
 
 	// Verify the request body example is generated successfully
 	assert.Contains(t, jsonString, "\"requestExample\"", "Request body should contain examples")

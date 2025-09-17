@@ -735,17 +735,18 @@ func (g *Generator) createFieldSchema(field specification.Field, service *specif
 			if objectExample := g.generateObjectExampleWithVisited(*obj, service, visited); objectExample != nil {
 				arrayNode := &yaml.Node{
 					Kind: yaml.SequenceNode,
+					Tag:  "!!seq",
 				}
 				arrayNode.Content = append(arrayNode.Content, objectExample)
-
+				
 				examples := []*yaml.Node{arrayNode}
-
+				
 				// If the field is nullable, add null as an additional example
 				if field.IsNullable() {
 					nullNode := g.createNullExampleNode()
 					examples = append(examples, nullNode)
 				}
-
+				
 				schema.Examples = examples
 			}
 		}
@@ -755,13 +756,13 @@ func (g *Generator) createFieldSchema(field specification.Field, service *specif
 			visited := make(map[string]bool)
 			if objectExample := g.generateObjectExampleWithVisited(*obj, service, visited); objectExample != nil {
 				examples := []*yaml.Node{objectExample}
-
+				
 				// If the field is nullable, add null as an additional example
 				if field.IsNullable() {
 					nullNode := g.createNullExampleNode()
 					examples = append(examples, nullNode)
 				}
-
+				
 				schema.Examples = examples
 			}
 		}
@@ -1087,7 +1088,8 @@ func (g *Generator) generateRequestBodyExample(bodyParams []specification.Field,
 		if service.HasObject(field.Type) {
 			obj := service.GetObject(field.Type)
 			if obj != nil {
-				return g.generateObjectExample(*obj, service)
+				visited := make(map[string]bool)
+				return g.generateObjectExampleWithVisited(*obj, service, visited)
 			}
 		}
 		return nil
@@ -1196,7 +1198,8 @@ func (g *Generator) generateResponseBodyExample(response specification.EndpointR
 		if service.HasObject(*response.BodyObject) {
 			obj := service.GetObject(*response.BodyObject)
 			if obj != nil {
-				return g.generateObjectExample(*obj, service)
+				visited := make(map[string]bool)
+				return g.generateObjectExampleWithVisited(*obj, service, visited)
 			}
 		}
 		return nil
@@ -1423,7 +1426,8 @@ func (g *Generator) createComponentResponse(response specification.EndpointRespo
 				} else if field.IsArray() && service.HasObject(field.Type) {
 					// Generate example array from object definition
 					if obj := service.GetObject(field.Type); obj != nil {
-						if objectExample := g.generateObjectExample(*obj, service); objectExample != nil {
+						visited := make(map[string]bool)
+						if objectExample := g.generateObjectExampleWithVisited(*obj, service, visited); objectExample != nil {
 							arrayNode := &yaml.Node{
 								Kind: yaml.SequenceNode,
 							}
@@ -1434,7 +1438,8 @@ func (g *Generator) createComponentResponse(response specification.EndpointRespo
 				} else if service.HasObject(field.Type) {
 					// Generate example from object definition
 					if obj := service.GetObject(field.Type); obj != nil {
-						if objectExample := g.generateObjectExample(*obj, service); objectExample != nil {
+						visited := make(map[string]bool)
+						if objectExample := g.generateObjectExampleWithVisited(*obj, service, visited); objectExample != nil {
 							fieldSchema.Examples = []*yaml.Node{objectExample}
 						}
 					}
@@ -1587,7 +1592,8 @@ func (g *Generator) generateErrorFieldsExample(fields []specification.Field, ser
 			// For other types, try to generate from object definition or fallback to string
 			if service.HasObject(field.Type) {
 				if obj := service.GetObject(field.Type); obj != nil {
-					fieldValueNode = g.generateObjectExample(*obj, service)
+					visited := make(map[string]bool)
+					fieldValueNode = g.generateObjectExampleWithVisited(*obj, service, visited)
 				}
 			} else {
 				fieldValueNode = g.createTypedExampleNode(specification.FieldTypeString, fmt.Sprintf("Invalid %s", field.Name))
@@ -2102,7 +2108,8 @@ func (g *Generator) createResponse(response specification.EndpointResponse, reso
 				} else if field.IsArray() && service.HasObject(field.Type) {
 					// Generate example array from object definition
 					if obj := service.GetObject(field.Type); obj != nil {
-						if objectExample := g.generateObjectExample(*obj, service); objectExample != nil {
+						visited := make(map[string]bool)
+						if objectExample := g.generateObjectExampleWithVisited(*obj, service, visited); objectExample != nil {
 							arrayNode := &yaml.Node{
 								Kind: yaml.SequenceNode,
 							}
@@ -2113,7 +2120,8 @@ func (g *Generator) createResponse(response specification.EndpointResponse, reso
 				} else if service.HasObject(field.Type) {
 					// Generate example from object definition
 					if obj := service.GetObject(field.Type); obj != nil {
-						if objectExample := g.generateObjectExample(*obj, service); objectExample != nil {
+						visited := make(map[string]bool)
+						if objectExample := g.generateObjectExampleWithVisited(*obj, service, visited); objectExample != nil {
 							fieldSchema.Examples = []*yaml.Node{objectExample}
 						}
 					}
