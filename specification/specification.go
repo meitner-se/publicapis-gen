@@ -655,6 +655,8 @@ func ApplyOverlay(input *Service) *Service {
 
 	// Generate Objects and endpoints from Resources
 	generateObjectsFromResources(result, input.Resources)
+	// Generate filter objects for resources that have Read operations (needed for search endpoints)
+	generateFilterObjectsForSearchableResources(result, input.Resources)
 	generateEndpointsFromResources(result, input.Resources)
 
 	// Generate RequestError objects for types used in body parameters
@@ -1239,6 +1241,25 @@ func generateNestedFilterField(originalField Field, filterSuffix string, isNulla
 		Description: originalField.Description,
 		Type:        filterType,
 		Modifiers:   modifiers,
+	}
+}
+
+// generateFilterObjectsForSearchableResources generates filter objects for resources that have Read operations.
+// This ensures filter objects exist before search endpoints are generated.
+func generateFilterObjectsForSearchableResources(service *Service, resources []Resource) {
+	for _, resource := range resources {
+		// Only generate filter objects for resources that have Read operations (which will have search endpoints)
+		if resource.HasReadOperation() {
+			// Find the corresponding object for this resource
+			for _, obj := range service.Objects {
+				if obj.Name == resource.Name {
+					// Generate all filter objects for this resource object
+					filterObjects := generateFilterObjectsForObject(obj, service.Objects)
+					service.Objects = append(service.Objects, filterObjects...)
+					break
+				}
+			}
+		}
 	}
 }
 
