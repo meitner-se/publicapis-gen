@@ -3628,7 +3628,7 @@ func TestErrorFieldExamples(t *testing.T) {
 
 	// Verify the structure includes both fields in the same example object
 	assert.Contains(t, jsonString, "\"allOf\"", "Should contain allOf for ErrorField references")
-	
+
 	// Look for the pattern where we have both code and message in the same example
 	codeMessagePattern := `"code":\s*"InvalidValue"[^}]*"message"`
 	assert.Regexp(t, codeMessagePattern, jsonString, "ErrorField example should contain both code and message fields")

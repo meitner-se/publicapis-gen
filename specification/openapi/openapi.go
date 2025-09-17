@@ -1115,12 +1115,6 @@ func (g *Generator) generateRequestBodyExample(bodyParams []specification.Field,
 	return g.generateObjectExampleFromFields(bodyParams, service)
 }
 
-// generateObjectExample generates an example from an object definition.
-func (g *Generator) generateObjectExample(obj specification.Object, service *specification.Service) *yaml.Node {
-	visited := make(map[string]bool)
-	return g.generateObjectExampleWithVisited(obj, service, visited)
-}
-
 // generateObjectExampleWithVisited generates an example from an object definition with circular reference protection.
 func (g *Generator) generateObjectExampleWithVisited(obj specification.Object, service *specification.Service, visited map[string]bool) *yaml.Node {
 	// Check for circular reference
