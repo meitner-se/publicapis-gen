@@ -66,11 +66,11 @@ const (
 
 // Config file constants
 const (
-	configFileFlag       = "config"
-	errorInvalidConfig   = "invalid config file"
-	errorConfigParsing   = "failed to parse config file"
-	defaultConfigYAML    = "publicapis.yaml"
-	defaultConfigYML     = "publicapis.yml"
+	configFileFlag     = "config"
+	errorInvalidConfig = "invalid config file"
+	errorConfigParsing = "failed to parse config file"
+	defaultConfigYAML  = "publicapis.yaml"
+	defaultConfigYML   = "publicapis.yml"
 )
 
 // Job represents a single generation job in the config file
@@ -143,7 +143,7 @@ func run(ctx context.Context) error {
 			slog.InfoContext(ctx, "Using default config file", logKeyFile, defaultConfigPath)
 			return runConfigMode(ctx, defaultConfigPath)
 		}
-		
+
 		// No default config file found, require explicit configuration
 		flag.Usage()
 		return fmt.Errorf("%s: either config file or legacy flags (file and mode) are required", errorInvalidFile)
@@ -225,13 +225,13 @@ func runLegacyMode(ctx context.Context, filePath, mode, outputPath string) error
 func findDefaultConfigFile() string {
 	// Check for publicapis.yaml first, then publicapis.yml
 	candidates := []string{defaultConfigYAML, defaultConfigYML}
-	
+
 	for _, candidate := range candidates {
 		if _, err := os.Stat(candidate); err == nil {
 			return candidate
 		}
 	}
-	
+
 	return ""
 }
 
