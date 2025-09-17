@@ -133,7 +133,8 @@ Custom endpoint definition.
 type Endpoint struct {
     Name        string            `json:"name"`        // Endpoint name
     Title       string            `json:"title"`       // Endpoint title
-    Description string            `json:"description"` // Endpoint description
+    Summary     string            `json:"summary"`     // Endpoint summary (short plain text)
+    Description string            `json:"description"` // Endpoint description (longer, supports markdown)
     Method      string            `json:"method"`      // HTTP method
     Path        string            `json:"path"`        // URL path
     Request     EndpointRequest   `json:"request"`     // Request definition

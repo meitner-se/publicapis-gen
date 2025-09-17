@@ -127,6 +127,7 @@ resources:
     endpoints:
       - name: "BulkImport"
         title: "Bulk Import Students"
+        summary: "Bulk Import Students"
         description: "Import multiple students from a CSV file or structured data"
         method: "POST"
         path: "/bulk-import"
@@ -168,6 +169,7 @@ resources:
 
       - name: "GenerateReport"
         title: "Generate Student Report"
+        summary: "Generate Student Report"
         description: "Generate a comprehensive report for students based on filters"
         method: "POST"
         path: "/reports/generate"
@@ -217,6 +219,7 @@ resources:
 
       - name: "AdvancedSearch"
         title: "Advanced Student Search"
+        summary: "Advanced Student Search"
         description: "Search students with advanced filtering and sorting options"
         method: "POST"
         path: "/advanced-search"

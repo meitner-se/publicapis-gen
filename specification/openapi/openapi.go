@@ -933,7 +933,7 @@ func (g *Generator) addResourceToPaths(resource specification.Resource, paths *o
 func (g *Generator) createOperation(endpoint specification.Endpoint, resource specification.Resource, service *specification.Service) *v3.Operation {
 	operation := &v3.Operation{
 		OperationId: resource.Name + endpoint.Name,
-		Summary:     endpoint.Title,
+		Summary:     endpoint.Summary,
 		Description: endpoint.Description,
 		Tags:        []string{resource.Name},
 	}
