@@ -61,7 +61,7 @@ const (
 // Usage messages
 const (
 	usageDescription = "publicapis-gen - Generate API specifications and OpenAPI documents"
-	usageExample     = "\nExamples:\n  # Using command line flags (legacy)\n  publicapis-gen -file=spec.yaml -mode=overlay\n  publicapis-gen -file=spec.json -mode=openapi\n  publicapis-gen -file=spec.yaml -mode=schema\n  publicapis-gen -file=spec.yaml -mode=openapi -output=api-spec.json\n  publicapis-gen -file=spec.yaml -mode=schema -output=schemas.json\n  publicapis-gen -file=spec.yaml -mode=openapi -log-level=info\n\n  # Using config file (recommended)\n  publicapis-gen -config=build-config.yaml\n  publicapis-gen -config=build-config.yaml -log-level=info"
+	usageExample     = "\nExamples:\n  # Using command line flags (legacy)\n  publicapis-gen -file=spec.yaml -mode=overlay\n  publicapis-gen -file=spec.json -mode=openapi\n  publicapis-gen -file=spec.yaml -mode=schema\n  publicapis-gen -file=spec.yaml -mode=openapi -output=api-spec.json\n  publicapis-gen -file=spec.yaml -mode=schema -output=schemas.json\n  publicapis-gen -file=spec.yaml -mode=openapi -log-level=info\n\n  # Using config file (recommended)\n  publicapis-gen -config=build-config.yaml\n  publicapis-gen -config=build-config.yaml -log-level=info\n\n  # Using default config file (automatically detects publicapis.yaml or publicapis.yml)\n  publicapis-gen\n  publicapis-gen -log-level=info"
 )
 
 // Config file constants
@@ -69,6 +69,8 @@ const (
 	configFileFlag     = "config"
 	errorInvalidConfig = "invalid config file"
 	errorConfigParsing = "failed to parse config file"
+	defaultConfigYAML  = "publicapis.yaml"
+	defaultConfigYML   = "publicapis.yml"
 )
 
 // Job represents a single generation job in the config file
@@ -134,7 +136,15 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("%s: cannot use both config file and legacy flags (file/mode) at the same time", errorInvalidConfig)
 	}
 
+	// If no explicit config or legacy flags provided, try to find default config file
 	if !usingConfig && !usingLegacy {
+		defaultConfigPath := findDefaultConfigFile()
+		if defaultConfigPath != "" {
+			slog.InfoContext(ctx, "Using default config file", logKeyFile, defaultConfigPath)
+			return runConfigMode(ctx, defaultConfigPath)
+		}
+
+		// No default config file found, require explicit configuration
 		flag.Usage()
 		return fmt.Errorf("%s: either config file or legacy flags (file and mode) are required", errorInvalidFile)
 	}
@@ -208,6 +218,21 @@ func runLegacyMode(ctx context.Context, filePath, mode, outputPath string) error
 	default:
 		return fmt.Errorf("%s: unsupported mode '%s'", errorInvalidMode, mode)
 	}
+}
+
+// findDefaultConfigFile searches for default config files in the current directory
+// Returns the path to the first found config file, or empty string if none found
+func findDefaultConfigFile() string {
+	// Check for publicapis.yaml first, then publicapis.yml
+	candidates := []string{defaultConfigYAML, defaultConfigYML}
+
+	for _, candidate := range candidates {
+		if _, err := os.Stat(candidate); err == nil {
+			return candidate
+		}
+	}
+
+	return ""
 }
 
 // parseConfigFile reads and parses a YAML config file
