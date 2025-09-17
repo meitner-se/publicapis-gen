@@ -18,6 +18,150 @@
     }
   ],
   "paths": {
+    "/students": {
+      "get": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "List all Students",
+        "description": "Returns a paginated list of all `Students` in your organization.",
+        "operationId": "StudentsList",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of Students to return (default: 50) when listing Students",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "examples": [
+                1
+              ],
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "The number of Students to skip before starting to return results (default: 0) when listing Students",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "examples": [
+                0
+              ],
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for Students List operation - returns a paginated list of Students",
+            "$ref": "#/components/responses/StudentsList"
+          },
+          "400": {
+            "description": "Bad Request error for Students List operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students List operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students List operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students List operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students List operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students List operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students List operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-pagination": {
+          "type": "offsetLimit",
+          "inputs": [
+            {
+              "name": "offset",
+              "in": "parameters",
+              "type": "offset"
+            },
+            {
+              "name": "limit",
+              "in": "parameters",
+              "type": "limit"
+            }
+          ],
+          "outputs": {
+            "results": "$.data.resultArray"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "list"
+      },
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Create Students",
+        "description": "Create a new Students",
+        "operationId": "StudentsCreate",
+        "parameters": [],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsCreate"
+        },
+        "responses": {
+          "201": {
+            "description": "Response for Students Create operation - returns the created Students",
+            "$ref": "#/components/responses/StudentsCreate"
+          },
+          "400": {
+            "description": "Bad Request error for Students Create operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Create operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Create operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Create operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Create operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students Create operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsCreate422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Create operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Create operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "create"
+      }
+    },
     "/students/{id}": {
       "get": {
         "tags": [
@@ -544,150 +688,6 @@
         "x-speakeasy-group": "students",
         "x-speakeasy-name-override": "advancedSearch"
       }
-    },
-    "/students": {
-      "get": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "List all Students",
-        "description": "Returns a paginated list of all `Students` in your organization.",
-        "operationId": "StudentsList",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of Students to return (default: 50) when listing Students",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "examples": [
-                1
-              ],
-              "default": 50
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "The number of Students to skip before starting to return results (default: 0) when listing Students",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "examples": [
-                0
-              ],
-              "default": 0
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Response for Students List operation - returns a paginated list of Students",
-            "$ref": "#/components/responses/StudentsList"
-          },
-          "400": {
-            "description": "Bad Request error for Students List operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students List operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students List operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students List operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students List operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students List operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students List operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-pagination": {
-          "type": "offsetLimit",
-          "inputs": [
-            {
-              "name": "offset",
-              "in": "parameters",
-              "type": "offset"
-            },
-            {
-              "name": "limit",
-              "in": "parameters",
-              "type": "limit"
-            }
-          ],
-          "outputs": {
-            "results": "$.data.resultArray"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "list"
-      },
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Create Students",
-        "description": "Create a new Students",
-        "operationId": "StudentsCreate",
-        "parameters": [],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsCreate"
-        },
-        "responses": {
-          "201": {
-            "description": "Response for Students Create operation - returns the created Students",
-            "$ref": "#/components/responses/StudentsCreate"
-          },
-          "400": {
-            "description": "Bad Request error for Students Create operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students Create operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students Create operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students Create operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students Create operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "Validation error for Students Create operation - request data failed validation",
-            "$ref": "#/components/responses/StudentsCreate422ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students Create operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students Create operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "create"
-      }
     }
   },
   "components": {
@@ -994,6 +994,14 @@
                 "$ref": "#/components/schemas/Meta"
               }
             ],
+            "examples": [
+              {
+                "createdAt": "2024-01-15T10:30:00Z",
+                "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                "updatedAt": "2024-01-15T14:45:00Z",
+                "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+              }
+            ],
             "description": "Metadata information for the Students"
           },
           "firstName": {
@@ -1040,6 +1048,12 @@
                 "$ref": "#/components/schemas/Contact"
               }
             ],
+            "examples": [
+              {
+                "email": "example",
+                "phone": "example"
+              }
+            ],
             "description": "Student contact information"
           },
           "address": {
@@ -1047,6 +1061,15 @@
               {
                 "$ref": "#/components/schemas/Address"
               }
+            ],
+            "examples": [
+              {
+                "street": "example",
+                "city": "example",
+                "state": "example",
+                "zipCode": "example"
+              },
+              null
             ],
             "description": "Student home address",
             "nullable": true
@@ -1090,6 +1113,13 @@
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "email is required"
+              },
+              null
+            ],
             "description": "Email address",
             "nullable": true
           },
@@ -1099,53 +1129,18 @@
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "phone is required"
+              },
+              null
+            ],
             "description": "Phone number",
             "nullable": true
           }
         },
         "description": "Request error object for Contact"
-      },
-      "AddressRequestError": {
-        "type": "object",
-        "properties": {
-          "street": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "Street address",
-            "nullable": true
-          },
-          "city": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "City",
-            "nullable": true
-          },
-          "state": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "State or province",
-            "nullable": true
-          },
-          "zipCode": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "description": "ZIP or postal code",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Address"
       },
       "StudentRequestError": {
         "type": "object",
@@ -1156,6 +1151,13 @@
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "firstName is required"
+              },
+              null
+            ],
             "description": "Student's first name",
             "nullable": true
           },
@@ -1164,6 +1166,13 @@
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "lastName is required"
+              },
+              null
             ],
             "description": "Student's last name",
             "nullable": true
@@ -1174,6 +1183,13 @@
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "studentId is required"
+              },
+              null
+            ],
             "description": "School-assigned student ID",
             "nullable": true
           },
@@ -1182,6 +1198,13 @@
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "status is required"
+              },
+              null
             ],
             "description": "Current status of the student",
             "nullable": true
@@ -1192,11 +1215,88 @@
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "gradeLevel is required"
+              },
+              null
+            ],
             "description": "Current grade level",
             "nullable": true
           }
         },
         "description": "Request error object for Student"
+      },
+      "AddressRequestError": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "street is required"
+              },
+              null
+            ],
+            "description": "Street address",
+            "nullable": true
+          },
+          "city": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "city is required"
+              },
+              null
+            ],
+            "description": "City",
+            "nullable": true
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "state is required"
+              },
+              null
+            ],
+            "description": "State or province",
+            "nullable": true
+          },
+          "zipCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorField"
+              }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "zipCode is required"
+              },
+              null
+            ],
+            "description": "ZIP or postal code",
+            "nullable": true
+          }
+        },
+        "description": "Request error object for Address"
       },
       "StudentsBulkImportRequestError": {
         "type": "object",
@@ -1207,6 +1307,31 @@
                 "$ref": "#/components/schemas/StudentRequestError"
               }
             ],
+            "examples": [
+              {
+                "firstName": {
+                  "code": "InvalidValue",
+                  "message": "firstName is required"
+                },
+                "lastName": {
+                  "code": "InvalidValue",
+                  "message": "lastName is required"
+                },
+                "studentId": {
+                  "code": "InvalidValue",
+                  "message": "studentId is required"
+                },
+                "status": {
+                  "code": "InvalidValue",
+                  "message": "status is required"
+                },
+                "gradeLevel": {
+                  "code": "InvalidValue",
+                  "message": "gradeLevel is required"
+                }
+              },
+              null
+            ],
             "description": "Array of student data to import",
             "nullable": true
           },
@@ -1215,6 +1340,13 @@
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "overwriteExisting is required"
+              },
+              null
             ],
             "description": "Whether to overwrite existing student records",
             "nullable": true
@@ -1231,6 +1363,13 @@
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "gradeLevel is required"
+              },
+              null
+            ],
             "description": "Filter by specific grade level",
             "nullable": true
           },
@@ -1239,6 +1378,13 @@
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "status is required"
+              },
+              null
             ],
             "description": "Filter by student status",
             "nullable": true
@@ -1249,6 +1395,13 @@
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "enrollmentDateFrom is required"
+              },
+              null
+            ],
             "description": "Filter students enrolled after this date",
             "nullable": true
           },
@@ -1258,6 +1411,13 @@
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "enrollmentDateTo is required"
+              },
+              null
+            ],
             "description": "Filter students enrolled before this date",
             "nullable": true
           },
@@ -1266,6 +1426,13 @@
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "includeInactive is required"
+              },
+              null
             ],
             "description": "Include inactive students in report",
             "nullable": true
@@ -1282,6 +1449,13 @@
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "nameQuery is required"
+              },
+              null
+            ],
             "description": "Search in first name and last name",
             "nullable": true
           },
@@ -1290,6 +1464,13 @@
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "gradeLevel is required"
+              },
+              null
             ],
             "description": "Filter by one or more grade levels",
             "nullable": true
@@ -1300,6 +1481,13 @@
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "status is required"
+              },
+              null
+            ],
             "description": "Filter by one or more statuses",
             "nullable": true
           },
@@ -1309,6 +1497,13 @@
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "enrollmentDateRange is required"
+              },
+              null
+            ],
             "description": "Date range filter [from, to]",
             "nullable": true
           },
@@ -1317,6 +1512,13 @@
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "hasGraduationDate is required"
+              },
+              null
             ],
             "description": "Filter students with or without graduation date",
             "nullable": true
@@ -1333,6 +1535,13 @@
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "firstName is required"
+              },
+              null
+            ],
             "description": "Student's first name",
             "nullable": true
           },
@@ -1341,6 +1550,13 @@
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "lastName is required"
+              },
+              null
             ],
             "description": "Student's last name",
             "nullable": true
@@ -1351,6 +1567,13 @@
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "studentId is required"
+              },
+              null
+            ],
             "description": "School-assigned student ID",
             "nullable": true
           },
@@ -1359,6 +1582,13 @@
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "status is required"
+              },
+              null
             ],
             "description": "Current status of the student",
             "nullable": true
@@ -1369,6 +1599,13 @@
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "gradeLevel is required"
+              },
+              null
+            ],
             "description": "Current grade level",
             "nullable": true
           },
@@ -1377,6 +1614,19 @@
               {
                 "$ref": "#/components/schemas/ContactRequestError"
               }
+            ],
+            "examples": [
+              {
+                "email": {
+                  "code": "InvalidValue",
+                  "message": "email is required"
+                },
+                "phone": {
+                  "code": "InvalidValue",
+                  "message": "phone is required"
+                }
+              },
+              null
             ],
             "description": "Student contact information",
             "nullable": true
@@ -1387,6 +1637,27 @@
                 "$ref": "#/components/schemas/AddressRequestError"
               }
             ],
+            "examples": [
+              {
+                "street": {
+                  "code": "InvalidValue",
+                  "message": "street is required"
+                },
+                "city": {
+                  "code": "InvalidValue",
+                  "message": "city is required"
+                },
+                "state": {
+                  "code": "InvalidValue",
+                  "message": "state is required"
+                },
+                "zipCode": {
+                  "code": "InvalidValue",
+                  "message": "zipCode is required"
+                }
+              },
+              null
+            ],
             "description": "Student home address",
             "nullable": true
           },
@@ -1395,6 +1666,13 @@
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "enrollmentDate is required"
+              },
+              null
             ],
             "description": "Date when student was enrolled",
             "nullable": true
@@ -1411,6 +1689,13 @@
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "firstName is required"
+              },
+              null
+            ],
             "description": "Student's first name",
             "nullable": true
           },
@@ -1419,6 +1704,13 @@
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "lastName is required"
+              },
+              null
             ],
             "description": "Student's last name",
             "nullable": true
@@ -1429,6 +1721,13 @@
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "status is required"
+              },
+              null
+            ],
             "description": "Current status of the student",
             "nullable": true
           },
@@ -1437,6 +1736,13 @@
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "gradeLevel is required"
+              },
+              null
             ],
             "description": "Current grade level",
             "nullable": true
@@ -1447,6 +1753,19 @@
                 "$ref": "#/components/schemas/ContactRequestError"
               }
             ],
+            "examples": [
+              {
+                "email": {
+                  "code": "InvalidValue",
+                  "message": "email is required"
+                },
+                "phone": {
+                  "code": "InvalidValue",
+                  "message": "phone is required"
+                }
+              },
+              null
+            ],
             "description": "Student contact information",
             "nullable": true
           },
@@ -1456,6 +1775,27 @@
                 "$ref": "#/components/schemas/AddressRequestError"
               }
             ],
+            "examples": [
+              {
+                "street": {
+                  "code": "InvalidValue",
+                  "message": "street is required"
+                },
+                "city": {
+                  "code": "InvalidValue",
+                  "message": "city is required"
+                },
+                "state": {
+                  "code": "InvalidValue",
+                  "message": "state is required"
+                },
+                "zipCode": {
+                  "code": "InvalidValue",
+                  "message": "zipCode is required"
+                }
+              },
+              null
+            ],
             "description": "Student home address",
             "nullable": true
           },
@@ -1464,6 +1804,13 @@
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "graduationDate is required"
+              },
+              null
             ],
             "description": "Expected or actual graduation date",
             "nullable": true
@@ -1491,6 +1838,13 @@
                 "$ref": "#/components/schemas/ContactFilterEquals"
               }
             ],
+            "examples": [
+              {
+                "email": "example",
+                "phone": "example"
+              },
+              null
+            ],
             "description": "Equality filters for Contact",
             "nullable": true
           },
@@ -1499,6 +1853,13 @@
               {
                 "$ref": "#/components/schemas/ContactFilterEquals"
               }
+            ],
+            "examples": [
+              {
+                "email": "example",
+                "phone": "example"
+              },
+              null
             ],
             "description": "Inequality filters for Contact",
             "nullable": true
@@ -1545,6 +1906,17 @@
                 "$ref": "#/components/schemas/ContactFilterContains"
               }
             ],
+            "examples": [
+              {
+                "email": [
+                  "example"
+                ],
+                "phone": [
+                  "example"
+                ]
+              },
+              null
+            ],
             "description": "Contains filters for Contact",
             "nullable": true
           },
@@ -1553,6 +1925,17 @@
               {
                 "$ref": "#/components/schemas/ContactFilterContains"
               }
+            ],
+            "examples": [
+              {
+                "email": [
+                  "example"
+                ],
+                "phone": [
+                  "example"
+                ]
+              },
+              null
             ],
             "description": "Not contains filters for Contact",
             "nullable": true
@@ -1563,6 +1946,13 @@
                 "$ref": "#/components/schemas/ContactFilterLike"
               }
             ],
+            "examples": [
+              {
+                "email": "example",
+                "phone": "example"
+              },
+              null
+            ],
             "description": "LIKE filters for Contact",
             "nullable": true
           },
@@ -1571,6 +1961,13 @@
               {
                 "$ref": "#/components/schemas/ContactFilterLike"
               }
+            ],
+            "examples": [
+              {
+                "email": "example",
+                "phone": "example"
+              },
+              null
             ],
             "description": "NOT LIKE filters for Contact",
             "nullable": true
@@ -1581,6 +1978,12 @@
                 "$ref": "#/components/schemas/ContactFilterNull"
               }
             ],
+            "examples": [
+              {
+                "phone": true
+              },
+              null
+            ],
             "description": "Null filters for Contact",
             "nullable": true
           },
@@ -1589,6 +1992,12 @@
               {
                 "$ref": "#/components/schemas/ContactFilterNull"
               }
+            ],
+            "examples": [
+              {
+                "phone": true
+              },
+              null
             ],
             "description": "Not null filters for Contact",
             "nullable": true
@@ -1602,6 +2011,51 @@
           },
           "nestedFilters": {
             "type": "array",
+            "examples": [
+              [
+                {
+                  "equals": {
+                    "email": "example",
+                    "phone": "example"
+                  },
+                  "notEquals": {
+                    "email": "example",
+                    "phone": "example"
+                  },
+                  "contains": {
+                    "email": [
+                      "example"
+                    ],
+                    "phone": [
+                      "example"
+                    ]
+                  },
+                  "notContains": {
+                    "email": [
+                      "example"
+                    ],
+                    "phone": [
+                      "example"
+                    ]
+                  },
+                  "like": {
+                    "email": "example",
+                    "phone": "example"
+                  },
+                  "notLike": {
+                    "email": "example",
+                    "phone": "example"
+                  },
+                  "null": {
+                    "phone": true
+                  },
+                  "notNull": {
+                    "phone": true
+                  },
+                  "orCondition": true
+                }
+              ]
+            ],
             "items": {
               "allOf": [
                 {
@@ -1723,6 +2177,15 @@
                 "$ref": "#/components/schemas/AddressFilterEquals"
               }
             ],
+            "examples": [
+              {
+                "street": "example",
+                "city": "example",
+                "state": "example",
+                "zipCode": "example"
+              },
+              null
+            ],
             "description": "Equality filters for Address",
             "nullable": true
           },
@@ -1731,6 +2194,15 @@
               {
                 "$ref": "#/components/schemas/AddressFilterEquals"
               }
+            ],
+            "examples": [
+              {
+                "street": "example",
+                "city": "example",
+                "state": "example",
+                "zipCode": "example"
+              },
+              null
             ],
             "description": "Inequality filters for Address",
             "nullable": true
@@ -1777,6 +2249,23 @@
                 "$ref": "#/components/schemas/AddressFilterContains"
               }
             ],
+            "examples": [
+              {
+                "street": [
+                  "example"
+                ],
+                "city": [
+                  "example"
+                ],
+                "state": [
+                  "example"
+                ],
+                "zipCode": [
+                  "example"
+                ]
+              },
+              null
+            ],
             "description": "Contains filters for Address",
             "nullable": true
           },
@@ -1785,6 +2274,23 @@
               {
                 "$ref": "#/components/schemas/AddressFilterContains"
               }
+            ],
+            "examples": [
+              {
+                "street": [
+                  "example"
+                ],
+                "city": [
+                  "example"
+                ],
+                "state": [
+                  "example"
+                ],
+                "zipCode": [
+                  "example"
+                ]
+              },
+              null
             ],
             "description": "Not contains filters for Address",
             "nullable": true
@@ -1795,6 +2301,15 @@
                 "$ref": "#/components/schemas/AddressFilterLike"
               }
             ],
+            "examples": [
+              {
+                "street": "example",
+                "city": "example",
+                "state": "example",
+                "zipCode": "example"
+              },
+              null
+            ],
             "description": "LIKE filters for Address",
             "nullable": true
           },
@@ -1803,6 +2318,15 @@
               {
                 "$ref": "#/components/schemas/AddressFilterLike"
               }
+            ],
+            "examples": [
+              {
+                "street": "example",
+                "city": "example",
+                "state": "example",
+                "zipCode": "example"
+              },
+              null
             ],
             "description": "NOT LIKE filters for Address",
             "nullable": true
@@ -1834,6 +2358,65 @@
           },
           "nestedFilters": {
             "type": "array",
+            "examples": [
+              [
+                {
+                  "equals": {
+                    "street": "example",
+                    "city": "example",
+                    "state": "example",
+                    "zipCode": "example"
+                  },
+                  "notEquals": {
+                    "street": "example",
+                    "city": "example",
+                    "state": "example",
+                    "zipCode": "example"
+                  },
+                  "contains": {
+                    "street": [
+                      "example"
+                    ],
+                    "city": [
+                      "example"
+                    ],
+                    "state": [
+                      "example"
+                    ],
+                    "zipCode": [
+                      "example"
+                    ]
+                  },
+                  "notContains": {
+                    "street": [
+                      "example"
+                    ],
+                    "city": [
+                      "example"
+                    ],
+                    "state": [
+                      "example"
+                    ],
+                    "zipCode": [
+                      "example"
+                    ]
+                  },
+                  "like": {
+                    "street": "example",
+                    "city": "example",
+                    "state": "example",
+                    "zipCode": "example"
+                  },
+                  "notLike": {
+                    "street": "example",
+                    "city": "example",
+                    "state": "example",
+                    "zipCode": "example"
+                  },
+                  "orCondition": true
+                }
+              ]
+            ],
             "items": {
               "allOf": [
                 {
@@ -2004,6 +2587,14 @@
                 "$ref": "#/components/schemas/StudentFilterEquals"
               }
             ],
+            "examples": [
+              {
+                "firstName": "example",
+                "lastName": "example",
+                "studentId": "example"
+              },
+              null
+            ],
             "description": "Equality filters for Student",
             "nullable": true
           },
@@ -2012,6 +2603,14 @@
               {
                 "$ref": "#/components/schemas/StudentFilterEquals"
               }
+            ],
+            "examples": [
+              {
+                "firstName": "example",
+                "lastName": "example",
+                "studentId": "example"
+              },
+              null
             ],
             "description": "Inequality filters for Student",
             "nullable": true
@@ -2058,6 +2657,20 @@
                 "$ref": "#/components/schemas/StudentFilterContains"
               }
             ],
+            "examples": [
+              {
+                "firstName": [
+                  "example"
+                ],
+                "lastName": [
+                  "example"
+                ],
+                "studentId": [
+                  "example"
+                ]
+              },
+              null
+            ],
             "description": "Contains filters for Student",
             "nullable": true
           },
@@ -2066,6 +2679,20 @@
               {
                 "$ref": "#/components/schemas/StudentFilterContains"
               }
+            ],
+            "examples": [
+              {
+                "firstName": [
+                  "example"
+                ],
+                "lastName": [
+                  "example"
+                ],
+                "studentId": [
+                  "example"
+                ]
+              },
+              null
             ],
             "description": "Not contains filters for Student",
             "nullable": true
@@ -2076,6 +2703,14 @@
                 "$ref": "#/components/schemas/StudentFilterLike"
               }
             ],
+            "examples": [
+              {
+                "firstName": "example",
+                "lastName": "example",
+                "studentId": "example"
+              },
+              null
+            ],
             "description": "LIKE filters for Student",
             "nullable": true
           },
@@ -2084,6 +2719,14 @@
               {
                 "$ref": "#/components/schemas/StudentFilterLike"
               }
+            ],
+            "examples": [
+              {
+                "firstName": "example",
+                "lastName": "example",
+                "studentId": "example"
+              },
+              null
             ],
             "description": "NOT LIKE filters for Student",
             "nullable": true
@@ -2115,6 +2758,55 @@
           },
           "nestedFilters": {
             "type": "array",
+            "examples": [
+              [
+                {
+                  "equals": {
+                    "firstName": "example",
+                    "lastName": "example",
+                    "studentId": "example"
+                  },
+                  "notEquals": {
+                    "firstName": "example",
+                    "lastName": "example",
+                    "studentId": "example"
+                  },
+                  "contains": {
+                    "firstName": [
+                      "example"
+                    ],
+                    "lastName": [
+                      "example"
+                    ],
+                    "studentId": [
+                      "example"
+                    ]
+                  },
+                  "notContains": {
+                    "firstName": [
+                      "example"
+                    ],
+                    "lastName": [
+                      "example"
+                    ],
+                    "studentId": [
+                      "example"
+                    ]
+                  },
+                  "like": {
+                    "firstName": "example",
+                    "lastName": "example",
+                    "studentId": "example"
+                  },
+                  "notLike": {
+                    "firstName": "example",
+                    "lastName": "example",
+                    "studentId": "example"
+                  },
+                  "orCondition": true
+                }
+              ]
+            ],
             "items": {
               "allOf": [
                 {
@@ -2368,16 +3060,16 @@
                     {
                       "students": {
                         "firstName": {
-                          "code": "Required",
+                          "code": "InvalidValue",
                           "message": "firstName is required"
                         },
                         "lastName": {
-                          "code": "Required",
+                          "code": "InvalidValue",
                           "message": "lastName is required"
                         }
                       },
                       "overwriteExisting": {
-                        "code": "Required",
+                        "code": "InvalidValue",
                         "message": "overwriteExisting is required"
                       }
                     }
@@ -2400,16 +3092,16 @@
                   "errorFields": {
                     "students": {
                       "firstName": {
-                        "code": "Required",
+                        "code": "InvalidValue",
                         "message": "firstName is required"
                       },
                       "lastName": {
-                        "code": "Required",
+                        "code": "InvalidValue",
                         "message": "lastName is required"
                       }
                     },
                     "overwriteExisting": {
-                      "code": "Required",
+                      "code": "InvalidValue",
                       "message": "overwriteExisting is required"
                     }
                   }
@@ -2494,11 +3186,11 @@
                   "examples": [
                     {
                       "gradeLevel": {
-                        "code": "Required",
+                        "code": "InvalidValue",
                         "message": "gradeLevel is required"
                       },
                       "status": {
-                        "code": "Required",
+                        "code": "InvalidValue",
                         "message": "status is required"
                       }
                     }
@@ -2520,11 +3212,11 @@
                   },
                   "errorFields": {
                     "gradeLevel": {
-                      "code": "Required",
+                      "code": "InvalidValue",
                       "message": "gradeLevel is required"
                     },
                     "status": {
-                      "code": "Required",
+                      "code": "InvalidValue",
                       "message": "status is required"
                     }
                   }
@@ -2625,11 +3317,11 @@
                   "examples": [
                     {
                       "nameQuery": {
-                        "code": "Required",
+                        "code": "InvalidValue",
                         "message": "nameQuery is required"
                       },
                       "gradeLevel": {
-                        "code": "Required",
+                        "code": "InvalidValue",
                         "message": "gradeLevel is required"
                       }
                     }
@@ -2651,11 +3343,11 @@
                   },
                   "errorFields": {
                     "nameQuery": {
-                      "code": "Required",
+                      "code": "InvalidValue",
                       "message": "nameQuery is required"
                     },
                     "gradeLevel": {
-                      "code": "Required",
+                      "code": "InvalidValue",
                       "message": "gradeLevel is required"
                     }
                   }
@@ -2737,11 +3429,11 @@
                   "examples": [
                     {
                       "firstName": {
-                        "code": "Required",
+                        "code": "InvalidValue",
                         "message": "firstName is required"
                       },
                       "lastName": {
-                        "code": "Required",
+                        "code": "InvalidValue",
                         "message": "lastName is required"
                       }
                     }
@@ -2763,11 +3455,11 @@
                   },
                   "errorFields": {
                     "firstName": {
-                      "code": "Required",
+                      "code": "InvalidValue",
                       "message": "firstName is required"
                     },
                     "lastName": {
-                      "code": "Required",
+                      "code": "InvalidValue",
                       "message": "lastName is required"
                     }
                   }
@@ -2849,11 +3541,11 @@
                   "examples": [
                     {
                       "firstName": {
-                        "code": "Required",
+                        "code": "InvalidValue",
                         "message": "firstName is required"
                       },
                       "lastName": {
-                        "code": "Required",
+                        "code": "InvalidValue",
                         "message": "lastName is required"
                       }
                     }
@@ -2875,11 +3567,11 @@
                   },
                   "errorFields": {
                     "firstName": {
-                      "code": "Required",
+                      "code": "InvalidValue",
                       "message": "firstName is required"
                     },
                     "lastName": {
-                      "code": "Required",
+                      "code": "InvalidValue",
                       "message": "lastName is required"
                     }
                   }
@@ -3479,6 +4171,15 @@
               "properties": {
                 "students": {
                   "type": "array",
+                  "examples": [
+                    [
+                      {
+                        "firstName": "example",
+                        "lastName": "example",
+                        "studentId": "example"
+                      }
+                    ]
+                  ],
                   "items": {
                     "allOf": [
                       {
@@ -3719,6 +4420,12 @@
                       "$ref": "#/components/schemas/Contact"
                     }
                   ],
+                  "examples": [
+                    {
+                      "email": "example",
+                      "phone": "example"
+                    }
+                  ],
                   "description": "Student contact information"
                 },
                 "address": {
@@ -3726,6 +4433,15 @@
                     {
                       "$ref": "#/components/schemas/Address"
                     }
+                  ],
+                  "examples": [
+                    {
+                      "street": "example",
+                      "city": "example",
+                      "state": "example",
+                      "zipCode": "example"
+                    },
+                    null
                   ],
                   "description": "Student home address",
                   "nullable": true
@@ -3816,6 +4532,12 @@
                       "$ref": "#/components/schemas/Contact"
                     }
                   ],
+                  "examples": [
+                    {
+                      "email": "example",
+                      "phone": "example"
+                    }
+                  ],
                   "description": "Student contact information"
                 },
                 "address": {
@@ -3823,6 +4545,15 @@
                     {
                       "$ref": "#/components/schemas/Address"
                     }
+                  ],
+                  "examples": [
+                    {
+                      "street": "example",
+                      "city": "example",
+                      "state": "example",
+                      "zipCode": "example"
+                    },
+                    null
                   ],
                   "description": "Student home address",
                   "nullable": true
