@@ -727,6 +727,41 @@ func (g *Generator) createFieldSchema(field specification.Field, service *specif
 		}
 
 		schema.Examples = examples
+	} else if field.IsArray() && service.HasObject(field.Type) {
+		// Generate example array from object definition when no explicit example is provided
+		if obj := service.GetObject(field.Type); obj != nil {
+			if objectExample := g.generateObjectExample(*obj, service); objectExample != nil {
+				arrayNode := &yaml.Node{
+					Kind: yaml.SequenceNode,
+				}
+				arrayNode.Content = append(arrayNode.Content, objectExample)
+
+				examples := []*yaml.Node{arrayNode}
+
+				// If the field is nullable, add null as an additional example
+				if field.IsNullable() {
+					nullNode := g.createNullExampleNode()
+					examples = append(examples, nullNode)
+				}
+
+				schema.Examples = examples
+			}
+		}
+	} else if service.HasObject(field.Type) {
+		// Generate example from object definition when no explicit example is provided
+		if obj := service.GetObject(field.Type); obj != nil {
+			if objectExample := g.generateObjectExample(*obj, service); objectExample != nil {
+				examples := []*yaml.Node{objectExample}
+
+				// If the field is nullable, add null as an additional example
+				if field.IsNullable() {
+					nullNode := g.createNullExampleNode()
+					examples = append(examples, nullNode)
+				}
+
+				schema.Examples = examples
+			}
+		}
 	}
 
 	return schema
