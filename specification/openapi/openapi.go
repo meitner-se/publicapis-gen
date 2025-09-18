@@ -190,6 +190,7 @@ const (
 	responseBodySuffix      = "ResponseBody"
 	errorResponseBodyPrefix = "Error"
 	requestErrorSuffix      = "RequestError"
+	searchEndpointNameValue = "Search"
 )
 
 // Security scheme constants
@@ -1510,30 +1511,34 @@ func (g *Generator) generate422ErrorExample(resourceName, endpointName string, s
 	errorValueNode := g.generateErrorObjectExample(resourceName, endpointName)
 	rootNode.Content = append(rootNode.Content, errorKeyNode, errorValueNode)
 
-	// Add errorFields field with validation examples
-	errorFieldsKeyNode := &yaml.Node{
-		Kind:  yaml.ScalarNode,
-		Tag:   "!!str",
-		Value: errorFieldsFieldName,
-	}
-
-	// Generate errorFields content based on RequestError object or fallback
-	var errorFieldsValueNode *yaml.Node
-	requestErrorObjectName := resourceName + endpointName + requestErrorSuffix
-	if service.HasObject(requestErrorObjectName) {
-		// Generate example from RequestError object definition
-		requestErrorObj := service.GetObject(requestErrorObjectName)
-		if requestErrorObj != nil {
-			errorFieldsValueNode = g.generateErrorFieldsExample(requestErrorObj.Fields, service)
+	// Skip errorFields for search endpoints to avoid complexity with nested filter parameters
+	isSearchEndpoint := endpointName == searchEndpointNameValue || endpointName == "AdvancedSearch"
+	if !isSearchEndpoint {
+		// Add errorFields field with validation examples
+		errorFieldsKeyNode := &yaml.Node{
+			Kind:  yaml.ScalarNode,
+			Tag:   "!!str",
+			Value: errorFieldsFieldName,
 		}
-	}
 
-	// Fallback to generic error fields example if no RequestError object found
-	if errorFieldsValueNode == nil {
-		errorFieldsValueNode = g.generateGenericErrorFieldsExample()
-	}
+		// Generate errorFields content based on RequestError object or fallback
+		var errorFieldsValueNode *yaml.Node
+		requestErrorObjectName := resourceName + endpointName + requestErrorSuffix
+		if service.HasObject(requestErrorObjectName) {
+			// Generate example from RequestError object definition
+			requestErrorObj := service.GetObject(requestErrorObjectName)
+			if requestErrorObj != nil {
+				errorFieldsValueNode = g.generateErrorFieldsExample(requestErrorObj.Fields, service)
+			}
+		}
 
-	rootNode.Content = append(rootNode.Content, errorFieldsKeyNode, errorFieldsValueNode)
+		// Fallback to generic error fields example if no RequestError object found
+		if errorFieldsValueNode == nil {
+			errorFieldsValueNode = g.generateGenericErrorFieldsExample()
+		}
+
+		rootNode.Content = append(rootNode.Content, errorFieldsKeyNode, errorFieldsValueNode)
+	}
 
 	return rootNode
 }
@@ -1685,7 +1690,7 @@ func (g *Generator) generateGenericErrorFieldsExample() *yaml.Node {
 
 // createEndpointSpecific422ErrorResponse creates a 422 error response component for an endpoint using RequestError schema.
 func (g *Generator) createEndpointSpecific422ErrorResponse(resourceName, endpointName string, service *specification.Service) *v3.Response {
-	// Create schema with error field (ErrorCode) and errorFields field (RequestError type)
+	// Create schema with error field (ErrorCode) and optionally errorFields field (RequestError type)
 	schema := &base.Schema{
 		Type:       []string{schemaTypeObject},
 		Properties: orderedmap.New[string, *base.SchemaProxy](),
@@ -1720,81 +1725,91 @@ func (g *Generator) createEndpointSpecific422ErrorResponse(resourceName, endpoin
 
 	schema.Properties.Set(errorFieldName, base.CreateSchemaProxy(errorSchema))
 
-	// Add errorFields field using RequestError type
-	requestErrorObjectName := resourceName + endpointName + requestErrorSuffix
-	var errorFieldsSchema *base.Schema
-	var errorFieldsExampleNode *yaml.Node
+	// Skip errorFields for search endpoints to avoid complexity with nested filter parameters
+	isSearchEndpoint := endpointName == searchEndpointNameValue || endpointName == "AdvancedSearch"
+	var requiredFields []string
 
-	if service.HasObject(requestErrorObjectName) {
-		// Reference the RequestError object
-		refString := schemaReferencePrefix + requestErrorObjectName
-		refProxy := base.CreateSchemaProxyRef(refString)
-		errorFieldsSchema = &base.Schema{
-			AllOf: []*base.SchemaProxy{refProxy},
-		}
-		// Generate example from RequestError object definition
-		requestErrorObj := service.GetObject(requestErrorObjectName)
-		if requestErrorObj != nil {
-			errorFieldsExampleNode = g.generateErrorFieldsExample(requestErrorObj.Fields, service)
-		}
-	} else {
-		// Fallback to generic object with ErrorField objects as additional properties
-		var errorFieldSchema *base.Schema
-		if service.HasObject(errorFieldObjectName) {
-			// Reference the ErrorField object
-			refString := schemaReferencePrefix + errorFieldObjectName
+	if !isSearchEndpoint {
+		// Add errorFields field using RequestError type for non-search endpoints
+		requestErrorObjectName := resourceName + endpointName + requestErrorSuffix
+		var errorFieldsSchema *base.Schema
+		var errorFieldsExampleNode *yaml.Node
+
+		if service.HasObject(requestErrorObjectName) {
+			// Reference the RequestError object
+			refString := schemaReferencePrefix + requestErrorObjectName
 			refProxy := base.CreateSchemaProxyRef(refString)
-			errorFieldSchema = &base.Schema{
+			errorFieldsSchema = &base.Schema{
 				AllOf: []*base.SchemaProxy{refProxy},
 			}
-		} else {
-			// Fallback to generic ErrorField schema
-			errorFieldSchema = &base.Schema{
-				Type:       []string{schemaTypeObject},
-				Properties: orderedmap.New[string, *base.SchemaProxy](),
-			}
-			messageSchema := &base.Schema{Type: []string{schemaTypeString}}
-			codeSchema := &base.Schema{Type: []string{schemaTypeString}}
-			errorFieldSchema.Properties.Set(messageFieldName, base.CreateSchemaProxy(messageSchema))
-			errorFieldSchema.Properties.Set(codeFieldName, base.CreateSchemaProxy(codeSchema))
-			errorFieldSchema.Required = []string{messageFieldName, codeFieldName}
-		}
-
-		// Create a schema that allows nested objects containing ErrorField objects
-		errorFieldsSchema = &base.Schema{
-			Type: []string{schemaTypeObject},
-			AdditionalProperties: &base.DynamicValue[*base.SchemaProxy, bool]{
-				A: base.CreateSchemaProxy(&base.Schema{
-					Type: []string{schemaTypeObject},
-					AdditionalProperties: &base.DynamicValue[*base.SchemaProxy, bool]{
-						A: base.CreateSchemaProxy(errorFieldSchema),
-					},
-				}),
-			},
-		}
-		// Generate fallback example
-		errorFieldsExampleNode = g.generateGenericErrorFieldsExample()
-	}
-
-	// Add example to errorFields property, but ensure it matches the schema type
-	if errorFieldsExampleNode != nil {
-		// Check if the RequestError object exists and examine its field types
-		if service.HasObject(requestErrorObjectName) {
+			// Generate example from RequestError object definition
 			requestErrorObj := service.GetObject(requestErrorObjectName)
 			if requestErrorObj != nil {
-				// Verify that examples match the actual field types in the RequestError schema
-				errorFieldsSchema.Examples = []*yaml.Node{errorFieldsExampleNode}
+				errorFieldsExampleNode = g.generateErrorFieldsExample(requestErrorObj.Fields, service)
 			}
 		} else {
-			// For fallback schema, always add examples since we control the schema type
-			errorFieldsSchema.Examples = []*yaml.Node{errorFieldsExampleNode}
+			// Fallback to generic object with ErrorField objects as additional properties
+			var errorFieldSchema *base.Schema
+			if service.HasObject(errorFieldObjectName) {
+				// Reference the ErrorField object
+				refString := schemaReferencePrefix + errorFieldObjectName
+				refProxy := base.CreateSchemaProxyRef(refString)
+				errorFieldSchema = &base.Schema{
+					AllOf: []*base.SchemaProxy{refProxy},
+				}
+			} else {
+				// Fallback to generic ErrorField schema
+				errorFieldSchema = &base.Schema{
+					Type:       []string{schemaTypeObject},
+					Properties: orderedmap.New[string, *base.SchemaProxy](),
+				}
+				messageSchema := &base.Schema{Type: []string{schemaTypeString}}
+				codeSchema := &base.Schema{Type: []string{schemaTypeString}}
+				errorFieldSchema.Properties.Set(messageFieldName, base.CreateSchemaProxy(messageSchema))
+				errorFieldSchema.Properties.Set(codeFieldName, base.CreateSchemaProxy(codeSchema))
+				errorFieldSchema.Required = []string{messageFieldName, codeFieldName}
+			}
+
+			// Create a schema that allows nested objects containing ErrorField objects
+			errorFieldsSchema = &base.Schema{
+				Type: []string{schemaTypeObject},
+				AdditionalProperties: &base.DynamicValue[*base.SchemaProxy, bool]{
+					A: base.CreateSchemaProxy(&base.Schema{
+						Type: []string{schemaTypeObject},
+						AdditionalProperties: &base.DynamicValue[*base.SchemaProxy, bool]{
+							A: base.CreateSchemaProxy(errorFieldSchema),
+						},
+					}),
+				},
+			}
+			// Generate fallback example
+			errorFieldsExampleNode = g.generateGenericErrorFieldsExample()
 		}
+
+		// Add example to errorFields property, but ensure it matches the schema type
+		if errorFieldsExampleNode != nil {
+			// Check if the RequestError object exists and examine its field types
+			if service.HasObject(requestErrorObjectName) {
+				requestErrorObj := service.GetObject(requestErrorObjectName)
+				if requestErrorObj != nil {
+					// Verify that examples match the actual field types in the RequestError schema
+					errorFieldsSchema.Examples = []*yaml.Node{errorFieldsExampleNode}
+				}
+			} else {
+				// For fallback schema, always add examples since we control the schema type
+				errorFieldsSchema.Examples = []*yaml.Node{errorFieldsExampleNode}
+			}
+		}
+
+		schema.Properties.Set(errorFieldsFieldName, base.CreateSchemaProxy(errorFieldsSchema))
+		requiredFields = []string{errorFieldName, errorFieldsFieldName}
+	} else {
+		// For search endpoints, only require the error field
+		requiredFields = []string{errorFieldName}
 	}
 
-	schema.Properties.Set(errorFieldsFieldName, base.CreateSchemaProxy(errorFieldsSchema))
-
 	// Set required fields
-	schema.Required = []string{errorFieldName, errorFieldsFieldName}
+	schema.Required = requiredFields
 
 	content := orderedmap.New[string, *v3.MediaType]()
 	mediaType := &v3.MediaType{
