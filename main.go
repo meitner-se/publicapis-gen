@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	yaml "github.com/goccy/go-yaml"
+	"github.com/meitner-se/publicapis-gen/server"
 	"github.com/meitner-se/publicapis-gen/specification"
 	"github.com/meitner-se/publicapis-gen/specification/openapi"
 	"github.com/meitner-se/publicapis-gen/specification/schema"
@@ -33,6 +34,7 @@ const (
 	modeOverlay = "overlay"
 	modeOpenAPI = "openapi"
 	modeSchema  = "schema"
+	modeServer  = "server"
 )
 
 // File extensions
@@ -47,6 +49,7 @@ const (
 	suffixOverlay = "-overlay"
 	suffixOpenAPI = "-openapi"
 	suffixSchema  = "-schema"
+	suffixServer  = "-server"
 )
 
 // Log levels
@@ -61,7 +64,7 @@ const (
 // Usage messages
 const (
 	usageDescription = "publicapis-gen - Generate API specifications and OpenAPI documents"
-	usageExample     = "\nExamples:\n  # Using command line flags (legacy)\n  publicapis-gen generate -file=spec.yaml -mode=overlay\n  publicapis-gen generate -file=spec.json -mode=openapi\n  publicapis-gen generate -file=spec.yaml -mode=schema\n  publicapis-gen generate -file=spec.yaml -mode=openapi -output=api-spec.json\n  publicapis-gen generate -file=spec.yaml -mode=schema -output=schemas.json\n  publicapis-gen generate -file=spec.yaml -mode=openapi -log-level=info\n\n  # Using config file (recommended)\n  publicapis-gen generate -config=build-config.yaml\n  publicapis-gen generate -config=build-config.yaml -log-level=info\n\n  # Using default config file (automatically detects publicapis.yaml or publicapis.yml)\n  publicapis-gen generate\n  publicapis-gen generate -log-level=info"
+	usageExample     = "\nExamples:\n  # Using command line flags (legacy)\n  publicapis-gen generate -file=spec.yaml -mode=overlay\n  publicapis-gen generate -file=spec.json -mode=openapi\n  publicapis-gen generate -file=spec.yaml -mode=schema\n  publicapis-gen generate -file=spec.yaml -mode=server\n  publicapis-gen generate -file=spec.yaml -mode=openapi -output=api-spec.json\n  publicapis-gen generate -file=spec.yaml -mode=schema -output=schemas.json\n  publicapis-gen generate -file=spec.yaml -mode=server -output=server.go\n  publicapis-gen generate -file=spec.yaml -mode=openapi -log-level=info\n\n  # Using config file (recommended)\n  publicapis-gen generate -config=build-config.yaml\n  publicapis-gen generate -config=build-config.yaml -log-level=info\n\n  # Using default config file (automatically detects publicapis.yaml or publicapis.yml)\n  publicapis-gen generate\n  publicapis-gen generate -log-level=info"
 )
 
 // Config file constants
@@ -96,6 +99,8 @@ type Job struct {
 	SchemaJSON    string `yaml:"schema_json,omitempty" json:"schema_json,omitempty"`
 	OverlayYAML   string `yaml:"overlay_yaml,omitempty" json:"overlay_yaml,omitempty"`
 	OverlayJSON   string `yaml:"overlay_json,omitempty" json:"overlay_json,omitempty"`
+	ServerGo      string `yaml:"server_go,omitempty" json:"server_go,omitempty"`
+	ServerPackage string `yaml:"server_package,omitempty" json:"server_package,omitempty"`
 }
 
 // Config represents the configuration file structure
@@ -159,7 +164,7 @@ func showGenerateUsage() {
 	fmt.Fprintf(os.Stderr, "Usage: %s generate [options]\n\n", os.Args[0])
 	fmt.Fprintf(os.Stderr, "Options:\n")
 	fmt.Fprintf(os.Stderr, "  -file string\n        Path to input specification file (YAML or JSON) - legacy mode\n")
-	fmt.Fprintf(os.Stderr, "  -mode string\n        Operation mode: 'overlay', 'openapi', or 'schema' - legacy mode\n")
+	fmt.Fprintf(os.Stderr, "  -mode string\n        Operation mode: 'overlay', 'openapi', 'schema', or 'server' - legacy mode\n")
 	fmt.Fprintf(os.Stderr, "  -output string\n        Output file path (optional, defaults to input name with suffix) - legacy mode\n")
 	fmt.Fprintf(os.Stderr, "  -config string\n        Path to YAML config file containing multiple jobs\n")
 	fmt.Fprintf(os.Stderr, "  -log-level string\n        Log level: 'debug', 'info', 'warn', 'error', or 'off' (default: off)\n")
@@ -175,7 +180,7 @@ func runGenerateCommand(ctx context.Context, args []string) error {
 	// Parse command line flags for generate command
 	var (
 		fileFlag     = generateFlags.String("file", "", "Path to input specification file (YAML or JSON) - legacy mode")
-		modeFlag     = generateFlags.String("mode", "", "Operation mode: 'overlay', 'openapi', or 'schema' - legacy mode")
+		modeFlag     = generateFlags.String("mode", "", "Operation mode: 'overlay', 'openapi', 'schema', or 'server' - legacy mode")
 		outputFlag   = generateFlags.String("output", "", "Output file path (optional, defaults to input name with suffix) - legacy mode")
 		configFlag   = generateFlags.String(configFileFlag, "", "Path to YAML config file containing multiple jobs")
 		logLevelFlag = generateFlags.String("log-level", logLevelOff, "Log level: 'debug', 'info', 'warn', 'error', or 'off' (default: off)")
@@ -235,8 +240,8 @@ func runGenerateCommand(ctx context.Context, args []string) error {
 	}
 
 	// Validate mode
-	if *modeFlag != modeOverlay && *modeFlag != modeOpenAPI && *modeFlag != modeSchema {
-		return fmt.Errorf("%s: mode must be '%s', '%s', or '%s'", errorInvalidMode, modeOverlay, modeOpenAPI, modeSchema)
+	if *modeFlag != modeOverlay && *modeFlag != modeOpenAPI && *modeFlag != modeSchema && *modeFlag != modeServer {
+		return fmt.Errorf("%s: mode must be '%s', '%s', '%s', or '%s'", errorInvalidMode, modeOverlay, modeOpenAPI, modeSchema, modeServer)
 	}
 
 	return runLegacyMode(ctx, *fileFlag, *modeFlag, *outputFlag)
@@ -285,6 +290,8 @@ func runLegacyMode(ctx context.Context, filePath, mode, outputPath string) error
 		return generateOpenAPI(ctx, service, filePath, outputPath)
 	case modeSchema:
 		return generateSchema(ctx, service, filePath, outputPath)
+	case modeServer:
+		return generateServer(ctx, filePath, outputPath)
 	default:
 		return fmt.Errorf("%s: unsupported mode '%s'", errorInvalidMode, mode)
 	}
@@ -339,8 +346,8 @@ func parseConfigFile(configPath string) (Config, error) {
 		}
 
 		// Check if at least one output format is specified
-		if job.OpenAPIJSON == "" && job.OpenAPIYAML == "" && job.SchemaJSON == "" && job.OverlayYAML == "" && job.OverlayJSON == "" {
-			return nil, fmt.Errorf("%s: job %d must specify at least one output format (openapi_json, openapi_yaml, schema_json, overlay_yaml, or overlay_json)", errorInvalidConfig, i+1)
+		if job.OpenAPIJSON == "" && job.OpenAPIYAML == "" && job.SchemaJSON == "" && job.OverlayYAML == "" && job.OverlayJSON == "" && job.ServerGo == "" {
+			return nil, fmt.Errorf("%s: job %d must specify at least one output format (openapi_json, openapi_yaml, schema_json, overlay_yaml, overlay_json, or server_go)", errorInvalidConfig, i+1)
 		}
 	}
 
@@ -385,6 +392,25 @@ func processJob(ctx context.Context, job Job) error {
 	if job.OverlayJSON != "" {
 		if err := generateOverlay(ctx, service, job.Specification, job.OverlayJSON); err != nil {
 			return fmt.Errorf("failed to generate overlay JSON to '%s': %w", job.OverlayJSON, err)
+		}
+	}
+
+	if job.ServerGo != "" {
+		// Check if the specification is already an OpenAPI file
+		if isOpenAPIFile(job.Specification) {
+			// For OpenAPI files, use direct server generation
+			finalPackageName := job.ServerPackage
+			if finalPackageName == "" {
+				finalPackageName = extractPackageNameFromPath(job.ServerGo)
+			}
+			if err := generateServerFromFile(ctx, job.Specification, job.ServerGo, finalPackageName); err != nil {
+				return fmt.Errorf("failed to generate Go server to '%s': %w", job.ServerGo, err)
+			}
+		} else {
+			// For specification files, convert to OpenAPI first
+			if err := generateServerFromSpecification(ctx, service, job.Specification, job.ServerGo, job.ServerPackage); err != nil {
+				return fmt.Errorf("failed to generate Go server to '%s': %w", job.ServerGo, err)
+			}
 		}
 	}
 
@@ -623,6 +649,167 @@ func ensureYAMLExtension(outputPath string) string {
 		return base + extYAML
 	}
 	return outputPath
+}
+
+// generateServer generates Go server code from an OpenAPI specification file (for legacy mode).
+func generateServer(ctx context.Context, specPath, outputPath string) error {
+	slog.InfoContext(ctx, "Generating Go server code", logKeyMode, modeServer)
+
+	// Check if the file is already an OpenAPI file
+	if isOpenAPIFile(specPath) {
+		slog.InfoContext(ctx, "Detected OpenAPI file, generating server directly")
+		return generateServerFromOpenAPI(ctx, specPath, outputPath)
+	}
+
+	slog.InfoContext(ctx, "Detected specification file, converting to OpenAPI first")
+
+	// Read and parse the specification file first
+	service, err := readSpecificationFile(specPath)
+	if err != nil {
+		return fmt.Errorf("failed to read specification file for server generation: %w", err)
+	}
+
+	// Determine output file path
+	finalOutputPath := outputPath
+	if finalOutputPath == "" {
+		finalOutputPath = generateServerOutputPath(specPath)
+	} else {
+		// Ensure output path has .go extension
+		finalOutputPath = ensureGoExtension(finalOutputPath)
+	}
+
+	// Extract package name from output path for default
+	packageName := extractPackageNameFromPath(finalOutputPath)
+
+	// Generate server code using the specification
+	return generateServerFromSpecification(ctx, service, specPath, finalOutputPath, packageName)
+}
+
+// generateServerFromSpecification generates Go server code from a specification (for config mode).
+// It first generates an OpenAPI JSON file, then uses that to generate the server code.
+func generateServerFromSpecification(ctx context.Context, service *specification.Service, specPath, outputPath, packageName string) error {
+	slog.InfoContext(ctx, "Generating Go server code from specification", logKeyMode, modeServer)
+
+	// Generate OpenAPI JSON first to a temporary file
+	tmpFile, err := os.CreateTemp("", "server-gen-*.json")
+	if err != nil {
+		return fmt.Errorf("failed to create temporary OpenAPI file: %w", err)
+	}
+	defer os.Remove(tmpFile.Name())
+	tmpFile.Close()
+
+	// Generate OpenAPI JSON to the temporary file
+	if err := generateOpenAPI(ctx, service, specPath, tmpFile.Name()); err != nil {
+		return fmt.Errorf("failed to generate OpenAPI for server generation: %w", err)
+	}
+
+	// Determine package name
+	finalPackageName := packageName
+	if finalPackageName == "" {
+		finalPackageName = extractPackageNameFromPath(outputPath)
+	}
+
+	// Generate server code from the OpenAPI JSON
+	return generateServerFromFile(ctx, tmpFile.Name(), outputPath, finalPackageName)
+}
+
+// generateServerFromFile generates Go server code from an OpenAPI specification file.
+func generateServerFromFile(ctx context.Context, openAPIPath, outputPath, packageName string) error {
+	// Create server generator configuration
+	config := server.Config{
+		OutputPath:  outputPath,
+		PackageName: packageName,
+	}
+
+	// Create server generator
+	generator, err := server.New(config)
+	if err != nil {
+		return fmt.Errorf("failed to create server generator: %w", err)
+	}
+
+	// Generate server code from OpenAPI file
+	if err := generator.GenerateFromFileWithContext(ctx, openAPIPath); err != nil {
+		return fmt.Errorf("failed to generate server code: %w", err)
+	}
+
+	slog.InfoContext(ctx, "Successfully generated Go server code", logKeyFile, outputPath)
+	fmt.Printf("Go server code generated: %s\n", outputPath)
+
+	return nil
+}
+
+// generateServerFromOpenAPI generates Go server code directly from an OpenAPI file for testing.
+func generateServerFromOpenAPI(ctx context.Context, openAPIPath, outputPath string) error {
+	slog.InfoContext(ctx, "Generating Go server code from OpenAPI file", logKeyMode, modeServer)
+
+	// Determine output file path
+	finalOutputPath := outputPath
+	if finalOutputPath == "" {
+		finalOutputPath = generateServerOutputPath(openAPIPath)
+	} else {
+		// Ensure output path has .go extension
+		finalOutputPath = ensureGoExtension(finalOutputPath)
+	}
+
+	// Extract package name from output path for default
+	packageName := extractPackageNameFromPath(finalOutputPath)
+
+	return generateServerFromFile(ctx, openAPIPath, finalOutputPath, packageName)
+}
+
+// generateServerOutputPath generates an output file path for Go server files (always .go).
+func generateServerOutputPath(inputFile string) string {
+	base := strings.TrimSuffix(inputFile, filepath.Ext(inputFile))
+	return base + suffixServer + ".go"
+}
+
+// ensureGoExtension ensures the output path has a .go extension.
+func ensureGoExtension(outputPath string) string {
+	ext := strings.ToLower(filepath.Ext(outputPath))
+	if ext != ".go" {
+		base := strings.TrimSuffix(outputPath, filepath.Ext(outputPath))
+		return base + ".go"
+	}
+	return outputPath
+}
+
+// extractPackageNameFromPath extracts a suitable package name from a file path.
+func extractPackageNameFromPath(outputPath string) string {
+	// Get the directory name
+	dir := filepath.Dir(outputPath)
+	if dir == "." || dir == "/" {
+		return "api" // Default package name
+	}
+
+	// Extract the last directory component
+	packageName := filepath.Base(dir)
+	if packageName == "." || packageName == "/" {
+		return "api"
+	}
+
+	// Clean up package name to be a valid Go identifier
+	// Replace hyphens and other invalid characters with underscores
+	packageName = strings.ReplaceAll(packageName, "-", "_")
+	packageName = strings.ReplaceAll(packageName, " ", "_")
+
+	return packageName
+}
+
+// isOpenAPIFile checks if a file is already an OpenAPI specification file.
+func isOpenAPIFile(filePath string) bool {
+	// Read the first few bytes to check for OpenAPI signature
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return false
+	}
+
+	// Check if the file contains "openapi" field (for JSON) or "openapi:" (for YAML)
+	content := string(data)
+	if strings.Contains(content, `"openapi"`) || strings.Contains(content, "openapi:") {
+		return true
+	}
+
+	return false
 }
 
 // configureLogging configures the slog logger based on the specified log level.
