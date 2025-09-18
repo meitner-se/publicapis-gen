@@ -14016,44 +14016,10 @@
                       "message": "Validation failed for Students Search endpoint"
                     }
                   ]
-                },
-                "errorFields": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/StudentsSearchRequestError"
-                    }
-                  ],
-                  "examples": [
-                    {
-                      "filter": {
-                        "equals": {
-                          "id": {
-                            "code": "InvalidValue",
-                            "message": "ID is required"
-                          },
-                          "meta": {
-                            "code": "InvalidValue",
-                            "message": "Meta is required"
-                          }
-                        },
-                        "notEquals": {
-                          "id": {
-                            "code": "InvalidValue",
-                            "message": "ID is required"
-                          },
-                          "meta": {
-                            "code": "InvalidValue",
-                            "message": "Meta is required"
-                          }
-                        }
-                      }
-                    }
-                  ]
                 }
               },
               "required": [
-                "error",
-                "errorFields"
+                "error"
               ]
             },
             "examples": {
@@ -14063,30 +14029,6 @@
                   "error": {
                     "code": "UnprocessableEntity",
                     "message": "Validation failed for Students Search endpoint"
-                  },
-                  "errorFields": {
-                    "filter": {
-                      "equals": {
-                        "id": {
-                          "code": "InvalidValue",
-                          "message": "ID is required"
-                        },
-                        "meta": {
-                          "code": "InvalidValue",
-                          "message": "Meta is required"
-                        }
-                      },
-                      "notEquals": {
-                        "id": {
-                          "code": "InvalidValue",
-                          "message": "ID is required"
-                        },
-                        "meta": {
-                          "code": "InvalidValue",
-                          "message": "Meta is required"
-                        }
-                      }
-                    }
                   }
                 }
               }
