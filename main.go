@@ -440,14 +440,27 @@ func generateOverlay(ctx context.Context, service *specification.Service, inputF
 	return writeSpecificationFile(ctx, service, outputPath)
 }
 
-// generateOpenAPI generates an OpenAPI document from the specification.
-func generateOpenAPI(ctx context.Context, service *specification.Service, inputFile, outputFile string) error {
-	slog.InfoContext(ctx, "Generating OpenAPI document", logKeyMode, modeOpenAPI)
+// generateOpenAPIBytes generates an OpenAPI document from the specification and returns it as bytes.
+func generateOpenAPIBytes(ctx context.Context, service *specification.Service) ([]byte, error) {
+	slog.InfoContext(ctx, "Generating OpenAPI document bytes", logKeyMode, modeOpenAPI)
 
 	// Generate OpenAPI document as JSON in a single call
 	outputData, err := openapi.GenerateFromSpecificationToJSON(service)
 	if err != nil {
-		return fmt.Errorf("failed to generate OpenAPI document: %w", err)
+		return nil, fmt.Errorf("failed to generate OpenAPI document: %w", err)
+	}
+
+	return outputData, nil
+}
+
+// generateOpenAPI generates an OpenAPI document from the specification.
+func generateOpenAPI(ctx context.Context, service *specification.Service, inputFile, outputFile string) error {
+	slog.InfoContext(ctx, "Generating OpenAPI document", logKeyMode, modeOpenAPI)
+
+	// Generate OpenAPI document as bytes
+	outputData, err := generateOpenAPIBytes(ctx, service)
+	if err != nil {
+		return err
 	}
 
 	// Determine output file path - always use JSON for OpenAPI
@@ -474,10 +487,10 @@ func generateOpenAPI(ctx context.Context, service *specification.Service, inputF
 func generateOpenAPIYAML(ctx context.Context, service *specification.Service, inputFile, outputFile string) error {
 	slog.InfoContext(ctx, "Generating OpenAPI YAML document", logKeyMode, "openapi-yaml")
 
-	// Generate OpenAPI document as JSON first
-	outputData, err := openapi.GenerateFromSpecificationToJSON(service)
+	// Generate OpenAPI document as JSON bytes first
+	outputData, err := generateOpenAPIBytes(ctx, service)
 	if err != nil {
-		return fmt.Errorf("failed to generate OpenAPI document: %w", err)
+		return err
 	}
 
 	// Parse JSON to interface{} so we can convert to YAML
@@ -686,20 +699,13 @@ func generateServer(ctx context.Context, specPath, outputPath string) error {
 }
 
 // generateServerFromSpecification generates Go server code from a specification (for config mode).
-// It first generates an OpenAPI JSON file, then uses that to generate the server code.
+// It generates an OpenAPI document as bytes and uses that directly to generate the server code.
 func generateServerFromSpecification(ctx context.Context, service *specification.Service, specPath, outputPath, packageName string) error {
 	slog.InfoContext(ctx, "Generating Go server code from specification", logKeyMode, modeServer)
 
-	// Generate OpenAPI JSON first to a temporary file
-	tmpFile, err := os.CreateTemp("", "server-gen-*.json")
+	// Generate OpenAPI document as bytes
+	openAPIBytes, err := generateOpenAPIBytes(ctx, service)
 	if err != nil {
-		return fmt.Errorf("failed to create temporary OpenAPI file: %w", err)
-	}
-	defer os.Remove(tmpFile.Name())
-	tmpFile.Close()
-
-	// Generate OpenAPI JSON to the temporary file
-	if err := generateOpenAPI(ctx, service, specPath, tmpFile.Name()); err != nil {
 		return fmt.Errorf("failed to generate OpenAPI for server generation: %w", err)
 	}
 
@@ -709,12 +715,12 @@ func generateServerFromSpecification(ctx context.Context, service *specification
 		finalPackageName = extractPackageNameFromPath(outputPath)
 	}
 
-	// Generate server code from the OpenAPI JSON
-	return generateServerFromFile(ctx, tmpFile.Name(), outputPath, finalPackageName)
+	// Generate server code directly from the OpenAPI bytes
+	return generateServerFromBytes(ctx, openAPIBytes, outputPath, finalPackageName)
 }
 
-// generateServerFromFile generates Go server code from an OpenAPI specification file.
-func generateServerFromFile(ctx context.Context, openAPIPath, outputPath, packageName string) error {
+// generateServerFromBytes generates Go server code from OpenAPI specification bytes.
+func generateServerFromBytes(ctx context.Context, openAPIData []byte, outputPath, packageName string) error {
 	// Create server generator configuration
 	config := server.Config{
 		OutputPath:  outputPath,
@@ -727,8 +733,8 @@ func generateServerFromFile(ctx context.Context, openAPIPath, outputPath, packag
 		return fmt.Errorf("failed to create server generator: %w", err)
 	}
 
-	// Generate server code from OpenAPI file
-	if err := generator.GenerateFromFileWithContext(ctx, openAPIPath); err != nil {
+	// Generate server code from OpenAPI bytes
+	if err := generator.GenerateFromDataWithContext(ctx, openAPIData); err != nil {
 		return fmt.Errorf("failed to generate server code: %w", err)
 	}
 
@@ -736,6 +742,18 @@ func generateServerFromFile(ctx context.Context, openAPIPath, outputPath, packag
 	fmt.Printf("Go server code generated: %s\n", outputPath)
 
 	return nil
+}
+
+// generateServerFromFile generates Go server code from an OpenAPI specification file.
+func generateServerFromFile(ctx context.Context, openAPIPath, outputPath, packageName string) error {
+	// Read the OpenAPI specification file
+	specData, err := os.ReadFile(openAPIPath)
+	if err != nil {
+		return fmt.Errorf("failed to read OpenAPI file: %w", err)
+	}
+
+	// Generate server code from the bytes
+	return generateServerFromBytes(ctx, specData, outputPath, packageName)
 }
 
 // generateServerFromOpenAPI generates Go server code directly from an OpenAPI file for testing.
