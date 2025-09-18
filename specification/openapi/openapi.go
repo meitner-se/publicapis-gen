@@ -1512,7 +1512,7 @@ func (g *Generator) generate422ErrorExample(resourceName, endpointName string, s
 	rootNode.Content = append(rootNode.Content, errorKeyNode, errorValueNode)
 
 	// Skip errorFields for search endpoints to avoid complexity with nested filter parameters
-	isSearchEndpoint := endpointName == searchEndpointNameValue
+	isSearchEndpoint := endpointName == searchEndpointNameValue || endpointName == "AdvancedSearch"
 	if !isSearchEndpoint {
 		// Add errorFields field with validation examples
 		errorFieldsKeyNode := &yaml.Node{
@@ -1726,7 +1726,7 @@ func (g *Generator) createEndpointSpecific422ErrorResponse(resourceName, endpoin
 	schema.Properties.Set(errorFieldName, base.CreateSchemaProxy(errorSchema))
 
 	// Skip errorFields for search endpoints to avoid complexity with nested filter parameters
-	isSearchEndpoint := endpointName == searchEndpointNameValue
+	isSearchEndpoint := endpointName == searchEndpointNameValue || endpointName == "AdvancedSearch"
 	var requiredFields []string
 
 	if !isSearchEndpoint {

@@ -295,34 +295,6 @@ objects:
     type: ErrorField
     modifiers:
     - Nullable
-- name: StudentsAdvancedSearchRequestError
-  description: Request error object for Students AdvancedSearch endpoint
-  fields:
-  - name: nameQuery
-    description: Search in first name and last name
-    type: ErrorField
-    modifiers:
-    - Nullable
-  - name: gradeLevel
-    description: Filter by one or more grade levels
-    type: ErrorField
-    modifiers:
-    - Nullable
-  - name: status
-    description: Filter by one or more statuses
-    type: ErrorField
-    modifiers:
-    - Nullable
-  - name: enrollmentDateRange
-    description: Date range filter [from, to]
-    type: ErrorField
-    modifiers:
-    - Nullable
-  - name: hasGraduationDate
-    description: Filter students with or without graduation date
-    type: ErrorField
-    modifiers:
-    - Nullable
 - name: StudentsCreateRequestError
   description: Request error object for Students Create endpoint
   fields:
@@ -402,14 +374,6 @@ objects:
   - name: graduationDate
     description: Expected or actual graduation date
     type: ErrorField
-    modifiers:
-    - Nullable
-- name: StudentsSearchRequestError
-  description: Request error object for Students Search endpoint
-  fields:
-  - name: Filter
-    description: Filter criteria to search for specific records
-    type: StudentsFilterRequestError
     modifiers:
     - Nullable
 - name: ContactFilter

@@ -1123,10 +1123,14 @@ func generateRequestErrorObjectsForBodyParams(service *Service) {
 	for _, resource := range service.Resources {
 		for _, endpoint := range resource.Endpoints {
 			if len(endpoint.Request.BodyParams) > 0 {
-				requestErrorName := resource.Name + endpoint.Name + requestErrorSuffix
-				requestErrorDescription := requestErrorDescriptionPrefix + resource.Name + " " + endpoint.Name + " endpoint"
-				requestError := generateRequestErrorObject(requestErrorName, requestErrorDescription, endpoint.Request.BodyParams, service.Objects)
-				service.Objects = append(service.Objects, requestError)
+				// Skip generating RequestError objects for search endpoints since they don't use errorFields
+				isSearchEndpoint := endpoint.Name == searchEndpointName || endpoint.Name == "AdvancedSearch"
+				if !isSearchEndpoint {
+					requestErrorName := resource.Name + endpoint.Name + requestErrorSuffix
+					requestErrorDescription := requestErrorDescriptionPrefix + resource.Name + " " + endpoint.Name + " endpoint"
+					requestError := generateRequestErrorObject(requestErrorName, requestErrorDescription, endpoint.Request.BodyParams, service.Objects)
+					service.Objects = append(service.Objects, requestError)
+				}
 			}
 		}
 	}
