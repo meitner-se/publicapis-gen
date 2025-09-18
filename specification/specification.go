@@ -1109,6 +1109,10 @@ func generateRequestErrorObjectsForBodyParams(service *Service) {
 
 		// Find the object definition
 		for _, obj := range service.Objects {
+			if obj.IsFilter() {
+				continue // Do not generate RequestError objects for filter objects
+			}
+
 			if obj.Name == typeName {
 				requestErrorName := obj.Name + requestErrorSuffix
 				requestErrorDescription := requestErrorDescriptionPrefix + obj.Name
@@ -1769,6 +1773,16 @@ func (o Object) GetField(name string) *Field {
 		}
 	}
 	return nil
+}
+
+// IsFilter checks if the object is a filter object.
+func (o Object) IsFilter() bool {
+	return strings.HasSuffix(o.Name, filterSuffix) ||
+		strings.HasSuffix(o.Name, filterEqualsSuffix) ||
+		strings.HasSuffix(o.Name, filterRangeSuffix) ||
+		strings.HasSuffix(o.Name, filterContainsSuffix) ||
+		strings.HasSuffix(o.Name, filterLikeSuffix) ||
+		strings.HasSuffix(o.Name, filterNullSuffix)
 }
 
 // Utility factory methods
