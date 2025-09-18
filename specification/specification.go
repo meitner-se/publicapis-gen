@@ -1062,11 +1062,15 @@ func createListResponse(statusCode int, description string, dataField Field, pag
 func collectTypesUsedInBodyParams(service *Service) map[string]bool {
 	usedTypes := make(map[string]bool)
 
-	// Collect types from all endpoint body parameters
+	// Collect types from all endpoint body parameters, excluding search endpoints
 	for _, resource := range service.Resources {
 		for _, endpoint := range resource.Endpoints {
-			for _, bodyParam := range endpoint.Request.BodyParams {
-				collectTypeRecursively(bodyParam.Type, usedTypes, service.Objects)
+			// Skip search endpoints since they don't use errorFields
+			isSearchEndpoint := endpoint.Name == searchEndpointName || endpoint.Name == "AdvancedSearch"
+			if !isSearchEndpoint {
+				for _, bodyParam := range endpoint.Request.BodyParams {
+					collectTypeRecursively(bodyParam.Type, usedTypes, service.Objects)
+				}
 			}
 		}
 	}
