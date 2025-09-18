@@ -188,6 +188,64 @@ func Test_run(t *testing.T) {
 		assert.JSONEq(t, string(expectedOutputData), string(actualOutputData), "Generated OpenAPI JSON should exactly match expected output")
 	})
 
+	t.Run("complete OpenAPI to Go server pipeline", func(t *testing.T) {
+		// Reset flag package for this test
+		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+
+		// Use test data files
+		inputOpenAPIFile := "testdata/simple-api-openapi.json"
+		expectedOutputFile := "testdata/simple-api-server-expected.go"
+
+		// Create temporary output file
+		tmpOutputFile, err := os.CreateTemp("", "test-server-output-*.go")
+		require.NoError(t, err)
+		defer os.Remove(tmpOutputFile.Name())
+		tmpOutputFile.Close()
+
+		// Arrange command line arguments for server generation
+		os.Args = []string{"publicapis-gen", "generate", "-file=" + inputOpenAPIFile, "-mode=server", "-output=" + tmpOutputFile.Name()}
+		ctx := context.Background()
+
+		// Act - run the command
+		err = run(ctx)
+
+		// Assert - command should succeed
+		require.NoError(t, err, "run() should not return an error for valid OpenAPI to Go server conversion")
+
+		// Verify output file was created
+		_, err = os.Stat(tmpOutputFile.Name())
+		require.NoError(t, err, "Output Go server file should be created")
+
+		// Read the generated Go server code content
+		actualOutputData, err := os.ReadFile(tmpOutputFile.Name())
+		require.NoError(t, err, "Should be able to read generated Go server file")
+
+		// Read the expected Go server code content
+		expectedOutputData, err := os.ReadFile(expectedOutputFile)
+		require.NoError(t, err, "Should be able to read expected Go server file")
+
+		// Convert to strings for comparison
+		actualContent := string(actualOutputData)
+		expectedContent := string(expectedOutputData)
+
+		// Assert that both files are valid Go code by checking they contain expected Go constructs
+		assert.Contains(t, actualContent, "package ", "Generated file should contain package declaration")
+		assert.Contains(t, actualContent, "type ServerInterface interface", "Generated file should contain ServerInterface")
+		assert.Contains(t, actualContent, "func RegisterHandlersWithOptions", "Generated file should contain registration function")
+
+		// Assert structural similarity - both files should have similar structure
+		assert.Contains(t, actualContent, "CreateUserRequest", "Generated file should contain CreateUserRequest type")
+		assert.Contains(t, actualContent, "User", "Generated file should contain User type")
+		assert.Contains(t, actualContent, "GetUsers", "Generated file should contain GetUsers method")
+		assert.Contains(t, actualContent, "CreateUser", "Generated file should contain CreateUser method")
+		assert.Contains(t, actualContent, "GetUserById", "Generated file should contain GetUserById method")
+
+		// Ensure the expected file also has the same structure
+		assert.Contains(t, expectedContent, "package ", "Expected file should contain package declaration")
+		assert.Contains(t, expectedContent, "type ServerInterface interface", "Expected file should contain ServerInterface")
+		assert.Contains(t, expectedContent, "CreateUserRequest", "Expected file should contain CreateUserRequest type")
+	})
+
 	t.Run("config file with valid jobs succeeds", func(t *testing.T) {
 		// Reset flag package for this test
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
@@ -230,6 +288,55 @@ func Test_run(t *testing.T) {
 
 		_, err = os.Stat("test-config-schema.json")
 		require.NoError(t, err, "Schema JSON file should be created from config")
+	})
+
+	t.Run("config file with server generation succeeds", func(t *testing.T) {
+		// Reset flag package for this test
+		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+
+		// Create a test config file with server generation
+		testConfig := Config{
+			{
+				Specification: "testdata/simple-api-openapi.json",
+				ServerGo:      "test-config-server.go",
+				ServerPackage: "testapi",
+			},
+		}
+
+		yamlData, err := yaml.Marshal(&testConfig)
+		require.NoError(t, err)
+
+		tmpConfigFile, err := os.CreateTemp("", "test-config-server-*.yaml")
+		require.NoError(t, err)
+		defer os.Remove(tmpConfigFile.Name())
+		defer os.Remove("test-config-server.go")
+
+		_, err = tmpConfigFile.Write(yamlData)
+		require.NoError(t, err)
+		tmpConfigFile.Close()
+
+		// Arrange command line arguments for config mode with server generation
+		os.Args = []string{"publicapis-gen", "generate", "-config=" + tmpConfigFile.Name()}
+		ctx := context.Background()
+
+		// Act - run the command
+		err = run(ctx)
+
+		// Assert - command should succeed
+		require.NoError(t, err, "run() should not return an error for valid config file with server generation")
+
+		// Verify server output file was created
+		_, err = os.Stat("test-config-server.go")
+		require.NoError(t, err, "Go server file should be created from config")
+
+		// Read and verify the generated server file contains expected content
+		serverContent, err := os.ReadFile("test-config-server.go")
+		require.NoError(t, err, "Should be able to read generated server file")
+
+		serverContentStr := string(serverContent)
+		assert.Contains(t, serverContentStr, "package testapi", "Generated server should use specified package name")
+		assert.Contains(t, serverContentStr, "type ServerInterface interface", "Generated server should contain ServerInterface")
+		assert.Contains(t, serverContentStr, "CreateUserRequest", "Generated server should contain CreateUserRequest type")
 	})
 
 	t.Run("mixing config and legacy flags returns error", func(t *testing.T) {
