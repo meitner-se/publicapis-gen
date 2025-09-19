@@ -388,10 +388,11 @@ func TestGenerator_addErrorResponses(t *testing.T) {
 			Objects: []specification.Object{
 				{
 					Name:        "Error",
-					Description: "Standard error response object containing error code and message",
+					Description: "Standard error response object containing error code, message, and request ID",
 					Fields: []specification.Field{
 						{Name: "Code", Description: "The specific error code", Type: "ErrorCode"},
 						{Name: "Message", Description: "Human-readable error message", Type: specification.FieldTypeString},
+						{Name: "RequestID", Description: "Unique identifier for the request that generated this error, used for logging and debugging", Type: specification.FieldTypeString},
 					},
 				},
 			},

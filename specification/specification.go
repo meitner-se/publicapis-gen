@@ -145,13 +145,15 @@ const (
 
 // Error object constants
 const (
-	errorObjectName              = "Error"
-	errorObjectDescription       = "Standard error response object containing error code and message"
-	errorCodeFieldName           = "Code"
-	errorCodeFieldDescription    = "The specific error code indicating the type of error"
-	errorMessageFieldName        = "Message"
-	errorMessageFieldDescription = "Human-readable error message providing additional details"
-	errorCodeEnumName            = "ErrorCode"
+	errorObjectName                = "Error"
+	errorObjectDescription         = "Standard error response object containing error code, message, and request ID"
+	errorCodeFieldName             = "Code"
+	errorCodeFieldDescription      = "The specific error code indicating the type of error"
+	errorMessageFieldName          = "Message"
+	errorMessageFieldDescription   = "Human-readable error message providing additional details"
+	errorRequestIDFieldName        = "RequestID"
+	errorRequestIDFieldDescription = "Unique identifier for the request that generated this error, used for logging and debugging"
+	errorCodeEnumName              = "ErrorCode"
 )
 
 // ErrorFieldCode Values
@@ -762,6 +764,11 @@ func addDefaultEnumsAndObjects(result *Service, input *Service) {
 				{
 					Name:        errorMessageFieldName,
 					Description: errorMessageFieldDescription,
+					Type:        FieldTypeString,
+				},
+				{
+					Name:        errorRequestIDFieldName,
+					Description: errorRequestIDFieldDescription,
 					Type:        FieldTypeString,
 				},
 			},
