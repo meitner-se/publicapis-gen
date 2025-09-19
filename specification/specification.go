@@ -281,12 +281,12 @@ const (
 	listEndpointSummaryPrefix   = "List "
 	listEndpointDescTemplate    = "Returns a paginated list of all `%s` in your organization."
 	listResponseStatusCode      = 200
-	listLimitParamName          = "Limit"
+	listLimitParamName          = "limit"
 	listLimitParamDesc          = "The maximum number of items to return (default: 50)"
 	listLimitParamDescTemplate  = "The maximum number of %s to return (default: 50) when listing %s"
 	listLimitDefaultValue       = "50"
 	listLimitExampleValue       = "1"
-	listOffsetParamName         = "Offset"
+	listOffsetParamName         = "offset"
 	listOffsetParamDesc         = "The number of items to skip before starting to return results (default: 0)"
 	listOffsetParamDescTemplate = "The number of %s to skip before starting to return results (default: 0) when listing %s"
 	listOffsetDefaultValue      = "0"
@@ -1925,7 +1925,7 @@ func createPaginationField() Field {
 // createDataField creates a standard data field for array responses.
 func createDataField(resourceName string) Field {
 	return Field{
-		Name:        "Data",
+		Name:        "data",
 		Description: fmt.Sprintf("Array of %s objects", resourceName),
 		Type:        resourceName,
 		Modifiers:   []string{ModifierArray},
@@ -1935,7 +1935,7 @@ func createDataField(resourceName string) Field {
 // createIDParam creates a standard ID parameter for path parameters.
 func createIDParam(description string) Field {
 	return Field{
-		Name:        "ID",
+		Name:        "id",
 		Description: description,
 		Type:        FieldTypeUUID,
 	}
