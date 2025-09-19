@@ -770,6 +770,7 @@ func addDefaultEnumsAndObjects(result *Service, input *Service) {
 					Name:        errorRequestIDFieldName,
 					Description: errorRequestIDFieldDescription,
 					Type:        FieldTypeString,
+					Example:     "550e8400-e29b-41d4-a716-446655440000",
 				},
 			},
 		}

@@ -6,775 +6,6 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/users": {
-      "get": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "List all Users",
-        "description": "Returns a paginated list of all `Users` in your organization.",
-        "operationId": "UsersList",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of Users to return (default: 50) when listing Users",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "description": "The maximum number of Users to return (default: 50) when listing Users",
-              "default": 50
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "The number of Users to skip before starting to return results (default: 0) when listing Users",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "description": "The number of Users to skip before starting to return results (default: 0) when listing Users",
-              "default": 0
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "allOf": [
-                          {
-                            "$ref": "#/components/schemas/Users"
-                          }
-                        ]
-                      },
-                      "description": "Array of Users objects"
-                    },
-                    "pagination": {
-                      "allOf": [
-                        {
-                          "$ref": "#/components/schemas/Pagination"
-                        }
-                      ],
-                      "description": "Pagination information"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The request was malformed or contained invalid parameters. 400 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "The request is missing valid authentication credentials. 401 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "When the rate limit has been exceeded, 429 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Some serverside issue, 5xx status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        "x-speakeasy-pagination": {
-          "strategy": "offsetLimit",
-          "offsetParam": "offset",
-          "limitParam": "limit",
-          "totalField": "pagination.total",
-          "dataField": "data"
-        }
-      },
-      "post": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Create Users",
-        "description": "Create a new Users",
-        "operationId": "UsersCreate",
-        "parameters": [],
-        "requestBody": {
-          "description": "Request body",
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "description": "User email address"
-                  },
-                  "name": {
-                    "type": "string",
-                    "description": "User display name"
-                  }
-                },
-                "required": [
-                  "email",
-                  "name"
-                ]
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Users"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The request was malformed or contained invalid parameters. 400 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "The request is missing valid authentication credentials. 401 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "The request was well-formed but failed validation (e.g. invalid field format or constraints), 422 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "When the rate limit has been exceeded, 429 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Some serverside issue, 5xx status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/users/{id}": {
-      "get": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Retrieve an existing Users",
-        "description": "Retrieves the `Users` with the given ID.",
-        "operationId": "UsersGet",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "The unique identifier of the Users to retrieve",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "description": "The unique identifier of the Users to retrieve"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Users"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The request was malformed or contained invalid parameters. 400 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "The request is missing valid authentication credentials. 401 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "When the rate limit has been exceeded, 429 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Some serverside issue, 5xx status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Delete Users",
-        "description": "Delete a Users",
-        "operationId": "UsersDelete",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "The unique identifier of the Users to delete",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "description": "The unique identifier of the Users to delete"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful response"
-          },
-          "400": {
-            "description": "The request was malformed or contained invalid parameters. 400 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "The request is missing valid authentication credentials. 401 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "When the rate limit has been exceeded, 429 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Some serverside issue, 5xx status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Update Users",
-        "description": "Update a Users",
-        "operationId": "UsersUpdate",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "The unique identifier of the Users to update",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "description": "The unique identifier of the Users to update"
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "Request body",
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "description": "User email address"
-                  },
-                  "name": {
-                    "type": "string",
-                    "description": "User display name"
-                  }
-                },
-                "required": [
-                  "email",
-                  "name"
-                ]
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Users"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The request was malformed or contained invalid parameters. 400 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "The request is missing valid authentication credentials. 401 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "The request was well-formed but failed validation (e.g. invalid field format or constraints), 422 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "When the rate limit has been exceeded, 429 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Some serverside issue, 5xx status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/users/_search": {
       "post": {
         "tags": [
@@ -791,7 +22,9 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "description": "The maximum number of Users to return (default: 50) when searching Users",
+              "examples": [
+                1
+              ],
               "default": 50
             }
           },
@@ -802,183 +35,403 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "description": "The number of Users to skip before starting to return results (default: 0) when searching Users",
+              "examples": [
+                0
+              ],
               "default": 0
             }
           }
         ],
         "requestBody": {
-          "description": "Request body",
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "filter": {
-                    "type": "string",
-                    "description": "Filter criteria to search for specific records"
-                  }
-                },
-                "required": [
-                  "filter"
-                ]
-              }
-            }
-          },
-          "required": true
+          "$ref": "#/components/requestBodies/UsersSearch"
         },
         "responses": {
           "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "allOf": [
-                          {
-                            "$ref": "#/components/schemas/Users"
-                          }
-                        ]
-                      },
-                      "description": "Array of Users objects"
-                    },
-                    "pagination": {
-                      "allOf": [
-                        {
-                          "$ref": "#/components/schemas/Pagination"
-                        }
-                      ],
-                      "description": "Pagination information"
-                    }
-                  }
-                }
-              }
-            }
+            "description": "Response for Users Search operation - returns filtered Users results",
+            "$ref": "#/components/responses/UsersSearch"
           },
           "400": {
-            "description": "The request was malformed or contained invalid parameters. 400 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
+            "description": "Bad Request error for Users Search operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
           },
           "401": {
-            "description": "The request is missing valid authentication credentials. 401 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
+            "description": "Unauthorized error for Users Search operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
           },
           "403": {
-            "description": "Request is authenticated, but the user is not allowed to perform the operation. 403 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
+            "description": "Forbidden error for Users Search operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
           },
           "404": {
-            "description": "The requested resource or endpoint does not exist. This can happen if a resource ID is invalid or the route is unknown. 404 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
+            "description": "Not Found error for Users Search operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
           },
           "409": {
-            "description": "The request could not be completed due to a conflict, such as a resource with dependencies that prevent deletion. 409 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
+            "description": "Conflict error for Users Search operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
           },
           "422": {
-            "description": "The request was well-formed but failed validation (e.g. invalid field format or constraints), 422 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
+            "description": "Validation error for Users Search operation - request data failed validation",
+            "$ref": "#/components/responses/UsersSearch422ResponseBody"
           },
           "429": {
-            "description": "When the rate limit has been exceeded, 429 status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
+            "description": "Rate Limit error for Users Search operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
           },
           "500": {
-            "description": "Some serverside issue, 5xx status code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Error"
-                    }
-                  ]
-                }
-              }
-            }
+            "description": "Internal Server error for Users Search operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
           }
         },
         "x-speakeasy-pagination": {
-          "strategy": "offsetLimit",
-          "offsetParam": "offset",
-          "limitParam": "limit",
-          "totalField": "pagination.total",
-          "dataField": "data"
-        }
+          "type": "offsetLimit",
+          "inputs": [
+            {
+              "name": "offset",
+              "in": "parameters",
+              "type": "offset"
+            },
+            {
+              "name": "limit",
+              "in": "parameters",
+              "type": "limit"
+            }
+          ],
+          "outputs": {
+            "results": "$.data.resultArray"
+          }
+        },
+        "x-speakeasy-group": "users",
+        "x-speakeasy-name-override": "search"
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "List Users",
+        "description": "Returns a paginated list of all `Users` in your organization.",
+        "operationId": "UsersList",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of Users to return (default: 50) when listing Users",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "examples": [
+                1
+              ],
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "The number of Users to skip before starting to return results (default: 0) when listing Users",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "examples": [
+                0
+              ],
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for Users List operation - returns a paginated list of Users",
+            "$ref": "#/components/responses/UsersList"
+          },
+          "400": {
+            "description": "Bad Request error for Users List operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Users List operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Users List operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Users List operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Users List operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Users List operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Users List operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-pagination": {
+          "type": "offsetLimit",
+          "inputs": [
+            {
+              "name": "offset",
+              "in": "parameters",
+              "type": "offset"
+            },
+            {
+              "name": "limit",
+              "in": "parameters",
+              "type": "limit"
+            }
+          ],
+          "outputs": {
+            "results": "$.data.resultArray"
+          }
+        },
+        "x-speakeasy-group": "users",
+        "x-speakeasy-name-override": "list"
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Create a new Users",
+        "description": "Create a new Users",
+        "operationId": "UsersCreate",
+        "parameters": [],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/UsersCreate"
+        },
+        "responses": {
+          "201": {
+            "description": "Response for Users Create operation - returns the created Users",
+            "$ref": "#/components/responses/UsersCreate"
+          },
+          "400": {
+            "description": "Bad Request error for Users Create operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Users Create operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Users Create operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Users Create operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Users Create operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Users Create operation - request data failed validation",
+            "$ref": "#/components/responses/UsersCreate422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Users Create operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Users Create operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "users",
+        "x-speakeasy-name-override": "create"
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get a Users",
+        "description": "Retrieves the `Users` with the given ID.",
+        "operationId": "UsersGet",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Users to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "examples": [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ],
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for Users Get operation - returns the requested Users",
+            "$ref": "#/components/responses/UsersGet"
+          },
+          "400": {
+            "description": "Bad Request error for Users Get operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Users Get operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Users Get operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Users Get operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Users Get operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Users Get operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Users Get operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "users",
+        "x-speakeasy-name-override": "get"
+      },
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Delete a Users",
+        "description": "Delete a Users",
+        "operationId": "UsersDelete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Users to delete",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "examples": [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ],
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Response for Users Delete operation - confirms successful deletion"
+          },
+          "400": {
+            "description": "Bad Request error for Users Delete operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Users Delete operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Users Delete operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Users Delete operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Users Delete operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Users Delete operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Users Delete operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "users",
+        "x-speakeasy-name-override": "delete"
+      },
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Update a Users",
+        "description": "Update a Users",
+        "operationId": "UsersUpdate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the Users to update",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "examples": [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ],
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/UsersUpdate"
+        },
+        "responses": {
+          "200": {
+            "description": "Response for Users Update operation - returns the updated Users",
+            "$ref": "#/components/responses/UsersUpdate"
+          },
+          "400": {
+            "description": "Bad Request error for Users Update operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Users Update operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Users Update operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Users Update operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Users Update operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Users Update operation - request data failed validation",
+            "$ref": "#/components/responses/UsersUpdate422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Users Update operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Users Update operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "users",
+        "x-speakeasy-name-override": "update"
       }
     }
   },
@@ -1021,14 +474,25 @@
           },
           "message": {
             "type": "string",
+            "examples": [
+              "example"
+            ],
             "description": "Human-readable error message providing additional details"
+          },
+          "requestID": {
+            "type": "string",
+            "examples": [
+              "550e8400-e29b-41d4-a716-446655440000"
+            ],
+            "description": "Unique identifier for the request that generated this error, used for logging and debugging"
           }
         },
         "required": [
           "code",
-          "message"
+          "message",
+          "requestID"
         ],
-        "description": "Standard error response object containing error code and message"
+        "description": "Standard error response object containing error code, message, and request ID"
       },
       "ErrorField": {
         "type": "object",
@@ -1043,6 +507,9 @@
           },
           "message": {
             "type": "string",
+            "examples": [
+              "example"
+            ],
             "description": "Human-readable error message providing details about the field validation error"
           }
         },
@@ -1057,14 +524,23 @@
         "properties": {
           "offset": {
             "type": "integer",
+            "examples": [
+              0
+            ],
             "description": "Number of items to skip from the beginning of the result set"
           },
           "limit": {
             "type": "integer",
+            "examples": [
+              1
+            ],
             "description": "Maximum number of items to return in the result set"
           },
           "total": {
             "type": "integer",
+            "examples": [
+              100
+            ],
             "description": "Total number of items available for pagination"
           }
         },
@@ -1080,22 +556,36 @@
         "properties": {
           "createdAt": {
             "type": "string",
+            "examples": [
+              "2024-01-15T10:30:00Z"
+            ],
             "format": "date-time",
             "description": "Timestamp when the resource was created"
           },
           "createdBy": {
             "type": "string",
+            "examples": [
+              "987fcdeb-51a2-43d1-b567-123456789abc",
+              null
+            ],
             "format": "uuid",
             "description": "User who created the resource",
             "nullable": true
           },
           "updatedAt": {
             "type": "string",
+            "examples": [
+              "2024-01-15T14:45:00Z"
+            ],
             "format": "date-time",
             "description": "Timestamp when the resource was last updated"
           },
           "updatedBy": {
             "type": "string",
+            "examples": [
+              "987fcdeb-51a2-43d1-b567-123456789abc",
+              null
+            ],
             "format": "uuid",
             "description": "User who last updated the resource",
             "nullable": true
@@ -1112,6 +602,9 @@
         "properties": {
           "id": {
             "type": "string",
+            "examples": [
+              "123e4567-e89b-12d3-a456-426614174000"
+            ],
             "format": "uuid",
             "description": "Unique identifier for the Users"
           },
@@ -1121,14 +614,28 @@
                 "$ref": "#/components/schemas/Meta"
               }
             ],
+            "examples": [
+              {
+                "createdAt": "2024-01-15T10:30:00Z",
+                "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                "updatedAt": "2024-01-15T14:45:00Z",
+                "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+              }
+            ],
             "description": "Metadata information for the Users"
           },
           "email": {
             "type": "string",
+            "examples": [
+              "example"
+            ],
             "description": "User email address"
           },
           "name": {
             "type": "string",
+            "examples": [
+              "example"
+            ],
             "description": "User display name"
           }
         },
@@ -1139,6 +646,536 @@
         ],
         "description": "User management with custom timeout configuration"
       },
+      "UsersFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UsersFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "id": "123e4567-e89b-12d3-a456-426614174000",
+                "meta": {
+                  "createdAt": "2024-01-15T10:30:00Z",
+                  "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                  "updatedAt": "2024-01-15T10:30:00Z",
+                  "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                },
+                "email": "example",
+                "name": "example"
+              },
+              null
+            ],
+            "description": "Equality filters for Users",
+            "nullable": true
+          },
+          "notEquals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UsersFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "id": "123e4567-e89b-12d3-a456-426614174000",
+                "meta": {
+                  "createdAt": "2024-01-15T10:30:00Z",
+                  "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                  "updatedAt": "2024-01-15T10:30:00Z",
+                  "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                },
+                "email": "example",
+                "name": "example"
+              },
+              null
+            ],
+            "description": "Inequality filters for Users",
+            "nullable": true
+          },
+          "greaterThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UsersFilterRange"
+              }
+            ],
+            "examples": [
+              {
+                "meta": {
+                  "createdAt": "2024-01-15T10:30:00Z",
+                  "updatedAt": "2024-01-15T10:30:00Z"
+                }
+              },
+              null
+            ],
+            "description": "Greater than filters for Users",
+            "nullable": true
+          },
+          "smallerThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UsersFilterRange"
+              }
+            ],
+            "examples": [
+              {
+                "meta": {
+                  "createdAt": "2024-01-15T10:30:00Z",
+                  "updatedAt": "2024-01-15T10:30:00Z"
+                }
+              },
+              null
+            ],
+            "description": "Smaller than filters for Users",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UsersFilterRange"
+              }
+            ],
+            "examples": [
+              {
+                "meta": {
+                  "createdAt": "2024-01-15T10:30:00Z",
+                  "updatedAt": "2024-01-15T10:30:00Z"
+                }
+              },
+              null
+            ],
+            "description": "Greater than or equal filters for Users",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UsersFilterRange"
+              }
+            ],
+            "examples": [
+              {
+                "meta": {
+                  "createdAt": "2024-01-15T10:30:00Z",
+                  "updatedAt": "2024-01-15T10:30:00Z"
+                }
+              },
+              null
+            ],
+            "description": "Smaller than or equal filters for Users",
+            "nullable": true
+          },
+          "contains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UsersFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "id": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ],
+                "meta": {
+                  "createdBy": [
+                    "123e4567-e89b-12d3-a456-426614174000"
+                  ],
+                  "updatedBy": [
+                    "123e4567-e89b-12d3-a456-426614174000"
+                  ]
+                },
+                "email": [
+                  "example"
+                ],
+                "name": [
+                  "example"
+                ]
+              },
+              null
+            ],
+            "description": "Contains filters for Users",
+            "nullable": true
+          },
+          "notContains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UsersFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "id": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ],
+                "meta": {
+                  "createdBy": [
+                    "123e4567-e89b-12d3-a456-426614174000"
+                  ],
+                  "updatedBy": [
+                    "123e4567-e89b-12d3-a456-426614174000"
+                  ]
+                },
+                "email": [
+                  "example"
+                ],
+                "name": [
+                  "example"
+                ]
+              },
+              null
+            ],
+            "description": "Not contains filters for Users",
+            "nullable": true
+          },
+          "like": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UsersFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "email": "example",
+                "name": "example"
+              },
+              null
+            ],
+            "description": "LIKE filters for Users",
+            "nullable": true
+          },
+          "notLike": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UsersFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "email": "example",
+                "name": "example"
+              },
+              null
+            ],
+            "description": "NOT LIKE filters for Users",
+            "nullable": true
+          },
+          "null": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UsersFilterNull"
+              }
+            ],
+            "description": "Null filters for Users",
+            "nullable": true
+          },
+          "notNull": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UsersFilterNull"
+              }
+            ],
+            "description": "Not null filters for Users",
+            "nullable": true
+          },
+          "orCondition": {
+            "type": "boolean",
+            "examples": [
+              true
+            ],
+            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
+          },
+          "nestedFilters": {
+            "type": "array",
+            "examples": [
+              [
+                {
+                  "equals": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                      "updatedAt": "2024-01-15T10:30:00Z",
+                      "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                    },
+                    "email": "example",
+                    "name": "example"
+                  },
+                  "notEquals": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                      "updatedAt": "2024-01-15T10:30:00Z",
+                      "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                    },
+                    "email": "example",
+                    "name": "example"
+                  },
+                  "greaterThan": {
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "updatedAt": "2024-01-15T10:30:00Z"
+                    }
+                  },
+                  "smallerThan": {
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "updatedAt": "2024-01-15T10:30:00Z"
+                    }
+                  },
+                  "greaterOrEqual": {
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "updatedAt": "2024-01-15T10:30:00Z"
+                    }
+                  },
+                  "smallerOrEqual": {
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "updatedAt": "2024-01-15T10:30:00Z"
+                    }
+                  },
+                  "contains": {
+                    "id": [
+                      "123e4567-e89b-12d3-a456-426614174000"
+                    ],
+                    "meta": {
+                      "createdBy": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ],
+                      "updatedBy": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ]
+                    },
+                    "email": [
+                      "example"
+                    ],
+                    "name": [
+                      "example"
+                    ]
+                  },
+                  "notContains": {
+                    "id": [
+                      "123e4567-e89b-12d3-a456-426614174000"
+                    ],
+                    "meta": {
+                      "createdBy": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ],
+                      "updatedBy": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ]
+                    },
+                    "email": [
+                      "example"
+                    ],
+                    "name": [
+                      "example"
+                    ]
+                  },
+                  "like": {
+                    "email": "example",
+                    "name": "example"
+                  },
+                  "notLike": {
+                    "email": "example",
+                    "name": "example"
+                  },
+                  "orCondition": true
+                }
+              ]
+            ],
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/UsersFilter"
+                }
+              ]
+            },
+            "description": "NestedFilters of the Users, useful for more complex filters"
+          }
+        },
+        "required": [
+          "orCondition"
+        ],
+        "description": "Filter object for Users"
+      },
+      "UsersFilterEquals": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "examples": [
+              "123e4567-e89b-12d3-a456-426614174000",
+              null
+            ],
+            "format": "uuid",
+            "description": "Unique identifier for the Users",
+            "nullable": true
+          },
+          "meta": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "createdAt": "2024-01-15T10:30:00Z",
+                "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                "updatedAt": "2024-01-15T10:30:00Z",
+                "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+              },
+              null
+            ],
+            "description": "Metadata information for the Users",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "User email address",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "User display name",
+            "nullable": true
+          }
+        },
+        "description": "Equality/Inequality filter fields for Users"
+      },
+      "UsersFilterRange": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterRange"
+              }
+            ],
+            "examples": [
+              {
+                "createdAt": "2024-01-15T10:30:00Z",
+                "updatedAt": "2024-01-15T10:30:00Z"
+              },
+              null
+            ],
+            "description": "Metadata information for the Users",
+            "nullable": true
+          }
+        },
+        "description": "Range filter fields for Users"
+      },
+      "UsersFilterContains": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "array",
+            "examples": [
+              [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ]
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Unique identifier for the Users"
+          },
+          "meta": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "createdBy": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ],
+                "updatedBy": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ]
+              },
+              null
+            ],
+            "description": "Metadata information for the Users",
+            "nullable": true
+          },
+          "email": {
+            "type": "array",
+            "examples": [
+              [
+                "example"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "User email address"
+          },
+          "name": {
+            "type": "array",
+            "examples": [
+              [
+                "example"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "User display name"
+          }
+        },
+        "description": "Contains filter fields for Users"
+      },
+      "UsersFilterLike": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterLike"
+              }
+            ],
+            "description": "Metadata information for the Users",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "User email address",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "User display name",
+            "nullable": true
+          }
+        },
+        "description": "LIKE filter fields for Users"
+      },
+      "UsersFilterNull": {
+        "type": "object",
+        "description": "Null filter fields for Users"
+      },
       "UsersCreateRequestError": {
         "type": "object",
         "properties": {
@@ -1148,6 +1185,13 @@
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "email is required"
+              },
+              null
+            ],
             "description": "User email address",
             "nullable": true
           },
@@ -1156,6 +1200,13 @@
               {
                 "$ref": "#/components/schemas/ErrorField"
               }
+            ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "name is required"
+              },
+              null
             ],
             "description": "User display name",
             "nullable": true
@@ -1172,6 +1223,13 @@
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "email is required"
+              },
+              null
+            ],
             "description": "User email address",
             "nullable": true
           },
@@ -1181,25 +1239,1351 @@
                 "$ref": "#/components/schemas/ErrorField"
               }
             ],
+            "examples": [
+              {
+                "code": "InvalidValue",
+                "message": "name is required"
+              },
+              null
+            ],
             "description": "User display name",
             "nullable": true
           }
         },
         "description": "Request error object for Users Update endpoint"
       },
-      "UsersSearchRequestError": {
+      "MetaFilter": {
         "type": "object",
         "properties": {
-          "filter": {
+          "equals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "createdAt": "2024-01-15T10:30:00Z",
+                "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                "updatedAt": "2024-01-15T10:30:00Z",
+                "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+              },
+              null
+            ],
+            "description": "Equality filters for Meta",
+            "nullable": true
+          },
+          "notEquals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "createdAt": "2024-01-15T10:30:00Z",
+                "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                "updatedAt": "2024-01-15T10:30:00Z",
+                "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+              },
+              null
+            ],
+            "description": "Inequality filters for Meta",
+            "nullable": true
+          },
+          "greaterThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterRange"
+              }
+            ],
+            "examples": [
+              {
+                "createdAt": "2024-01-15T10:30:00Z",
+                "updatedAt": "2024-01-15T10:30:00Z"
+              },
+              null
+            ],
+            "description": "Greater than filters for Meta",
+            "nullable": true
+          },
+          "smallerThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterRange"
+              }
+            ],
+            "examples": [
+              {
+                "createdAt": "2024-01-15T10:30:00Z",
+                "updatedAt": "2024-01-15T10:30:00Z"
+              },
+              null
+            ],
+            "description": "Smaller than filters for Meta",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterRange"
+              }
+            ],
+            "examples": [
+              {
+                "createdAt": "2024-01-15T10:30:00Z",
+                "updatedAt": "2024-01-15T10:30:00Z"
+              },
+              null
+            ],
+            "description": "Greater than or equal filters for Meta",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterRange"
+              }
+            ],
+            "examples": [
+              {
+                "createdAt": "2024-01-15T10:30:00Z",
+                "updatedAt": "2024-01-15T10:30:00Z"
+              },
+              null
+            ],
+            "description": "Smaller than or equal filters for Meta",
+            "nullable": true
+          },
+          "contains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "createdBy": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ],
+                "updatedBy": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ]
+              },
+              null
+            ],
+            "description": "Contains filters for Meta",
+            "nullable": true
+          },
+          "notContains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "createdBy": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ],
+                "updatedBy": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ]
+              },
+              null
+            ],
+            "description": "Not contains filters for Meta",
+            "nullable": true
+          },
+          "like": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterLike"
+              }
+            ],
+            "description": "LIKE filters for Meta",
+            "nullable": true
+          },
+          "notLike": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterLike"
+              }
+            ],
+            "description": "NOT LIKE filters for Meta",
+            "nullable": true
+          },
+          "null": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterNull"
+              }
+            ],
+            "examples": [
+              {
+                "createdBy": true,
+                "updatedBy": true
+              },
+              null
+            ],
+            "description": "Null filters for Meta",
+            "nullable": true
+          },
+          "notNull": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterNull"
+              }
+            ],
+            "examples": [
+              {
+                "createdBy": true,
+                "updatedBy": true
+              },
+              null
+            ],
+            "description": "Not null filters for Meta",
+            "nullable": true
+          },
+          "orCondition": {
+            "type": "boolean",
+            "examples": [
+              true
+            ],
+            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
+          },
+          "nestedFilters": {
+            "type": "array",
+            "examples": [
+              [
+                {
+                  "equals": {
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                    "updatedAt": "2024-01-15T10:30:00Z",
+                    "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                  },
+                  "notEquals": {
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                    "updatedAt": "2024-01-15T10:30:00Z",
+                    "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                  },
+                  "greaterThan": {
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "updatedAt": "2024-01-15T10:30:00Z"
+                  },
+                  "smallerThan": {
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "updatedAt": "2024-01-15T10:30:00Z"
+                  },
+                  "greaterOrEqual": {
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "updatedAt": "2024-01-15T10:30:00Z"
+                  },
+                  "smallerOrEqual": {
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "updatedAt": "2024-01-15T10:30:00Z"
+                  },
+                  "contains": {
+                    "createdBy": [
+                      "123e4567-e89b-12d3-a456-426614174000"
+                    ],
+                    "updatedBy": [
+                      "123e4567-e89b-12d3-a456-426614174000"
+                    ]
+                  },
+                  "notContains": {
+                    "createdBy": [
+                      "123e4567-e89b-12d3-a456-426614174000"
+                    ],
+                    "updatedBy": [
+                      "123e4567-e89b-12d3-a456-426614174000"
+                    ]
+                  },
+                  "null": {
+                    "createdBy": true,
+                    "updatedBy": true
+                  },
+                  "notNull": {
+                    "createdBy": true,
+                    "updatedBy": true
+                  },
+                  "orCondition": true
+                }
+              ]
+            ],
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/MetaFilter"
+                }
+              ]
+            },
+            "description": "NestedFilters of the Meta, useful for more complex filters"
+          }
+        },
+        "required": [
+          "orCondition"
+        ],
+        "description": "Filter object for Meta"
+      },
+      "MetaFilterEquals": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
             "type": "string",
-            "description": "Filter criteria to search for specific records",
+            "examples": [
+              "2024-01-15T10:30:00Z",
+              null
+            ],
+            "format": "date-time",
+            "description": "Timestamp when the resource was created",
+            "nullable": true
+          },
+          "createdBy": {
+            "type": "string",
+            "examples": [
+              "123e4567-e89b-12d3-a456-426614174000",
+              null
+            ],
+            "format": "uuid",
+            "description": "User who created the resource",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "examples": [
+              "2024-01-15T10:30:00Z",
+              null
+            ],
+            "format": "date-time",
+            "description": "Timestamp when the resource was last updated",
+            "nullable": true
+          },
+          "updatedBy": {
+            "type": "string",
+            "examples": [
+              "123e4567-e89b-12d3-a456-426614174000",
+              null
+            ],
+            "format": "uuid",
+            "description": "User who last updated the resource",
             "nullable": true
           }
         },
-        "description": "Request error object for Users Search endpoint"
+        "description": "Equality/Inequality filter fields for Meta"
+      },
+      "MetaFilterRange": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "type": "string",
+            "examples": [
+              "2024-01-15T10:30:00Z",
+              null
+            ],
+            "format": "date-time",
+            "description": "Timestamp when the resource was created",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "examples": [
+              "2024-01-15T10:30:00Z",
+              null
+            ],
+            "format": "date-time",
+            "description": "Timestamp when the resource was last updated",
+            "nullable": true
+          }
+        },
+        "description": "Range filter fields for Meta"
+      },
+      "MetaFilterContains": {
+        "type": "object",
+        "properties": {
+          "createdBy": {
+            "type": "array",
+            "examples": [
+              [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ]
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "User who created the resource"
+          },
+          "updatedBy": {
+            "type": "array",
+            "examples": [
+              [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ]
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "User who last updated the resource"
+          }
+        },
+        "description": "Contains filter fields for Meta"
+      },
+      "MetaFilterLike": {
+        "type": "object",
+        "description": "LIKE filter fields for Meta"
+      },
+      "MetaFilterNull": {
+        "type": "object",
+        "properties": {
+          "createdBy": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "User who created the resource",
+            "nullable": true
+          },
+          "updatedBy": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "User who last updated the resource",
+            "nullable": true
+          }
+        },
+        "description": "Null filter fields for Meta"
+      }
+    },
+    "responses": {
+      "UsersCreate": {
+        "description": "Response for Users Create operation - returns the created Users",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Users"
+                }
+              ]
+            },
+            "examples": {
+              "responseExample": {
+                "summary": "Response body example",
+                "value": {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "meta": {
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                    "updatedAt": "2024-01-15T14:45:00Z",
+                    "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                  },
+                  "email": "example",
+                  "name": "example"
+                }
+              }
+            }
+          }
+        }
+      },
+      "UsersCreate422ResponseBody": {
+        "description": "Validation error for Users Create operation - request data failed validation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "UnprocessableEntity",
+                      "message": "Validation failed for Users Create endpoint",
+                      "requestID": "550e8400-e29b-41d4-a716-446655440000"
+                    }
+                  ]
+                },
+                "errorFields": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/UsersCreateRequestError"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "email": {
+                        "code": "InvalidValue",
+                        "message": "email is required"
+                      },
+                      "name": {
+                        "code": "InvalidValue",
+                        "message": "name is required"
+                      }
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error",
+                "errorFields"
+              ]
+            },
+            "examples": {
+              "validationError": {
+                "summary": "Validation error example",
+                "value": {
+                  "error": {
+                    "code": "UnprocessableEntity",
+                    "message": "Validation failed for Users Create endpoint",
+                    "requestID": "550e8400-e29b-41d4-a716-446655440000"
+                  },
+                  "errorFields": {
+                    "email": {
+                      "code": "InvalidValue",
+                      "message": "email is required"
+                    },
+                    "name": {
+                      "code": "InvalidValue",
+                      "message": "name is required"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "UsersUpdate": {
+        "description": "Response for Users Update operation - returns the updated Users",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Users"
+                }
+              ]
+            },
+            "examples": {
+              "responseExample": {
+                "summary": "Response body example",
+                "value": {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "meta": {
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                    "updatedAt": "2024-01-15T14:45:00Z",
+                    "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                  },
+                  "email": "example",
+                  "name": "example"
+                }
+              }
+            }
+          }
+        }
+      },
+      "UsersUpdate422ResponseBody": {
+        "description": "Validation error for Users Update operation - request data failed validation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "UnprocessableEntity",
+                      "message": "Validation failed for Users Update endpoint",
+                      "requestID": "550e8400-e29b-41d4-a716-446655440000"
+                    }
+                  ]
+                },
+                "errorFields": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/UsersUpdateRequestError"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "email": {
+                        "code": "InvalidValue",
+                        "message": "email is required"
+                      },
+                      "name": {
+                        "code": "InvalidValue",
+                        "message": "name is required"
+                      }
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error",
+                "errorFields"
+              ]
+            },
+            "examples": {
+              "validationError": {
+                "summary": "Validation error example",
+                "value": {
+                  "error": {
+                    "code": "UnprocessableEntity",
+                    "message": "Validation failed for Users Update endpoint",
+                    "requestID": "550e8400-e29b-41d4-a716-446655440000"
+                  },
+                  "errorFields": {
+                    "email": {
+                      "code": "InvalidValue",
+                      "message": "email is required"
+                    },
+                    "name": {
+                      "code": "InvalidValue",
+                      "message": "name is required"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "UsersGet": {
+        "description": "Response for Users Get operation - returns the requested Users",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Users"
+                }
+              ]
+            },
+            "examples": {
+              "responseExample": {
+                "summary": "Response body example",
+                "value": {
+                  "id": "123e4567-e89b-12d3-a456-426614174000",
+                  "meta": {
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                    "updatedAt": "2024-01-15T14:45:00Z",
+                    "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                  },
+                  "email": "example",
+                  "name": "example"
+                }
+              }
+            }
+          }
+        }
+      },
+      "UsersList": {
+        "description": "Response for Users List operation - returns a paginated list of Users",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "examples": [
+                    [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "meta": {
+                          "createdAt": "2024-01-15T10:30:00Z",
+                          "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                          "updatedAt": "2024-01-15T14:45:00Z",
+                          "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                        },
+                        "email": "example",
+                        "name": "example"
+                      }
+                    ]
+                  ],
+                  "items": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Users"
+                      }
+                    ]
+                  },
+                  "description": "Array of Users objects"
+                },
+                "pagination": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "offset": 0,
+                      "limit": 1,
+                      "total": 100
+                    }
+                  ],
+                  "description": "Pagination information"
+                }
+              }
+            },
+            "examples": {
+              "responseExample": {
+                "summary": "Response body example",
+                "value": {
+                  "data": [
+                    {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "meta": {
+                        "createdAt": "2024-01-15T10:30:00Z",
+                        "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                        "updatedAt": "2024-01-15T14:45:00Z",
+                        "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                      },
+                      "email": "example",
+                      "name": "example"
+                    }
+                  ],
+                  "pagination": {
+                    "offset": 0,
+                    "limit": 1,
+                    "total": 100
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "UsersSearch": {
+        "description": "Response for Users Search operation - returns filtered Users results",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "examples": [
+                    [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "meta": {
+                          "createdAt": "2024-01-15T10:30:00Z",
+                          "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                          "updatedAt": "2024-01-15T14:45:00Z",
+                          "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                        },
+                        "email": "example",
+                        "name": "example"
+                      }
+                    ]
+                  ],
+                  "items": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Users"
+                      }
+                    ]
+                  },
+                  "description": "Array of Users objects"
+                },
+                "pagination": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "offset": 0,
+                      "limit": 1,
+                      "total": 100
+                    }
+                  ],
+                  "description": "Pagination information"
+                }
+              }
+            },
+            "examples": {
+              "responseExample": {
+                "summary": "Response body example",
+                "value": {
+                  "data": [
+                    {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "meta": {
+                        "createdAt": "2024-01-15T10:30:00Z",
+                        "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                        "updatedAt": "2024-01-15T14:45:00Z",
+                        "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
+                      },
+                      "email": "example",
+                      "name": "example"
+                    }
+                  ],
+                  "pagination": {
+                    "offset": 0,
+                    "limit": 1,
+                    "total": 100
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "UsersSearch422ResponseBody": {
+        "description": "Validation error for Users Search operation - request data failed validation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "UnprocessableEntity",
+                      "message": "Validation failed for Users Search endpoint",
+                      "requestID": "550e8400-e29b-41d4-a716-446655440000"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            },
+            "examples": {
+              "validationError": {
+                "summary": "Validation error example",
+                "value": {
+                  "error": {
+                    "code": "UnprocessableEntity",
+                    "message": "Validation failed for Users Search endpoint",
+                    "requestID": "550e8400-e29b-41d4-a716-446655440000"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error400ResponseBody": {
+        "description": "Bad Request - The request was malformed or contained invalid parameters",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "BadRequest",
+                      "message": "The request contains invalid parameters or malformed data",
+                      "requestID": "550e8400-e29b-41d4-a716-446655440000"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            },
+            "examples": {
+              "errorExample": {
+                "summary": "Bad Request error example",
+                "value": {
+                  "error": {
+                    "code": "BadRequest",
+                    "message": "The request contains invalid parameters or malformed data",
+                    "requestID": "550e8400-e29b-41d4-a716-446655440000"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error401ResponseBody": {
+        "description": "Unauthorized - The request is missing valid authentication credentials",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "BadRequest",
+                      "message": "The request contains invalid parameters or malformed data",
+                      "requestID": "550e8400-e29b-41d4-a716-446655440000"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            },
+            "examples": {
+              "errorExample": {
+                "summary": "Unauthorized error example",
+                "value": {
+                  "error": {
+                    "code": "Unauthorized",
+                    "message": "Authentication credentials are missing or invalid",
+                    "requestID": "550e8400-e29b-41d4-a716-446655440000"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error403ResponseBody": {
+        "description": "Forbidden - Request is authenticated, but the user is not allowed to perform the operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "BadRequest",
+                      "message": "The request contains invalid parameters or malformed data",
+                      "requestID": "550e8400-e29b-41d4-a716-446655440000"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            },
+            "examples": {
+              "errorExample": {
+                "summary": "Forbidden error example",
+                "value": {
+                  "error": {
+                    "code": "Forbidden",
+                    "message": "You do not have permission to perform this operation",
+                    "requestID": "550e8400-e29b-41d4-a716-446655440000"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error404ResponseBody": {
+        "description": "Not Found - The requested resource does not exist",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "BadRequest",
+                      "message": "The request contains invalid parameters or malformed data",
+                      "requestID": "550e8400-e29b-41d4-a716-446655440000"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            },
+            "examples": {
+              "errorExample": {
+                "summary": "Not Found error example",
+                "value": {
+                  "error": {
+                    "code": "NotFound",
+                    "message": "The requested resource could not be found",
+                    "requestID": "550e8400-e29b-41d4-a716-446655440000"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error409ResponseBody": {
+        "description": "Conflict - The request could not be completed due to a conflict",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "BadRequest",
+                      "message": "The request contains invalid parameters or malformed data",
+                      "requestID": "550e8400-e29b-41d4-a716-446655440000"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            },
+            "examples": {
+              "errorExample": {
+                "summary": "Conflict error example",
+                "value": {
+                  "error": {
+                    "code": "Conflict",
+                    "message": "The request conflicts with the current state of the resource",
+                    "requestID": "550e8400-e29b-41d4-a716-446655440000"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error429ResponseBody": {
+        "description": "Too Many Requests - When the rate limit has been exceeded",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "BadRequest",
+                      "message": "The request contains invalid parameters or malformed data",
+                      "requestID": "550e8400-e29b-41d4-a716-446655440000"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            },
+            "examples": {
+              "errorExample": {
+                "summary": "Rate Limited error example",
+                "value": {
+                  "error": {
+                    "code": "RateLimited",
+                    "message": "Too many requests - rate limit exceeded",
+                    "requestID": "550e8400-e29b-41d4-a716-446655440000"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error500ResponseBody": {
+        "description": "Internal Server Error - An unexpected server error occurred",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "code": "BadRequest",
+                      "message": "The request contains invalid parameters or malformed data",
+                      "requestID": "550e8400-e29b-41d4-a716-446655440000"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            },
+            "examples": {
+              "errorExample": {
+                "summary": "Internal Server error example",
+                "value": {
+                  "error": {
+                    "code": "Internal",
+                    "message": "An unexpected server error occurred",
+                    "requestID": "550e8400-e29b-41d4-a716-446655440000"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "requestBodies": {
+      "UsersCreate": {
+        "description": "Request body",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "examples": [
+                    "example"
+                  ],
+                  "description": "User email address"
+                },
+                "name": {
+                  "type": "string",
+                  "examples": [
+                    "example"
+                  ],
+                  "description": "User display name"
+                }
+              },
+              "required": [
+                "email",
+                "name"
+              ]
+            },
+            "examples": {
+              "requestExample": {
+                "summary": "Request body example",
+                "value": {
+                  "email": "example",
+                  "name": "example"
+                }
+              }
+            }
+          }
+        },
+        "required": true
+      },
+      "UsersUpdate": {
+        "description": "Request body",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "examples": [
+                    "example"
+                  ],
+                  "description": "User email address"
+                },
+                "name": {
+                  "type": "string",
+                  "examples": [
+                    "example"
+                  ],
+                  "description": "User display name"
+                }
+              },
+              "required": [
+                "email",
+                "name"
+              ]
+            },
+            "examples": {
+              "requestExample": {
+                "summary": "Request body example",
+                "value": {
+                  "email": "example",
+                  "name": "example"
+                }
+              }
+            }
+          }
+        },
+        "required": true
+      },
+      "UsersSearch": {
+        "description": "Request body",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/UsersFilter"
+                }
+              ],
+              "description": "Filter criteria to search for specific records"
+            },
+            "examples": {
+              "requestExample": {
+                "summary": "Request body example",
+                "value": {
+                  "equals": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                      "updatedAt": "2024-01-15T10:30:00Z",
+                      "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                    },
+                    "email": "example",
+                    "name": "example"
+                  },
+                  "notEquals": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                      "updatedAt": "2024-01-15T10:30:00Z",
+                      "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                    },
+                    "email": "example",
+                    "name": "example"
+                  },
+                  "greaterThan": {
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "updatedAt": "2024-01-15T10:30:00Z"
+                    }
+                  },
+                  "smallerThan": {
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "updatedAt": "2024-01-15T10:30:00Z"
+                    }
+                  },
+                  "greaterOrEqual": {
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "updatedAt": "2024-01-15T10:30:00Z"
+                    }
+                  },
+                  "smallerOrEqual": {
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "updatedAt": "2024-01-15T10:30:00Z"
+                    }
+                  },
+                  "contains": {
+                    "id": [
+                      "123e4567-e89b-12d3-a456-426614174000"
+                    ],
+                    "meta": {
+                      "createdBy": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ],
+                      "updatedBy": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ]
+                    },
+                    "email": [
+                      "example"
+                    ],
+                    "name": [
+                      "example"
+                    ]
+                  },
+                  "notContains": {
+                    "id": [
+                      "123e4567-e89b-12d3-a456-426614174000"
+                    ],
+                    "meta": {
+                      "createdBy": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ],
+                      "updatedBy": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ]
+                    },
+                    "email": [
+                      "example"
+                    ],
+                    "name": [
+                      "example"
+                    ]
+                  },
+                  "like": {
+                    "email": "example",
+                    "name": "example"
+                  },
+                  "notLike": {
+                    "email": "example",
+                    "name": "example"
+                  },
+                  "orCondition": true
+                }
+              }
+            }
+          }
+        },
+        "required": false
       }
     }
   },
+  "tags": [
+    {
+      "name": "Users",
+      "description": "User management with custom timeout configuration"
+    }
+  ],
   "x-speakeasy-retries": {
     "strategy": "backoff",
     "backoff": {

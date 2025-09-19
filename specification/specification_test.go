@@ -1589,7 +1589,7 @@ func TestApplyOverlay(t *testing.T) {
 		errorObj := result.GetObject("Error")
 		require.NotNil(t, errorObj, "Error object should exist")
 		assert.Equal(t, 3, len(errorObj.Fields), "Error object should have 3 fields: Code, Message, and RequestID")
-		
+
 		var hasRequestID bool
 		for _, field := range errorObj.Fields {
 			if field.Name == "RequestID" {
