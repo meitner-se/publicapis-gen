@@ -1326,8 +1326,13 @@ func ApplyFilterOverlay(input *Service) *Service {
 
 	hasFilter := make(map[string]bool)
 
-	// Generate filter objects for field types in resource objects (includes Meta)
+	// Generate filter objects ONLY for field types in resource objects that have Read operations
 	for _, resource := range result.Resources {
+		// Only process resources with Read operations
+		if !resource.HasReadOperation() {
+			continue
+		}
+
 		for _, object := range result.Objects {
 			if object.Name != resource.Name {
 				continue
@@ -1348,24 +1353,6 @@ func ApplyFilterOverlay(input *Service) *Service {
 
 					hasFilter[fieldObject.Name] = true
 				}
-			}
-		}
-	}
-
-	// Also generate filter objects for types used in request body parameters
-	bodyParamTypes := collectTypesUsedInBodyParams(result)
-	for typeName := range bodyParamTypes {
-		if hasFilter[typeName] {
-			continue // Already generated
-		}
-
-		// Find the object and generate filter objects
-		for _, obj := range result.Objects {
-			if obj.Name == typeName && !obj.IsFilter() {
-				filterObjects := generateFilterObjectsForObject(obj, result.Objects)
-				result.Objects = append(result.Objects, filterObjects...)
-				hasFilter[obj.Name] = true
-				break
 			}
 		}
 	}

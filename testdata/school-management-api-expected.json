@@ -18,142 +18,6 @@
     }
   ],
   "paths": {
-    "/students/bulk-import": {
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Bulk Import Students",
-        "description": "Import multiple students from a CSV file or structured data",
-        "operationId": "StudentsBulkImport",
-        "parameters": [
-          {
-            "name": "validateOnly",
-            "in": "query",
-            "description": "Only validate data without importing",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "examples": [
-                true
-              ],
-              "default": false
-            }
-          }
-        ],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsBulkImport"
-        },
-        "responses": {
-          "200": {
-            "description": "Successfully imported students",
-            "$ref": "#/components/responses/StudentsBulkImport"
-          },
-          "400": {
-            "description": "Bad Request error for Students BulkImport operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students BulkImport operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students BulkImport operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students BulkImport operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students BulkImport operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "Validation error for Students BulkImport operation - request data failed validation",
-            "$ref": "#/components/responses/StudentsBulkImport422ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students BulkImport operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students BulkImport operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "bulkImport"
-      }
-    },
-    "/students/reports/generate": {
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Generate Student Report",
-        "description": "Generate a comprehensive report for students based on filters",
-        "operationId": "StudentsGenerateReport",
-        "parameters": [
-          {
-            "name": "format",
-            "in": "query",
-            "description": "Report format (pdf, excel, csv)",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "examples": [
-                "example"
-              ],
-              "default": "pdf"
-            }
-          }
-        ],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsGenerateReport"
-        },
-        "responses": {
-          "202": {
-            "description": "Successfully queued report generation",
-            "$ref": "#/components/responses/StudentsGenerateReport"
-          },
-          "400": {
-            "description": "Bad Request error for Students GenerateReport operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students GenerateReport operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students GenerateReport operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students GenerateReport operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students GenerateReport operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "Validation error for Students GenerateReport operation - request data failed validation",
-            "$ref": "#/components/responses/StudentsGenerateReport422ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students GenerateReport operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students GenerateReport operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "generateReport"
-      }
-    },
     "/students/advanced-search": {
       "post": {
         "tags": [
@@ -687,6 +551,142 @@
         },
         "x-speakeasy-group": "students",
         "x-speakeasy-name-override": "search"
+      }
+    },
+    "/students/bulk-import": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Bulk Import Students",
+        "description": "Import multiple students from a CSV file or structured data",
+        "operationId": "StudentsBulkImport",
+        "parameters": [
+          {
+            "name": "validateOnly",
+            "in": "query",
+            "description": "Only validate data without importing",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "examples": [
+                true
+              ],
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsBulkImport"
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully imported students",
+            "$ref": "#/components/responses/StudentsBulkImport"
+          },
+          "400": {
+            "description": "Bad Request error for Students BulkImport operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students BulkImport operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students BulkImport operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students BulkImport operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students BulkImport operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students BulkImport operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsBulkImport422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students BulkImport operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students BulkImport operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "bulkImport"
+      }
+    },
+    "/students/reports/generate": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Generate Student Report",
+        "description": "Generate a comprehensive report for students based on filters",
+        "operationId": "StudentsGenerateReport",
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "description": "Report format (pdf, excel, csv)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "examples": [
+                "example"
+              ],
+              "default": "pdf"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsGenerateReport"
+        },
+        "responses": {
+          "202": {
+            "description": "Successfully queued report generation",
+            "$ref": "#/components/responses/StudentsGenerateReport"
+          },
+          "400": {
+            "description": "Bad Request error for Students GenerateReport operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students GenerateReport operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students GenerateReport operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students GenerateReport operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students GenerateReport operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students GenerateReport operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsGenerateReport422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students GenerateReport operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students GenerateReport operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "generateReport"
       }
     }
   },
@@ -3964,406 +3964,6 @@
       "AddressFilterNull": {
         "type": "object",
         "description": "Null filter fields for Address"
-      },
-      "StudentFilter": {
-        "type": "object",
-        "properties": {
-          "equals": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterEquals"
-              }
-            ],
-            "examples": [
-              {
-                "firstName": "example",
-                "lastName": "example",
-                "studentId": "example"
-              },
-              null
-            ],
-            "description": "Equality filters for Student",
-            "nullable": true
-          },
-          "notEquals": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterEquals"
-              }
-            ],
-            "examples": [
-              {
-                "firstName": "example",
-                "lastName": "example",
-                "studentId": "example"
-              },
-              null
-            ],
-            "description": "Inequality filters for Student",
-            "nullable": true
-          },
-          "greaterThan": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterRange"
-              }
-            ],
-            "description": "Greater than filters for Student",
-            "nullable": true
-          },
-          "smallerThan": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterRange"
-              }
-            ],
-            "description": "Smaller than filters for Student",
-            "nullable": true
-          },
-          "greaterOrEqual": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterRange"
-              }
-            ],
-            "description": "Greater than or equal filters for Student",
-            "nullable": true
-          },
-          "smallerOrEqual": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterRange"
-              }
-            ],
-            "description": "Smaller than or equal filters for Student",
-            "nullable": true
-          },
-          "contains": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterContains"
-              }
-            ],
-            "examples": [
-              {
-                "firstName": [
-                  "example"
-                ],
-                "lastName": [
-                  "example"
-                ],
-                "studentId": [
-                  "example"
-                ]
-              },
-              null
-            ],
-            "description": "Contains filters for Student",
-            "nullable": true
-          },
-          "notContains": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterContains"
-              }
-            ],
-            "examples": [
-              {
-                "firstName": [
-                  "example"
-                ],
-                "lastName": [
-                  "example"
-                ],
-                "studentId": [
-                  "example"
-                ]
-              },
-              null
-            ],
-            "description": "Not contains filters for Student",
-            "nullable": true
-          },
-          "like": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterLike"
-              }
-            ],
-            "examples": [
-              {
-                "firstName": "example",
-                "lastName": "example",
-                "studentId": "example"
-              },
-              null
-            ],
-            "description": "LIKE filters for Student",
-            "nullable": true
-          },
-          "notLike": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterLike"
-              }
-            ],
-            "examples": [
-              {
-                "firstName": "example",
-                "lastName": "example",
-                "studentId": "example"
-              },
-              null
-            ],
-            "description": "NOT LIKE filters for Student",
-            "nullable": true
-          },
-          "null": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterNull"
-              }
-            ],
-            "description": "Null filters for Student",
-            "nullable": true
-          },
-          "notNull": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterNull"
-              }
-            ],
-            "description": "Not null filters for Student",
-            "nullable": true
-          },
-          "orCondition": {
-            "type": "boolean",
-            "examples": [
-              true
-            ],
-            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
-          },
-          "nestedFilters": {
-            "type": "array",
-            "examples": [
-              [
-                {
-                  "equals": {
-                    "firstName": "example",
-                    "lastName": "example",
-                    "studentId": "example"
-                  },
-                  "notEquals": {
-                    "firstName": "example",
-                    "lastName": "example",
-                    "studentId": "example"
-                  },
-                  "contains": {
-                    "firstName": [
-                      "example"
-                    ],
-                    "lastName": [
-                      "example"
-                    ],
-                    "studentId": [
-                      "example"
-                    ]
-                  },
-                  "notContains": {
-                    "firstName": [
-                      "example"
-                    ],
-                    "lastName": [
-                      "example"
-                    ],
-                    "studentId": [
-                      "example"
-                    ]
-                  },
-                  "like": {
-                    "firstName": "example",
-                    "lastName": "example",
-                    "studentId": "example"
-                  },
-                  "notLike": {
-                    "firstName": "example",
-                    "lastName": "example",
-                    "studentId": "example"
-                  },
-                  "orCondition": true
-                }
-              ]
-            ],
-            "items": {
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/StudentFilter"
-                }
-              ]
-            },
-            "description": "NestedFilters of the Student, useful for more complex filters"
-          }
-        },
-        "required": [
-          "orCondition"
-        ],
-        "description": "Filter object for Student"
-      },
-      "StudentFilterEquals": {
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "Student's first name",
-            "nullable": true
-          },
-          "lastName": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "Student's last name",
-            "nullable": true
-          },
-          "studentId": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "School-assigned student ID",
-            "nullable": true
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentStatus"
-              }
-            ],
-            "description": "Current status of the student",
-            "nullable": true
-          },
-          "gradeLevel": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/GradeLevel"
-              }
-            ],
-            "description": "Current grade level",
-            "nullable": true
-          }
-        },
-        "description": "Equality/Inequality filter fields for Student"
-      },
-      "StudentFilterRange": {
-        "type": "object",
-        "description": "Range filter fields for Student"
-      },
-      "StudentFilterContains": {
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "type": "array",
-            "examples": [
-              [
-                "example"
-              ]
-            ],
-            "items": {
-              "type": "string"
-            },
-            "description": "Student's first name"
-          },
-          "lastName": {
-            "type": "array",
-            "examples": [
-              [
-                "example"
-              ]
-            ],
-            "items": {
-              "type": "string"
-            },
-            "description": "Student's last name"
-          },
-          "studentId": {
-            "type": "array",
-            "examples": [
-              [
-                "example"
-              ]
-            ],
-            "items": {
-              "type": "string"
-            },
-            "description": "School-assigned student ID"
-          },
-          "status": {
-            "type": "array",
-            "items": {
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/StudentStatus"
-                }
-              ]
-            },
-            "description": "Current status of the student"
-          },
-          "gradeLevel": {
-            "type": "array",
-            "items": {
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/GradeLevel"
-                }
-              ]
-            },
-            "description": "Current grade level"
-          }
-        },
-        "description": "Contains filter fields for Student"
-      },
-      "StudentFilterLike": {
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "Student's first name",
-            "nullable": true
-          },
-          "lastName": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "Student's last name",
-            "nullable": true
-          },
-          "studentId": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "School-assigned student ID",
-            "nullable": true
-          }
-        },
-        "description": "LIKE filter fields for Student"
-      },
-      "StudentFilterNull": {
-        "type": "object",
-        "description": "Null filter fields for Student"
       }
     },
     "responses": {

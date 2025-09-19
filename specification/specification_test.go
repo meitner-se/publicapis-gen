@@ -1820,7 +1820,8 @@ func TestApplyFilterOverlay(t *testing.T) {
 		}
 		assert.NotNil(t, metaFilter, "Should have MetaFilter object since Meta is used in Users object with Read operation")
 
-		// Person object is used in body parameters, so it should get filter objects (preserving original behavior)
+		// Person object is used only in body parameters but has no corresponding Read resource,
+		// so it should NOT get filter objects (new restrictive behavior)
 		var personFilter *Object
 		for i := range result.Objects {
 			if result.Objects[i].Name == "PersonFilter" {
@@ -1828,7 +1829,7 @@ func TestApplyFilterOverlay(t *testing.T) {
 				break
 			}
 		}
-		assert.NotNil(t, personFilter, "Should have PersonFilter object since Person is used in body parameters")
+		assert.Nil(t, personFilter, "Should NOT have PersonFilter object since Person is only used in body parameters without Read operations")
 	})
 
 	t.Run("should not generate filters for response-only objects", func(t *testing.T) {
@@ -1973,7 +1974,7 @@ func TestApplyFilterOverlay(t *testing.T) {
 		}
 
 		assert.True(t, hasUsersFilter, "Should have generated UsersFilter (Users resource has Read operation)")
-		assert.True(t, hasUserFilter, "Should have generated UserFilter (User is used in Users object and body params)")
+		assert.False(t, hasUserFilter, "Should NOT have generated UserFilter (User object doesn't correspond to a resource with Read operations)")
 		assert.False(t, hasErrorFilter, "Should NOT have generated ErrorFilter (Error is only used in responses)")
 		assert.False(t, hasPaginationFilter, "Should NOT have generated PaginationFilter (Pagination is only used in responses)")
 	})
@@ -3052,8 +3053,8 @@ func TestApplyFilterOverlay_NestedObjects(t *testing.T) {
 		result := ApplyFilterOverlay(overlayResult)
 		require.NotNil(t, result)
 
-		// Should have filter objects for both Address and Person
-		var addressFilter, personFilter *Object
+		// Should NOT generate filter objects for Address or Person since they don't correspond to resources with Read operations
+		var addressFilter, personFilter, peopleFilter *Object
 		for i := range result.Objects {
 			if result.Objects[i].Name == "AddressFilter" {
 				addressFilter = &result.Objects[i]
@@ -3061,28 +3062,18 @@ func TestApplyFilterOverlay_NestedObjects(t *testing.T) {
 			if result.Objects[i].Name == "PersonFilter" {
 				personFilter = &result.Objects[i]
 			}
-		}
-
-		assert.NotNil(t, addressFilter, "Should have AddressFilter object")
-		assert.NotNil(t, personFilter, "Should have PersonFilter object")
-
-		// PersonFilter should reference AddressFilter for nested object field
-		var addressField *Field
-		for i := range personFilter.Fields {
-			if personFilter.Fields[i].Name == "address" {
-				addressField = &personFilter.Fields[i]
-				break
+			if result.Objects[i].Name == "PeopleFilter" {
+				peopleFilter = &result.Objects[i]
 			}
 		}
 
-		// This tests the generateNestedFilterField function
-		if addressField != nil {
-			assert.Equal(t, "AddressFilter", addressField.Type, "Address field should reference AddressFilter type")
-		} else {
-			// If address field is not found, it might be because nested object filters work differently
-			// Just verify that the filter generation process completed successfully
-			assert.Greater(t, len(result.Objects), 2, "Should have generated filter objects")
-		}
+		assert.Nil(t, addressFilter, "Should NOT have AddressFilter object (Address doesn't correspond to a resource with Read operations)")
+		assert.Nil(t, personFilter, "Should NOT have PersonFilter object (Person doesn't correspond to a resource with Read operations)")
+		assert.NotNil(t, peopleFilter, "Should have PeopleFilter object (People resource has Read operation)")
+
+		// With the new restrictive logic, nested object filtering is only relevant for objects
+		// that correspond to resources with Read operations. Since neither Address nor Person
+		// have corresponding Read resources, no nested filtering relationships are tested here.
 	})
 }
 
