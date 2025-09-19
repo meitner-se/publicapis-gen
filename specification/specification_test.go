@@ -3,6 +3,7 @@ package specification
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	yaml "github.com/goccy/go-yaml"
@@ -3133,6 +3134,76 @@ func TestApplyFilterOverlay_MetaObjectFilters(t *testing.T) {
 		assert.NotNil(t, metaField, "User object should contain Meta field")
 		if metaField != nil {
 			assert.Equal(t, metaObjectName, metaField.Type, "Meta field should be of type Meta")
+		}
+	})
+
+	t.Run("objects from resources without Read operations should not get filter objects", func(t *testing.T) {
+		input := &Service{
+			Name:  "TestService",
+			Enums: []Enum{},
+			Objects: []Object{
+				{
+					Name:        "WriteOnlyObject",
+					Description: "Object used only for writes",
+					Fields: []Field{
+						{
+							Name:        "data",
+							Description: "Some data",
+							Type:        FieldTypeString,
+						},
+					},
+				},
+			},
+			Resources: []Resource{
+				{
+					Name:        "WriteOnlyResource",
+					Description: "Resource with only Create/Update operations",
+					Operations:  []string{OperationCreate, OperationUpdate}, // No Read operation
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "name",
+								Description: "Resource name",
+								Type:        FieldTypeString,
+							},
+							Operations: []string{OperationCreate, OperationUpdate},
+						},
+					},
+				},
+			},
+		}
+
+		// Apply overlay
+		overlayResult := ApplyOverlay(input)
+		require.NotNil(t, overlayResult, "ApplyOverlay should not return nil")
+
+		// Apply filter overlay
+		filterResult := ApplyFilterOverlay(overlayResult)
+		require.NotNil(t, filterResult, "ApplyFilterOverlay should not return nil")
+
+		// Verify no filter objects are generated for WriteOnlyObject
+		for _, obj := range filterResult.Objects {
+			assert.False(t, strings.HasPrefix(obj.Name, "WriteOnlyObjectFilter"),
+				"Should not generate filter objects for WriteOnlyObject, found: %s", obj.Name)
+			assert.False(t, strings.HasPrefix(obj.Name, "WriteOnlyResourceFilter"),
+				"Should not generate filter objects for WriteOnlyResource, found: %s", obj.Name)
+		}
+
+		// Meta object should still exist but no Meta filter objects should be generated
+		// since no resources with Read operations use it
+		var metaObject *Object
+		for i := range filterResult.Objects {
+			if filterResult.Objects[i].Name == metaObjectName {
+				metaObject = &filterResult.Objects[i]
+				break
+			}
+		}
+		assert.NotNil(t, metaObject, "Meta object should still exist")
+
+		// But no Meta filter objects should be generated
+		for _, obj := range filterResult.Objects {
+			assert.False(t, strings.HasPrefix(obj.Name, "MetaFilter"),
+				"Should not generate Meta filter objects when no Read operations use it, found: %s", obj.Name)
 		}
 	})
 }

@@ -1078,8 +1078,8 @@ func collectTypesUsedInBodyParams(service *Service) map[string]bool {
 	return usedTypes
 }
 
-// collectAllUsedTypes collects all types used throughout the service, including in object fields.
-func collectAllUsedTypes(service *Service) map[string]bool {
+// collectTypesUsedInReadOperations collects types used in Read operations and their related objects.
+func collectTypesUsedInReadOperations(service *Service) map[string]bool {
 	usedTypes := make(map[string]bool)
 
 	// Collect types from request body parameters (existing behavior for RequestError objects)
@@ -1088,10 +1088,19 @@ func collectAllUsedTypes(service *Service) map[string]bool {
 		usedTypes[typeName] = true
 	}
 
-	// Collect types from all object fields recursively
-	for _, obj := range service.Objects {
-		for _, field := range obj.Fields {
-			collectTypeRecursively(field.Type, usedTypes, service.Objects)
+	// Collect types from objects that are used in resources with Read operations
+	for _, resource := range service.Resources {
+		if resource.HasReadOperation() {
+			// Find the corresponding object for this resource
+			for _, obj := range service.Objects {
+				if obj.Name == resource.Name {
+					// Recursively collect all field types used in this object
+					for _, field := range obj.Fields {
+						collectTypeRecursively(field.Type, usedTypes, service.Objects)
+					}
+					break
+				}
+			}
 		}
 	}
 
@@ -1344,12 +1353,12 @@ func ApplyFilterOverlay(input *Service) *Service {
 	// Copy resources
 	copy(result.Resources, input.Resources)
 
-	// Collect types used throughout the service (in body parameters, object fields, etc.)
-	usedTypes := collectAllUsedTypes(result)
+	// Collect types used in Read operations (for filtering/searching)
+	usedTypes := collectTypesUsedInReadOperations(result)
 
-	// Generate Filter objects for all Objects that are used anywhere in the service
+	// Generate Filter objects only for Objects used in Read operations
 	for _, obj := range input.Objects {
-		// Skip objects that are not used anywhere in the service
+		// Skip objects that are not used in Read operations
 		if !usedTypes[obj.Name] {
 			continue
 		}
