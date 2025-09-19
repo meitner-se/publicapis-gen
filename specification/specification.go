@@ -1078,29 +1078,32 @@ func collectTypesUsedInBodyParams(service *Service) map[string]bool {
 	return usedTypes
 }
 
-// collectTypesUsedInReadOperations collects types used in Read operations and their related objects.
+// collectTypesUsedInReadOperations collects types that should have filter objects generated.
+// This includes types used in request body parameters AND types used by resources with Read operations.
 func collectTypesUsedInReadOperations(service *Service) map[string]bool {
 	usedTypes := make(map[string]bool)
 
-	// Collect types from request body parameters (existing behavior for RequestError objects)
+	// Collect types from request body parameters (preserving original behavior)
+	// This ensures objects used in Create/Update body parameters get filter objects
 	bodyParamTypes := collectTypesUsedInBodyParams(service)
 	for typeName := range bodyParamTypes {
 		usedTypes[typeName] = true
 	}
 
-	// Collect types from objects that are used in resources with Read operations
+	// Additionally, collect types from objects that correspond to resources with Read operations
+	// This ensures objects like Meta that are embedded in Read-enabled resource objects get filter objects
 	for _, resource := range service.Resources {
-		if !resource.HasReadOperation() {
-			continue
-		}
-
-		for _, field := range resource.Fields {
-			if !field.HasReadOperation() {
-				continue
+		if resource.HasReadOperation() {
+			// Find the corresponding object for this resource
+			for _, obj := range service.Objects {
+				if obj.Name == resource.Name {
+					// Recursively collect all field types used in this object
+					for _, field := range obj.Fields {
+						collectTypeRecursively(field.Type, usedTypes, service.Objects)
+					}
+					break
+				}
 			}
-
-			// Recursively collect all field types used in this object
-			collectTypeRecursively(field.Type, usedTypes, service.Objects)
 		}
 	}
 
