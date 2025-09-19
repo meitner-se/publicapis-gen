@@ -183,6 +183,7 @@ const (
 	errorFieldObjectName    = "ErrorField"
 	messageFieldName        = "message"
 	codeFieldName           = "code"
+	requestIDFieldName      = "requestID"
 	errorFieldName          = "error"
 	errorFieldsFieldName    = "errorFields"
 	errorCodeEnumName       = "ErrorCode"
@@ -1543,7 +1544,7 @@ func (g *Generator) generate422ErrorExample(resourceName, endpointName string, s
 	return rootNode
 }
 
-// generateErrorObjectExample generates an Error object example with code and message fields.
+// generateErrorObjectExample generates an Error object example with code, message, and requestID fields.
 func (g *Generator) generateErrorObjectExample(resourceName, endpointName string) *yaml.Node {
 	errorObjectNode := &yaml.Node{
 		Kind: yaml.MappingNode,
@@ -1574,6 +1575,19 @@ func (g *Generator) generateErrorObjectExample(resourceName, endpointName string
 		Value: fmt.Sprintf("Validation failed for %s %s endpoint", resourceName, endpointName),
 	}
 	errorObjectNode.Content = append(errorObjectNode.Content, messageKeyNode, messageValueNode)
+
+	// Add requestID field
+	requestIDKeyNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: requestIDFieldName,
+	}
+	requestIDValueNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: "550e8400-e29b-41d4-a716-446655440000",
+	}
+	errorObjectNode.Content = append(errorObjectNode.Content, requestIDKeyNode, requestIDValueNode)
 
 	return errorObjectNode
 }
@@ -1899,6 +1913,19 @@ func (g *Generator) generateStandardErrorObjectExample(errorCode, message string
 	}
 	errorObjectNode.Content = append(errorObjectNode.Content, messageKeyNode, messageValueNode)
 
+	// Add requestID field
+	requestIDKeyNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: requestIDFieldName,
+	}
+	requestIDValueNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: "550e8400-e29b-41d4-a716-446655440000",
+	}
+	errorObjectNode.Content = append(errorObjectNode.Content, requestIDKeyNode, requestIDValueNode)
+
 	return errorObjectNode
 }
 
@@ -1993,6 +2020,19 @@ func (g *Generator) generateStandardErrorExample(errorCode, message string) *yam
 		Value: message,
 	}
 	errorObjectNode.Content = append(errorObjectNode.Content, messageKeyNode, messageValueNode)
+
+	// Add requestID field
+	requestIDKeyNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: requestIDFieldName,
+	}
+	requestIDValueNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: "550e8400-e29b-41d4-a716-446655440000",
+	}
+	errorObjectNode.Content = append(errorObjectNode.Content, requestIDKeyNode, requestIDValueNode)
 
 	// Add the error object to the wrapper
 	wrapperNode.Content = append(wrapperNode.Content, errorKeyNode, errorObjectNode)

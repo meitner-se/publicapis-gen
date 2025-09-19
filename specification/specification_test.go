@@ -1584,6 +1584,22 @@ func TestApplyOverlay(t *testing.T) {
 		assert.Equal(t, 2, len(result.Enums))   // ErrorCode and ErrorFieldCode enums
 		assert.Equal(t, 4, len(result.Objects)) // Error, ErrorField, Pagination, and Meta objects
 		assert.Equal(t, 0, len(result.Resources))
+
+		// Verify Error object has RequestID field
+		errorObj := result.GetObject("Error")
+		require.NotNil(t, errorObj, "Error object should exist")
+		assert.Equal(t, 3, len(errorObj.Fields), "Error object should have 3 fields: Code, Message, and RequestID")
+
+		var hasRequestID bool
+		for _, field := range errorObj.Fields {
+			if field.Name == "RequestID" {
+				hasRequestID = true
+				assert.Equal(t, FieldTypeString, field.Type, "RequestID should be of type String")
+				assert.Contains(t, field.Description, "request that generated this error", "RequestID should have appropriate description")
+				break
+			}
+		}
+		assert.True(t, hasRequestID, "Error object should have RequestID field")
 	})
 
 	t.Run("service with resources", func(t *testing.T) {
