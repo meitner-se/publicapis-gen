@@ -999,7 +999,7 @@ func TestSpeakeasyPaginationExtension(t *testing.T) {
 							StatusCode:  200,
 							BodyFields: []specification.Field{
 								{
-									Name:        "data",
+									Name:        "Data",
 									Description: "Array of User objects",
 									Type:        "User",
 									Modifiers:   []string{specification.ModifierArray},
@@ -1047,7 +1047,7 @@ func TestSpeakeasyPaginationExtension(t *testing.T) {
 							StatusCode:  200,
 							BodyFields: []specification.Field{
 								{
-									Name:        "data",
+									Name:        "Data",
 									Description: "Array of User objects",
 									Type:        "User",
 									Modifiers:   []string{specification.ModifierArray},
