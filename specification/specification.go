@@ -1090,17 +1090,17 @@ func collectTypesUsedInReadOperations(service *Service) map[string]bool {
 
 	// Collect types from objects that are used in resources with Read operations
 	for _, resource := range service.Resources {
-		if resource.HasReadOperation() {
-			// Find the corresponding object for this resource
-			for _, obj := range service.Objects {
-				if obj.Name == resource.Name {
-					// Recursively collect all field types used in this object
-					for _, field := range obj.Fields {
-						collectTypeRecursively(field.Type, usedTypes, service.Objects)
-					}
-					break
-				}
+		if !resource.HasReadOperation() {
+			continue
+		}
+
+		for _, field := range resource.Fields {
+			if !field.HasReadOperation() {
+				continue
 			}
+
+			// Recursively collect all field types used in this object
+			collectTypeRecursively(field.Type, usedTypes, service.Objects)
 		}
 	}
 
@@ -1353,18 +1353,31 @@ func ApplyFilterOverlay(input *Service) *Service {
 	// Copy resources
 	copy(result.Resources, input.Resources)
 
-	// Collect types used in Read operations (for filtering/searching)
-	usedTypes := collectTypesUsedInReadOperations(result)
+	hasFilter := make(map[string]bool)
 
-	// Generate Filter objects only for Objects used in Read operations
-	for _, obj := range input.Objects {
-		// Skip objects that are not used in Read operations
-		if !usedTypes[obj.Name] {
-			continue
+	for _, resource := range result.Resources {
+		for _, object := range result.Objects {
+			if object.Name != resource.Name {
+				continue
+			}
+
+			for _, field := range object.Fields {
+				if hasFilter[field.Type] {
+					continue
+				}
+
+				for _, fieldObject := range result.Objects {
+					if fieldObject.Name != field.Type {
+						continue
+					}
+
+					filterObjects := generateFilterObjectsForObject(fieldObject, result.Objects)
+					result.Objects = append(result.Objects, filterObjects...)
+
+					hasFilter[fieldObject.Name] = true
+				}
+			}
 		}
-		// Generate all filter objects for this object
-		filterObjects := generateFilterObjectsForObject(obj, input.Objects)
-		result.Objects = append(result.Objects, filterObjects...)
 	}
 
 	return result
