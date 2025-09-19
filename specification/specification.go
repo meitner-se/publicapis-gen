@@ -246,7 +246,7 @@ const (
 	updateEndpointSummaryPrefix = "Update a "
 	updateEndpointDescPrefix    = "Update a "
 	updateResponseStatusCode    = 200
-	updateIDParamName           = "id"
+	updateIDParamName           = "ID"
 	updateIDParamDescTemplate   = "The unique identifier of the %s to update"
 )
 
@@ -258,7 +258,7 @@ const (
 	deleteEndpointSummaryPrefix = "Delete a "
 	deleteEndpointDescPrefix    = "Delete a "
 	deleteResponseStatusCode    = 204
-	deleteIDParamName           = "id"
+	deleteIDParamName           = "ID"
 	deleteIDParamDescTemplate   = "The unique identifier of the %s to delete"
 )
 
@@ -269,7 +269,7 @@ const (
 	getEndpointTitlePrefix   = "Retrieve an existing "
 	getEndpointSummaryPrefix = "Get a "
 	getResponseStatusCode    = 200
-	getIDParamName           = "id"
+	getIDParamName           = "ID"
 	getIDParamDescTemplate   = "The unique identifier of the %s to retrieve"
 )
 
@@ -281,12 +281,12 @@ const (
 	listEndpointSummaryPrefix   = "List "
 	listEndpointDescTemplate    = "Returns a paginated list of all `%s` in your organization."
 	listResponseStatusCode      = 200
-	listLimitParamName          = "limit"
+	listLimitParamName          = "Limit"
 	listLimitParamDesc          = "The maximum number of items to return (default: 50)"
 	listLimitParamDescTemplate  = "The maximum number of %s to return (default: 50) when listing %s"
 	listLimitDefaultValue       = "50"
 	listLimitExampleValue       = "1"
-	listOffsetParamName         = "offset"
+	listOffsetParamName         = "Offset"
 	listOffsetParamDesc         = "The number of items to skip before starting to return results (default: 0)"
 	listOffsetParamDescTemplate = "The number of %s to skip before starting to return results (default: 0) when listing %s"
 	listOffsetDefaultValue      = "0"
@@ -1636,6 +1636,50 @@ func (e Endpoint) GetFullPath(resourceName string) string {
 	return pathSeparator + toKebabCase(resourceName) + e.Path
 }
 
+func (e Endpoint) GetPathParamsType(resourceName string) string {
+	if len(e.Request.PathParams) > 0 {
+		return resourceName + e.Name + "PathParams"
+	}
+
+	return "struct{}"
+}
+
+func (e Endpoint) GetQueryParamsType(resourceName string) string {
+	if len(e.Request.QueryParams) > 0 {
+		return resourceName + e.Name + "QueryParams"
+	}
+
+	return "struct{}"
+}
+
+func (e Endpoint) GetBodyParamsType(resourceName string) string {
+	if len(e.Request.BodyParams) > 0 {
+		return resourceName + e.Name + "BodyParams"
+	}
+
+	return "struct{}"
+}
+
+func (e Endpoint) GetRequestType(resourceName string) string {
+	return resourceName + e.Name + "Request"
+}
+
+func (e Endpoint) HasResponseType() bool {
+	return e.Response.BodyObject != nil || len(e.Response.BodyFields) > 0
+}
+
+func (e Endpoint) GetResponseType(resourceName string) string {
+	if e.Response.BodyObject != nil {
+		return *e.Response.BodyObject
+	}
+
+	if len(e.Response.BodyFields) > 0 {
+		return resourceName + e.Name + "Response"
+	}
+
+	return "struct{}"
+}
+
 // Resource methods
 
 // HasCreateOperation checks if the Resource supports Create operations.
@@ -1789,6 +1833,10 @@ func (o Object) IsFilter() bool {
 		strings.HasSuffix(o.Name, filterNullSuffix)
 }
 
+func (o Object) GetComment() string {
+	return getComment(commentPrefix, o.Description, o.Name)
+}
+
 // Utility factory methods
 
 // createLimitParam creates a standard limit parameter for pagination.
@@ -1877,7 +1925,7 @@ func createPaginationField() Field {
 // createDataField creates a standard data field for array responses.
 func createDataField(resourceName string) Field {
 	return Field{
-		Name:        "data",
+		Name:        "Data",
 		Description: fmt.Sprintf("Array of %s objects", resourceName),
 		Type:        resourceName,
 		Modifiers:   []string{ModifierArray},
@@ -1887,7 +1935,7 @@ func createDataField(resourceName string) Field {
 // createIDParam creates a standard ID parameter for path parameters.
 func createIDParam(description string) Field {
 	return Field{
-		Name:        "id",
+		Name:        "ID",
 		Description: description,
 		Type:        FieldTypeUUID,
 	}
@@ -2006,29 +2054,9 @@ func createAutoColumnsWithMeta(resourceName string) []Field {
 
 // Helper functions
 
-// getComment formats a comment string with proper indentation and prefixes.
-func getComment(tabs string, description string, name string) string {
-	comment := description
-
-	if !strings.HasPrefix(description, name) {
-		comment = name + nameDescSeparator + description
-	}
-
-	// Every new line should be prefixed with a //
-	lines := strings.Split(comment, newlineChar)
-	for i, line := range lines {
-		lines[i] = tabs + commentPrefix + line
-	}
-
-	comment = strings.Join(lines, newlineChar)
-	comment = strings.TrimSuffix(comment, tabs+newlineChar+commentPrefix)
-
-	return comment
-}
-
 // CamelCase converts a string to camelCase format.
 // Special cases:
-// - "ID" becomes "id" instead of "iD"
+// - "ID" becomes "ID" instead of "iD"
 // - Consecutive capital letters at the start are lowercased (e.g., "CSNSchoolCode" -> "csnSchoolCode")
 func CamelCase(s string) string {
 	if s == "ID" {
@@ -2108,6 +2136,25 @@ func toKebabCase(s string) string {
 
 	// Convert to lowercase
 	return strings.ToLower(result.String())
+}
+
+func getComment(tabs string, description string, name string) string {
+	comment := description
+
+	if !strings.HasPrefix(description, name) {
+		comment = name + ": " + description
+	}
+
+	// Every new line should be prefixed with a //
+	lines := strings.Split(comment, "\n")
+	for i, line := range lines {
+		lines[i] = tabs + "// " + line
+	}
+
+	comment = strings.Join(lines, "\n")
+	comment = strings.TrimSuffix(comment, tabs+"\n// ")
+
+	return comment
 }
 
 // Validation functions
@@ -2743,6 +2790,10 @@ func (s Service) GetRetryConfigurationWithDefaults() RetryConfiguration {
 	// Users must explicitly set it to true if they want connection error retries
 
 	return config
+}
+
+func (s Service) PathName() string {
+	return toKebabCase(s.Name)
 }
 
 // createDefaultRetryConfiguration creates a retry configuration with all default values.
