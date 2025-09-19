@@ -1324,18 +1324,37 @@ func ApplyFilterOverlay(input *Service) *Service {
 	// Copy resources
 	copy(result.Resources, input.Resources)
 
-	// Collect types used in request body parameters
-	usedTypes := collectTypesUsedInBodyParams(result)
+	hasFilter := make(map[string]bool)
 
-	// Generate Filter objects only for Objects used in request body parameters
-	for _, obj := range input.Objects {
-		// Skip objects that are not used in request body parameters
-		if !usedTypes[obj.Name] {
+	// Generate filter objects ONLY for field types in resource objects that have Read operations
+	for _, resource := range result.Resources {
+		// Only process resources with Read operations
+		if !resource.HasReadOperation() {
 			continue
 		}
-		// Generate all filter objects for this object
-		filterObjects := generateFilterObjectsForObject(obj, input.Objects)
-		result.Objects = append(result.Objects, filterObjects...)
+
+		for _, object := range result.Objects {
+			if object.Name != resource.Name {
+				continue
+			}
+
+			for _, field := range object.Fields {
+				if hasFilter[field.Type] {
+					continue
+				}
+
+				for _, fieldObject := range result.Objects {
+					if fieldObject.Name != field.Type {
+						continue
+					}
+
+					filterObjects := generateFilterObjectsForObject(fieldObject, result.Objects)
+					result.Objects = append(result.Objects, filterObjects...)
+
+					hasFilter[fieldObject.Name] = true
+				}
+			}
+		}
 	}
 
 	return result

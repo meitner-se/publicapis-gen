@@ -3,6 +3,7 @@ package specification
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	yaml "github.com/goccy/go-yaml"
@@ -1731,14 +1732,14 @@ func TestApplyFilterOverlay(t *testing.T) {
 		assert.Equal(t, 0, len(result.Resources))
 	})
 
-	t.Run("service with one object", func(t *testing.T) {
+	t.Run("service with resource that has Read operations should generate filters", func(t *testing.T) {
 		input := &Service{
 			Name:  "TestService",
 			Enums: []Enum{},
 			Objects: []Object{
 				{
 					Name:        "Person",
-					Description: "Person object",
+					Description: "Person object used in body parameters",
 					Fields: []Field{
 						{
 							Name:        "FirstName",
@@ -1759,7 +1760,7 @@ func TestApplyFilterOverlay(t *testing.T) {
 				{
 					Name:        "Users",
 					Description: "User management",
-					Operations:  []string{OperationCreate},
+					Operations:  []string{OperationCreate, OperationRead},
 					Fields:      []ResourceField{},
 					Endpoints: []Endpoint{
 						{
@@ -1788,24 +1789,47 @@ func TestApplyFilterOverlay(t *testing.T) {
 			},
 		}
 
-		result := ApplyFilterOverlay(input)
+		// First apply overlay to generate full service structure
+		overlayResult := ApplyOverlay(input)
+		require.NotNil(t, overlayResult)
+
+		// Then apply filter overlay to generate filter objects
+		result := ApplyFilterOverlay(overlayResult)
 		require.NotNil(t, result)
 
-		// Should have original object plus filter objects
-		assert.Greater(t, len(result.Objects), len(input.Objects), "Should have generated filter objects")
+		// Should have filter objects for resources with Read operations and their nested objects
+		assert.Greater(t, len(result.Objects), len(overlayResult.Objects), "Should have generated filter objects")
 
-		// Check main filter object exists
-		var mainFilter *Object
+		// Verify Users filter objects exist (because Users resource has Read operation)
+		var usersFilter *Object
 		for i := range result.Objects {
-			if result.Objects[i].Name == "PersonFilter" {
-				mainFilter = &result.Objects[i]
+			if result.Objects[i].Name == "UsersFilter" {
+				usersFilter = &result.Objects[i]
 				break
 			}
 		}
+		assert.NotNil(t, usersFilter, "Should have UsersFilter object since Users resource has Read operation")
 
-		assert.NotNil(t, mainFilter, "Should have PersonFilter object")
-		assert.Equal(t, "Filter object for Person", mainFilter.Description)
-		assert.Greater(t, len(mainFilter.Fields), 0, "Filter should have fields")
+		// Verify Meta filter objects exist (because Meta is used in Users object)
+		var metaFilter *Object
+		for i := range result.Objects {
+			if result.Objects[i].Name == "MetaFilter" {
+				metaFilter = &result.Objects[i]
+				break
+			}
+		}
+		assert.NotNil(t, metaFilter, "Should have MetaFilter object since Meta is used in Users object with Read operation")
+
+		// Person object is used only in body parameters but has no corresponding Read resource,
+		// so it should NOT get filter objects (new restrictive behavior)
+		var personFilter *Object
+		for i := range result.Objects {
+			if result.Objects[i].Name == "PersonFilter" {
+				personFilter = &result.Objects[i]
+				break
+			}
+		}
+		assert.Nil(t, personFilter, "Should NOT have PersonFilter object since Person is only used in body parameters without Read operations")
 	})
 
 	t.Run("should not generate filters for response-only objects", func(t *testing.T) {
@@ -1919,15 +1943,25 @@ func TestApplyFilterOverlay(t *testing.T) {
 			},
 		}
 
-		result := ApplyFilterOverlay(input)
+		// First apply overlay to generate full service structure
+		overlayResult := ApplyOverlay(input)
+		require.NotNil(t, overlayResult)
+
+		// Then apply filter overlay to generate filter objects
+		result := ApplyFilterOverlay(overlayResult)
 		require.NotNil(t, result)
 
-		// Should have generated filters for User (used in body params) but not for Error or Pagination (response-only)
+		// Should have generated filters for Users resource (has Read operation) and User object (used in Users + body params)
+		// But not for Error or Pagination (response-only)
+		hasUsersFilter := false
 		hasUserFilter := false
 		hasErrorFilter := false
 		hasPaginationFilter := false
 
 		for _, obj := range result.Objects {
+			if obj.Name == "UsersFilter" {
+				hasUsersFilter = true
+			}
 			if obj.Name == "UserFilter" {
 				hasUserFilter = true
 			}
@@ -1939,7 +1973,8 @@ func TestApplyFilterOverlay(t *testing.T) {
 			}
 		}
 
-		assert.True(t, hasUserFilter, "Should have generated UserFilter (User is used in request body)")
+		assert.True(t, hasUsersFilter, "Should have generated UsersFilter (Users resource has Read operation)")
+		assert.False(t, hasUserFilter, "Should NOT have generated UserFilter (User object doesn't correspond to a resource with Read operations)")
 		assert.False(t, hasErrorFilter, "Should NOT have generated ErrorFilter (Error is only used in responses)")
 		assert.False(t, hasPaginationFilter, "Should NOT have generated PaginationFilter (Pagination is only used in responses)")
 	})
@@ -2981,7 +3016,7 @@ func TestApplyFilterOverlay_NestedObjects(t *testing.T) {
 				{
 					Name:        "People",
 					Description: "People management",
-					Operations:  []string{OperationCreate},
+					Operations:  []string{OperationCreate, OperationRead},
 					Fields:      []ResourceField{},
 					Endpoints: []Endpoint{
 						{
@@ -3010,11 +3045,16 @@ func TestApplyFilterOverlay_NestedObjects(t *testing.T) {
 			},
 		}
 
-		result := ApplyFilterOverlay(input)
+		// First apply overlay to generate full service structure
+		overlayResult := ApplyOverlay(input)
+		require.NotNil(t, overlayResult)
+
+		// Then apply filter overlay to generate filter objects
+		result := ApplyFilterOverlay(overlayResult)
 		require.NotNil(t, result)
 
-		// Should have filter objects for both Address and Person
-		var addressFilter, personFilter *Object
+		// Should NOT generate filter objects for Address or Person since they don't correspond to resources with Read operations
+		var addressFilter, personFilter, peopleFilter *Object
 		for i := range result.Objects {
 			if result.Objects[i].Name == "AddressFilter" {
 				addressFilter = &result.Objects[i]
@@ -3022,27 +3062,177 @@ func TestApplyFilterOverlay_NestedObjects(t *testing.T) {
 			if result.Objects[i].Name == "PersonFilter" {
 				personFilter = &result.Objects[i]
 			}
-		}
-
-		assert.NotNil(t, addressFilter, "Should have AddressFilter object")
-		assert.NotNil(t, personFilter, "Should have PersonFilter object")
-
-		// PersonFilter should reference AddressFilter for nested object field
-		var addressField *Field
-		for i := range personFilter.Fields {
-			if personFilter.Fields[i].Name == "address" {
-				addressField = &personFilter.Fields[i]
-				break
+			if result.Objects[i].Name == "PeopleFilter" {
+				peopleFilter = &result.Objects[i]
 			}
 		}
 
-		// This tests the generateNestedFilterField function
-		if addressField != nil {
-			assert.Equal(t, "AddressFilter", addressField.Type, "Address field should reference AddressFilter type")
-		} else {
-			// If address field is not found, it might be because nested object filters work differently
-			// Just verify that the filter generation process completed successfully
-			assert.Greater(t, len(result.Objects), 2, "Should have generated filter objects")
+		assert.Nil(t, addressFilter, "Should NOT have AddressFilter object (Address doesn't correspond to a resource with Read operations)")
+		assert.Nil(t, personFilter, "Should NOT have PersonFilter object (Person doesn't correspond to a resource with Read operations)")
+		assert.NotNil(t, peopleFilter, "Should have PeopleFilter object (People resource has Read operation)")
+
+		// With the new restrictive logic, nested object filtering is only relevant for objects
+		// that correspond to resources with Read operations. Since neither Address nor Person
+		// have corresponding Read resources, no nested filtering relationships are tested here.
+	})
+}
+
+func TestApplyFilterOverlay_MetaObjectFilters(t *testing.T) {
+	t.Run("service with resource using Meta object should generate Meta filters", func(t *testing.T) {
+		input := &Service{
+			Name:  "TestService",
+			Enums: []Enum{},
+			Resources: []Resource{
+				{
+					Name:        "User",
+					Description: "User resource",
+					Operations:  []string{OperationCreate, OperationRead, OperationUpdate, OperationDelete},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "name",
+								Description: "User name",
+								Type:        FieldTypeString,
+							},
+							Operations: []string{OperationCreate, OperationRead, OperationUpdate},
+						},
+					},
+				},
+			},
+		}
+
+		// Apply overlay to generate objects and Meta object
+		overlayResult := ApplyOverlay(input)
+		require.NotNil(t, overlayResult, "ApplyOverlay should not return nil")
+
+		// Verify Meta object exists in the service
+		var metaObject *Object
+		for i := range overlayResult.Objects {
+			if overlayResult.Objects[i].Name == metaObjectName {
+				metaObject = &overlayResult.Objects[i]
+				break
+			}
+		}
+		require.NotNil(t, metaObject, "Meta object should exist after ApplyOverlay")
+
+		// Apply filter overlay
+		filterResult := ApplyFilterOverlay(overlayResult)
+		require.NotNil(t, filterResult, "ApplyFilterOverlay should not return nil")
+
+		// Verify all Meta filter objects are generated with correct field counts
+		expectedMetaFilters := map[string]int{
+			"MetaFilter":         14, // Main filter object with all filter type references
+			"MetaFilterEquals":   4,  // All fields: CreatedAt, CreatedBy, UpdatedAt, UpdatedBy
+			"MetaFilterRange":    2,  // Only Timestamp fields: CreatedAt, UpdatedAt
+			"MetaFilterContains": 2,  // Only UUID fields: CreatedBy, UpdatedBy (Timestamp excluded)
+			"MetaFilterLike":     0,  // No String fields in Meta object
+			"MetaFilterNull":     2,  // Only nullable fields: CreatedBy, UpdatedBy
+		}
+
+		for expectedFilter, expectedFieldCount := range expectedMetaFilters {
+			found := false
+			for _, obj := range filterResult.Objects {
+				if obj.Name == expectedFilter {
+					found = true
+					assert.Equal(t, expectedFieldCount, len(obj.Fields),
+						"Filter object %s should have exactly %d fields", expectedFilter, expectedFieldCount)
+					break
+				}
+			}
+			assert.True(t, found, "Should have generated %s filter object", expectedFilter)
+		}
+
+		// Verify User object contains Meta field of type "Meta"
+		var userObject *Object
+		for i := range filterResult.Objects {
+			if filterResult.Objects[i].Name == "User" {
+				userObject = &filterResult.Objects[i]
+				break
+			}
+		}
+		require.NotNil(t, userObject, "User object should exist")
+
+		// Check that User object has a Meta field
+		var metaField *Field
+		for i := range userObject.Fields {
+			if userObject.Fields[i].Name == metaObjectName {
+				metaField = &userObject.Fields[i]
+				break
+			}
+		}
+		assert.NotNil(t, metaField, "User object should contain Meta field")
+		if metaField != nil {
+			assert.Equal(t, metaObjectName, metaField.Type, "Meta field should be of type Meta")
+		}
+	})
+
+	t.Run("objects from resources without Read operations should not get filter objects", func(t *testing.T) {
+		input := &Service{
+			Name:  "TestService",
+			Enums: []Enum{},
+			Objects: []Object{
+				{
+					Name:        "WriteOnlyObject",
+					Description: "Object used only for writes",
+					Fields: []Field{
+						{
+							Name:        "data",
+							Description: "Some data",
+							Type:        FieldTypeString,
+						},
+					},
+				},
+			},
+			Resources: []Resource{
+				{
+					Name:        "WriteOnlyResource",
+					Description: "Resource with only Create/Update operations",
+					Operations:  []string{OperationCreate, OperationUpdate}, // No Read operation
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "name",
+								Description: "Resource name",
+								Type:        FieldTypeString,
+							},
+							Operations: []string{OperationCreate, OperationUpdate},
+						},
+					},
+				},
+			},
+		}
+
+		// Apply overlay
+		overlayResult := ApplyOverlay(input)
+		require.NotNil(t, overlayResult, "ApplyOverlay should not return nil")
+
+		// Apply filter overlay
+		filterResult := ApplyFilterOverlay(overlayResult)
+		require.NotNil(t, filterResult, "ApplyFilterOverlay should not return nil")
+
+		// Verify no filter objects are generated for WriteOnlyObject
+		for _, obj := range filterResult.Objects {
+			assert.False(t, strings.HasPrefix(obj.Name, "WriteOnlyObjectFilter"),
+				"Should not generate filter objects for WriteOnlyObject, found: %s", obj.Name)
+			assert.False(t, strings.HasPrefix(obj.Name, "WriteOnlyResourceFilter"),
+				"Should not generate filter objects for WriteOnlyResource, found: %s", obj.Name)
+		}
+
+		// Meta object should still exist but no Meta filter objects should be generated
+		// since no resources with Read operations use it
+		var metaObject *Object
+		for i := range filterResult.Objects {
+			if filterResult.Objects[i].Name == metaObjectName {
+				metaObject = &filterResult.Objects[i]
+				break
+			}
+		}
+		assert.NotNil(t, metaObject, "Meta object should still exist")
+
+		// But no Meta filter objects should be generated
+		for _, obj := range filterResult.Objects {
+			assert.False(t, strings.HasPrefix(obj.Name, "MetaFilter"),
+				"Should not generate Meta filter objects when no Read operations use it, found: %s", obj.Name)
 		}
 	})
 }
