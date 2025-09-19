@@ -18,6 +18,74 @@
     }
   ],
   "paths": {
+    "/students/bulk-import": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Bulk Import Students",
+        "description": "Import multiple students from a CSV file or structured data",
+        "operationId": "StudentsBulkImport",
+        "parameters": [
+          {
+            "name": "validateOnly",
+            "in": "query",
+            "description": "Only validate data without importing",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "examples": [
+                true
+              ],
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsBulkImport"
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully imported students",
+            "$ref": "#/components/responses/StudentsBulkImport"
+          },
+          "400": {
+            "description": "Bad Request error for Students BulkImport operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students BulkImport operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students BulkImport operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students BulkImport operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students BulkImport operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students BulkImport operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsBulkImport422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students BulkImport operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students BulkImport operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "bulkImport"
+      }
+    },
     "/students/reports/generate": {
       "post": {
         "tags": [
@@ -620,74 +688,6 @@
         "x-speakeasy-group": "students",
         "x-speakeasy-name-override": "search"
       }
-    },
-    "/students/bulk-import": {
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "summary": "Bulk Import Students",
-        "description": "Import multiple students from a CSV file or structured data",
-        "operationId": "StudentsBulkImport",
-        "parameters": [
-          {
-            "name": "validateOnly",
-            "in": "query",
-            "description": "Only validate data without importing",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "examples": [
-                true
-              ],
-              "default": false
-            }
-          }
-        ],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsBulkImport"
-        },
-        "responses": {
-          "200": {
-            "description": "Successfully imported students",
-            "$ref": "#/components/responses/StudentsBulkImport"
-          },
-          "400": {
-            "description": "Bad Request error for Students BulkImport operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students BulkImport operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students BulkImport operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students BulkImport operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students BulkImport operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "Validation error for Students BulkImport operation - request data failed validation",
-            "$ref": "#/components/responses/StudentsBulkImport422ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students BulkImport operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students BulkImport operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "bulkImport"
-      }
     }
   },
   "components": {
@@ -1116,6 +1116,12 @@
             "examples": [
               {
                 "id": "123e4567-e89b-12d3-a456-426614174000",
+                "meta": {
+                  "createdAt": "2024-01-15T10:30:00Z",
+                  "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                  "updatedAt": "2024-01-15T10:30:00Z",
+                  "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                },
                 "firstName": "example",
                 "lastName": "example",
                 "studentId": "example",
@@ -1146,6 +1152,12 @@
             "examples": [
               {
                 "id": "123e4567-e89b-12d3-a456-426614174000",
+                "meta": {
+                  "createdAt": "2024-01-15T10:30:00Z",
+                  "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                  "updatedAt": "2024-01-15T10:30:00Z",
+                  "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                },
                 "firstName": "example",
                 "lastName": "example",
                 "studentId": "example",
@@ -1175,6 +1187,10 @@
             ],
             "examples": [
               {
+                "meta": {
+                  "createdAt": "2024-01-15T10:30:00Z",
+                  "updatedAt": "2024-01-15T10:30:00Z"
+                },
                 "enrollmentDate": "2024-01-15",
                 "graduationDate": "2024-01-15"
               },
@@ -1191,6 +1207,10 @@
             ],
             "examples": [
               {
+                "meta": {
+                  "createdAt": "2024-01-15T10:30:00Z",
+                  "updatedAt": "2024-01-15T10:30:00Z"
+                },
                 "enrollmentDate": "2024-01-15",
                 "graduationDate": "2024-01-15"
               },
@@ -1207,6 +1227,10 @@
             ],
             "examples": [
               {
+                "meta": {
+                  "createdAt": "2024-01-15T10:30:00Z",
+                  "updatedAt": "2024-01-15T10:30:00Z"
+                },
                 "enrollmentDate": "2024-01-15",
                 "graduationDate": "2024-01-15"
               },
@@ -1223,6 +1247,10 @@
             ],
             "examples": [
               {
+                "meta": {
+                  "createdAt": "2024-01-15T10:30:00Z",
+                  "updatedAt": "2024-01-15T10:30:00Z"
+                },
                 "enrollmentDate": "2024-01-15",
                 "graduationDate": "2024-01-15"
               },
@@ -1242,6 +1270,14 @@
                 "id": [
                   "123e4567-e89b-12d3-a456-426614174000"
                 ],
+                "meta": {
+                  "createdBy": [
+                    "123e4567-e89b-12d3-a456-426614174000"
+                  ],
+                  "updatedBy": [
+                    "123e4567-e89b-12d3-a456-426614174000"
+                  ]
+                },
                 "firstName": [
                   "example"
                 ],
@@ -1296,6 +1332,14 @@
                 "id": [
                   "123e4567-e89b-12d3-a456-426614174000"
                 ],
+                "meta": {
+                  "createdBy": [
+                    "123e4567-e89b-12d3-a456-426614174000"
+                  ],
+                  "updatedBy": [
+                    "123e4567-e89b-12d3-a456-426614174000"
+                  ]
+                },
                 "firstName": [
                   "example"
                 ],
@@ -1439,6 +1483,12 @@
                 {
                   "equals": {
                     "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                      "updatedAt": "2024-01-15T10:30:00Z",
+                      "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                    },
                     "firstName": "example",
                     "lastName": "example",
                     "studentId": "example",
@@ -1457,6 +1507,12 @@
                   },
                   "notEquals": {
                     "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                      "updatedAt": "2024-01-15T10:30:00Z",
+                      "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                    },
                     "firstName": "example",
                     "lastName": "example",
                     "studentId": "example",
@@ -1474,18 +1530,34 @@
                     "graduationDate": "2024-01-15"
                   },
                   "greaterThan": {
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "updatedAt": "2024-01-15T10:30:00Z"
+                    },
                     "enrollmentDate": "2024-01-15",
                     "graduationDate": "2024-01-15"
                   },
                   "smallerThan": {
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "updatedAt": "2024-01-15T10:30:00Z"
+                    },
                     "enrollmentDate": "2024-01-15",
                     "graduationDate": "2024-01-15"
                   },
                   "greaterOrEqual": {
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "updatedAt": "2024-01-15T10:30:00Z"
+                    },
                     "enrollmentDate": "2024-01-15",
                     "graduationDate": "2024-01-15"
                   },
                   "smallerOrEqual": {
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "updatedAt": "2024-01-15T10:30:00Z"
+                    },
                     "enrollmentDate": "2024-01-15",
                     "graduationDate": "2024-01-15"
                   },
@@ -1493,6 +1565,14 @@
                     "id": [
                       "123e4567-e89b-12d3-a456-426614174000"
                     ],
+                    "meta": {
+                      "createdBy": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ],
+                      "updatedBy": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ]
+                    },
                     "firstName": [
                       "example"
                     ],
@@ -1535,6 +1615,14 @@
                     "id": [
                       "123e4567-e89b-12d3-a456-426614174000"
                     ],
+                    "meta": {
+                      "createdBy": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ],
+                      "updatedBy": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ]
+                    },
                     "firstName": [
                       "example"
                     ],
@@ -1644,7 +1732,20 @@
             "nullable": true
           },
           "meta": {
-            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "createdAt": "2024-01-15T10:30:00Z",
+                "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                "updatedAt": "2024-01-15T10:30:00Z",
+                "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+              },
+              null
+            ],
             "description": "Metadata information for the Students",
             "nullable": true
           },
@@ -1754,7 +1855,18 @@
         "type": "object",
         "properties": {
           "meta": {
-            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterRange"
+              }
+            ],
+            "examples": [
+              {
+                "createdAt": "2024-01-15T10:30:00Z",
+                "updatedAt": "2024-01-15T10:30:00Z"
+              },
+              null
+            ],
             "description": "Metadata information for the Students",
             "nullable": true
           },
@@ -1816,7 +1928,22 @@
             "description": "Unique student identifier"
           },
           "meta": {
-            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "createdBy": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ],
+                "updatedBy": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ]
+              },
+              null
+            ],
             "description": "Metadata information for the Students",
             "nullable": true
           },
@@ -1957,7 +2084,11 @@
         "type": "object",
         "properties": {
           "meta": {
-            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterLike"
+              }
+            ],
             "description": "Metadata information for the Students",
             "nullable": true
           },
@@ -2676,6 +2807,414 @@
           }
         },
         "description": "Request error object for Students Update endpoint"
+      },
+      "MetaFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "createdAt": "2024-01-15T10:30:00Z",
+                "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                "updatedAt": "2024-01-15T10:30:00Z",
+                "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+              },
+              null
+            ],
+            "description": "Equality filters for Meta",
+            "nullable": true
+          },
+          "notEquals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "createdAt": "2024-01-15T10:30:00Z",
+                "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                "updatedAt": "2024-01-15T10:30:00Z",
+                "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+              },
+              null
+            ],
+            "description": "Inequality filters for Meta",
+            "nullable": true
+          },
+          "greaterThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterRange"
+              }
+            ],
+            "examples": [
+              {
+                "createdAt": "2024-01-15T10:30:00Z",
+                "updatedAt": "2024-01-15T10:30:00Z"
+              },
+              null
+            ],
+            "description": "Greater than filters for Meta",
+            "nullable": true
+          },
+          "smallerThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterRange"
+              }
+            ],
+            "examples": [
+              {
+                "createdAt": "2024-01-15T10:30:00Z",
+                "updatedAt": "2024-01-15T10:30:00Z"
+              },
+              null
+            ],
+            "description": "Smaller than filters for Meta",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterRange"
+              }
+            ],
+            "examples": [
+              {
+                "createdAt": "2024-01-15T10:30:00Z",
+                "updatedAt": "2024-01-15T10:30:00Z"
+              },
+              null
+            ],
+            "description": "Greater than or equal filters for Meta",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterRange"
+              }
+            ],
+            "examples": [
+              {
+                "createdAt": "2024-01-15T10:30:00Z",
+                "updatedAt": "2024-01-15T10:30:00Z"
+              },
+              null
+            ],
+            "description": "Smaller than or equal filters for Meta",
+            "nullable": true
+          },
+          "contains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "createdBy": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ],
+                "updatedBy": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ]
+              },
+              null
+            ],
+            "description": "Contains filters for Meta",
+            "nullable": true
+          },
+          "notContains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "createdBy": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ],
+                "updatedBy": [
+                  "123e4567-e89b-12d3-a456-426614174000"
+                ]
+              },
+              null
+            ],
+            "description": "Not contains filters for Meta",
+            "nullable": true
+          },
+          "like": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterLike"
+              }
+            ],
+            "description": "LIKE filters for Meta",
+            "nullable": true
+          },
+          "notLike": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterLike"
+              }
+            ],
+            "description": "NOT LIKE filters for Meta",
+            "nullable": true
+          },
+          "null": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterNull"
+              }
+            ],
+            "examples": [
+              {
+                "createdBy": true,
+                "updatedBy": true
+              },
+              null
+            ],
+            "description": "Null filters for Meta",
+            "nullable": true
+          },
+          "notNull": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetaFilterNull"
+              }
+            ],
+            "examples": [
+              {
+                "createdBy": true,
+                "updatedBy": true
+              },
+              null
+            ],
+            "description": "Not null filters for Meta",
+            "nullable": true
+          },
+          "orCondition": {
+            "type": "boolean",
+            "examples": [
+              true
+            ],
+            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
+          },
+          "nestedFilters": {
+            "type": "array",
+            "examples": [
+              [
+                {
+                  "equals": {
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                    "updatedAt": "2024-01-15T10:30:00Z",
+                    "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                  },
+                  "notEquals": {
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                    "updatedAt": "2024-01-15T10:30:00Z",
+                    "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                  },
+                  "greaterThan": {
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "updatedAt": "2024-01-15T10:30:00Z"
+                  },
+                  "smallerThan": {
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "updatedAt": "2024-01-15T10:30:00Z"
+                  },
+                  "greaterOrEqual": {
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "updatedAt": "2024-01-15T10:30:00Z"
+                  },
+                  "smallerOrEqual": {
+                    "createdAt": "2024-01-15T10:30:00Z",
+                    "updatedAt": "2024-01-15T10:30:00Z"
+                  },
+                  "contains": {
+                    "createdBy": [
+                      "123e4567-e89b-12d3-a456-426614174000"
+                    ],
+                    "updatedBy": [
+                      "123e4567-e89b-12d3-a456-426614174000"
+                    ]
+                  },
+                  "notContains": {
+                    "createdBy": [
+                      "123e4567-e89b-12d3-a456-426614174000"
+                    ],
+                    "updatedBy": [
+                      "123e4567-e89b-12d3-a456-426614174000"
+                    ]
+                  },
+                  "null": {
+                    "createdBy": true,
+                    "updatedBy": true
+                  },
+                  "notNull": {
+                    "createdBy": true,
+                    "updatedBy": true
+                  },
+                  "orCondition": true
+                }
+              ]
+            ],
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/MetaFilter"
+                }
+              ]
+            },
+            "description": "NestedFilters of the Meta, useful for more complex filters"
+          }
+        },
+        "required": [
+          "orCondition"
+        ],
+        "description": "Filter object for Meta"
+      },
+      "MetaFilterEquals": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "type": "string",
+            "examples": [
+              "2024-01-15T10:30:00Z",
+              null
+            ],
+            "format": "date-time",
+            "description": "Timestamp when the resource was created",
+            "nullable": true
+          },
+          "createdBy": {
+            "type": "string",
+            "examples": [
+              "123e4567-e89b-12d3-a456-426614174000",
+              null
+            ],
+            "format": "uuid",
+            "description": "User who created the resource",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "examples": [
+              "2024-01-15T10:30:00Z",
+              null
+            ],
+            "format": "date-time",
+            "description": "Timestamp when the resource was last updated",
+            "nullable": true
+          },
+          "updatedBy": {
+            "type": "string",
+            "examples": [
+              "123e4567-e89b-12d3-a456-426614174000",
+              null
+            ],
+            "format": "uuid",
+            "description": "User who last updated the resource",
+            "nullable": true
+          }
+        },
+        "description": "Equality/Inequality filter fields for Meta"
+      },
+      "MetaFilterRange": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "type": "string",
+            "examples": [
+              "2024-01-15T10:30:00Z",
+              null
+            ],
+            "format": "date-time",
+            "description": "Timestamp when the resource was created",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "examples": [
+              "2024-01-15T10:30:00Z",
+              null
+            ],
+            "format": "date-time",
+            "description": "Timestamp when the resource was last updated",
+            "nullable": true
+          }
+        },
+        "description": "Range filter fields for Meta"
+      },
+      "MetaFilterContains": {
+        "type": "object",
+        "properties": {
+          "createdBy": {
+            "type": "array",
+            "examples": [
+              [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ]
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "User who created the resource"
+          },
+          "updatedBy": {
+            "type": "array",
+            "examples": [
+              [
+                "123e4567-e89b-12d3-a456-426614174000"
+              ]
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "User who last updated the resource"
+          }
+        },
+        "description": "Contains filter fields for Meta"
+      },
+      "MetaFilterLike": {
+        "type": "object",
+        "description": "LIKE filter fields for Meta"
+      },
+      "MetaFilterNull": {
+        "type": "object",
+        "properties": {
+          "createdBy": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "User who created the resource",
+            "nullable": true
+          },
+          "updatedBy": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "User who last updated the resource",
+            "nullable": true
+          }
+        },
+        "description": "Null filter fields for Meta"
       },
       "ContactFilter": {
         "type": "object",
@@ -5419,6 +5958,12 @@
                 "value": {
                   "equals": {
                     "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                      "updatedAt": "2024-01-15T10:30:00Z",
+                      "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                    },
                     "firstName": "example",
                     "lastName": "example",
                     "studentId": "example",
@@ -5437,6 +5982,12 @@
                   },
                   "notEquals": {
                     "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                      "updatedAt": "2024-01-15T10:30:00Z",
+                      "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                    },
                     "firstName": "example",
                     "lastName": "example",
                     "studentId": "example",
@@ -5454,18 +6005,34 @@
                     "graduationDate": "2024-01-15"
                   },
                   "greaterThan": {
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "updatedAt": "2024-01-15T10:30:00Z"
+                    },
                     "enrollmentDate": "2024-01-15",
                     "graduationDate": "2024-01-15"
                   },
                   "smallerThan": {
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "updatedAt": "2024-01-15T10:30:00Z"
+                    },
                     "enrollmentDate": "2024-01-15",
                     "graduationDate": "2024-01-15"
                   },
                   "greaterOrEqual": {
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "updatedAt": "2024-01-15T10:30:00Z"
+                    },
                     "enrollmentDate": "2024-01-15",
                     "graduationDate": "2024-01-15"
                   },
                   "smallerOrEqual": {
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "updatedAt": "2024-01-15T10:30:00Z"
+                    },
                     "enrollmentDate": "2024-01-15",
                     "graduationDate": "2024-01-15"
                   },
@@ -5473,6 +6040,14 @@
                     "id": [
                       "123e4567-e89b-12d3-a456-426614174000"
                     ],
+                    "meta": {
+                      "createdBy": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ],
+                      "updatedBy": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ]
+                    },
                     "firstName": [
                       "example"
                     ],
@@ -5515,6 +6090,14 @@
                     "id": [
                       "123e4567-e89b-12d3-a456-426614174000"
                     ],
+                    "meta": {
+                      "createdBy": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ],
+                      "updatedBy": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ]
+                    },
                     "firstName": [
                       "example"
                     ],

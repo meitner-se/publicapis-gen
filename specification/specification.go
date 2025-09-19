@@ -1078,38 +1078,6 @@ func collectTypesUsedInBodyParams(service *Service) map[string]bool {
 	return usedTypes
 }
 
-// collectTypesUsedInReadOperations collects types that should have filter objects generated.
-// This includes types used in request body parameters AND types used by resources with Read operations.
-func collectTypesUsedInReadOperations(service *Service) map[string]bool {
-	usedTypes := make(map[string]bool)
-
-	// Collect types from request body parameters (preserving original behavior)
-	// This ensures objects used in Create/Update body parameters get filter objects
-	bodyParamTypes := collectTypesUsedInBodyParams(service)
-	for typeName := range bodyParamTypes {
-		usedTypes[typeName] = true
-	}
-
-	// Additionally, collect types from objects that correspond to resources with Read operations
-	// This ensures objects like Meta that are embedded in Read-enabled resource objects get filter objects
-	for _, resource := range service.Resources {
-		if resource.HasReadOperation() {
-			// Find the corresponding object for this resource
-			for _, obj := range service.Objects {
-				if obj.Name == resource.Name {
-					// Recursively collect all field types used in this object
-					for _, field := range obj.Fields {
-						collectTypeRecursively(field.Type, usedTypes, service.Objects)
-					}
-					break
-				}
-			}
-		}
-	}
-
-	return usedTypes
-}
-
 // collectTypeRecursively collects a type and all its nested object types recursively.
 func collectTypeRecursively(fieldType string, usedTypes map[string]bool, objects []Object) {
 	// Skip if already processed
@@ -1358,6 +1326,7 @@ func ApplyFilterOverlay(input *Service) *Service {
 
 	hasFilter := make(map[string]bool)
 
+	// Generate filter objects for field types in resource objects (includes Meta)
 	for _, resource := range result.Resources {
 		for _, object := range result.Objects {
 			if object.Name != resource.Name {
@@ -1379,6 +1348,24 @@ func ApplyFilterOverlay(input *Service) *Service {
 
 					hasFilter[fieldObject.Name] = true
 				}
+			}
+		}
+	}
+
+	// Also generate filter objects for types used in request body parameters
+	bodyParamTypes := collectTypesUsedInBodyParams(result)
+	for typeName := range bodyParamTypes {
+		if hasFilter[typeName] {
+			continue // Already generated
+		}
+
+		// Find the object and generate filter objects
+		for _, obj := range result.Objects {
+			if obj.Name == typeName && !obj.IsFilter() {
+				filterObjects := generateFilterObjectsForObject(obj, result.Objects)
+				result.Objects = append(result.Objects, filterObjects...)
+				hasFilter[obj.Name] = true
+				break
 			}
 		}
 	}
