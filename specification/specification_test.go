@@ -3047,6 +3047,96 @@ func TestApplyFilterOverlay_NestedObjects(t *testing.T) {
 	})
 }
 
+func TestApplyFilterOverlay_MetaObjectFilters(t *testing.T) {
+	t.Run("service with resource using Meta object should generate Meta filters", func(t *testing.T) {
+		input := &Service{
+			Name:  "TestService",
+			Enums: []Enum{},
+			Resources: []Resource{
+				{
+					Name:        "User",
+					Description: "User resource",
+					Operations:  []string{OperationCreate, OperationRead, OperationUpdate, OperationDelete},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "name",
+								Description: "User name",
+								Type:        FieldTypeString,
+							},
+							Operations: []string{OperationCreate, OperationRead, OperationUpdate},
+						},
+					},
+				},
+			},
+		}
+
+		// Apply overlay to generate objects and Meta object
+		overlayResult := ApplyOverlay(input)
+		require.NotNil(t, overlayResult, "ApplyOverlay should not return nil")
+
+		// Verify Meta object exists in the service
+		var metaObject *Object
+		for i := range overlayResult.Objects {
+			if overlayResult.Objects[i].Name == metaObjectName {
+				metaObject = &overlayResult.Objects[i]
+				break
+			}
+		}
+		require.NotNil(t, metaObject, "Meta object should exist after ApplyOverlay")
+
+		// Apply filter overlay
+		filterResult := ApplyFilterOverlay(overlayResult)
+		require.NotNil(t, filterResult, "ApplyFilterOverlay should not return nil")
+
+		// Verify all Meta filter objects are generated with correct field counts
+		expectedMetaFilters := map[string]int{
+			"MetaFilter":         14, // Main filter object with all filter type references
+			"MetaFilterEquals":   4,  // All fields: CreatedAt, CreatedBy, UpdatedAt, UpdatedBy
+			"MetaFilterRange":    2,  // Only Timestamp fields: CreatedAt, UpdatedAt
+			"MetaFilterContains": 2,  // Only UUID fields: CreatedBy, UpdatedBy (Timestamp excluded)
+			"MetaFilterLike":     0,  // No String fields in Meta object
+			"MetaFilterNull":     2,  // Only nullable fields: CreatedBy, UpdatedBy
+		}
+
+		for expectedFilter, expectedFieldCount := range expectedMetaFilters {
+			found := false
+			for _, obj := range filterResult.Objects {
+				if obj.Name == expectedFilter {
+					found = true
+					assert.Equal(t, expectedFieldCount, len(obj.Fields),
+						"Filter object %s should have exactly %d fields", expectedFilter, expectedFieldCount)
+					break
+				}
+			}
+			assert.True(t, found, "Should have generated %s filter object", expectedFilter)
+		}
+
+		// Verify User object contains Meta field of type "Meta"
+		var userObject *Object
+		for i := range filterResult.Objects {
+			if filterResult.Objects[i].Name == "User" {
+				userObject = &filterResult.Objects[i]
+				break
+			}
+		}
+		require.NotNil(t, userObject, "User object should exist")
+
+		// Check that User object has a Meta field
+		var metaField *Field
+		for i := range userObject.Fields {
+			if userObject.Fields[i].Name == metaObjectName {
+				metaField = &userObject.Fields[i]
+				break
+			}
+		}
+		assert.NotNil(t, metaField, "User object should contain Meta field")
+		if metaField != nil {
+			assert.Equal(t, metaObjectName, metaField.Type, "Meta field should be of type Meta")
+		}
+	})
+}
+
 // ============================================================================
 // Specification Parsing Function Tests
 // ============================================================================

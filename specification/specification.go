@@ -1078,6 +1078,26 @@ func collectTypesUsedInBodyParams(service *Service) map[string]bool {
 	return usedTypes
 }
 
+// collectAllUsedTypes collects all types used throughout the service, including in object fields.
+func collectAllUsedTypes(service *Service) map[string]bool {
+	usedTypes := make(map[string]bool)
+
+	// Collect types from request body parameters (existing behavior for RequestError objects)
+	bodyParamTypes := collectTypesUsedInBodyParams(service)
+	for typeName := range bodyParamTypes {
+		usedTypes[typeName] = true
+	}
+
+	// Collect types from all object fields recursively
+	for _, obj := range service.Objects {
+		for _, field := range obj.Fields {
+			collectTypeRecursively(field.Type, usedTypes, service.Objects)
+		}
+	}
+
+	return usedTypes
+}
+
 // collectTypeRecursively collects a type and all its nested object types recursively.
 func collectTypeRecursively(fieldType string, usedTypes map[string]bool, objects []Object) {
 	// Skip if already processed
@@ -1324,12 +1344,12 @@ func ApplyFilterOverlay(input *Service) *Service {
 	// Copy resources
 	copy(result.Resources, input.Resources)
 
-	// Collect types used in request body parameters
-	usedTypes := collectTypesUsedInBodyParams(result)
+	// Collect types used throughout the service (in body parameters, object fields, etc.)
+	usedTypes := collectAllUsedTypes(result)
 
-	// Generate Filter objects only for Objects used in request body parameters
+	// Generate Filter objects for all Objects that are used anywhere in the service
 	for _, obj := range input.Objects {
-		// Skip objects that are not used in request body parameters
+		// Skip objects that are not used anywhere in the service
 		if !usedTypes[obj.Name] {
 			continue
 		}
