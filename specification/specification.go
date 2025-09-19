@@ -1944,7 +1944,7 @@ func createPaginationField() Field {
 // createDataField creates a standard data field for array responses.
 func createDataField(resourceName string) Field {
 	return Field{
-		Name:        "data",
+		Name:        "Data",
 		Description: fmt.Sprintf("Array of %s objects", resourceName),
 		Type:        resourceName,
 		Modifiers:   []string{ModifierArray},
@@ -1954,7 +1954,7 @@ func createDataField(resourceName string) Field {
 // createIDParam creates a standard ID parameter for path parameters.
 func createIDParam(description string) Field {
 	return Field{
-		Name:        "id",
+		Name:        "ID",
 		Description: description,
 		Type:        FieldTypeUUID,
 	}

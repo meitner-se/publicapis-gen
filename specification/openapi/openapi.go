@@ -174,7 +174,7 @@ const (
 	speakeasyPaginationInputsIn   = "parameters"
 	speakeasyPaginationOffsetType = "offset"
 	speakeasyPaginationLimitType  = "limit"
-	speakeasyDataFieldName        = "data" // Still used in isPaginatedOperation
+	speakeasyDataFieldName        = "Data" // Still used in isPaginatedOperation
 )
 
 // Object and field names
