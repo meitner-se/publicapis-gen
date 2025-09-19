@@ -1045,14 +1045,14 @@ func TestCreateDataField(t *testing.T) {
 	}{
 		{
 			resourceName:        "User",
-			expectedName:        "data",
+			expectedName:        "Data",
 			expectedDescription: "Array of User objects",
 			expectedType:        "User",
 			expectedModifiers:   []string{ModifierArray},
 		},
 		{
 			resourceName:        "Product",
-			expectedName:        "data",
+			expectedName:        "Data",
 			expectedDescription: "Array of Product objects",
 			expectedType:        "Product",
 			expectedModifiers:   []string{ModifierArray},
@@ -1075,7 +1075,7 @@ func TestCreateDataField(t *testing.T) {
 		t.Run("empty string", func(t *testing.T) {
 			dataField := createDataField("")
 
-			assert.Equal(t, "data", dataField.Name, "Data field should have 'data' name even with empty resource name")
+			assert.Equal(t, "Data", dataField.Name, "Data field should have 'Data' name even with empty resource name")
 			assert.Equal(t, "Array of  objects", dataField.Description, "Data field should handle empty resource name in description")
 			assert.Equal(t, "", dataField.Type, "Data field type should match empty resource name")
 			assert.True(t, dataField.IsArray(), "Data field should always be array")
@@ -1093,13 +1093,13 @@ func TestCreateIDParam(t *testing.T) {
 		{
 			name:         "user ID parameter",
 			description:  "The unique identifier of the user",
-			expectedName: "id",
+			expectedName: "ID",
 			expectedType: FieldTypeUUID,
 		},
 		{
 			name:         "product ID parameter",
 			description:  "Product identifier",
-			expectedName: "id",
+			expectedName: "ID",
 			expectedType: FieldTypeUUID,
 		},
 	}
@@ -1121,7 +1121,7 @@ func TestCreateIDParam(t *testing.T) {
 		t.Run("empty description", func(t *testing.T) {
 			idParam := createIDParam("")
 
-			assert.Equal(t, "id", idParam.Name, "ID param should always have 'id' name")
+			assert.Equal(t, "ID", idParam.Name, "ID param should always have 'ID' name")
 			assert.Equal(t, "", idParam.Description, "ID param should accept empty description")
 			assert.Equal(t, FieldTypeUUID, idParam.Type, "ID param should always have UUID type")
 		})
