@@ -195,6 +195,24 @@
             "$ref": "#/components/responses/Error500ResponseBody"
           }
         },
+        "x-speakeasy-pagination": {
+          "type": "offsetLimit",
+          "inputs": [
+            {
+              "name": "offset",
+              "in": "parameters",
+              "type": "offset"
+            },
+            {
+              "name": "limit",
+              "in": "parameters",
+              "type": "limit"
+            }
+          ],
+          "outputs": {
+            "results": "$.data.resultArray"
+          }
+        },
         "x-speakeasy-group": "students",
         "x-speakeasy-name-override": "list"
       },
@@ -511,6 +529,24 @@
           "500": {
             "description": "Internal Server error for Students Search operation - unexpected server error",
             "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-pagination": {
+          "type": "offsetLimit",
+          "inputs": [
+            {
+              "name": "offset",
+              "in": "parameters",
+              "type": "offset"
+            },
+            {
+              "name": "limit",
+              "in": "parameters",
+              "type": "limit"
+            }
+          ],
+          "outputs": {
+            "results": "$.data.resultArray"
           }
         },
         "x-speakeasy-group": "students",
