@@ -6,6 +6,7 @@ import (
 	"go/format"
 	"strings"
 
+	"github.com/aarondl/strmangle"
 	"github.com/meitner-se/publicapis-gen/specification"
 )
 
@@ -159,7 +160,8 @@ func generateObjects(buf *bytes.Buffer, service *specification.Service) error {
 }
 
 func generateServer(buf *bytes.Buffer, service *specification.Service) error {
-	buf.WriteString(fmt.Sprintf("func Register%sAPI[Session any](router *gin.Engine, api *%sAPI[Session]) {\n", service.Name, service.Name))
+	serviceName := strmangle.TitleCase(service.Name)
+	buf.WriteString(fmt.Sprintf("func Register%sAPI[Session any](router *gin.Engine, api *%sAPI[Session]) {\n", serviceName, serviceName))
 	buf.WriteString("\tif api.Server.ConvertErrorFunc == nil {\n")
 	buf.WriteString("\t\tapi.Server.ConvertErrorFunc = func(err error, requestID string) *Error {\n")
 	buf.WriteString("\t\t\treturn &Error{\n")
@@ -206,7 +208,7 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("// getSessionFunc is a function that is used on each endpoint to set the session to the request\n")
 	buf.WriteString("type getSessionFunc[T any] func(ctx context.Context, headers http.Header, requestID string) (T, error)\n\n")
 
-	buf.WriteString(fmt.Sprintf("type %sAPI[Session any] struct {\n", service.Name))
+	buf.WriteString(fmt.Sprintf("type %sAPI[Session any] struct {\n", serviceName))
 	buf.WriteString("\t// Server is the server configuration for the API\n")
 	buf.WriteString("\tServer Server[Session]\n")
 
