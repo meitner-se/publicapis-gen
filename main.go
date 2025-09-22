@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"flag"
@@ -444,13 +445,14 @@ func generateOverlay(ctx context.Context, service *specification.Service, inputF
 func generateOpenAPIBytes(ctx context.Context, service *specification.Service) ([]byte, error) {
 	slog.InfoContext(ctx, "Generating OpenAPI document bytes", logKeyMode, modeOpenAPI)
 
-	// Generate OpenAPI document as JSON in a single call
-	outputData, err := openapigen.GenerateFromSpecificationToJSON(service)
+	// Generate OpenAPI document as JSON using the new API pattern
+	var buf bytes.Buffer
+	err := openapigen.GenerateOpenAPI(&buf, service)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate OpenAPI document: %w", err)
 	}
 
-	return outputData, nil
+	return buf.Bytes(), nil
 }
 
 // generateOpenAPI generates an OpenAPI document from the specification.
