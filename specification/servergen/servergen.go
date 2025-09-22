@@ -1,4 +1,4 @@
-package server
+package servergen
 
 import (
 	"bytes"

@@ -1,4 +1,4 @@
-package openapi
+package openapigen
 
 import (
 	"encoding/json"

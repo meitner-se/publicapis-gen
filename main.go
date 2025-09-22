@@ -13,8 +13,8 @@ import (
 	yaml "github.com/goccy/go-yaml"
 	"github.com/meitner-se/publicapis-gen/server"
 	"github.com/meitner-se/publicapis-gen/specification"
-	"github.com/meitner-se/publicapis-gen/specification/openapi"
-	"github.com/meitner-se/publicapis-gen/specification/schema"
+	"github.com/meitner-se/publicapis-gen/specification/openapigen"
+	"github.com/meitner-se/publicapis-gen/specification/schemagen"
 )
 
 // Error messages and log keys
@@ -445,7 +445,7 @@ func generateOpenAPIBytes(ctx context.Context, service *specification.Service) (
 	slog.InfoContext(ctx, "Generating OpenAPI document bytes", logKeyMode, modeOpenAPI)
 
 	// Generate OpenAPI document as JSON in a single call
-	outputData, err := openapi.GenerateFromSpecificationToJSON(service)
+	outputData, err := openapigen.GenerateFromSpecificationToJSON(service)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate OpenAPI document: %w", err)
 	}
@@ -530,7 +530,7 @@ func generateSchema(ctx context.Context, service *specification.Service, inputFi
 	slog.InfoContext(ctx, "Generating JSON schemas", logKeyMode, modeSchema)
 
 	// Create schema generator
-	generator := schema.NewSchemaGenerator()
+	generator := schemagen.NewSchemaGenerator()
 
 	// Generate all schemas
 	schemas, err := generator.GenerateAllSchemas()

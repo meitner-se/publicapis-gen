@@ -58,7 +58,7 @@ import (
     "fmt"
     "log"
     
-    "github.com/meitner-se/publicapis-gen/specification/schema"
+    "github.com/meitner-se/publicapis-gen/specification/schemagen"
 )
 
 func generateSchemas() {
@@ -145,7 +145,7 @@ import (
     "log"
     "os"
     
-    "github.com/meitner-se/publicapis-gen/specification/schema"
+    "github.com/meitner-se/publicapis-gen/specification/schemagen"
 )
 
 func validateSpecFile(filename string) {
@@ -230,7 +230,7 @@ import (
     "net/http"
     
     "github.com/meitner-se/publicapis-gen/specification"
-    "github.com/meitner-se/publicapis-gen/specification/schema"
+    "github.com/meitner-se/publicapis-gen/specification/schemagen"
 )
 
 // Middleware to validate request bodies
@@ -396,7 +396,7 @@ import (
     "os"
     
     "github.com/meitner-se/publicapis-gen/specification"
-    "github.com/meitner-se/publicapis-gen/specification/schema"
+    "github.com/meitner-se/publicapis-gen/specification/schemagen"
 )
 
 func generateRequestSchemas() {

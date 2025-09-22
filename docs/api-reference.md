@@ -270,7 +270,7 @@ const (
 
 ---
 
-## Package: specification/schema
+## Package: specification/schemagen
 
 JSON schema generation and validation package.
 
@@ -348,7 +348,7 @@ func (sg *SchemaGenerator) ParseResourceFromYAML(data []byte) (*specification.Re
 
 ---
 
-## Package: specification/openapi
+## Package: specification/openapigen
 
 OpenAPI 3.1 generation package.
 

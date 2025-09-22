@@ -1,4 +1,4 @@
-// Package schema provides JSON schema generation, validation, and parsing functionality for specification types.
+// Package schemagen provides JSON schema generation, validation, and parsing functionality for specification types.
 //
 // This package contains the SchemaGenerator type which can generate JSON schemas
 // for all specification struct types including Service, Enum, Object, Resource,
@@ -12,7 +12,7 @@
 //
 // Basic schema generation example:
 //
-//	generator := schema.NewSchemaGenerator()
+//	generator := schemagen.NewSchemaGenerator()
 //	jsonSchema, err := generator.GenerateServiceSchema()
 //	if err != nil {
 //	    log.Fatal(err)
@@ -28,7 +28,7 @@
 //
 // Validation functions verify that JSON or YAML data conforms to the generated schemas:
 //
-//	generator := schema.NewSchemaGenerator()
+//	generator := schemagen.NewSchemaGenerator()
 //
 //	// Validate JSON data against Service schema
 //	jsonData := []byte(`{"name": "MyAPI", "enums": [], "objects": [], "resources": []}`)
@@ -53,7 +53,7 @@
 //
 // Parsing functions combine validation and unmarshaling in a single operation:
 //
-//	generator := schema.NewSchemaGenerator()
+//	generator := schemagen.NewSchemaGenerator()
 //
 //	// Parse and validate Service from JSON
 //	jsonData := []byte(`{"name": "UserAPI", "enums": [], "objects": [], "resources": []}`)
@@ -107,4 +107,4 @@
 // The package supports generating individual schemas for each type or all schemas
 // at once using the GenerateAllSchemas method. All validation and parsing functions
 // automatically handle both JSON and YAML input formats.
-package schema
+package schemagen
