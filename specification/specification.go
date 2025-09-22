@@ -156,34 +156,6 @@ const (
 	errorCodeEnumName              = "ErrorCode"
 )
 
-// ErrorFieldCode Values
-const (
-	errorFieldCodeAlreadyExists = "AlreadyExists"
-	errorFieldCodeRequired      = "Required"
-	errorFieldCodeNotFound      = "NotFound"
-	errorFieldCodeInvalidValue  = "InvalidValue"
-)
-
-// ErrorFieldCode Descriptions
-const (
-	descriptionErrorFieldCodeEnum          = "Error codes for field-level validation errors"
-	descriptionErrorFieldCodeAlreadyExists = "The field value already exists and violates a unique constraint (e.g., duplicate email address or username)"
-	descriptionErrorFieldCodeRequired      = "The field is required but is missing or empty in the request"
-	descriptionErrorFieldCodeNotFound      = "A referenced resource or relation does not exist (e.g., foreign key constraint violation)"
-	descriptionErrorFieldCodeInvalidValue  = "The field contains an invalid value (e.g., invalid enum value, malformed data, or value out of allowed range)"
-)
-
-// ErrorField object constants
-const (
-	errorFieldObjectName              = "ErrorField"
-	errorFieldObjectDescription       = "Field-specific error information containing error code and message for validation errors"
-	errorFieldCodeFieldName           = "Code"
-	errorFieldCodeFieldDescription    = "The specific error code indicating the type of field validation error"
-	errorFieldMessageFieldName        = "Message"
-	errorFieldMessageFieldDescription = "Human-readable error message providing details about the field validation error"
-	errorFieldCodeEnumName            = "ErrorFieldCode"
-)
-
 // Pagination object constants
 const (
 	paginationObjectName        = "Pagination"
@@ -317,12 +289,6 @@ const (
 	getResponseDescTemplate    = "Successfully retrieved the %s"
 	listResponseDescTemplate   = "Successfully retrieved the list of %s"
 	searchResponseDescTemplate = "Successfully searched for %s"
-)
-
-// Request Error Constants
-const (
-	requestErrorSuffix            = "RequestError"
-	requestErrorDescriptionPrefix = "Request error object for "
 )
 
 // Comment formatting constants
@@ -654,8 +620,8 @@ func ApplyOverlay(input *Service) *Service {
 		Security:        input.Security,                              // Copy security requirements
 		Retry:           input.Retry,                                 // Copy retry configuration
 		Timeout:         input.Timeout,                               // Copy timeout configuration
-		Enums:           make([]Enum, 0, len(input.Enums)+2),         // +2 for ErrorCode and ErrorFieldCode enums
-		Objects:         make([]Object, 0, len(input.Objects)+3),     // +3 for Error, ErrorField, and Pagination objects
+		Enums:           make([]Enum, 0, len(input.Enums)+1),         // +1 for ErrorCode enum
+		Objects:         make([]Object, 0, len(input.Objects)+3),     // +3 for Error, Pagination, and Meta objects
 		Resources:       make([]Resource, len(input.Resources)),
 	}
 
@@ -671,36 +637,24 @@ func ApplyOverlay(input *Service) *Service {
 	generateFilterObjectsForSearchableResources(result, input.Resources)
 	generateEndpointsFromResources(result, input.Resources)
 
-	// Generate RequestError objects for types used in body parameters
-	// This happens at the end to ensure all objects and endpoints are generated first
-	generateRequestErrorObjectsForBodyParams(result)
-
 	return result
 }
 
 // addDefaultEnumsAndObjects adds the default error, pagination, and meta objects to the service if they don't already exist.
 func addDefaultEnumsAndObjects(result *Service, input *Service) {
-	// Check if ErrorCode enum, Error object, ErrorFieldCode enum, ErrorField object, Pagination object, and Meta object already exist
+	// Check if ErrorCode enum, Error object, Pagination object, and Meta object already exist
 	errorCodeEnumExists := false
 	errorObjectExists := false
-	errorFieldCodeEnumExists := false
-	errorFieldObjectExists := false
 	paginationObjectExists := false
 	metaObjectExists := false
 	for _, enum := range input.Enums {
 		if enum.Name == errorCodeEnumName {
 			errorCodeEnumExists = true
 		}
-		if enum.Name == errorFieldCodeEnumName {
-			errorFieldCodeEnumExists = true
-		}
 	}
 	for _, object := range input.Objects {
 		if object.Name == errorObjectName {
 			errorObjectExists = true
-		}
-		if object.Name == errorFieldObjectName {
-			errorFieldObjectExists = true
 		}
 		if object.Name == paginationObjectName {
 			paginationObjectExists = true
@@ -732,21 +686,6 @@ func addDefaultEnumsAndObjects(result *Service, input *Service) {
 		result.Enums = append(result.Enums, errorCodeEnum)
 	}
 
-	// Add default ErrorFieldCode enum if it doesn't exist
-	if !errorFieldCodeEnumExists {
-		errorFieldCodeEnum := Enum{
-			Name:        errorFieldCodeEnumName,
-			Description: descriptionErrorFieldCodeEnum,
-			Values: []EnumValue{
-				{Name: errorFieldCodeAlreadyExists, Description: descriptionErrorFieldCodeAlreadyExists},
-				{Name: errorFieldCodeRequired, Description: descriptionErrorFieldCodeRequired},
-				{Name: errorFieldCodeNotFound, Description: descriptionErrorFieldCodeNotFound},
-				{Name: errorFieldCodeInvalidValue, Description: descriptionErrorFieldCodeInvalidValue},
-			},
-		}
-		result.Enums = append(result.Enums, errorFieldCodeEnum)
-	}
-
 	// Copy existing objects first to preserve order
 	result.Objects = append(result.Objects, input.Objects...)
 
@@ -775,27 +714,6 @@ func addDefaultEnumsAndObjects(result *Service, input *Service) {
 			},
 		}
 		result.Objects = append(result.Objects, errorObject)
-	}
-
-	// Add default ErrorField object if it doesn't exist
-	if !errorFieldObjectExists {
-		errorFieldObject := Object{
-			Name:        errorFieldObjectName,
-			Description: errorFieldObjectDescription,
-			Fields: []Field{
-				{
-					Name:        errorFieldCodeFieldName,
-					Description: errorFieldCodeFieldDescription,
-					Type:        errorFieldCodeEnumName,
-				},
-				{
-					Name:        errorFieldMessageFieldName,
-					Description: errorFieldMessageFieldDescription,
-					Type:        FieldTypeString,
-				},
-			},
-		}
-		result.Objects = append(result.Objects, errorFieldObject)
 	}
 
 	// Add default Pagination object if it doesn't exist
@@ -1066,92 +984,6 @@ func createListResponse(statusCode int, description string, dataField Field, pag
 	}
 }
 
-// collectTypesUsedInBodyParams collects all types (including nested) used in request body parameters.
-func collectTypesUsedInBodyParams(service *Service) map[string]bool {
-	usedTypes := make(map[string]bool)
-
-	// Collect types from all endpoint body parameters, excluding search endpoints
-	for _, resource := range service.Resources {
-		for _, endpoint := range resource.Endpoints {
-			// Skip search endpoints since they don't use errorFields
-			isSearchEndpoint := endpoint.Name == searchEndpointName || endpoint.Name == "AdvancedSearch"
-			if !isSearchEndpoint {
-				for _, bodyParam := range endpoint.Request.BodyParams {
-					collectTypeRecursively(bodyParam.Type, usedTypes, service.Objects)
-				}
-			}
-		}
-	}
-
-	return usedTypes
-}
-
-// collectTypeRecursively collects a type and all its nested object types recursively.
-func collectTypeRecursively(fieldType string, usedTypes map[string]bool, objects []Object) {
-	// Skip if already processed
-	if usedTypes[fieldType] {
-		return
-	}
-
-	// Mark this type as used
-	usedTypes[fieldType] = true
-
-	// If it's an object type, recursively collect its field types
-	for _, obj := range objects {
-		if obj.Name == fieldType {
-			for _, field := range obj.Fields {
-				collectTypeRecursively(field.Type, usedTypes, objects)
-			}
-			break
-		}
-	}
-}
-
-// generateRequestErrorObjectsForBodyParams generates RequestError objects only for types used in body parameters.
-func generateRequestErrorObjectsForBodyParams(service *Service) {
-	// Collect all types used in body parameters
-	usedTypes := collectTypesUsedInBodyParams(service)
-
-	// Generate RequestError objects for each used type
-	for typeName := range usedTypes {
-		// Skip primitive types - they don't need their own RequestError objects
-		if isPrimitiveType(typeName) {
-			continue
-		}
-
-		// Find the object definition
-		for _, obj := range service.Objects {
-			if obj.IsFilter() {
-				continue // Do not generate RequestError objects for filter objects
-			}
-
-			if obj.Name == typeName {
-				requestErrorName := obj.Name + requestErrorSuffix
-				requestErrorDescription := requestErrorDescriptionPrefix + obj.Name
-				requestError := generateRequestErrorObject(requestErrorName, requestErrorDescription, obj.Fields, service.Objects)
-				service.Objects = append(service.Objects, requestError)
-				break
-			}
-		}
-	}
-
-	// Generate RequestError objects for specific endpoints that have body parameters
-	for _, resource := range service.Resources {
-		for _, endpoint := range resource.Endpoints {
-			if len(endpoint.Request.BodyParams) > 0 {
-				// Skip generating RequestError objects for search endpoints since they don't use errorFields
-				isSearchEndpoint := endpoint.Name == searchEndpointName || endpoint.Name == "AdvancedSearch"
-				if !isSearchEndpoint {
-					requestErrorName := resource.Name + endpoint.Name + requestErrorSuffix
-					requestErrorDescription := requestErrorDescriptionPrefix + resource.Name + " " + endpoint.Name + " endpoint"
-					requestError := generateRequestErrorObject(requestErrorName, requestErrorDescription, endpoint.Request.BodyParams, service.Objects)
-					service.Objects = append(service.Objects, requestError)
-				}
-			}
-		}
-	}
-}
-
 // isComparableType returns true if the field type supports range operations.
 func isComparableType(fieldType string) bool {
 	switch fieldType {
@@ -1195,43 +1027,6 @@ func isObjectType(fieldType string, objects []Object) bool {
 		}
 	}
 	return false
-}
-
-// convertFieldToErrorField converts a field to its error counterpart.
-// Primitive types become *ErrorField, object types become their RequestError equivalent.
-func convertFieldToErrorField(field Field, objects []Object) Field {
-	errorField := Field{
-		Name:        field.Name,
-		Description: field.Description,
-		Type:        errorFieldObjectName,       // Default to ErrorField type
-		Modifiers:   []string{ModifierNullable}, // All error fields are nullable
-	}
-
-	if isObjectType(field.Type, objects) {
-		errorField.Type = field.Type + requestErrorSuffix
-	} else if strings.HasSuffix(field.Type, filterSuffix) {
-		// Handle filter types (e.g., UsersFilter -> UsersFilterRequestError)
-		errorField.Type = field.Type + requestErrorSuffix
-	}
-	// For primitive types and other types (enums, etc.), use the default ErrorField type
-
-	return errorField
-}
-
-// generateRequestErrorObject generates a RequestError object from a list of fields.
-func generateRequestErrorObject(objectName string, description string, fields []Field, objects []Object) Object {
-	errorFields := make([]Field, 0, len(fields))
-
-	for _, field := range fields {
-		errorField := convertFieldToErrorField(field, objects)
-		errorFields = append(errorFields, errorField)
-	}
-
-	return Object{
-		Name:        objectName,
-		Description: description,
-		Fields:      errorFields,
-	}
 }
 
 // generateFilterField creates a filter field based on the original field and filter type.

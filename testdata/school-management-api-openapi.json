@@ -724,16 +724,6 @@
         ],
         "description": "Standard error codes used in API responses"
       },
-      "ErrorFieldCode": {
-        "type": "string",
-        "enum": [
-          "AlreadyExists",
-          "Required",
-          "NotFound",
-          "InvalidValue"
-        ],
-        "description": "Error codes for field-level validation errors"
-      },
       "Contact": {
         "type": "object",
         "properties": {
@@ -881,31 +871,6 @@
           "requestID"
         ],
         "description": "Standard error response object containing error code, message, and request ID"
-      },
-      "ErrorField": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorFieldCode"
-              }
-            ],
-            "description": "The specific error code indicating the type of field validation error"
-          },
-          "message": {
-            "type": "string",
-            "examples": [
-              "example"
-            ],
-            "description": "Human-readable error message providing details about the field validation error"
-          }
-        },
-        "required": [
-          "code",
-          "message"
-        ],
-        "description": "Field-specific error information containing error code and message for validation errors"
       },
       "Pagination": {
         "type": "object",
@@ -2188,634 +2153,6 @@
         },
         "description": "Null filter fields for Students"
       },
-      "StudentRequestError": {
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "firstName is required"
-              },
-              null
-            ],
-            "description": "Student's first name",
-            "nullable": true
-          },
-          "lastName": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "lastName is required"
-              },
-              null
-            ],
-            "description": "Student's last name",
-            "nullable": true
-          },
-          "studentId": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "studentId is required"
-              },
-              null
-            ],
-            "description": "School-assigned student ID",
-            "nullable": true
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "status is required"
-              },
-              null
-            ],
-            "description": "Current status of the student",
-            "nullable": true
-          },
-          "gradeLevel": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "gradeLevel is required"
-              },
-              null
-            ],
-            "description": "Current grade level",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Student"
-      },
-      "ContactRequestError": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "email is required"
-              },
-              null
-            ],
-            "description": "Email address",
-            "nullable": true
-          },
-          "phone": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "phone is required"
-              },
-              null
-            ],
-            "description": "Phone number",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Contact"
-      },
-      "AddressRequestError": {
-        "type": "object",
-        "properties": {
-          "street": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "street is required"
-              },
-              null
-            ],
-            "description": "Street address",
-            "nullable": true
-          },
-          "city": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "city is required"
-              },
-              null
-            ],
-            "description": "City",
-            "nullable": true
-          },
-          "state": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "state is required"
-              },
-              null
-            ],
-            "description": "State or province",
-            "nullable": true
-          },
-          "zipCode": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "zipCode is required"
-              },
-              null
-            ],
-            "description": "ZIP or postal code",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Address"
-      },
-      "StudentsBulkImportRequestError": {
-        "type": "object",
-        "properties": {
-          "students": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentRequestError"
-              }
-            ],
-            "examples": [
-              {
-                "firstName": {
-                  "code": "InvalidValue",
-                  "message": "firstName is required"
-                },
-                "lastName": {
-                  "code": "InvalidValue",
-                  "message": "lastName is required"
-                },
-                "studentId": {
-                  "code": "InvalidValue",
-                  "message": "studentId is required"
-                },
-                "status": {
-                  "code": "InvalidValue",
-                  "message": "status is required"
-                },
-                "gradeLevel": {
-                  "code": "InvalidValue",
-                  "message": "gradeLevel is required"
-                }
-              },
-              null
-            ],
-            "description": "Array of student data to import",
-            "nullable": true
-          },
-          "overwriteExisting": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "overwriteExisting is required"
-              },
-              null
-            ],
-            "description": "Whether to overwrite existing student records",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Students BulkImport endpoint"
-      },
-      "StudentsGenerateReportRequestError": {
-        "type": "object",
-        "properties": {
-          "gradeLevel": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "gradeLevel is required"
-              },
-              null
-            ],
-            "description": "Filter by specific grade level",
-            "nullable": true
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "status is required"
-              },
-              null
-            ],
-            "description": "Filter by student status",
-            "nullable": true
-          },
-          "enrollmentDateFrom": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "enrollmentDateFrom is required"
-              },
-              null
-            ],
-            "description": "Filter students enrolled after this date",
-            "nullable": true
-          },
-          "enrollmentDateTo": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "enrollmentDateTo is required"
-              },
-              null
-            ],
-            "description": "Filter students enrolled before this date",
-            "nullable": true
-          },
-          "includeInactive": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "includeInactive is required"
-              },
-              null
-            ],
-            "description": "Include inactive students in report",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Students GenerateReport endpoint"
-      },
-      "StudentsCreateRequestError": {
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "firstName is required"
-              },
-              null
-            ],
-            "description": "Student's first name",
-            "nullable": true
-          },
-          "lastName": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "lastName is required"
-              },
-              null
-            ],
-            "description": "Student's last name",
-            "nullable": true
-          },
-          "studentId": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "studentId is required"
-              },
-              null
-            ],
-            "description": "School-assigned student ID",
-            "nullable": true
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "status is required"
-              },
-              null
-            ],
-            "description": "Current status of the student",
-            "nullable": true
-          },
-          "gradeLevel": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "gradeLevel is required"
-              },
-              null
-            ],
-            "description": "Current grade level",
-            "nullable": true
-          },
-          "contact": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ContactRequestError"
-              }
-            ],
-            "examples": [
-              {
-                "email": {
-                  "code": "InvalidValue",
-                  "message": "email is required"
-                },
-                "phone": {
-                  "code": "InvalidValue",
-                  "message": "phone is required"
-                }
-              },
-              null
-            ],
-            "description": "Student contact information",
-            "nullable": true
-          },
-          "address": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AddressRequestError"
-              }
-            ],
-            "examples": [
-              {
-                "street": {
-                  "code": "InvalidValue",
-                  "message": "street is required"
-                },
-                "city": {
-                  "code": "InvalidValue",
-                  "message": "city is required"
-                },
-                "state": {
-                  "code": "InvalidValue",
-                  "message": "state is required"
-                },
-                "zipCode": {
-                  "code": "InvalidValue",
-                  "message": "zipCode is required"
-                }
-              },
-              null
-            ],
-            "description": "Student home address",
-            "nullable": true
-          },
-          "enrollmentDate": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "enrollmentDate is required"
-              },
-              null
-            ],
-            "description": "Date when student was enrolled",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Students Create endpoint"
-      },
-      "StudentsUpdateRequestError": {
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "firstName is required"
-              },
-              null
-            ],
-            "description": "Student's first name",
-            "nullable": true
-          },
-          "lastName": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "lastName is required"
-              },
-              null
-            ],
-            "description": "Student's last name",
-            "nullable": true
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "status is required"
-              },
-              null
-            ],
-            "description": "Current status of the student",
-            "nullable": true
-          },
-          "gradeLevel": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "gradeLevel is required"
-              },
-              null
-            ],
-            "description": "Current grade level",
-            "nullable": true
-          },
-          "contact": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ContactRequestError"
-              }
-            ],
-            "examples": [
-              {
-                "email": {
-                  "code": "InvalidValue",
-                  "message": "email is required"
-                },
-                "phone": {
-                  "code": "InvalidValue",
-                  "message": "phone is required"
-                }
-              },
-              null
-            ],
-            "description": "Student contact information",
-            "nullable": true
-          },
-          "address": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AddressRequestError"
-              }
-            ],
-            "examples": [
-              {
-                "street": {
-                  "code": "InvalidValue",
-                  "message": "street is required"
-                },
-                "city": {
-                  "code": "InvalidValue",
-                  "message": "city is required"
-                },
-                "state": {
-                  "code": "InvalidValue",
-                  "message": "state is required"
-                },
-                "zipCode": {
-                  "code": "InvalidValue",
-                  "message": "zipCode is required"
-                }
-              },
-              null
-            ],
-            "description": "Student home address",
-            "nullable": true
-          },
-          "graduationDate": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "code": "InvalidValue",
-                "message": "graduationDate is required"
-              },
-              null
-            ],
-            "description": "Expected or actual graduation date",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Students Update endpoint"
-      },
       "MetaFilter": {
         "type": "object",
         "properties": {
@@ -4045,36 +3382,10 @@
                       "requestID": "550e8400-e29b-41d4-a716-446655440000"
                     }
                   ]
-                },
-                "errorFields": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/StudentsBulkImportRequestError"
-                    }
-                  ],
-                  "examples": [
-                    {
-                      "students": {
-                        "firstName": {
-                          "code": "InvalidValue",
-                          "message": "firstName is required"
-                        },
-                        "lastName": {
-                          "code": "InvalidValue",
-                          "message": "lastName is required"
-                        }
-                      },
-                      "overwriteExisting": {
-                        "code": "InvalidValue",
-                        "message": "overwriteExisting is required"
-                      }
-                    }
-                  ]
                 }
               },
               "required": [
-                "error",
-                "errorFields"
+                "error"
               ]
             },
             "examples": {
@@ -4085,22 +3396,6 @@
                     "code": "UnprocessableEntity",
                     "message": "Validation failed for Students BulkImport endpoint",
                     "requestID": "550e8400-e29b-41d4-a716-446655440000"
-                  },
-                  "errorFields": {
-                    "students": {
-                      "firstName": {
-                        "code": "InvalidValue",
-                        "message": "firstName is required"
-                      },
-                      "lastName": {
-                        "code": "InvalidValue",
-                        "message": "lastName is required"
-                      }
-                    },
-                    "overwriteExisting": {
-                      "code": "InvalidValue",
-                      "message": "overwriteExisting is required"
-                    }
                   }
                 }
               }
@@ -4174,30 +3469,10 @@
                       "requestID": "550e8400-e29b-41d4-a716-446655440000"
                     }
                   ]
-                },
-                "errorFields": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/StudentsGenerateReportRequestError"
-                    }
-                  ],
-                  "examples": [
-                    {
-                      "gradeLevel": {
-                        "code": "InvalidValue",
-                        "message": "gradeLevel is required"
-                      },
-                      "status": {
-                        "code": "InvalidValue",
-                        "message": "status is required"
-                      }
-                    }
-                  ]
                 }
               },
               "required": [
-                "error",
-                "errorFields"
+                "error"
               ]
             },
             "examples": {
@@ -4208,16 +3483,6 @@
                     "code": "UnprocessableEntity",
                     "message": "Validation failed for Students GenerateReport endpoint",
                     "requestID": "550e8400-e29b-41d4-a716-446655440000"
-                  },
-                  "errorFields": {
-                    "gradeLevel": {
-                      "code": "InvalidValue",
-                      "message": "gradeLevel is required"
-                    },
-                    "status": {
-                      "code": "InvalidValue",
-                      "message": "status is required"
-                    }
                   }
                 }
               }
@@ -4391,30 +3656,10 @@
                       "requestID": "550e8400-e29b-41d4-a716-446655440000"
                     }
                   ]
-                },
-                "errorFields": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/StudentsCreateRequestError"
-                    }
-                  ],
-                  "examples": [
-                    {
-                      "firstName": {
-                        "code": "InvalidValue",
-                        "message": "firstName is required"
-                      },
-                      "lastName": {
-                        "code": "InvalidValue",
-                        "message": "lastName is required"
-                      }
-                    }
-                  ]
                 }
               },
               "required": [
-                "error",
-                "errorFields"
+                "error"
               ]
             },
             "examples": {
@@ -4425,16 +3670,6 @@
                     "code": "UnprocessableEntity",
                     "message": "Validation failed for Students Create endpoint",
                     "requestID": "550e8400-e29b-41d4-a716-446655440000"
-                  },
-                  "errorFields": {
-                    "firstName": {
-                      "code": "InvalidValue",
-                      "message": "firstName is required"
-                    },
-                    "lastName": {
-                      "code": "InvalidValue",
-                      "message": "lastName is required"
-                    }
                   }
                 }
               }
@@ -4505,30 +3740,10 @@
                       "requestID": "550e8400-e29b-41d4-a716-446655440000"
                     }
                   ]
-                },
-                "errorFields": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/StudentsUpdateRequestError"
-                    }
-                  ],
-                  "examples": [
-                    {
-                      "firstName": {
-                        "code": "InvalidValue",
-                        "message": "firstName is required"
-                      },
-                      "lastName": {
-                        "code": "InvalidValue",
-                        "message": "lastName is required"
-                      }
-                    }
-                  ]
                 }
               },
               "required": [
-                "error",
-                "errorFields"
+                "error"
               ]
             },
             "examples": {
@@ -4539,16 +3754,6 @@
                     "code": "UnprocessableEntity",
                     "message": "Validation failed for Students Update endpoint",
                     "requestID": "550e8400-e29b-41d4-a716-446655440000"
-                  },
-                  "errorFields": {
-                    "firstName": {
-                      "code": "InvalidValue",
-                      "message": "firstName is required"
-                    },
-                    "lastName": {
-                      "code": "InvalidValue",
-                      "message": "lastName is required"
-                    }
                   }
                 }
               }
