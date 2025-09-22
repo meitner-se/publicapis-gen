@@ -10,7 +10,10 @@
   openapi_json: output/school-api.json
   openapi_yaml: output/school-api.yaml
   schema_json: output/school-schemas.json
+  server_go: output/school-server.go
+  server_package: schoolapi
 
 - specification: testdata/timeout-example-api.yaml
   openapi_json: output/timeout-api.json
   overlay_yaml: output/timeout-overlay.yaml
+  server_go: output/timeout-server.go

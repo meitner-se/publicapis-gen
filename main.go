@@ -12,10 +12,10 @@ import (
 	"strings"
 
 	yaml "github.com/goccy/go-yaml"
-	"github.com/meitner-se/publicapis-gen/server"
 	"github.com/meitner-se/publicapis-gen/specification"
 	"github.com/meitner-se/publicapis-gen/specification/openapigen"
 	"github.com/meitner-se/publicapis-gen/specification/schemagen"
+	"github.com/meitner-se/publicapis-gen/specification/servergen"
 )
 
 // Error messages and log keys
@@ -397,21 +397,9 @@ func processJob(ctx context.Context, job Job) error {
 	}
 
 	if job.ServerGo != "" {
-		// Check if the specification is already an OpenAPI file
-		if isOpenAPIFile(job.Specification) {
-			// For OpenAPI files, use direct server generation
-			finalPackageName := job.ServerPackage
-			if finalPackageName == "" {
-				finalPackageName = extractPackageNameFromPath(job.ServerGo)
-			}
-			if err := generateServerFromFile(ctx, job.Specification, job.ServerGo, finalPackageName); err != nil {
-				return fmt.Errorf("failed to generate Go server to '%s': %w", job.ServerGo, err)
-			}
-		} else {
-			// For specification files, convert to OpenAPI first
-			if err := generateServerFromSpecification(ctx, service, job.Specification, job.ServerGo, job.ServerPackage); err != nil {
-				return fmt.Errorf("failed to generate Go server to '%s': %w", job.ServerGo, err)
-			}
+		// Generate server code using servergen from the specification
+		if err := generateServerFromSpecification(ctx, service, job.Specification, job.ServerGo, job.ServerPackage); err != nil {
+			return fmt.Errorf("failed to generate Go server to '%s': %w", job.ServerGo, err)
 		}
 	}
 
@@ -645,19 +633,11 @@ func ensureYAMLExtension(outputPath string) string {
 	return outputPath
 }
 
-// generateServer generates Go server code from an OpenAPI specification file (for legacy mode).
+// generateServer generates Go server code from a specification file (for legacy mode).
 func generateServer(ctx context.Context, specPath, outputPath string) error {
 	slog.InfoContext(ctx, "Generating Go server code", logKeyMode, modeServer)
 
-	// Check if the file is already an OpenAPI file
-	if isOpenAPIFile(specPath) {
-		slog.InfoContext(ctx, "Detected OpenAPI file, generating server directly")
-		return generateServerFromOpenAPI(ctx, specPath, outputPath)
-	}
-
-	slog.InfoContext(ctx, "Detected specification file, converting to OpenAPI first")
-
-	// Read and parse the specification file first
+	// Read and parse the specification file
 	service, err := readSpecificationFile(specPath)
 	if err != nil {
 		return fmt.Errorf("failed to read specification file for server generation: %w", err)
@@ -680,80 +660,26 @@ func generateServer(ctx context.Context, specPath, outputPath string) error {
 }
 
 // generateServerFromSpecification generates Go server code from a specification (for config mode).
-// It generates an OpenAPI document as bytes and uses that directly to generate the server code.
+// It uses servergen to generate server code directly from the specification.
 func generateServerFromSpecification(ctx context.Context, service *specification.Service, specPath, outputPath, packageName string) error {
 	slog.InfoContext(ctx, "Generating Go server code from specification", logKeyMode, modeServer)
 
-	// Generate OpenAPI document as bytes
-	openAPIBytes, err := generateOpenAPIBytes(ctx, service)
+	// Generate server code using servergen
+	var buf bytes.Buffer
+	err := servergen.GenerateServer(&buf, service)
 	if err != nil {
-		return fmt.Errorf("failed to generate OpenAPI for server generation: %w", err)
-	}
-
-	// Determine package name
-	finalPackageName := packageName
-	if finalPackageName == "" {
-		finalPackageName = extractPackageNameFromPath(outputPath)
-	}
-
-	// Generate server code directly from the OpenAPI bytes
-	return generateServerFromBytes(ctx, openAPIBytes, outputPath, finalPackageName)
-}
-
-// generateServerFromBytes generates Go server code from OpenAPI specification bytes.
-func generateServerFromBytes(ctx context.Context, openAPIData []byte, outputPath, packageName string) error {
-	// Create server generator configuration
-	config := server.Config{
-		OutputPath:  outputPath,
-		PackageName: packageName,
-	}
-
-	// Create server generator
-	generator, err := server.New(config)
-	if err != nil {
-		return fmt.Errorf("failed to create server generator: %w", err)
-	}
-
-	// Generate server code from OpenAPI bytes
-	if err := generator.GenerateFromDataWithContext(ctx, openAPIData); err != nil {
 		return fmt.Errorf("failed to generate server code: %w", err)
+	}
+
+	// Write the generated code to the output file
+	if err := os.WriteFile(outputPath, buf.Bytes(), 0644); err != nil {
+		return fmt.Errorf("%s: %w", errorFileWrite, err)
 	}
 
 	slog.InfoContext(ctx, "Successfully generated Go server code", logKeyFile, outputPath)
 	fmt.Printf("Go server code generated: %s\n", outputPath)
 
 	return nil
-}
-
-// generateServerFromFile generates Go server code from an OpenAPI specification file.
-func generateServerFromFile(ctx context.Context, openAPIPath, outputPath, packageName string) error {
-	// Read the OpenAPI specification file
-	specData, err := os.ReadFile(openAPIPath)
-	if err != nil {
-		return fmt.Errorf("failed to read OpenAPI file: %w", err)
-	}
-
-	// Generate server code from the bytes
-	return generateServerFromBytes(ctx, specData, outputPath, packageName)
-}
-
-// generateServerFromOpenAPI generates Go server code directly from an OpenAPI file for testing.
-func generateServerFromOpenAPI(ctx context.Context, openAPIPath, outputPath string) error {
-	slog.InfoContext(ctx, "Generating Go server code from OpenAPI file", logKeyMode, modeServer)
-
-	// Determine output file path
-	finalOutputPath := outputPath
-	if finalOutputPath == "" {
-		finalOutputPath = generateServerOutputPath(openAPIPath)
-	} else {
-		// Ensure output path has .go extension
-		finalOutputPath = ensureGoExtension(finalOutputPath)
-	}
-
-	// Extract package name from output path for default
-	packageName := extractPackageNameFromPath(finalOutputPath)
-
-	return generateServerFromFile(ctx, openAPIPath, finalOutputPath, packageName)
 }
 
 // generateServerOutputPath generates an output file path for Go server files (always .go).
