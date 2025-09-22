@@ -1,4 +1,4 @@
-// Package server provides server code generation capabilities from specification types.
+// Package servergen provides server code generation capabilities from specification types.
 //
 // This package generates server implementations directly from specification.Service
 // definitions, complementing the existing root-level server package that works with
@@ -19,7 +19,7 @@
 //
 //	import (
 //	    "github.com/meitner-se/publicapis-gen/specification"
-//	    "github.com/meitner-se/publicapis-gen/specification/server"
+//	    "github.com/meitner-se/publicapis-gen/specification/servergen"
 //	)
 //
 //	// Load specification from YAML/JSON
@@ -29,7 +29,7 @@
 //	}
 //
 //	// Generate server code
-//	generator := server.NewGenerator()
+//	generator := servergen.NewGenerator()
 //	err = generator.Generate(service, "generated/server.go")
 //	if err != nil {
 //	    log.Fatal(err)
@@ -66,4 +66,4 @@
 // This package is designed to work alongside the existing server package,
 // providing an alternative generation approach that's more tightly integrated
 // with the specification type system and optimized for resource-oriented APIs.
-package server
+package servergen

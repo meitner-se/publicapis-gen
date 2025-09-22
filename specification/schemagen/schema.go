@@ -1,4 +1,4 @@
-package schema
+package schemagen
 
 import (
 	"encoding/json"

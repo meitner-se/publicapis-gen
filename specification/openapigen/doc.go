@@ -1,4 +1,4 @@
-// Package openapi provides functionality to generate OpenAPI 3.1 specifications from specification.Service structs.
+// Package openapigen provides functionality to generate OpenAPI 3.1 specifications from specification.Service structs.
 //
 // This package is designed to convert the internal specification format into valid OpenAPI 3.1
 // documents that can be used for API documentation, client generation, and API validation.
@@ -15,7 +15,7 @@
 //
 // Once implementation is complete, typical usage will be:
 //
-//	generator := openapi.NewGenerator()
+//	generator := openapigen.NewGenerator()
 //	document, err := generator.GenerateFromService(service)
 //	if err != nil {
 //	    log.Fatal(err)
@@ -66,4 +66,4 @@
 //
 // The package will support both the raw specification format and the overlay-processed
 // format that includes generated CRUD endpoints, filter objects, and error handling.
-package openapi
+package openapigen

@@ -24,9 +24,9 @@
 //
 // Basic schema generation example:
 //
-//	import "github.com/meitner-se/publicapis-gen/specification/schema"
+//	import "github.com/meitner-se/publicapis-gen/specification/schemagen"
 //
-//	generator := schema.NewSchemaGenerator()
+//	generator := schemagen.NewSchemaGenerator()
 //	jsonSchema, err := generator.GenerateServiceSchema()
 //	if err != nil {
 //	    log.Fatal(err)
@@ -43,7 +43,7 @@
 //
 // Validation example:
 //
-//	generator := schema.NewSchemaGenerator()
+//	generator := schemagen.NewSchemaGenerator()
 //
 //	// Validate JSON data
 //	jsonData := []byte(`{"name": "MyAPI", "enums": [], "objects": [], "resources": []}`)
@@ -70,7 +70,7 @@
 //
 // Parsing example:
 //
-//	generator := schema.NewSchemaGenerator()
+//	generator := schemagen.NewSchemaGenerator()
 //
 //	// Parse and validate JSON
 //	jsonData := []byte(`{

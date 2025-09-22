@@ -68,7 +68,7 @@ import (
     "os"
     
     "github.com/meitner-se/publicapis-gen/specification"
-    "github.com/meitner-se/publicapis-gen/specification/openapi"
+    "github.com/meitner-se/publicapis-gen/specification/openapigen"
 )
 
 func generateOpenAPI() {
@@ -390,7 +390,7 @@ package main
 
 import (
     "github.com/meitner-se/publicapis-gen/specification"
-    "github.com/meitner-se/publicapis-gen/specification/openapi"
+    "github.com/meitner-se/publicapis-gen/specification/openapigen"
 )
 
 func customizeOpenAPI() {
@@ -439,7 +439,7 @@ import (
     "log"
     
     "github.com/meitner-se/publicapis-gen/specification"
-    "github.com/meitner-se/publicapis-gen/specification/openapi"
+    "github.com/meitner-se/publicapis-gen/specification/openapigen"
 )
 
 func validateOpenAPI() {
