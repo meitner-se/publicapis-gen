@@ -231,11 +231,11 @@ func Test_run(t *testing.T) {
 		assert.Contains(t, actualContent, "type SchoolManagementAPIAPI[Session any] struct", "Generated file should contain API struct")
 		assert.Contains(t, actualContent, "type Server[Session any] struct", "Generated file should contain Server struct")
 		assert.Contains(t, actualContent, "type Request[", "Generated file should contain generic Request type")
-		
+
 		// Assert resource types are generated
 		assert.Contains(t, actualContent, "type Student struct", "Generated file should contain Student type")
 		assert.Contains(t, actualContent, "type StudentsCreateBodyParams struct", "Generated file should contain StudentsCreateBodyParams type")
-		
+
 		// Assert enum types are generated
 		assert.Contains(t, actualContent, "type StudentStatus types.String", "Generated file should contain StudentStatus enum")
 		assert.Contains(t, actualContent, "type GradeLevel types.String", "Generated file should contain GradeLevel enum")
