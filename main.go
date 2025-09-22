@@ -16,6 +16,7 @@ import (
 	"github.com/meitner-se/publicapis-gen/specification"
 	"github.com/meitner-se/publicapis-gen/specification/openapigen"
 	"github.com/meitner-se/publicapis-gen/specification/schemagen"
+	"github.com/meitner-se/publicapis-gen/specification/servergen"
 )
 
 // Error messages and log keys
@@ -680,15 +681,9 @@ func generateServer(ctx context.Context, specPath, outputPath string) error {
 }
 
 // generateServerFromSpecification generates Go server code from a specification (for config mode).
-// It generates an OpenAPI document as bytes and uses that directly to generate the server code.
+// It uses servergen to generate the server code directly from the specification.
 func generateServerFromSpecification(ctx context.Context, service *specification.Service, specPath, outputPath, packageName string) error {
-	slog.InfoContext(ctx, "Generating Go server code from specification", logKeyMode, modeServer)
-
-	// Generate OpenAPI document as bytes
-	openAPIBytes, err := generateOpenAPIBytes(ctx, service)
-	if err != nil {
-		return fmt.Errorf("failed to generate OpenAPI for server generation: %w", err)
-	}
+	slog.InfoContext(ctx, "Generating Go server code from specification using servergen", logKeyMode, modeServer)
 
 	// Determine package name
 	finalPackageName := packageName
@@ -696,8 +691,21 @@ func generateServerFromSpecification(ctx context.Context, service *specification
 		finalPackageName = extractPackageNameFromPath(outputPath)
 	}
 
-	// Generate server code directly from the OpenAPI bytes
-	return generateServerFromBytes(ctx, openAPIBytes, outputPath, finalPackageName)
+	// Generate server code using servergen
+	var buf bytes.Buffer
+	if err := servergen.GenerateServer(&buf, service); err != nil {
+		return fmt.Errorf("failed to generate server code: %w", err)
+	}
+
+	// Write the generated code to file
+	if err := os.WriteFile(outputPath, buf.Bytes(), 0644); err != nil {
+		return fmt.Errorf("%s: %w", errorFileWrite, err)
+	}
+
+	slog.InfoContext(ctx, "Successfully generated Go server code", logKeyFile, outputPath)
+	fmt.Printf("Go server code generated: %s\n", outputPath)
+
+	return nil
 }
 
 // generateServerFromBytes generates Go server code from OpenAPI specification bytes.

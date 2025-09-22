@@ -1226,3 +1226,270 @@ func Test_ensureYAMLExtension(t *testing.T) {
 		})
 	}
 }
+
+// stringPtr returns a pointer to a string value - helper for tests
+func stringPtr(s string) *string {
+	return &s
+}
+
+// Test_generateServerFromSpecification_e2e tests the servergen functionality end-to-end
+func Test_generateServerFromSpecification_e2e(t *testing.T) {
+	// Test constants to avoid hardcoded strings
+	const (
+		testServerPackage    = "testapi"
+		expectedPackageDecl  = "package api"
+		expectedImportGin    = `"github.com/gin-gonic/gin"`
+		expectedImportTypes  = `"github.com/meitner-se/go-types"`
+		expectedRegisterFunc = "func RegisterTestServiceAPI[Session any]"
+		expectedErrorType    = "type Error struct {"
+		expectedOpenAPIRoute = `routerGroup.StaticFileFS("/openapi.json", "openapi.json", http.FS(api.OpenAPI_JSON))`
+	)
+
+	// Create a test service with various features
+	service := &specification.Service{
+		Name:    "TestService",
+		Version: "v1",
+		Enums: []specification.Enum{
+			{
+				Name:        "Status",
+				Description: "Status enumeration",
+				Values: []specification.EnumValue{
+					{Name: "Active", Description: "Active status"},
+					{Name: "Inactive", Description: "Inactive status"},
+				},
+			},
+			{
+				Name:        "ErrorCode",
+				Description: "Error codes",
+				Values: []specification.EnumValue{
+					{Name: "BadRequest", Description: "Bad request"},
+					{Name: "Unauthorized", Description: "Unauthorized"},
+					{Name: "Forbidden", Description: "Forbidden"},
+					{Name: "NotFound", Description: "Not found"},
+					{Name: "Conflict", Description: "Conflict"},
+					{Name: "UnprocessableEntity", Description: "Unprocessable entity"},
+					{Name: "RateLimited", Description: "Rate limited"},
+					{Name: "Internal", Description: "Internal error"},
+				},
+			},
+		},
+		Objects: []specification.Object{
+			{
+				Name:        "User",
+				Description: "User object",
+				Fields: []specification.Field{
+					{
+						Name:        "ID",
+						Description: "User ID",
+						Type:        "UUID",
+					},
+					{
+						Name:        "Name",
+						Description: "User name",
+						Type:        "String",
+					},
+					{
+						Name:        "Status",
+						Description: "User status",
+						Type:        "Status",
+					},
+				},
+			},
+			{
+				Name:        "Error",
+				Description: "Error object",
+				Fields: []specification.Field{
+					{
+						Name:        "Code",
+						Description: "Error code",
+						Type:        "ErrorCode",
+					},
+					{
+						Name:        "Message",
+						Description: "Error message",
+						Type:        "String",
+					},
+					{
+						Name:        "RequestID",
+						Description: "Request ID",
+						Type:        "String",
+					},
+				},
+			},
+		},
+		Resources: []specification.Resource{
+			{
+				Name:        "User",
+				Description: "User resource",
+				Operations:  []string{"Create", "Read", "Update", "Delete"},
+				Fields: []specification.ResourceField{
+					{
+						Field: specification.Field{
+							Name:        "ID",
+							Description: "User ID",
+							Type:        "UUID",
+						},
+						Operations: []string{"Read"},
+					},
+					{
+						Field: specification.Field{
+							Name:        "Name",
+							Description: "User name",
+							Type:        "String",
+						},
+						Operations: []string{"Create", "Read", "Update"},
+					},
+				},
+				Endpoints: []specification.Endpoint{
+					{
+						Name:        "CreateUser",
+						Method:      "POST",
+						Path:        "/users",
+						Title:       "Create User",
+						Summary:     "Create a new user",
+						Description: "Creates a new user in the system",
+						Request: specification.EndpointRequest{
+							BodyParams: []specification.Field{
+								{
+									Name:        "Name",
+									Description: "User name",
+									Type:        "String",
+								},
+							},
+						},
+						Response: specification.EndpointResponse{
+							StatusCode: 201,
+							BodyObject: stringPtr("User"),
+						},
+					},
+					{
+						Name:        "GetUser",
+						Method:      "GET",
+						Path:        "/users/{id}",
+						Title:       "Get User",
+						Summary:     "Get a user by ID",
+						Description: "Retrieves a user by their ID",
+						Request: specification.EndpointRequest{
+							PathParams: []specification.Field{
+								{
+									Name:        "ID",
+									Description: "User ID",
+									Type:        "UUID",
+								},
+							},
+						},
+						Response: specification.EndpointResponse{
+							StatusCode: 200,
+							BodyObject: stringPtr("User"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Create a temporary directory for test output
+	tempDir := os.TempDir()
+	outputPath := tempDir + "/test_server.go"
+	defer os.Remove(outputPath) // Clean up after test
+
+	ctx := context.Background()
+
+	// Act - Generate server code
+	err := generateServerFromSpecification(ctx, service, "test-spec.yaml", outputPath, testServerPackage)
+
+	// Assert
+	assert.Nil(t, err, "Expected no error when generating server code")
+
+	// Verify file was created
+	_, statErr := os.Stat(outputPath)
+	assert.Nil(t, statErr, "Expected generated file to exist")
+
+	// Read and verify generated content
+	content, readErr := os.ReadFile(outputPath)
+	assert.Nil(t, readErr, "Expected no error reading generated file")
+
+	generatedCode := string(content)
+	assert.NotEmpty(t, generatedCode, "Expected generated code to be non-empty")
+
+	// Verify key components of generated code
+	assert.Contains(t, generatedCode, expectedPackageDecl, "Generated code should contain package declaration")
+	assert.Contains(t, generatedCode, expectedImportGin, "Generated code should import gin")
+	assert.Contains(t, generatedCode, expectedImportTypes, "Generated code should import go-types")
+	assert.Contains(t, generatedCode, expectedRegisterFunc, "Generated code should contain RegisterAPI function")
+	assert.Contains(t, generatedCode, expectedErrorType, "Generated code should contain Error type")
+	assert.Contains(t, generatedCode, expectedOpenAPIRoute, "Generated code should contain OpenAPI route")
+
+	// Verify enum generation
+	assert.Contains(t, generatedCode, "type Status types.String", "Generated code should contain Status enum")
+	assert.Contains(t, generatedCode, "StatusActive", "Generated code should contain StatusActive")
+	assert.Contains(t, generatedCode, "Status(types.NewString(\"Active\"))", "Generated code should contain enum values")
+
+	// Verify object generation
+	assert.Contains(t, generatedCode, "type User struct {", "Generated code should contain User object")
+	assert.Contains(t, generatedCode, "ID types.UUID `json:\"id\"`", "Generated code should contain User fields")
+
+	// Verify endpoint generation (Note: servergen includes resource name in path)
+	assert.Contains(t, generatedCode, "routerGroup.POST(\"/user/users\", serveWithResponse(201, api.Server, api.User.CreateUser))", "Generated code should contain POST endpoint")
+	assert.Contains(t, generatedCode, "routerGroup.GET(\"/user/users/{id}\", serveWithResponse(200, api.Server, api.User.GetUser))", "Generated code should contain GET endpoint")
+
+	// Verify request/response types
+	assert.Contains(t, generatedCode, "type UserCreateUserBodyParams struct {", "Generated code should contain request body type")
+	assert.Contains(t, generatedCode, "type UserGetUserPathParams struct {", "Generated code should contain path params type")
+	// Note: Response types are not generated when using BodyObject
+
+	t.Run("edge cases", func(t *testing.T) {
+		t.Run("empty service", func(t *testing.T) {
+			// Arrange
+			emptyService := &specification.Service{
+				Name:    "EmptyService",
+				Version: "v1",
+			}
+			outputPath := tempDir + "/empty_server.go"
+			defer os.Remove(outputPath)
+
+			// Act
+			err := generateServerFromSpecification(ctx, emptyService, "empty-spec.yaml", outputPath, "emptyapi")
+
+			// Assert
+			assert.Nil(t, err, "Expected no error with empty service")
+
+			// Verify file was created
+			_, statErr := os.Stat(outputPath)
+			assert.Nil(t, statErr, "Expected generated file to exist")
+
+			// Read and verify basic structure
+			content, _ := os.ReadFile(outputPath)
+			generatedCode := string(content)
+			assert.Contains(t, generatedCode, expectedPackageDecl, "Should still generate basic structure")
+			assert.Contains(t, generatedCode, "func RegisterEmptyServiceAPI[Session any]", "Should generate register function for empty service")
+		})
+
+		t.Run("service with no endpoints", func(t *testing.T) {
+			// Arrange
+			serviceNoEndpoints := &specification.Service{
+				Name:    "NoEndpointService",
+				Version: "v1",
+				Resources: []specification.Resource{
+					{
+						Name:        "Resource",
+						Description: "Resource with no endpoints",
+						Endpoints:   []specification.Endpoint{}, // No endpoints
+					},
+				},
+			}
+			outputPath := tempDir + "/no_endpoints_server.go"
+			defer os.Remove(outputPath)
+
+			// Act
+			err := generateServerFromSpecification(ctx, serviceNoEndpoints, "no-endpoints-spec.yaml", outputPath, "noendpointsapi")
+
+			// Assert
+			assert.Nil(t, err, "Expected no error with no endpoints")
+
+			// Verify file was created
+			_, statErr := os.Stat(outputPath)
+			assert.Nil(t, statErr, "Expected generated file to exist")
+		})
+	})
+}
