@@ -1,6 +1,7 @@
 package schemagen
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -23,26 +24,26 @@ const (
 	errorConversionFailed  = "failed to convert YAML to JSON"
 )
 
-// SchemaGenerator provides functionality to generate JSON schemas from specification structs.
-type SchemaGenerator struct {
+// schemaGenerator provides functionality to generate JSON schemas from specification structs.
+type schemaGenerator struct {
 	reflector *jsonschema.Reflector
 }
 
-// NewSchemaGenerator creates a new schema generator with default configuration.
-func NewSchemaGenerator() *SchemaGenerator {
+// newSchemaGenerator creates a new schema generator with default configuration.
+func newSchemaGenerator() *schemaGenerator {
 	r := &jsonschema.Reflector{
 		AllowAdditionalProperties: false,
 		DoNotReference:            false,
 		ExpandedStruct:            true,
 	}
 
-	return &SchemaGenerator{
+	return &schemaGenerator{
 		reflector: r,
 	}
 }
 
-// GenerateServiceSchema generates a JSON schema for the Service struct.
-func (sg *SchemaGenerator) GenerateServiceSchema() (*jsonschema.Schema, error) {
+// generateServiceSchema generates a JSON schema for the Service struct.
+func (sg *schemaGenerator) generateServiceSchema() (*jsonschema.Schema, error) {
 	schema := sg.reflector.Reflect(&specification.Service{})
 	if schema == nil {
 		return nil, fmt.Errorf("%s Service", errorFailedToGenerate)
@@ -51,8 +52,8 @@ func (sg *SchemaGenerator) GenerateServiceSchema() (*jsonschema.Schema, error) {
 	return schema, nil
 }
 
-// GenerateEnumSchema generates a JSON schema for the Enum struct.
-func (sg *SchemaGenerator) GenerateEnumSchema() (*jsonschema.Schema, error) {
+// generateEnumSchema generates a JSON schema for the Enum struct.
+func (sg *schemaGenerator) generateEnumSchema() (*jsonschema.Schema, error) {
 	schema := sg.reflector.Reflect(&specification.Enum{})
 	if schema == nil {
 		return nil, fmt.Errorf("%s Enum", errorFailedToGenerate)
@@ -61,8 +62,8 @@ func (sg *SchemaGenerator) GenerateEnumSchema() (*jsonschema.Schema, error) {
 	return schema, nil
 }
 
-// GenerateObjectSchema generates a JSON schema for the Object struct.
-func (sg *SchemaGenerator) GenerateObjectSchema() (*jsonschema.Schema, error) {
+// generateObjectSchema generates a JSON schema for the Object struct.
+func (sg *schemaGenerator) generateObjectSchema() (*jsonschema.Schema, error) {
 	schema := sg.reflector.Reflect(&specification.Object{})
 	if schema == nil {
 		return nil, fmt.Errorf("%s Object", errorFailedToGenerate)
@@ -71,8 +72,8 @@ func (sg *SchemaGenerator) GenerateObjectSchema() (*jsonschema.Schema, error) {
 	return schema, nil
 }
 
-// GenerateResourceSchema generates a JSON schema for the Resource struct.
-func (sg *SchemaGenerator) GenerateResourceSchema() (*jsonschema.Schema, error) {
+// generateResourceSchema generates a JSON schema for the Resource struct.
+func (sg *schemaGenerator) generateResourceSchema() (*jsonschema.Schema, error) {
 	schema := sg.reflector.Reflect(&specification.Resource{})
 	if schema == nil {
 		return nil, fmt.Errorf("%s Resource", errorFailedToGenerate)
@@ -81,8 +82,8 @@ func (sg *SchemaGenerator) GenerateResourceSchema() (*jsonschema.Schema, error) 
 	return schema, nil
 }
 
-// GenerateFieldSchema generates a JSON schema for the Field struct.
-func (sg *SchemaGenerator) GenerateFieldSchema() (*jsonschema.Schema, error) {
+// generateFieldSchema generates a JSON schema for the Field struct.
+func (sg *schemaGenerator) generateFieldSchema() (*jsonschema.Schema, error) {
 	schema := sg.reflector.Reflect(&specification.Field{})
 	if schema == nil {
 		return nil, fmt.Errorf("%s Field", errorFailedToGenerate)
@@ -91,8 +92,8 @@ func (sg *SchemaGenerator) GenerateFieldSchema() (*jsonschema.Schema, error) {
 	return schema, nil
 }
 
-// GenerateResourceFieldSchema generates a JSON schema for the ResourceField struct.
-func (sg *SchemaGenerator) GenerateResourceFieldSchema() (*jsonschema.Schema, error) {
+// generateResourceFieldSchema generates a JSON schema for the ResourceField struct.
+func (sg *schemaGenerator) generateResourceFieldSchema() (*jsonschema.Schema, error) {
 	schema := sg.reflector.Reflect(&specification.ResourceField{})
 	if schema == nil {
 		return nil, fmt.Errorf("%s ResourceField", errorFailedToGenerate)
@@ -101,8 +102,8 @@ func (sg *SchemaGenerator) GenerateResourceFieldSchema() (*jsonschema.Schema, er
 	return schema, nil
 }
 
-// GenerateEndpointSchema generates a JSON schema for the Endpoint struct.
-func (sg *SchemaGenerator) GenerateEndpointSchema() (*jsonschema.Schema, error) {
+// generateEndpointSchema generates a JSON schema for the Endpoint struct.
+func (sg *schemaGenerator) generateEndpointSchema() (*jsonschema.Schema, error) {
 	schema := sg.reflector.Reflect(&specification.Endpoint{})
 	if schema == nil {
 		return nil, fmt.Errorf("%s Endpoint", errorFailedToGenerate)
@@ -111,8 +112,8 @@ func (sg *SchemaGenerator) GenerateEndpointSchema() (*jsonschema.Schema, error) 
 	return schema, nil
 }
 
-// GenerateEndpointRequestSchema generates a JSON schema for the EndpointRequest struct.
-func (sg *SchemaGenerator) GenerateEndpointRequestSchema() (*jsonschema.Schema, error) {
+// generateEndpointRequestSchema generates a JSON schema for the EndpointRequest struct.
+func (sg *schemaGenerator) generateEndpointRequestSchema() (*jsonschema.Schema, error) {
 	schema := sg.reflector.Reflect(&specification.EndpointRequest{})
 	if schema == nil {
 		return nil, fmt.Errorf("%s EndpointRequest", errorFailedToGenerate)
@@ -121,8 +122,8 @@ func (sg *SchemaGenerator) GenerateEndpointRequestSchema() (*jsonschema.Schema, 
 	return schema, nil
 }
 
-// GenerateEndpointResponseSchema generates a JSON schema for the EndpointResponse struct.
-func (sg *SchemaGenerator) GenerateEndpointResponseSchema() (*jsonschema.Schema, error) {
+// generateEndpointResponseSchema generates a JSON schema for the EndpointResponse struct.
+func (sg *schemaGenerator) generateEndpointResponseSchema() (*jsonschema.Schema, error) {
 	schema := sg.reflector.Reflect(&specification.EndpointResponse{})
 	if schema == nil {
 		return nil, fmt.Errorf("%s EndpointResponse", errorFailedToGenerate)
@@ -131,59 +132,59 @@ func (sg *SchemaGenerator) GenerateEndpointResponseSchema() (*jsonschema.Schema,
 	return schema, nil
 }
 
-// GenerateAllSchemas generates JSON schemas for all main specification structs.
-func (sg *SchemaGenerator) GenerateAllSchemas() (map[string]*jsonschema.Schema, error) {
+// generateAllSchemas generates JSON schemas for all main specification structs.
+func (sg *schemaGenerator) generateAllSchemas() (map[string]*jsonschema.Schema, error) {
 	schemas := make(map[string]*jsonschema.Schema)
 
-	serviceSchema, err := sg.GenerateServiceSchema()
+	serviceSchema, err := sg.generateServiceSchema()
 	if err != nil {
 		return nil, fmt.Errorf("%s Service schema: %w", errorFailedToGenerate, err)
 	}
 	schemas["Service"] = serviceSchema
 
-	enumSchema, err := sg.GenerateEnumSchema()
+	enumSchema, err := sg.generateEnumSchema()
 	if err != nil {
 		return nil, fmt.Errorf("%s Enum schema: %w", errorFailedToGenerate, err)
 	}
 	schemas["Enum"] = enumSchema
 
-	objectSchema, err := sg.GenerateObjectSchema()
+	objectSchema, err := sg.generateObjectSchema()
 	if err != nil {
 		return nil, fmt.Errorf("%s Object schema: %w", errorFailedToGenerate, err)
 	}
 	schemas["Object"] = objectSchema
 
-	resourceSchema, err := sg.GenerateResourceSchema()
+	resourceSchema, err := sg.generateResourceSchema()
 	if err != nil {
 		return nil, fmt.Errorf("%s Resource schema: %w", errorFailedToGenerate, err)
 	}
 	schemas["Resource"] = resourceSchema
 
-	fieldSchema, err := sg.GenerateFieldSchema()
+	fieldSchema, err := sg.generateFieldSchema()
 	if err != nil {
 		return nil, fmt.Errorf("%s Field schema: %w", errorFailedToGenerate, err)
 	}
 	schemas["Field"] = fieldSchema
 
-	resourceFieldSchema, err := sg.GenerateResourceFieldSchema()
+	resourceFieldSchema, err := sg.generateResourceFieldSchema()
 	if err != nil {
 		return nil, fmt.Errorf("%s ResourceField schema: %w", errorFailedToGenerate, err)
 	}
 	schemas["ResourceField"] = resourceFieldSchema
 
-	endpointSchema, err := sg.GenerateEndpointSchema()
+	endpointSchema, err := sg.generateEndpointSchema()
 	if err != nil {
 		return nil, fmt.Errorf("%s Endpoint schema: %w", errorFailedToGenerate, err)
 	}
 	schemas["Endpoint"] = endpointSchema
 
-	endpointRequestSchema, err := sg.GenerateEndpointRequestSchema()
+	endpointRequestSchema, err := sg.generateEndpointRequestSchema()
 	if err != nil {
 		return nil, fmt.Errorf("%s EndpointRequest schema: %w", errorFailedToGenerate, err)
 	}
 	schemas["EndpointRequest"] = endpointRequestSchema
 
-	endpointResponseSchema, err := sg.GenerateEndpointResponseSchema()
+	endpointResponseSchema, err := sg.generateEndpointResponseSchema()
 	if err != nil {
 		return nil, fmt.Errorf("%s EndpointResponse schema: %w", errorFailedToGenerate, err)
 	}
@@ -192,8 +193,8 @@ func (sg *SchemaGenerator) GenerateAllSchemas() (map[string]*jsonschema.Schema, 
 	return schemas, nil
 }
 
-// SchemaToJSON converts a JSON schema to a JSON string.
-func (sg *SchemaGenerator) SchemaToJSON(schema *jsonschema.Schema) (string, error) {
+// schemaToJSON converts a JSON schema to a JSON string.
+func (sg *schemaGenerator) schemaToJSON(schema *jsonschema.Schema) (string, error) {
 	jsonBytes, err := json.MarshalIndent(schema, "", "  ")
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", errorFailedToMarshal, err)
@@ -203,18 +204,18 @@ func (sg *SchemaGenerator) SchemaToJSON(schema *jsonschema.Schema) (string, erro
 }
 
 // GenerateServiceSchemaJSON generates a JSON schema for the Service struct and returns it as a JSON string.
-func (sg *SchemaGenerator) GenerateServiceSchemaJSON() (string, error) {
-	schema, err := sg.GenerateServiceSchema()
+func (sg *schemaGenerator) GenerateServiceSchemaJSON() (string, error) {
+	schema, err := sg.generateServiceSchema()
 	if err != nil {
 		return "", err
 	}
 
-	return sg.SchemaToJSON(schema)
+	return sg.schemaToJSON(schema)
 }
 
 // ValidateService validates a JSON/YAML representation of a Service against its schema.
-func (sg *SchemaGenerator) ValidateService(data []byte) error {
-	schema, err := sg.GenerateServiceSchema()
+func (sg *schemaGenerator) ValidateService(data []byte) error {
+	schema, err := sg.generateServiceSchema()
 	if err != nil {
 		return fmt.Errorf("%s Service schema: %w", errorFailedToGenerate, err)
 	}
@@ -223,8 +224,8 @@ func (sg *SchemaGenerator) ValidateService(data []byte) error {
 }
 
 // ValidateEnum validates a JSON/YAML representation of an Enum against its schema.
-func (sg *SchemaGenerator) ValidateEnum(data []byte) error {
-	schema, err := sg.GenerateEnumSchema()
+func (sg *schemaGenerator) ValidateEnum(data []byte) error {
+	schema, err := sg.generateEnumSchema()
 	if err != nil {
 		return fmt.Errorf("%s Enum schema: %w", errorFailedToGenerate, err)
 	}
@@ -233,8 +234,8 @@ func (sg *SchemaGenerator) ValidateEnum(data []byte) error {
 }
 
 // ValidateObject validates a JSON/YAML representation of an Object against its schema.
-func (sg *SchemaGenerator) ValidateObject(data []byte) error {
-	schema, err := sg.GenerateObjectSchema()
+func (sg *schemaGenerator) ValidateObject(data []byte) error {
+	schema, err := sg.generateObjectSchema()
 	if err != nil {
 		return fmt.Errorf("%s Object schema: %w", errorFailedToGenerate, err)
 	}
@@ -243,8 +244,8 @@ func (sg *SchemaGenerator) ValidateObject(data []byte) error {
 }
 
 // ValidateResource validates a JSON/YAML representation of a Resource against its schema.
-func (sg *SchemaGenerator) ValidateResource(data []byte) error {
-	schema, err := sg.GenerateResourceSchema()
+func (sg *schemaGenerator) ValidateResource(data []byte) error {
+	schema, err := sg.generateResourceSchema()
 	if err != nil {
 		return fmt.Errorf("%s Resource schema: %w", errorFailedToGenerate, err)
 	}
@@ -253,8 +254,8 @@ func (sg *SchemaGenerator) ValidateResource(data []byte) error {
 }
 
 // ValidateField validates a JSON/YAML representation of a Field against its schema.
-func (sg *SchemaGenerator) ValidateField(data []byte) error {
-	schema, err := sg.GenerateFieldSchema()
+func (sg *schemaGenerator) ValidateField(data []byte) error {
+	schema, err := sg.generateFieldSchema()
 	if err != nil {
 		return fmt.Errorf("%s Field schema: %w", errorFailedToGenerate, err)
 	}
@@ -263,8 +264,8 @@ func (sg *SchemaGenerator) ValidateField(data []byte) error {
 }
 
 // ValidateResourceField validates a JSON/YAML representation of a ResourceField against its schema.
-func (sg *SchemaGenerator) ValidateResourceField(data []byte) error {
-	schema, err := sg.GenerateResourceFieldSchema()
+func (sg *schemaGenerator) ValidateResourceField(data []byte) error {
+	schema, err := sg.generateResourceFieldSchema()
 	if err != nil {
 		return fmt.Errorf("%s ResourceField schema: %w", errorFailedToGenerate, err)
 	}
@@ -273,8 +274,8 @@ func (sg *SchemaGenerator) ValidateResourceField(data []byte) error {
 }
 
 // ValidateEndpoint validates a JSON/YAML representation of an Endpoint against its schema.
-func (sg *SchemaGenerator) ValidateEndpoint(data []byte) error {
-	schema, err := sg.GenerateEndpointSchema()
+func (sg *schemaGenerator) ValidateEndpoint(data []byte) error {
+	schema, err := sg.generateEndpointSchema()
 	if err != nil {
 		return fmt.Errorf("%s Endpoint schema: %w", errorFailedToGenerate, err)
 	}
@@ -283,8 +284,8 @@ func (sg *SchemaGenerator) ValidateEndpoint(data []byte) error {
 }
 
 // ValidateEndpointRequest validates a JSON/YAML representation of an EndpointRequest against its schema.
-func (sg *SchemaGenerator) ValidateEndpointRequest(data []byte) error {
-	schema, err := sg.GenerateEndpointRequestSchema()
+func (sg *schemaGenerator) ValidateEndpointRequest(data []byte) error {
+	schema, err := sg.generateEndpointRequestSchema()
 	if err != nil {
 		return fmt.Errorf("%s EndpointRequest schema: %w", errorFailedToGenerate, err)
 	}
@@ -293,8 +294,8 @@ func (sg *SchemaGenerator) ValidateEndpointRequest(data []byte) error {
 }
 
 // ValidateEndpointResponse validates a JSON/YAML representation of an EndpointResponse against its schema.
-func (sg *SchemaGenerator) ValidateEndpointResponse(data []byte) error {
-	schema, err := sg.GenerateEndpointResponseSchema()
+func (sg *schemaGenerator) ValidateEndpointResponse(data []byte) error {
+	schema, err := sg.generateEndpointResponseSchema()
 	if err != nil {
 		return fmt.Errorf("%s EndpointResponse schema: %w", errorFailedToGenerate, err)
 	}
@@ -303,9 +304,9 @@ func (sg *SchemaGenerator) ValidateEndpointResponse(data []byte) error {
 }
 
 // validateWithSchema is a helper function that validates data against a JSON schema.
-func (sg *SchemaGenerator) validateWithSchema(schema *jsonschema.Schema, data []byte) error {
+func (sg *schemaGenerator) validateWithSchema(schema *jsonschema.Schema, data []byte) error {
 	// Convert schema to JSON string
-	schemaJSON, err := sg.SchemaToJSON(schema)
+	schemaJSON, err := sg.schemaToJSON(schema)
 	if err != nil {
 		return fmt.Errorf("%s: %w", errorFailedToConvert, err)
 	}
@@ -336,7 +337,7 @@ func (sg *SchemaGenerator) validateWithSchema(schema *jsonschema.Schema, data []
 }
 
 // convertToJSON converts YAML or JSON data to JSON format.
-func (sg *SchemaGenerator) convertToJSON(data []byte) ([]byte, error) {
+func (sg *schemaGenerator) convertToJSON(data []byte) ([]byte, error) {
 	// First, try to parse as JSON
 	var jsonData interface{}
 	if err := json.Unmarshal(data, &jsonData); err == nil {
@@ -360,7 +361,7 @@ func (sg *SchemaGenerator) convertToJSON(data []byte) ([]byte, error) {
 }
 
 // ParseServiceFromJSON parses and validates a Service from JSON data.
-func (sg *SchemaGenerator) ParseServiceFromJSON(data []byte) (*specification.Service, error) {
+func (sg *schemaGenerator) ParseServiceFromJSON(data []byte) (*specification.Service, error) {
 	// Validate against schema first
 	if err := sg.ValidateService(data); err != nil {
 		return nil, fmt.Errorf("%s: %w", errorValidationFailed, err)
@@ -376,7 +377,7 @@ func (sg *SchemaGenerator) ParseServiceFromJSON(data []byte) (*specification.Ser
 }
 
 // ParseServiceFromYAML parses and validates a Service from YAML data.
-func (sg *SchemaGenerator) ParseServiceFromYAML(data []byte) (*specification.Service, error) {
+func (sg *schemaGenerator) ParseServiceFromYAML(data []byte) (*specification.Service, error) {
 	// Convert YAML to JSON for validation
 	jsonData, err := sg.convertToJSON(data)
 	if err != nil {
@@ -398,7 +399,7 @@ func (sg *SchemaGenerator) ParseServiceFromYAML(data []byte) (*specification.Ser
 }
 
 // ParseEnumFromJSON parses and validates an Enum from JSON data.
-func (sg *SchemaGenerator) ParseEnumFromJSON(data []byte) (*specification.Enum, error) {
+func (sg *schemaGenerator) ParseEnumFromJSON(data []byte) (*specification.Enum, error) {
 	if err := sg.ValidateEnum(data); err != nil {
 		return nil, fmt.Errorf("%s: %w", errorValidationFailed, err)
 	}
@@ -412,7 +413,7 @@ func (sg *SchemaGenerator) ParseEnumFromJSON(data []byte) (*specification.Enum, 
 }
 
 // ParseEnumFromYAML parses and validates an Enum from YAML data.
-func (sg *SchemaGenerator) ParseEnumFromYAML(data []byte) (*specification.Enum, error) {
+func (sg *schemaGenerator) ParseEnumFromYAML(data []byte) (*specification.Enum, error) {
 	jsonData, err := sg.convertToJSON(data)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", errorConversionFailed, err)
@@ -431,7 +432,7 @@ func (sg *SchemaGenerator) ParseEnumFromYAML(data []byte) (*specification.Enum, 
 }
 
 // ParseObjectFromJSON parses and validates an Object from JSON data.
-func (sg *SchemaGenerator) ParseObjectFromJSON(data []byte) (*specification.Object, error) {
+func (sg *schemaGenerator) ParseObjectFromJSON(data []byte) (*specification.Object, error) {
 	if err := sg.ValidateObject(data); err != nil {
 		return nil, fmt.Errorf("%s: %w", errorValidationFailed, err)
 	}
@@ -445,7 +446,7 @@ func (sg *SchemaGenerator) ParseObjectFromJSON(data []byte) (*specification.Obje
 }
 
 // ParseObjectFromYAML parses and validates an Object from YAML data.
-func (sg *SchemaGenerator) ParseObjectFromYAML(data []byte) (*specification.Object, error) {
+func (sg *schemaGenerator) ParseObjectFromYAML(data []byte) (*specification.Object, error) {
 	jsonData, err := sg.convertToJSON(data)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", errorConversionFailed, err)
@@ -464,7 +465,7 @@ func (sg *SchemaGenerator) ParseObjectFromYAML(data []byte) (*specification.Obje
 }
 
 // ParseResourceFromJSON parses and validates a Resource from JSON data.
-func (sg *SchemaGenerator) ParseResourceFromJSON(data []byte) (*specification.Resource, error) {
+func (sg *schemaGenerator) ParseResourceFromJSON(data []byte) (*specification.Resource, error) {
 	if err := sg.ValidateResource(data); err != nil {
 		return nil, fmt.Errorf("%s: %w", errorValidationFailed, err)
 	}
@@ -478,7 +479,7 @@ func (sg *SchemaGenerator) ParseResourceFromJSON(data []byte) (*specification.Re
 }
 
 // ParseResourceFromYAML parses and validates a Resource from YAML data.
-func (sg *SchemaGenerator) ParseResourceFromYAML(data []byte) (*specification.Resource, error) {
+func (sg *schemaGenerator) ParseResourceFromYAML(data []byte) (*specification.Resource, error) {
 	jsonData, err := sg.convertToJSON(data)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", errorConversionFailed, err)
@@ -494,4 +495,45 @@ func (sg *SchemaGenerator) ParseResourceFromYAML(data []byte) (*specification.Re
 	}
 
 	return &resource, nil
+}
+
+// GenerateSchemas generates JSON schemas for all specification types
+// and writes them to the provided buffer as a JSON object.
+func GenerateSchemas(buf *bytes.Buffer, service *specification.Service) error {
+	// Create schema generator
+	generator := newSchemaGenerator()
+
+	// Generate all schemas
+	schemas, err := generator.generateAllSchemas()
+	if err != nil {
+		return fmt.Errorf("failed to generate schemas: %w", err)
+	}
+
+	// Convert all schemas to a combined JSON structure
+	schemaMap := make(map[string]interface{})
+	for name, schemaObj := range schemas {
+		// Convert each schema to JSON and then parse it back to interface{} for clean structure
+		jsonStr, err := generator.schemaToJSON(schemaObj)
+		if err != nil {
+			return fmt.Errorf("failed to convert %s schema to JSON: %w", name, err)
+		}
+
+		var schemaData interface{}
+		if err := json.Unmarshal([]byte(jsonStr), &schemaData); err != nil {
+			return fmt.Errorf("failed to parse %s schema JSON: %w", name, err)
+		}
+
+		schemaMap[name] = schemaData
+	}
+
+	// Marshal the combined schema map to JSON with proper indentation
+	outputData, err := json.MarshalIndent(schemaMap, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal combined schemas to JSON: %w", err)
+	}
+
+	// Write to buffer
+	buf.Write(outputData)
+
+	return nil
 }

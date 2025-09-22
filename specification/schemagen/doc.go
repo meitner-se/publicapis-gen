@@ -10,19 +10,33 @@
 //
 // # Schema Generation
 //
-// Basic schema generation example:
+// The package exports a single function GenerateSchemas that writes all generated
+// schemas to a bytes.Buffer:
 //
-//	generator := schemagen.NewSchemaGenerator()
-//	jsonSchema, err := generator.GenerateServiceSchema()
+//	import (
+//	    "bytes"
+//	    "github.com/meitner-se/publicapis-gen/specification"
+//	    "github.com/meitner-se/publicapis-gen/specification/schemagen"
+//	)
+//
+//	// Load specification
+//	service, err := specification.LoadFromFile("api-spec.yaml")
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
 //
-//	schemaJSON, err := generator.SchemaToJSON(jsonSchema)
+//	// Generate schemas
+//	var buf bytes.Buffer
+//	err = schemagen.GenerateSchemas(&buf, service)
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-//	fmt.Println(schemaJSON)
+//
+//	// Write to file
+//	err = os.WriteFile("schemas.json", buf.Bytes(), 0644)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
 //
 // # Validation
 //

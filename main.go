@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"flag"
@@ -444,13 +445,14 @@ func generateOverlay(ctx context.Context, service *specification.Service, inputF
 func generateOpenAPIBytes(ctx context.Context, service *specification.Service) ([]byte, error) {
 	slog.InfoContext(ctx, "Generating OpenAPI document bytes", logKeyMode, modeOpenAPI)
 
-	// Generate OpenAPI document as JSON in a single call
-	outputData, err := openapigen.GenerateFromSpecificationToJSON(service)
+	// Generate OpenAPI document to buffer
+	var buf bytes.Buffer
+	err := openapigen.GenerateOpenAPI(&buf, service)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate OpenAPI document: %w", err)
 	}
 
-	return outputData, nil
+	return buf.Bytes(), nil
 }
 
 // generateOpenAPI generates an OpenAPI document from the specification.
@@ -529,36 +531,11 @@ func generateOpenAPIYAML(ctx context.Context, service *specification.Service, in
 func generateSchema(ctx context.Context, service *specification.Service, inputFile, outputFile string) error {
 	slog.InfoContext(ctx, "Generating JSON schemas", logKeyMode, modeSchema)
 
-	// Create schema generator
-	generator := schemagen.NewSchemaGenerator()
-
-	// Generate all schemas
-	schemas, err := generator.GenerateAllSchemas()
+	// Generate schemas to buffer
+	var buf bytes.Buffer
+	err := schemagen.GenerateSchemas(&buf, service)
 	if err != nil {
 		return fmt.Errorf("failed to generate schemas: %w", err)
-	}
-
-	// Convert all schemas to a combined JSON structure
-	schemaMap := make(map[string]interface{})
-	for name, schemaObj := range schemas {
-		// Convert each schema to JSON and then parse it back to interface{} for clean structure
-		jsonStr, err := generator.SchemaToJSON(schemaObj)
-		if err != nil {
-			return fmt.Errorf("failed to convert %s schema to JSON: %w", name, err)
-		}
-
-		var schemaData interface{}
-		if err := json.Unmarshal([]byte(jsonStr), &schemaData); err != nil {
-			return fmt.Errorf("failed to parse %s schema JSON: %w", name, err)
-		}
-
-		schemaMap[name] = schemaData
-	}
-
-	// Marshal the combined schema map to JSON with proper indentation
-	outputData, err := json.MarshalIndent(schemaMap, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal combined schemas to JSON: %w", err)
 	}
 
 	// Determine output file path - always use JSON for schemas
@@ -571,7 +548,7 @@ func generateSchema(ctx context.Context, service *specification.Service, inputFi
 	}
 
 	// Write output file
-	if err := os.WriteFile(outputPath, outputData, 0644); err != nil {
+	if err := os.WriteFile(outputPath, buf.Bytes(), 0644); err != nil {
 		return fmt.Errorf("%s: %w", errorFileWrite, err)
 	}
 
