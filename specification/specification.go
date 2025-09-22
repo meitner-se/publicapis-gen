@@ -984,47 +984,6 @@ func createListResponse(statusCode int, description string, dataField Field, pag
 	}
 }
 
-// collectTypesUsedInBodyParams collects all types (including nested) used in request body parameters.
-func collectTypesUsedInBodyParams(service *Service) map[string]bool {
-	usedTypes := make(map[string]bool)
-
-	// Collect types from all endpoint body parameters, excluding search endpoints
-	for _, resource := range service.Resources {
-		for _, endpoint := range resource.Endpoints {
-			// Skip search endpoints since they don't use errorFields
-			isSearchEndpoint := endpoint.Name == searchEndpointName || endpoint.Name == "AdvancedSearch"
-			if !isSearchEndpoint {
-				for _, bodyParam := range endpoint.Request.BodyParams {
-					collectTypeRecursively(bodyParam.Type, usedTypes, service.Objects)
-				}
-			}
-		}
-	}
-
-	return usedTypes
-}
-
-// collectTypeRecursively collects a type and all its nested object types recursively.
-func collectTypeRecursively(fieldType string, usedTypes map[string]bool, objects []Object) {
-	// Skip if already processed
-	if usedTypes[fieldType] {
-		return
-	}
-
-	// Mark this type as used
-	usedTypes[fieldType] = true
-
-	// If it's an object type, recursively collect its field types
-	for _, obj := range objects {
-		if obj.Name == fieldType {
-			for _, field := range obj.Fields {
-				collectTypeRecursively(field.Type, usedTypes, objects)
-			}
-			break
-		}
-	}
-}
-
 // isComparableType returns true if the field type supports range operations.
 func isComparableType(fieldType string) bool {
 	switch fieldType {

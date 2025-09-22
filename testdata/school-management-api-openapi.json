@@ -8,95 +8,22 @@
   "servers": [
     {
       "url": "https://api.school.example.com/v1",
-      "description": "Production server for School Management API"
+      "description": "Production server for School Management API",
+      "x-speakeasy-server-id": "production"
+    },
+    {
+      "url": "https://staging-api.school.example.com/v1",
+      "description": "Staging server for School Management API",
+      "x-speakeasy-server-id": "staging"
     }
   ],
   "paths": {
-    "/students/_search": {
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "description": "Search for `Students` with filtering capabilities.",
-        "operationId": "StudentsSearch",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of Students to return (default: 50)",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "examples": [
-                42
-              ],
-              "default": 50
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "The number of Students to skip before starting to return results (default: 0)",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "examples": [
-                42
-              ],
-              "default": 0
-            }
-          }
-        ],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/StudentsSearch"
-        },
-        "responses": {
-          "200": {
-            "description": "Response for Students Search operation - returns filtered Students results",
-            "$ref": "#/components/responses/StudentsSearch"
-          },
-          "400": {
-            "description": "Bad Request error for Students Search operation - request contains invalid parameters",
-            "$ref": "#/components/responses/Error400ResponseBody"
-          },
-          "401": {
-            "description": "Unauthorized error for Students Search operation - authentication required",
-            "$ref": "#/components/responses/Error401ResponseBody"
-          },
-          "403": {
-            "description": "Forbidden error for Students Search operation - insufficient permissions",
-            "$ref": "#/components/responses/Error403ResponseBody"
-          },
-          "404": {
-            "description": "Not Found error for Students Search operation - resource does not exist",
-            "$ref": "#/components/responses/Error404ResponseBody"
-          },
-          "409": {
-            "description": "Conflict error for Students Search operation - request conflicts with current state",
-            "$ref": "#/components/responses/Error409ResponseBody"
-          },
-          "422": {
-            "description": "Validation error for Students Search operation - request data failed validation",
-            "$ref": "#/components/responses/StudentsSearch422ResponseBody"
-          },
-          "429": {
-            "description": "Rate Limit error for Students Search operation - too many requests",
-            "$ref": "#/components/responses/Error429ResponseBody"
-          },
-          "500": {
-            "description": "Internal Server error for Students Search operation - unexpected server error",
-            "$ref": "#/components/responses/Error500ResponseBody"
-          }
-        },
-        "x-speakeasy-group": "students",
-        "x-speakeasy-name-override": "search"
-      }
-    },
     "/students/bulk-import": {
       "post": {
         "tags": [
           "Students"
         ],
+        "summary": "Bulk Import Students",
         "description": "Import multiple students from a CSV file or structured data",
         "operationId": "StudentsBulkImport",
         "parameters": [
@@ -119,7 +46,7 @@
         },
         "responses": {
           "200": {
-            "description": "Response for Students BulkImport operation",
+            "description": "Successfully imported students",
             "$ref": "#/components/responses/StudentsBulkImport"
           },
           "400": {
@@ -164,6 +91,7 @@
         "tags": [
           "Students"
         ],
+        "summary": "Generate Student Report",
         "description": "Generate a comprehensive report for students based on filters",
         "operationId": "StudentsGenerateReport",
         "parameters": [
@@ -186,7 +114,7 @@
         },
         "responses": {
           "202": {
-            "description": "Response for Students GenerateReport operation",
+            "description": "Successfully queued report generation",
             "$ref": "#/components/responses/StudentsGenerateReport"
           },
           "400": {
@@ -231,6 +159,7 @@
         "tags": [
           "Students"
         ],
+        "summary": "Advanced Student Search",
         "description": "Search students with advanced filtering and sorting options",
         "operationId": "StudentsAdvancedSearch",
         "parameters": [
@@ -292,7 +221,7 @@
         },
         "responses": {
           "200": {
-            "description": "Response for Students AdvancedSearch operation",
+            "description": "Successfully performed advanced search",
             "$ref": "#/components/responses/StudentsAdvancedSearch"
           },
           "400": {
@@ -337,18 +266,19 @@
         "tags": [
           "Students"
         ],
+        "summary": "List Students",
         "description": "Returns a paginated list of all `Students` in your organization.",
         "operationId": "StudentsList",
         "parameters": [
           {
             "name": "limit",
             "in": "query",
-            "description": "The maximum number of Students to return (default: 50)",
+            "description": "The maximum number of Students to return (default: 50) when listing Students",
             "required": false,
             "schema": {
               "type": "integer",
               "examples": [
-                42
+                1
               ],
               "default": 50
             }
@@ -356,12 +286,12 @@
           {
             "name": "offset",
             "in": "query",
-            "description": "The number of Students to skip before starting to return results (default: 0)",
+            "description": "The number of Students to skip before starting to return results (default: 0) when listing Students",
             "required": false,
             "schema": {
               "type": "integer",
               "examples": [
-                42
+                0
               ],
               "default": 0
             }
@@ -401,6 +331,24 @@
             "$ref": "#/components/responses/Error500ResponseBody"
           }
         },
+        "x-speakeasy-pagination": {
+          "type": "offsetLimit",
+          "inputs": [
+            {
+              "name": "offset",
+              "in": "parameters",
+              "type": "offset"
+            },
+            {
+              "name": "limit",
+              "in": "parameters",
+              "type": "limit"
+            }
+          ],
+          "outputs": {
+            "results": "$.data.resultArray"
+          }
+        },
         "x-speakeasy-group": "students",
         "x-speakeasy-name-override": "list"
       },
@@ -408,6 +356,7 @@
         "tags": [
           "Students"
         ],
+        "summary": "Create a new Students",
         "description": "Create a new Students",
         "operationId": "StudentsCreate",
         "parameters": [],
@@ -461,6 +410,7 @@
         "tags": [
           "Students"
         ],
+        "summary": "Get a Students",
         "description": "Retrieves the `Students` with the given ID.",
         "operationId": "StudentsGet",
         "parameters": [
@@ -519,6 +469,7 @@
         "tags": [
           "Students"
         ],
+        "summary": "Delete a Students",
         "description": "Delete a Students",
         "operationId": "StudentsDelete",
         "parameters": [
@@ -576,6 +527,7 @@
         "tags": [
           "Students"
         ],
+        "summary": "Update a Students",
         "description": "Update a Students",
         "operationId": "StudentsUpdate",
         "parameters": [
@@ -637,6 +589,105 @@
         "x-speakeasy-group": "students",
         "x-speakeasy-name-override": "update"
       }
+    },
+    "/students/_search": {
+      "post": {
+        "tags": [
+          "Students"
+        ],
+        "summary": "Search Students",
+        "description": "Search for `Students` with filtering capabilities.",
+        "operationId": "StudentsSearch",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of Students to return (default: 50) when searching Students",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "examples": [
+                1
+              ],
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "The number of Students to skip before starting to return results (default: 0) when searching Students",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "examples": [
+                0
+              ],
+              "default": 0
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/StudentsSearch"
+        },
+        "responses": {
+          "200": {
+            "description": "Response for Students Search operation - returns filtered Students results",
+            "$ref": "#/components/responses/StudentsSearch"
+          },
+          "400": {
+            "description": "Bad Request error for Students Search operation - request contains invalid parameters",
+            "$ref": "#/components/responses/Error400ResponseBody"
+          },
+          "401": {
+            "description": "Unauthorized error for Students Search operation - authentication required",
+            "$ref": "#/components/responses/Error401ResponseBody"
+          },
+          "403": {
+            "description": "Forbidden error for Students Search operation - insufficient permissions",
+            "$ref": "#/components/responses/Error403ResponseBody"
+          },
+          "404": {
+            "description": "Not Found error for Students Search operation - resource does not exist",
+            "$ref": "#/components/responses/Error404ResponseBody"
+          },
+          "409": {
+            "description": "Conflict error for Students Search operation - request conflicts with current state",
+            "$ref": "#/components/responses/Error409ResponseBody"
+          },
+          "422": {
+            "description": "Validation error for Students Search operation - request data failed validation",
+            "$ref": "#/components/responses/StudentsSearch422ResponseBody"
+          },
+          "429": {
+            "description": "Rate Limit error for Students Search operation - too many requests",
+            "$ref": "#/components/responses/Error429ResponseBody"
+          },
+          "500": {
+            "description": "Internal Server error for Students Search operation - unexpected server error",
+            "$ref": "#/components/responses/Error500ResponseBody"
+          }
+        },
+        "x-speakeasy-pagination": {
+          "type": "offsetLimit",
+          "inputs": [
+            {
+              "name": "offset",
+              "in": "parameters",
+              "type": "offset"
+            },
+            {
+              "name": "limit",
+              "in": "parameters",
+              "type": "limit"
+            }
+          ],
+          "outputs": {
+            "results": "$.data.resultArray"
+          }
+        },
+        "x-speakeasy-group": "students",
+        "x-speakeasy-name-override": "search"
+      }
     }
   },
   "components": {
@@ -672,16 +723,6 @@
           "Internal"
         ],
         "description": "Standard error codes used in API responses"
-      },
-      "ErrorFieldCode": {
-        "type": "string",
-        "enum": [
-          "AlreadyExists",
-          "Required",
-          "NotFound",
-          "InvalidValue"
-        ],
-        "description": "Error codes for field-level validation errors"
       },
       "Contact": {
         "type": "object",
@@ -815,38 +856,21 @@
               "example"
             ],
             "description": "Human-readable error message providing additional details"
-          }
-        },
-        "required": [
-          "code",
-          "message"
-        ],
-        "description": "Standard error response object containing error code and message"
-      },
-      "ErrorField": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorFieldCode"
-              }
-            ],
-            "description": "The specific error code indicating the type of field validation error"
           },
-          "message": {
+          "requestID": {
             "type": "string",
             "examples": [
-              "example"
+              "550e8400-e29b-41d4-a716-446655440000"
             ],
-            "description": "Human-readable error message providing details about the field validation error"
+            "description": "Unique identifier for the request that generated this error, used for logging and debugging"
           }
         },
         "required": [
           "code",
-          "message"
+          "message",
+          "requestID"
         ],
-        "description": "Field-specific error information containing error code and message for validation errors"
+        "description": "Standard error response object containing error code, message, and request ID"
       },
       "Pagination": {
         "type": "object",
@@ -854,21 +878,21 @@
           "offset": {
             "type": "integer",
             "examples": [
-              42
+              0
             ],
             "description": "Number of items to skip from the beginning of the result set"
           },
           "limit": {
             "type": "integer",
             "examples": [
-              42
+              1
             ],
             "description": "Maximum number of items to return in the result set"
           },
           "total": {
             "type": "integer",
             "examples": [
-              42
+              100
             ],
             "description": "Total number of items available for pagination"
           }
@@ -894,7 +918,7 @@
           "createdBy": {
             "type": "string",
             "examples": [
-              "123e4567-e89b-12d3-a456-426614174000",
+              "987fcdeb-51a2-43d1-b567-123456789abc",
               null
             ],
             "format": "uuid",
@@ -904,7 +928,7 @@
           "updatedAt": {
             "type": "string",
             "examples": [
-              "2024-01-15T10:30:00Z"
+              "2024-01-15T14:45:00Z"
             ],
             "format": "date-time",
             "description": "Timestamp when the resource was last updated"
@@ -912,7 +936,7 @@
           "updatedBy": {
             "type": "string",
             "examples": [
-              "123e4567-e89b-12d3-a456-426614174000",
+              "987fcdeb-51a2-43d1-b567-123456789abc",
               null
             ],
             "format": "uuid",
@@ -946,9 +970,9 @@
             "examples": [
               {
                 "createdAt": "2024-01-15T10:30:00Z",
-                "createdBy": "123e4567-e89b-12d3-a456-426614174000",
-                "updatedAt": "2024-01-15T10:30:00Z",
-                "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                "updatedAt": "2024-01-15T14:45:00Z",
+                "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
               }
             ],
             "description": "Metadata information for the Students"
@@ -1052,1738 +1076,6 @@
           "enrollmentDate"
         ],
         "description": "Student management resource"
-      },
-      "ContactRequestError": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Email address",
-            "nullable": true
-          },
-          "phone": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Phone number",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Contact"
-      },
-      "StudentRequestError": {
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Student's first name",
-            "nullable": true
-          },
-          "lastName": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Student's last name",
-            "nullable": true
-          },
-          "studentId": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "School-assigned student ID",
-            "nullable": true
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Current status of the student",
-            "nullable": true
-          },
-          "gradeLevel": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Current grade level",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Student"
-      },
-      "AddressRequestError": {
-        "type": "object",
-        "properties": {
-          "street": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Street address",
-            "nullable": true
-          },
-          "city": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "City",
-            "nullable": true
-          },
-          "state": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "State or province",
-            "nullable": true
-          },
-          "zipCode": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "ZIP or postal code",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Address"
-      },
-      "StudentsBulkImportRequestError": {
-        "type": "object",
-        "properties": {
-          "students": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentRequestError"
-              }
-            ],
-            "examples": [
-              {
-                "firstName": {
-                  "message": "example"
-                },
-                "lastName": {
-                  "message": "example"
-                },
-                "studentId": {
-                  "message": "example"
-                },
-                "status": {
-                  "message": "example"
-                },
-                "gradeLevel": {
-                  "message": "example"
-                }
-              },
-              null
-            ],
-            "description": "Array of student data to import",
-            "nullable": true
-          },
-          "overwriteExisting": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Whether to overwrite existing student records",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Students BulkImport endpoint"
-      },
-      "StudentsGenerateReportRequestError": {
-        "type": "object",
-        "properties": {
-          "gradeLevel": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Filter by specific grade level",
-            "nullable": true
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Filter by student status",
-            "nullable": true
-          },
-          "enrollmentDateFrom": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Filter students enrolled after this date",
-            "nullable": true
-          },
-          "enrollmentDateTo": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Filter students enrolled before this date",
-            "nullable": true
-          },
-          "includeInactive": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Include inactive students in report",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Students GenerateReport endpoint"
-      },
-      "StudentsCreateRequestError": {
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Student's first name",
-            "nullable": true
-          },
-          "lastName": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Student's last name",
-            "nullable": true
-          },
-          "studentId": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "School-assigned student ID",
-            "nullable": true
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Current status of the student",
-            "nullable": true
-          },
-          "gradeLevel": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Current grade level",
-            "nullable": true
-          },
-          "contact": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ContactRequestError"
-              }
-            ],
-            "examples": [
-              {
-                "email": {
-                  "message": "example"
-                },
-                "phone": {
-                  "message": "example"
-                }
-              },
-              null
-            ],
-            "description": "Student contact information",
-            "nullable": true
-          },
-          "address": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AddressRequestError"
-              }
-            ],
-            "examples": [
-              {
-                "street": {
-                  "message": "example"
-                },
-                "city": {
-                  "message": "example"
-                },
-                "state": {
-                  "message": "example"
-                },
-                "zipCode": {
-                  "message": "example"
-                }
-              },
-              null
-            ],
-            "description": "Student home address",
-            "nullable": true
-          },
-          "enrollmentDate": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Date when student was enrolled",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Students Create endpoint"
-      },
-      "StudentsUpdateRequestError": {
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Student's first name",
-            "nullable": true
-          },
-          "lastName": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Student's last name",
-            "nullable": true
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Current status of the student",
-            "nullable": true
-          },
-          "gradeLevel": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Current grade level",
-            "nullable": true
-          },
-          "contact": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ContactRequestError"
-              }
-            ],
-            "examples": [
-              {
-                "email": {
-                  "message": "example"
-                },
-                "phone": {
-                  "message": "example"
-                }
-              },
-              null
-            ],
-            "description": "Student contact information",
-            "nullable": true
-          },
-          "address": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AddressRequestError"
-              }
-            ],
-            "examples": [
-              {
-                "street": {
-                  "message": "example"
-                },
-                "city": {
-                  "message": "example"
-                },
-                "state": {
-                  "message": "example"
-                },
-                "zipCode": {
-                  "message": "example"
-                }
-              },
-              null
-            ],
-            "description": "Student home address",
-            "nullable": true
-          },
-          "graduationDate": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ErrorField"
-              }
-            ],
-            "examples": [
-              {
-                "message": "example"
-              },
-              null
-            ],
-            "description": "Expected or actual graduation date",
-            "nullable": true
-          }
-        },
-        "description": "Request error object for Students Update endpoint"
-      },
-      "ContactFilter": {
-        "type": "object",
-        "properties": {
-          "equals": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ContactFilterEquals"
-              }
-            ],
-            "examples": [
-              {
-                "email": "example",
-                "phone": "example"
-              },
-              null
-            ],
-            "description": "Equality filters for Contact",
-            "nullable": true
-          },
-          "notEquals": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ContactFilterEquals"
-              }
-            ],
-            "examples": [
-              {
-                "email": "example",
-                "phone": "example"
-              },
-              null
-            ],
-            "description": "Inequality filters for Contact",
-            "nullable": true
-          },
-          "greaterThan": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ContactFilterRange"
-              }
-            ],
-            "description": "Greater than filters for Contact",
-            "nullable": true
-          },
-          "smallerThan": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ContactFilterRange"
-              }
-            ],
-            "description": "Smaller than filters for Contact",
-            "nullable": true
-          },
-          "greaterOrEqual": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ContactFilterRange"
-              }
-            ],
-            "description": "Greater than or equal filters for Contact",
-            "nullable": true
-          },
-          "smallerOrEqual": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ContactFilterRange"
-              }
-            ],
-            "description": "Smaller than or equal filters for Contact",
-            "nullable": true
-          },
-          "contains": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ContactFilterContains"
-              }
-            ],
-            "examples": [
-              {
-                "email": [
-                  "example"
-                ],
-                "phone": [
-                  "example"
-                ]
-              },
-              null
-            ],
-            "description": "Contains filters for Contact",
-            "nullable": true
-          },
-          "notContains": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ContactFilterContains"
-              }
-            ],
-            "examples": [
-              {
-                "email": [
-                  "example"
-                ],
-                "phone": [
-                  "example"
-                ]
-              },
-              null
-            ],
-            "description": "Not contains filters for Contact",
-            "nullable": true
-          },
-          "like": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ContactFilterLike"
-              }
-            ],
-            "examples": [
-              {
-                "email": "example",
-                "phone": "example"
-              },
-              null
-            ],
-            "description": "LIKE filters for Contact",
-            "nullable": true
-          },
-          "notLike": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ContactFilterLike"
-              }
-            ],
-            "examples": [
-              {
-                "email": "example",
-                "phone": "example"
-              },
-              null
-            ],
-            "description": "NOT LIKE filters for Contact",
-            "nullable": true
-          },
-          "null": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ContactFilterNull"
-              }
-            ],
-            "examples": [
-              {
-                "phone": true
-              },
-              null
-            ],
-            "description": "Null filters for Contact",
-            "nullable": true
-          },
-          "notNull": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ContactFilterNull"
-              }
-            ],
-            "examples": [
-              {
-                "phone": true
-              },
-              null
-            ],
-            "description": "Not null filters for Contact",
-            "nullable": true
-          },
-          "orCondition": {
-            "type": "boolean",
-            "examples": [
-              true
-            ],
-            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
-          },
-          "nestedFilters": {
-            "type": "array",
-            "examples": [
-              [
-                {
-                  "equals": {
-                    "email": "example",
-                    "phone": "example"
-                  },
-                  "notEquals": {
-                    "email": "example",
-                    "phone": "example"
-                  },
-                  "contains": {
-                    "email": [
-                      "example"
-                    ],
-                    "phone": [
-                      "example"
-                    ]
-                  },
-                  "notContains": {
-                    "email": [
-                      "example"
-                    ],
-                    "phone": [
-                      "example"
-                    ]
-                  },
-                  "like": {
-                    "email": "example",
-                    "phone": "example"
-                  },
-                  "notLike": {
-                    "email": "example",
-                    "phone": "example"
-                  },
-                  "null": {
-                    "phone": true
-                  },
-                  "notNull": {
-                    "phone": true
-                  },
-                  "orCondition": true
-                }
-              ]
-            ],
-            "items": {
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/ContactFilter"
-                }
-              ]
-            },
-            "description": "NestedFilters of the Contact, useful for more complex filters"
-          }
-        },
-        "required": [
-          "orCondition"
-        ],
-        "description": "Filter object for Contact"
-      },
-      "ContactFilterEquals": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "Email address",
-            "nullable": true
-          },
-          "phone": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "Phone number",
-            "nullable": true
-          }
-        },
-        "description": "Equality/Inequality filter fields for Contact"
-      },
-      "ContactFilterRange": {
-        "type": "object",
-        "description": "Range filter fields for Contact"
-      },
-      "ContactFilterContains": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "array",
-            "examples": [
-              [
-                "example"
-              ]
-            ],
-            "items": {
-              "type": "string"
-            },
-            "description": "Email address"
-          },
-          "phone": {
-            "type": "array",
-            "examples": [
-              [
-                "example"
-              ]
-            ],
-            "items": {
-              "type": "string"
-            },
-            "description": "Phone number"
-          }
-        },
-        "description": "Contains filter fields for Contact"
-      },
-      "ContactFilterLike": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "Email address",
-            "nullable": true
-          },
-          "phone": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "Phone number",
-            "nullable": true
-          }
-        },
-        "description": "LIKE filter fields for Contact"
-      },
-      "ContactFilterNull": {
-        "type": "object",
-        "properties": {
-          "phone": {
-            "type": "boolean",
-            "examples": [
-              true,
-              null
-            ],
-            "description": "Phone number",
-            "nullable": true
-          }
-        },
-        "description": "Null filter fields for Contact"
-      },
-      "AddressFilter": {
-        "type": "object",
-        "properties": {
-          "equals": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AddressFilterEquals"
-              }
-            ],
-            "examples": [
-              {
-                "street": "example",
-                "city": "example",
-                "state": "example",
-                "zipCode": "example"
-              },
-              null
-            ],
-            "description": "Equality filters for Address",
-            "nullable": true
-          },
-          "notEquals": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AddressFilterEquals"
-              }
-            ],
-            "examples": [
-              {
-                "street": "example",
-                "city": "example",
-                "state": "example",
-                "zipCode": "example"
-              },
-              null
-            ],
-            "description": "Inequality filters for Address",
-            "nullable": true
-          },
-          "greaterThan": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AddressFilterRange"
-              }
-            ],
-            "description": "Greater than filters for Address",
-            "nullable": true
-          },
-          "smallerThan": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AddressFilterRange"
-              }
-            ],
-            "description": "Smaller than filters for Address",
-            "nullable": true
-          },
-          "greaterOrEqual": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AddressFilterRange"
-              }
-            ],
-            "description": "Greater than or equal filters for Address",
-            "nullable": true
-          },
-          "smallerOrEqual": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AddressFilterRange"
-              }
-            ],
-            "description": "Smaller than or equal filters for Address",
-            "nullable": true
-          },
-          "contains": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AddressFilterContains"
-              }
-            ],
-            "examples": [
-              {
-                "street": [
-                  "example"
-                ],
-                "city": [
-                  "example"
-                ],
-                "state": [
-                  "example"
-                ],
-                "zipCode": [
-                  "example"
-                ]
-              },
-              null
-            ],
-            "description": "Contains filters for Address",
-            "nullable": true
-          },
-          "notContains": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AddressFilterContains"
-              }
-            ],
-            "examples": [
-              {
-                "street": [
-                  "example"
-                ],
-                "city": [
-                  "example"
-                ],
-                "state": [
-                  "example"
-                ],
-                "zipCode": [
-                  "example"
-                ]
-              },
-              null
-            ],
-            "description": "Not contains filters for Address",
-            "nullable": true
-          },
-          "like": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AddressFilterLike"
-              }
-            ],
-            "examples": [
-              {
-                "street": "example",
-                "city": "example",
-                "state": "example",
-                "zipCode": "example"
-              },
-              null
-            ],
-            "description": "LIKE filters for Address",
-            "nullable": true
-          },
-          "notLike": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AddressFilterLike"
-              }
-            ],
-            "examples": [
-              {
-                "street": "example",
-                "city": "example",
-                "state": "example",
-                "zipCode": "example"
-              },
-              null
-            ],
-            "description": "NOT LIKE filters for Address",
-            "nullable": true
-          },
-          "null": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AddressFilterNull"
-              }
-            ],
-            "description": "Null filters for Address",
-            "nullable": true
-          },
-          "notNull": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AddressFilterNull"
-              }
-            ],
-            "description": "Not null filters for Address",
-            "nullable": true
-          },
-          "orCondition": {
-            "type": "boolean",
-            "examples": [
-              true
-            ],
-            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
-          },
-          "nestedFilters": {
-            "type": "array",
-            "examples": [
-              [
-                {
-                  "equals": {
-                    "street": "example",
-                    "city": "example",
-                    "state": "example",
-                    "zipCode": "example"
-                  },
-                  "notEquals": {
-                    "street": "example",
-                    "city": "example",
-                    "state": "example",
-                    "zipCode": "example"
-                  },
-                  "contains": {
-                    "street": [
-                      "example"
-                    ],
-                    "city": [
-                      "example"
-                    ],
-                    "state": [
-                      "example"
-                    ],
-                    "zipCode": [
-                      "example"
-                    ]
-                  },
-                  "notContains": {
-                    "street": [
-                      "example"
-                    ],
-                    "city": [
-                      "example"
-                    ],
-                    "state": [
-                      "example"
-                    ],
-                    "zipCode": [
-                      "example"
-                    ]
-                  },
-                  "like": {
-                    "street": "example",
-                    "city": "example",
-                    "state": "example",
-                    "zipCode": "example"
-                  },
-                  "notLike": {
-                    "street": "example",
-                    "city": "example",
-                    "state": "example",
-                    "zipCode": "example"
-                  },
-                  "orCondition": true
-                }
-              ]
-            ],
-            "items": {
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/AddressFilter"
-                }
-              ]
-            },
-            "description": "NestedFilters of the Address, useful for more complex filters"
-          }
-        },
-        "required": [
-          "orCondition"
-        ],
-        "description": "Filter object for Address"
-      },
-      "AddressFilterEquals": {
-        "type": "object",
-        "properties": {
-          "street": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "Street address",
-            "nullable": true
-          },
-          "city": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "City",
-            "nullable": true
-          },
-          "state": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "State or province",
-            "nullable": true
-          },
-          "zipCode": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "ZIP or postal code",
-            "nullable": true
-          }
-        },
-        "description": "Equality/Inequality filter fields for Address"
-      },
-      "AddressFilterRange": {
-        "type": "object",
-        "description": "Range filter fields for Address"
-      },
-      "AddressFilterContains": {
-        "type": "object",
-        "properties": {
-          "street": {
-            "type": "array",
-            "examples": [
-              [
-                "example"
-              ]
-            ],
-            "items": {
-              "type": "string"
-            },
-            "description": "Street address"
-          },
-          "city": {
-            "type": "array",
-            "examples": [
-              [
-                "example"
-              ]
-            ],
-            "items": {
-              "type": "string"
-            },
-            "description": "City"
-          },
-          "state": {
-            "type": "array",
-            "examples": [
-              [
-                "example"
-              ]
-            ],
-            "items": {
-              "type": "string"
-            },
-            "description": "State or province"
-          },
-          "zipCode": {
-            "type": "array",
-            "examples": [
-              [
-                "example"
-              ]
-            ],
-            "items": {
-              "type": "string"
-            },
-            "description": "ZIP or postal code"
-          }
-        },
-        "description": "Contains filter fields for Address"
-      },
-      "AddressFilterLike": {
-        "type": "object",
-        "properties": {
-          "street": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "Street address",
-            "nullable": true
-          },
-          "city": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "City",
-            "nullable": true
-          },
-          "state": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "State or province",
-            "nullable": true
-          },
-          "zipCode": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "ZIP or postal code",
-            "nullable": true
-          }
-        },
-        "description": "LIKE filter fields for Address"
-      },
-      "AddressFilterNull": {
-        "type": "object",
-        "description": "Null filter fields for Address"
-      },
-      "StudentFilter": {
-        "type": "object",
-        "properties": {
-          "equals": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterEquals"
-              }
-            ],
-            "examples": [
-              {
-                "firstName": "example",
-                "lastName": "example",
-                "studentId": "example"
-              },
-              null
-            ],
-            "description": "Equality filters for Student",
-            "nullable": true
-          },
-          "notEquals": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterEquals"
-              }
-            ],
-            "examples": [
-              {
-                "firstName": "example",
-                "lastName": "example",
-                "studentId": "example"
-              },
-              null
-            ],
-            "description": "Inequality filters for Student",
-            "nullable": true
-          },
-          "greaterThan": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterRange"
-              }
-            ],
-            "description": "Greater than filters for Student",
-            "nullable": true
-          },
-          "smallerThan": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterRange"
-              }
-            ],
-            "description": "Smaller than filters for Student",
-            "nullable": true
-          },
-          "greaterOrEqual": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterRange"
-              }
-            ],
-            "description": "Greater than or equal filters for Student",
-            "nullable": true
-          },
-          "smallerOrEqual": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterRange"
-              }
-            ],
-            "description": "Smaller than or equal filters for Student",
-            "nullable": true
-          },
-          "contains": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterContains"
-              }
-            ],
-            "examples": [
-              {
-                "firstName": [
-                  "example"
-                ],
-                "lastName": [
-                  "example"
-                ],
-                "studentId": [
-                  "example"
-                ]
-              },
-              null
-            ],
-            "description": "Contains filters for Student",
-            "nullable": true
-          },
-          "notContains": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterContains"
-              }
-            ],
-            "examples": [
-              {
-                "firstName": [
-                  "example"
-                ],
-                "lastName": [
-                  "example"
-                ],
-                "studentId": [
-                  "example"
-                ]
-              },
-              null
-            ],
-            "description": "Not contains filters for Student",
-            "nullable": true
-          },
-          "like": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterLike"
-              }
-            ],
-            "examples": [
-              {
-                "firstName": "example",
-                "lastName": "example",
-                "studentId": "example"
-              },
-              null
-            ],
-            "description": "LIKE filters for Student",
-            "nullable": true
-          },
-          "notLike": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterLike"
-              }
-            ],
-            "examples": [
-              {
-                "firstName": "example",
-                "lastName": "example",
-                "studentId": "example"
-              },
-              null
-            ],
-            "description": "NOT LIKE filters for Student",
-            "nullable": true
-          },
-          "null": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterNull"
-              }
-            ],
-            "description": "Null filters for Student",
-            "nullable": true
-          },
-          "notNull": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentFilterNull"
-              }
-            ],
-            "description": "Not null filters for Student",
-            "nullable": true
-          },
-          "orCondition": {
-            "type": "boolean",
-            "examples": [
-              true
-            ],
-            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
-          },
-          "nestedFilters": {
-            "type": "array",
-            "examples": [
-              [
-                {
-                  "equals": {
-                    "firstName": "example",
-                    "lastName": "example",
-                    "studentId": "example"
-                  },
-                  "notEquals": {
-                    "firstName": "example",
-                    "lastName": "example",
-                    "studentId": "example"
-                  },
-                  "contains": {
-                    "firstName": [
-                      "example"
-                    ],
-                    "lastName": [
-                      "example"
-                    ],
-                    "studentId": [
-                      "example"
-                    ]
-                  },
-                  "notContains": {
-                    "firstName": [
-                      "example"
-                    ],
-                    "lastName": [
-                      "example"
-                    ],
-                    "studentId": [
-                      "example"
-                    ]
-                  },
-                  "like": {
-                    "firstName": "example",
-                    "lastName": "example",
-                    "studentId": "example"
-                  },
-                  "notLike": {
-                    "firstName": "example",
-                    "lastName": "example",
-                    "studentId": "example"
-                  },
-                  "orCondition": true
-                }
-              ]
-            ],
-            "items": {
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/StudentFilter"
-                }
-              ]
-            },
-            "description": "NestedFilters of the Student, useful for more complex filters"
-          }
-        },
-        "required": [
-          "orCondition"
-        ],
-        "description": "Filter object for Student"
-      },
-      "StudentFilterEquals": {
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "Student's first name",
-            "nullable": true
-          },
-          "lastName": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "Student's last name",
-            "nullable": true
-          },
-          "studentId": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "School-assigned student ID",
-            "nullable": true
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StudentStatus"
-              }
-            ],
-            "description": "Current status of the student",
-            "nullable": true
-          },
-          "gradeLevel": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/GradeLevel"
-              }
-            ],
-            "description": "Current grade level",
-            "nullable": true
-          }
-        },
-        "description": "Equality/Inequality filter fields for Student"
-      },
-      "StudentFilterRange": {
-        "type": "object",
-        "description": "Range filter fields for Student"
-      },
-      "StudentFilterContains": {
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "type": "array",
-            "examples": [
-              [
-                "example"
-              ]
-            ],
-            "items": {
-              "type": "string"
-            },
-            "description": "Student's first name"
-          },
-          "lastName": {
-            "type": "array",
-            "examples": [
-              [
-                "example"
-              ]
-            ],
-            "items": {
-              "type": "string"
-            },
-            "description": "Student's last name"
-          },
-          "studentId": {
-            "type": "array",
-            "examples": [
-              [
-                "example"
-              ]
-            ],
-            "items": {
-              "type": "string"
-            },
-            "description": "School-assigned student ID"
-          },
-          "status": {
-            "type": "array",
-            "items": {
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/StudentStatus"
-                }
-              ]
-            },
-            "description": "Current status of the student"
-          },
-          "gradeLevel": {
-            "type": "array",
-            "items": {
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/GradeLevel"
-                }
-              ]
-            },
-            "description": "Current grade level"
-          }
-        },
-        "description": "Contains filter fields for Student"
-      },
-      "StudentFilterLike": {
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "Student's first name",
-            "nullable": true
-          },
-          "lastName": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "Student's last name",
-            "nullable": true
-          },
-          "studentId": {
-            "type": "string",
-            "examples": [
-              "example",
-              null
-            ],
-            "description": "School-assigned student ID",
-            "nullable": true
-          }
-        },
-        "description": "LIKE filter fields for Student"
-      },
-      "StudentFilterNull": {
-        "type": "object",
-        "description": "Null filter fields for Student"
       },
       "StudentsFilter": {
         "type": "object",
@@ -4268,11 +2560,760 @@
           }
         },
         "description": "Null filter fields for Meta"
+      },
+      "ContactFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "email": "example",
+                "phone": "example"
+              },
+              null
+            ],
+            "description": "Equality filters for Contact",
+            "nullable": true
+          },
+          "notEquals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "email": "example",
+                "phone": "example"
+              },
+              null
+            ],
+            "description": "Inequality filters for Contact",
+            "nullable": true
+          },
+          "greaterThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterRange"
+              }
+            ],
+            "description": "Greater than filters for Contact",
+            "nullable": true
+          },
+          "smallerThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterRange"
+              }
+            ],
+            "description": "Smaller than filters for Contact",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterRange"
+              }
+            ],
+            "description": "Greater than or equal filters for Contact",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterRange"
+              }
+            ],
+            "description": "Smaller than or equal filters for Contact",
+            "nullable": true
+          },
+          "contains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "email": [
+                  "example"
+                ],
+                "phone": [
+                  "example"
+                ]
+              },
+              null
+            ],
+            "description": "Contains filters for Contact",
+            "nullable": true
+          },
+          "notContains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "email": [
+                  "example"
+                ],
+                "phone": [
+                  "example"
+                ]
+              },
+              null
+            ],
+            "description": "Not contains filters for Contact",
+            "nullable": true
+          },
+          "like": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "email": "example",
+                "phone": "example"
+              },
+              null
+            ],
+            "description": "LIKE filters for Contact",
+            "nullable": true
+          },
+          "notLike": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "email": "example",
+                "phone": "example"
+              },
+              null
+            ],
+            "description": "NOT LIKE filters for Contact",
+            "nullable": true
+          },
+          "null": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterNull"
+              }
+            ],
+            "examples": [
+              {
+                "phone": true
+              },
+              null
+            ],
+            "description": "Null filters for Contact",
+            "nullable": true
+          },
+          "notNull": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactFilterNull"
+              }
+            ],
+            "examples": [
+              {
+                "phone": true
+              },
+              null
+            ],
+            "description": "Not null filters for Contact",
+            "nullable": true
+          },
+          "orCondition": {
+            "type": "boolean",
+            "examples": [
+              true
+            ],
+            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
+          },
+          "nestedFilters": {
+            "type": "array",
+            "examples": [
+              [
+                {
+                  "equals": {
+                    "email": "example",
+                    "phone": "example"
+                  },
+                  "notEquals": {
+                    "email": "example",
+                    "phone": "example"
+                  },
+                  "contains": {
+                    "email": [
+                      "example"
+                    ],
+                    "phone": [
+                      "example"
+                    ]
+                  },
+                  "notContains": {
+                    "email": [
+                      "example"
+                    ],
+                    "phone": [
+                      "example"
+                    ]
+                  },
+                  "like": {
+                    "email": "example",
+                    "phone": "example"
+                  },
+                  "notLike": {
+                    "email": "example",
+                    "phone": "example"
+                  },
+                  "null": {
+                    "phone": true
+                  },
+                  "notNull": {
+                    "phone": true
+                  },
+                  "orCondition": true
+                }
+              ]
+            ],
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ContactFilter"
+                }
+              ]
+            },
+            "description": "NestedFilters of the Contact, useful for more complex filters"
+          }
+        },
+        "required": [
+          "orCondition"
+        ],
+        "description": "Filter object for Contact"
+      },
+      "ContactFilterEquals": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "Email address",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "Phone number",
+            "nullable": true
+          }
+        },
+        "description": "Equality/Inequality filter fields for Contact"
+      },
+      "ContactFilterRange": {
+        "type": "object",
+        "description": "Range filter fields for Contact"
+      },
+      "ContactFilterContains": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "array",
+            "examples": [
+              [
+                "example"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Email address"
+          },
+          "phone": {
+            "type": "array",
+            "examples": [
+              [
+                "example"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Phone number"
+          }
+        },
+        "description": "Contains filter fields for Contact"
+      },
+      "ContactFilterLike": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "Email address",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "Phone number",
+            "nullable": true
+          }
+        },
+        "description": "LIKE filter fields for Contact"
+      },
+      "ContactFilterNull": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "boolean",
+            "examples": [
+              true,
+              null
+            ],
+            "description": "Phone number",
+            "nullable": true
+          }
+        },
+        "description": "Null filter fields for Contact"
+      },
+      "AddressFilter": {
+        "type": "object",
+        "properties": {
+          "equals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "street": "example",
+                "city": "example",
+                "state": "example",
+                "zipCode": "example"
+              },
+              null
+            ],
+            "description": "Equality filters for Address",
+            "nullable": true
+          },
+          "notEquals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterEquals"
+              }
+            ],
+            "examples": [
+              {
+                "street": "example",
+                "city": "example",
+                "state": "example",
+                "zipCode": "example"
+              },
+              null
+            ],
+            "description": "Inequality filters for Address",
+            "nullable": true
+          },
+          "greaterThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterRange"
+              }
+            ],
+            "description": "Greater than filters for Address",
+            "nullable": true
+          },
+          "smallerThan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterRange"
+              }
+            ],
+            "description": "Smaller than filters for Address",
+            "nullable": true
+          },
+          "greaterOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterRange"
+              }
+            ],
+            "description": "Greater than or equal filters for Address",
+            "nullable": true
+          },
+          "smallerOrEqual": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterRange"
+              }
+            ],
+            "description": "Smaller than or equal filters for Address",
+            "nullable": true
+          },
+          "contains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "street": [
+                  "example"
+                ],
+                "city": [
+                  "example"
+                ],
+                "state": [
+                  "example"
+                ],
+                "zipCode": [
+                  "example"
+                ]
+              },
+              null
+            ],
+            "description": "Contains filters for Address",
+            "nullable": true
+          },
+          "notContains": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterContains"
+              }
+            ],
+            "examples": [
+              {
+                "street": [
+                  "example"
+                ],
+                "city": [
+                  "example"
+                ],
+                "state": [
+                  "example"
+                ],
+                "zipCode": [
+                  "example"
+                ]
+              },
+              null
+            ],
+            "description": "Not contains filters for Address",
+            "nullable": true
+          },
+          "like": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "street": "example",
+                "city": "example",
+                "state": "example",
+                "zipCode": "example"
+              },
+              null
+            ],
+            "description": "LIKE filters for Address",
+            "nullable": true
+          },
+          "notLike": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterLike"
+              }
+            ],
+            "examples": [
+              {
+                "street": "example",
+                "city": "example",
+                "state": "example",
+                "zipCode": "example"
+              },
+              null
+            ],
+            "description": "NOT LIKE filters for Address",
+            "nullable": true
+          },
+          "null": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterNull"
+              }
+            ],
+            "description": "Null filters for Address",
+            "nullable": true
+          },
+          "notNull": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressFilterNull"
+              }
+            ],
+            "description": "Not null filters for Address",
+            "nullable": true
+          },
+          "orCondition": {
+            "type": "boolean",
+            "examples": [
+              true
+            ],
+            "description": "OrCondition decides if this filter is within an OR-condition or AND-condition"
+          },
+          "nestedFilters": {
+            "type": "array",
+            "examples": [
+              [
+                {
+                  "equals": {
+                    "street": "example",
+                    "city": "example",
+                    "state": "example",
+                    "zipCode": "example"
+                  },
+                  "notEquals": {
+                    "street": "example",
+                    "city": "example",
+                    "state": "example",
+                    "zipCode": "example"
+                  },
+                  "contains": {
+                    "street": [
+                      "example"
+                    ],
+                    "city": [
+                      "example"
+                    ],
+                    "state": [
+                      "example"
+                    ],
+                    "zipCode": [
+                      "example"
+                    ]
+                  },
+                  "notContains": {
+                    "street": [
+                      "example"
+                    ],
+                    "city": [
+                      "example"
+                    ],
+                    "state": [
+                      "example"
+                    ],
+                    "zipCode": [
+                      "example"
+                    ]
+                  },
+                  "like": {
+                    "street": "example",
+                    "city": "example",
+                    "state": "example",
+                    "zipCode": "example"
+                  },
+                  "notLike": {
+                    "street": "example",
+                    "city": "example",
+                    "state": "example",
+                    "zipCode": "example"
+                  },
+                  "orCondition": true
+                }
+              ]
+            ],
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/AddressFilter"
+                }
+              ]
+            },
+            "description": "NestedFilters of the Address, useful for more complex filters"
+          }
+        },
+        "required": [
+          "orCondition"
+        ],
+        "description": "Filter object for Address"
+      },
+      "AddressFilterEquals": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "Street address",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "City",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "State or province",
+            "nullable": true
+          },
+          "zipCode": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "ZIP or postal code",
+            "nullable": true
+          }
+        },
+        "description": "Equality/Inequality filter fields for Address"
+      },
+      "AddressFilterRange": {
+        "type": "object",
+        "description": "Range filter fields for Address"
+      },
+      "AddressFilterContains": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "type": "array",
+            "examples": [
+              [
+                "example"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Street address"
+          },
+          "city": {
+            "type": "array",
+            "examples": [
+              [
+                "example"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "City"
+          },
+          "state": {
+            "type": "array",
+            "examples": [
+              [
+                "example"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "State or province"
+          },
+          "zipCode": {
+            "type": "array",
+            "examples": [
+              [
+                "example"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "ZIP or postal code"
+          }
+        },
+        "description": "Contains filter fields for Address"
+      },
+      "AddressFilterLike": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "Street address",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "City",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "State or province",
+            "nullable": true
+          },
+          "zipCode": {
+            "type": "string",
+            "examples": [
+              "example",
+              null
+            ],
+            "description": "ZIP or postal code",
+            "nullable": true
+          }
+        },
+        "description": "LIKE filter fields for Address"
+      },
+      "AddressFilterNull": {
+        "type": "object",
+        "description": "Null filter fields for Address"
       }
     },
     "responses": {
       "StudentsBulkImport": {
-        "description": "Response for Students BulkImport operation",
+        "description": "Successfully imported students",
         "content": {
           "application/json": {
             "schema": {
@@ -4363,7 +3404,7 @@
         }
       },
       "StudentsGenerateReport": {
-        "description": "Response for Students GenerateReport operation",
+        "description": "Successfully queued report generation",
         "content": {
           "application/json": {
             "schema": {
@@ -4450,7 +3491,7 @@
         }
       },
       "StudentsAdvancedSearch": {
-        "description": "Response for Students AdvancedSearch operation",
+        "description": "Successfully performed advanced search",
         "content": {
           "application/json": {
             "schema": {
@@ -4570,9 +3611,9 @@
                   "id": "123e4567-e89b-12d3-a456-426614174000",
                   "meta": {
                     "createdAt": "2024-01-15T10:30:00Z",
-                    "createdBy": "123e4567-e89b-12d3-a456-426614174000",
-                    "updatedAt": "2024-01-15T10:30:00Z",
-                    "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                    "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                    "updatedAt": "2024-01-15T14:45:00Z",
+                    "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
                   },
                   "firstName": "example",
                   "lastName": "example",
@@ -4654,9 +3695,9 @@
                   "id": "123e4567-e89b-12d3-a456-426614174000",
                   "meta": {
                     "createdAt": "2024-01-15T10:30:00Z",
-                    "createdBy": "123e4567-e89b-12d3-a456-426614174000",
-                    "updatedAt": "2024-01-15T10:30:00Z",
-                    "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                    "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                    "updatedAt": "2024-01-15T14:45:00Z",
+                    "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
                   },
                   "firstName": "example",
                   "lastName": "example",
@@ -4738,9 +3779,9 @@
                   "id": "123e4567-e89b-12d3-a456-426614174000",
                   "meta": {
                     "createdAt": "2024-01-15T10:30:00Z",
-                    "createdBy": "123e4567-e89b-12d3-a456-426614174000",
-                    "updatedAt": "2024-01-15T10:30:00Z",
-                    "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                    "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                    "updatedAt": "2024-01-15T14:45:00Z",
+                    "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
                   },
                   "firstName": "example",
                   "lastName": "example",
@@ -4778,9 +3819,9 @@
                         "id": "123e4567-e89b-12d3-a456-426614174000",
                         "meta": {
                           "createdAt": "2024-01-15T10:30:00Z",
-                          "createdBy": "123e4567-e89b-12d3-a456-426614174000",
-                          "updatedAt": "2024-01-15T10:30:00Z",
-                          "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                          "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                          "updatedAt": "2024-01-15T14:45:00Z",
+                          "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
                         },
                         "firstName": "example",
                         "lastName": "example",
@@ -4817,9 +3858,9 @@
                   ],
                   "examples": [
                     {
-                      "offset": 42,
-                      "limit": 42,
-                      "total": 42
+                      "offset": 0,
+                      "limit": 1,
+                      "total": 100
                     }
                   ],
                   "description": "Pagination information"
@@ -4835,9 +3876,9 @@
                       "id": "123e4567-e89b-12d3-a456-426614174000",
                       "meta": {
                         "createdAt": "2024-01-15T10:30:00Z",
-                        "createdBy": "123e4567-e89b-12d3-a456-426614174000",
-                        "updatedAt": "2024-01-15T10:30:00Z",
-                        "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                        "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                        "updatedAt": "2024-01-15T14:45:00Z",
+                        "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
                       },
                       "firstName": "example",
                       "lastName": "example",
@@ -4857,9 +3898,9 @@
                     }
                   ],
                   "pagination": {
-                    "offset": 42,
-                    "limit": 42,
-                    "total": 42
+                    "offset": 0,
+                    "limit": 1,
+                    "total": 100
                   }
                 }
               }
@@ -4882,9 +3923,9 @@
                         "id": "123e4567-e89b-12d3-a456-426614174000",
                         "meta": {
                           "createdAt": "2024-01-15T10:30:00Z",
-                          "createdBy": "123e4567-e89b-12d3-a456-426614174000",
-                          "updatedAt": "2024-01-15T10:30:00Z",
-                          "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                          "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                          "updatedAt": "2024-01-15T14:45:00Z",
+                          "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
                         },
                         "firstName": "example",
                         "lastName": "example",
@@ -4921,9 +3962,9 @@
                   ],
                   "examples": [
                     {
-                      "offset": 42,
-                      "limit": 42,
-                      "total": 42
+                      "offset": 0,
+                      "limit": 1,
+                      "total": 100
                     }
                   ],
                   "description": "Pagination information"
@@ -4939,9 +3980,9 @@
                       "id": "123e4567-e89b-12d3-a456-426614174000",
                       "meta": {
                         "createdAt": "2024-01-15T10:30:00Z",
-                        "createdBy": "123e4567-e89b-12d3-a456-426614174000",
-                        "updatedAt": "2024-01-15T10:30:00Z",
-                        "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                        "createdBy": "987fcdeb-51a2-43d1-b567-123456789abc",
+                        "updatedAt": "2024-01-15T14:45:00Z",
+                        "updatedBy": "987fcdeb-51a2-43d1-b567-123456789abc"
                       },
                       "firstName": "example",
                       "lastName": "example",
@@ -4961,9 +4002,9 @@
                     }
                   ],
                   "pagination": {
-                    "offset": 42,
-                    "limit": 42,
-                    "total": 42
+                    "offset": 0,
+                    "limit": 1,
+                    "total": 100
                   }
                 }
               }
@@ -5745,7 +4786,7 @@
             "schema": {
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/StudentFilter"
+                  "$ref": "#/components/schemas/StudentsFilter"
                 }
               ],
               "description": "Filter criteria to search for specific records"
@@ -5755,16 +4796,97 @@
                 "summary": "Request body example",
                 "value": {
                   "equals": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                      "updatedAt": "2024-01-15T10:30:00Z",
+                      "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                    },
                     "firstName": "example",
                     "lastName": "example",
-                    "studentId": "example"
+                    "studentId": "example",
+                    "contact": {
+                      "email": "example",
+                      "phone": "example"
+                    },
+                    "address": {
+                      "street": "example",
+                      "city": "example",
+                      "state": "example",
+                      "zipCode": "example"
+                    },
+                    "enrollmentDate": "2024-01-15",
+                    "graduationDate": "2024-01-15"
                   },
                   "notEquals": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                      "updatedAt": "2024-01-15T10:30:00Z",
+                      "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                    },
                     "firstName": "example",
                     "lastName": "example",
-                    "studentId": "example"
+                    "studentId": "example",
+                    "contact": {
+                      "email": "example",
+                      "phone": "example"
+                    },
+                    "address": {
+                      "street": "example",
+                      "city": "example",
+                      "state": "example",
+                      "zipCode": "example"
+                    },
+                    "enrollmentDate": "2024-01-15",
+                    "graduationDate": "2024-01-15"
+                  },
+                  "greaterThan": {
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "updatedAt": "2024-01-15T10:30:00Z"
+                    },
+                    "enrollmentDate": "2024-01-15",
+                    "graduationDate": "2024-01-15"
+                  },
+                  "smallerThan": {
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "updatedAt": "2024-01-15T10:30:00Z"
+                    },
+                    "enrollmentDate": "2024-01-15",
+                    "graduationDate": "2024-01-15"
+                  },
+                  "greaterOrEqual": {
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "updatedAt": "2024-01-15T10:30:00Z"
+                    },
+                    "enrollmentDate": "2024-01-15",
+                    "graduationDate": "2024-01-15"
+                  },
+                  "smallerOrEqual": {
+                    "meta": {
+                      "createdAt": "2024-01-15T10:30:00Z",
+                      "updatedAt": "2024-01-15T10:30:00Z"
+                    },
+                    "enrollmentDate": "2024-01-15",
+                    "graduationDate": "2024-01-15"
                   },
                   "contains": {
+                    "id": [
+                      "123e4567-e89b-12d3-a456-426614174000"
+                    ],
+                    "meta": {
+                      "createdBy": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ],
+                      "updatedBy": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ]
+                    },
                     "firstName": [
                       "example"
                     ],
@@ -5773,9 +4895,48 @@
                     ],
                     "studentId": [
                       "example"
+                    ],
+                    "contact": {
+                      "email": [
+                        "example"
+                      ],
+                      "phone": [
+                        "example"
+                      ]
+                    },
+                    "address": {
+                      "street": [
+                        "example"
+                      ],
+                      "city": [
+                        "example"
+                      ],
+                      "state": [
+                        "example"
+                      ],
+                      "zipCode": [
+                        "example"
+                      ]
+                    },
+                    "enrollmentDate": [
+                      "2024-01-15"
+                    ],
+                    "graduationDate": [
+                      "2024-01-15"
                     ]
                   },
                   "notContains": {
+                    "id": [
+                      "123e4567-e89b-12d3-a456-426614174000"
+                    ],
+                    "meta": {
+                      "createdBy": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ],
+                      "updatedBy": [
+                        "123e4567-e89b-12d3-a456-426614174000"
+                      ]
+                    },
                     "firstName": [
                       "example"
                     ],
@@ -5784,17 +4945,73 @@
                     ],
                     "studentId": [
                       "example"
+                    ],
+                    "contact": {
+                      "email": [
+                        "example"
+                      ],
+                      "phone": [
+                        "example"
+                      ]
+                    },
+                    "address": {
+                      "street": [
+                        "example"
+                      ],
+                      "city": [
+                        "example"
+                      ],
+                      "state": [
+                        "example"
+                      ],
+                      "zipCode": [
+                        "example"
+                      ]
+                    },
+                    "enrollmentDate": [
+                      "2024-01-15"
+                    ],
+                    "graduationDate": [
+                      "2024-01-15"
                     ]
                   },
                   "like": {
                     "firstName": "example",
                     "lastName": "example",
-                    "studentId": "example"
+                    "studentId": "example",
+                    "contact": {
+                      "email": "example",
+                      "phone": "example"
+                    },
+                    "address": {
+                      "street": "example",
+                      "city": "example",
+                      "state": "example",
+                      "zipCode": "example"
+                    }
                   },
                   "notLike": {
                     "firstName": "example",
                     "lastName": "example",
-                    "studentId": "example"
+                    "studentId": "example",
+                    "contact": {
+                      "email": "example",
+                      "phone": "example"
+                    },
+                    "address": {
+                      "street": "example",
+                      "city": "example",
+                      "state": "example",
+                      "zipCode": "example"
+                    }
+                  },
+                  "null": {
+                    "address": true,
+                    "graduationDate": true
+                  },
+                  "notNull": {
+                    "address": true,
+                    "graduationDate": true
                   },
                   "orCondition": true
                 }
