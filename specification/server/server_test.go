@@ -103,16 +103,9 @@ const (
 	expectedDecodePathParams     = "func decodePathParams[T any](c *gin.Context) (T, error)"
 	expectedDecodeQueryParams    = "func decodeQueryParams[T any](c *gin.Context) (T, error)"
 
-	// JSON tags
-	expectedJSONTag = "`json:\"name\"`"
-	expectedFormTag = "`form:\"limit\"`"
-
 	// Comment constants
 	expectedFieldComment  = "// Name: User name"
 	expectedObjectComment = "// Address object"
-
-	// Buffer content checks
-	expectedGofmtError = "gofmt failed:"
 )
 
 // ============================================================================
