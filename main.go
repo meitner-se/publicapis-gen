@@ -720,23 +720,6 @@ func extractPackageNameFromPath(outputPath string) string {
 	return packageName
 }
 
-// isOpenAPIFile checks if a file is already an OpenAPI specification file.
-func isOpenAPIFile(filePath string) bool {
-	// Read the first few bytes to check for OpenAPI signature
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return false
-	}
-
-	// Check if the file contains "openapi" field (for JSON) or "openapi:" (for YAML)
-	content := string(data)
-	if strings.Contains(content, `"openapi"`) || strings.Contains(content, "openapi:") {
-		return true
-	}
-
-	return false
-}
-
 // configureLogging configures the slog logger based on the specified log level.
 func configureLogging(logLevel string) error {
 	var level slog.Level
