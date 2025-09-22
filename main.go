@@ -685,11 +685,8 @@ func generateServer(ctx context.Context, specPath, outputPath string) error {
 func generateServerFromSpecification(ctx context.Context, service *specification.Service, specPath, outputPath, packageName string) error {
 	slog.InfoContext(ctx, "Generating Go server code from specification using servergen", logKeyMode, modeServer)
 
-	// Determine package name
-	finalPackageName := packageName
-	if finalPackageName == "" {
-		finalPackageName = extractPackageNameFromPath(outputPath)
-	}
+	// Note: packageName parameter is currently not used as servergen hardcodes the package to "api"
+	// This is kept for future compatibility when servergen supports custom package names
 
 	// Generate server code using servergen
 	var buf bytes.Buffer
