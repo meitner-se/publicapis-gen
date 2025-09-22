@@ -915,7 +915,7 @@ func TestGenerateUtils(t *testing.T) {
 	assert.Contains(t, generatedCode, expectedDecodeQueryParams, "Should generate decodeQueryParams")
 
 	// Check function implementations
-	assert.Contains(t, generatedCode, `requestID := "test-request-id"`, "Should use test request ID")
+	assert.Contains(t, generatedCode, `requestID := uuid.New().String()`, "Should use test request ID")
 	assert.Contains(t, generatedCode, "parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType]",
 		"Should call parseRequest with generic types")
 	assert.Contains(t, generatedCode, "c.JSON(successStatusCode, response)",

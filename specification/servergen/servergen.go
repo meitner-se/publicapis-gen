@@ -17,6 +17,7 @@ func GenerateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("\t\"embed\"\n")
 	buf.WriteString("\t\"encoding/json\"\n")
 	buf.WriteString("\t\"net/http\"\n\n")
+	buf.WriteString(fmt.Sprintf("\t\"%s\"\n", "github.com/google/uuid"))
 	buf.WriteString(fmt.Sprintf("\t\"%s\"\n", "github.com/gin-gonic/gin"))
 	buf.WriteString(fmt.Sprintf("\t\"%s\"\n", "github.com/meitner-se/go-types"))
 	buf.WriteString(")\n\n")
@@ -324,7 +325,7 @@ func generateUtils(buf *bytes.Buffer) error {
 	function func(ctx context.Context, request Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) (*responseType, error),
 ) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		requestID := "test-request-id"
+		requestID := uuid.New().String()
 
 		request, apiError := parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server.GetSessionFunc)
 		if apiError != nil {
@@ -354,7 +355,7 @@ func generateUtils(buf *bytes.Buffer) error {
 	function func(ctx context.Context, request Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) error,
 ) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		requestID := "test-request-id"
+		requestID := uuid.New().String()
 	
 		request, apiError := parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server.GetSessionFunc)
 		if apiError != nil {
