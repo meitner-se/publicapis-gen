@@ -1,0 +1,482 @@
+package server
+
+import (
+	"bytes"
+	"fmt"
+	"go/format"
+	"strings"
+
+	"github.com/meitner-se/publicapis-gen/specification"
+)
+
+func GenerateServer(buf *bytes.Buffer, service *specification.Service) error {
+	buf.WriteString("package api\n\n")
+
+	buf.WriteString("import (\n")
+	buf.WriteString("\t\"context\"\n")
+	buf.WriteString("\t\"embed\"\n")
+	buf.WriteString("\t\"encoding/json\"\n")
+	buf.WriteString("\t\"net/http\"\n\n")
+	buf.WriteString(fmt.Sprintf("\t\"%s\"\n", "github.com/gin-gonic/gin"))
+	buf.WriteString(fmt.Sprintf("\t\"%s\"\n", "github.com/meitner-se/go-types"))
+	buf.WriteString(")\n\n")
+
+	err := generateServer(buf, service)
+	if err != nil {
+		return err
+	}
+
+	err = generateEnums(buf, service.Enums)
+	if err != nil {
+		return err
+	}
+
+	err = generateObjects(buf, service)
+	if err != nil {
+		return err
+	}
+
+	err = generateRequestTypes(buf, service)
+	if err != nil {
+		return err
+	}
+
+	err = generateResponseTypes(buf, service)
+	if err != nil {
+		return err
+	}
+
+	err = generateUtils(buf)
+	if err != nil {
+		return err
+	}
+
+	// Format the buffer content
+	formatted, err := format.Source(buf.Bytes())
+	if err != nil {
+		return fmt.Errorf("gofmt failed: %w", err)
+	}
+
+	// Write the formatted content back to the buffer
+	buf.Reset()
+	buf.Write(formatted)
+
+	return nil
+}
+
+func generateEnums(buf *bytes.Buffer, enums []specification.Enum) error {
+	for _, enumStruct := range enums {
+		buf.WriteString(fmt.Sprintf("type %s types.String\n\n", enumStruct.Name))
+
+		buf.WriteString("var (\n")
+		for _, value := range enumStruct.Values {
+			buf.WriteString(fmt.Sprintf("\t%s%s = %s(types.NewString(\"%s\")) // %s\n", enumStruct.Name, value.Name, enumStruct.Name, value.Name, value.Description))
+		}
+		buf.WriteString(")\n\n")
+	}
+
+	return nil
+}
+
+func getTypeForGo(field specification.Field, service *specification.Service) string {
+	fieldType := field.Type
+
+	//	if service.HasEnum(fieldType) {
+	//		fieldType = "String"
+	//	}
+
+	return getTypePrefix(field, service) + fieldType
+}
+
+func getTypePrefix(field specification.Field, service *specification.Service) string {
+	isObject := service.IsObject(field.Type)
+	isEnum := service.HasEnum(field.Type)
+
+	prefixes := []string{}
+
+	if field.IsArray() {
+		prefixes = append(prefixes, "[]")
+	}
+
+	if field.IsNullable() && isObject {
+		prefixes = append(prefixes, "*")
+	}
+
+	if !isObject && !isEnum {
+		prefixes = append(prefixes, "types.")
+	}
+
+	typePrefix := strings.Join(prefixes, "")
+
+	return typePrefix
+}
+
+func generateObjects(buf *bytes.Buffer, service *specification.Service) error {
+	for _, object := range service.Objects {
+		buf.WriteString(fmt.Sprintf("// %s\n", object.GetComment()))
+		buf.WriteString(fmt.Sprintf("type %s struct {\n", object.Name))
+
+		for _, field := range object.Fields {
+			buf.WriteString(fmt.Sprintf("%s\n", field.GetComment("\t")))
+
+			buf.WriteString(fmt.Sprintf("\t%s %s `json:\"%s\"`\n\n", field.Name, getTypeForGo(field, service), field.TagJSON()))
+		}
+
+		buf.WriteString("}\n\n")
+
+		if object.Name == "Error" {
+			buf.WriteString("func (e *Error) Error() string {\n")
+			buf.WriteString("\treturn e.Message.String()\n")
+			buf.WriteString("}\n\n")
+
+			buf.WriteString("func (e *Error) HTTPStatusCode() int {\n")
+			buf.WriteString("\tswitch e.Code {\n")
+			buf.WriteString("\tcase ErrorCodeBadRequest:\n")
+			buf.WriteString("\t\treturn http.StatusBadRequest\n")
+			buf.WriteString("\tcase ErrorCodeUnauthorized:\n")
+			buf.WriteString("\t\treturn http.StatusUnauthorized\n")
+			buf.WriteString("\tcase ErrorCodeForbidden:\n")
+			buf.WriteString("\t\treturn http.StatusForbidden\n")
+			buf.WriteString("\tcase ErrorCodeNotFound:\n")
+			buf.WriteString("\t\treturn http.StatusNotFound\n")
+			buf.WriteString("\tcase ErrorCodeConflict:\n")
+			buf.WriteString("\t\treturn http.StatusConflict\n")
+			buf.WriteString("\tcase ErrorCodeUnprocessableEntity:\n")
+			buf.WriteString("\t\treturn http.StatusUnprocessableEntity\n")
+			buf.WriteString("\tcase ErrorCodeRateLimited:\n")
+			buf.WriteString("\t\treturn http.StatusTooManyRequests\n")
+			buf.WriteString("\tcase ErrorCodeInternal:\n")
+			buf.WriteString("\t\treturn http.StatusInternalServerError\n")
+			buf.WriteString("\tdefault:\n")
+			buf.WriteString("\t\treturn http.StatusInternalServerError\n")
+			buf.WriteString("\t}\n")
+			buf.WriteString("}\n\n")
+		}
+	}
+
+	return nil
+}
+
+func generateServer(buf *bytes.Buffer, service *specification.Service) error {
+	buf.WriteString(fmt.Sprintf("func Register%sAPI[Session any](router *gin.Engine, api *%sAPI[Session]) {\n", service.Name, service.Name))
+	buf.WriteString("\tif api.Server.ConvertErrorFunc == nil {\n")
+	buf.WriteString("\t\tapi.Server.ConvertErrorFunc = func(err error, requestID string) *Error {\n")
+	buf.WriteString("\t\t\treturn &Error{\n")
+	buf.WriteString("\t\t\t\tCode:    ErrorCodeInternal,\n")
+	buf.WriteString("\t\t\t\tMessage: types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t}\n")
+	buf.WriteString("\t\t}\n")
+	buf.WriteString("\t}\n\n")
+
+	buf.WriteString("\tif api.Server.GetSessionFunc == nil {\n")
+	buf.WriteString("\t\tpanic(\"GetSessionFunc is nil\")\n")
+	buf.WriteString("\t}\n\n")
+
+	buf.WriteString(fmt.Sprintf("\trouterGroup := router.Group(\"/%s/%s\")\n\n", service.PathName(), service.Version))
+
+	buf.WriteString("\t// OpenAPI Documentation in JSON format\n")
+	buf.WriteString("\trouterGroup.StaticFileFS(\"/openapi.json\", \"openapi.json\", http.FS(api.OpenAPI_JSON))\n\n")
+
+	for _, resource := range service.Resources {
+		for _, endpoint := range resource.Endpoints {
+			if endpoint.HasResponseType() {
+				buf.WriteString(fmt.Sprintf("\trouterGroup.%s(\"%s\", serveWithResponse(%d, api.Server, api.%s.%s))\n",
+					endpoint.Method,
+					endpoint.GetFullPath(resource.Name),
+					endpoint.Response.StatusCode,
+					resource.Name,
+					endpoint.Name,
+				))
+			} else {
+				buf.WriteString(fmt.Sprintf("\trouterGroup.%s(\"%s\", serveWithoutResponse(%d, api.Server, api.%s.%s))\n",
+					endpoint.Method,
+					endpoint.GetFullPath(resource.Name),
+					endpoint.Response.StatusCode,
+					resource.Name,
+					endpoint.Name,
+				))
+			}
+		}
+		buf.WriteString("\n")
+	}
+	buf.WriteString("}\n\n")
+
+	buf.WriteString("// getSessionFunc is a function that is used on each endpoint to set the session to the request\n")
+	buf.WriteString("type getSessionFunc[T any] func(ctx context.Context, headers http.Header, requestID string) (T, error)\n\n")
+
+	buf.WriteString(fmt.Sprintf("type %sAPI[Session any] struct {\n", service.Name))
+	buf.WriteString("\t// Server is the server configuration for the API\n")
+	buf.WriteString("\tServer Server[Session]\n")
+
+	buf.WriteString("\tOpenAPI_JSON embed.FS\n")
+	for _, resource := range service.Resources {
+		buf.WriteString(fmt.Sprintf("\t%s %sAPI[Session] // Endpoints for the %s resource\n", resource.Name, resource.Name, resource.Name))
+	}
+	buf.WriteString("}\n\n")
+
+	buf.WriteString("type Server[Session any] struct {\n")
+	buf.WriteString("\t// GetSessionFunc is a function that is used on each endpoint to set the session to the request\n")
+	buf.WriteString("\tGetSessionFunc getSessionFunc[Session]\n")
+
+	buf.WriteString("\t// ConvertErrorFunc is a function that is used on each endpoint to convert an error to an Error object\n")
+	buf.WriteString("\tConvertErrorFunc func(err error, requestID string) *Error\n")
+	buf.WriteString("}\n\n")
+
+	for _, resource := range service.Resources {
+		buf.WriteString(fmt.Sprintf("type %sAPI[Session any] interface {\n", resource.Name))
+		for _, endpoint := range resource.Endpoints {
+			if endpoint.HasResponseType() {
+				buf.WriteString(fmt.Sprintf("\t%s(ctx context.Context, request Request[Session, %s, %s, %s]) (*%s, error)\n",
+					endpoint.Name,
+					endpoint.GetPathParamsType(resource.Name),
+					endpoint.GetQueryParamsType(resource.Name),
+					endpoint.GetBodyParamsType(resource.Name),
+					endpoint.GetResponseType(resource.Name),
+				))
+			} else {
+				buf.WriteString(fmt.Sprintf("\t%s(ctx context.Context, request Request[Session, %s, %s, %s]) error\n",
+					endpoint.Name,
+					endpoint.GetPathParamsType(resource.Name),
+					endpoint.GetQueryParamsType(resource.Name),
+					endpoint.GetBodyParamsType(resource.Name),
+				))
+			}
+		}
+		buf.WriteString("}\n\n")
+	}
+
+	return nil
+}
+
+func generateRequestTypes(buf *bytes.Buffer, service *specification.Service) error {
+	buf.WriteString("type Request[sessionType, pathParamsType, queryParamsType, bodyParamsType any] struct {\n")
+	buf.WriteString("\trequestID string `json:\"-\"` // Unexported field since it shouldn't be changed\n")
+	buf.WriteString("\tSession sessionType `json:\"-\"`\n")
+	buf.WriteString("\tPathParams pathParamsType `json:\"-\"`\n")
+	buf.WriteString("\tQueryParams queryParamsType `json:\"-\"`\n")
+	buf.WriteString("\tBodyParams bodyParamsType `json:\"-\"`\n")
+	buf.WriteString("}\n\n")
+
+	buf.WriteString("func (r Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) RequestID() string {\n")
+	buf.WriteString("\treturn r.requestID\n")
+	buf.WriteString("}\n\n")
+
+	for _, resource := range service.Resources {
+		for _, endpoint := range resource.Endpoints {
+			if len(endpoint.Request.PathParams) > 0 {
+				buf.WriteString(fmt.Sprintf("type %s struct {\n", endpoint.GetPathParamsType(resource.Name)))
+				for _, field := range endpoint.Request.PathParams {
+					buf.WriteString(fmt.Sprintf("\t%s %s `json:\"%s\"`\n", field.Name, getTypeForGo(field, service), field.TagJSON()))
+				}
+				buf.WriteString("}\n\n")
+			}
+
+			if len(endpoint.Request.QueryParams) > 0 {
+				buf.WriteString(fmt.Sprintf("type %s struct {\n", endpoint.GetQueryParamsType(resource.Name)))
+				for _, field := range endpoint.Request.QueryParams {
+					buf.WriteString(fmt.Sprintf("\t%s %s `form:\"%s\"`\n", field.Name, getTypeForGo(field, service), field.TagJSON()))
+				}
+				buf.WriteString("}\n\n")
+			}
+
+			if len(endpoint.Request.BodyParams) > 0 {
+				buf.WriteString(fmt.Sprintf("type %s struct {\n", endpoint.GetBodyParamsType(resource.Name)))
+				for _, field := range endpoint.Request.BodyParams {
+					buf.WriteString(fmt.Sprintf("\t%s %s `json:\"%s\"`\n", field.Name, getTypeForGo(field, service), field.TagJSON()))
+				}
+				buf.WriteString("}\n\n")
+			}
+		}
+	}
+
+	return nil
+}
+
+func generateResponseTypes(buf *bytes.Buffer, service *specification.Service) error {
+	for _, resource := range service.Resources {
+		for _, endpoint := range resource.Endpoints {
+			if len(endpoint.Response.BodyFields) == 0 {
+				continue
+			}
+
+			buf.WriteString(fmt.Sprintf("type %s struct {\n", endpoint.GetResponseType(resource.Name)))
+			for _, field := range endpoint.Response.BodyFields {
+				buf.WriteString(fmt.Sprintf("\t%s %s `json:\"%s\"`\n", field.Name, getTypeForGo(field, service), field.TagJSON()))
+			}
+			buf.WriteString("}\n\n")
+		}
+	}
+
+	return nil
+}
+
+func generateUtils(buf *bytes.Buffer) error {
+	buf.WriteString(`func serveWithResponse[
+	sessionType any,
+	pathParamsType any,
+	queryParamsType any,
+	bodyParamsType any,
+	responseType any,
+](
+	successStatusCode int,
+	server Server[sessionType],
+	function func(ctx context.Context, request Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) (*responseType, error),
+) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		requestID := "test-request-id"
+
+		request, apiError := parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server.GetSessionFunc)
+		if apiError != nil {
+			c.JSON(apiError.HTTPStatusCode(), apiError)
+			return
+		}
+
+		response, err := function(c.Request.Context(), request)
+		if err != nil {
+			apiError := server.ConvertErrorFunc(err, requestID)
+			c.JSON(apiError.HTTPStatusCode(), apiError)
+			return
+		}
+
+		c.JSON(successStatusCode, response)
+	}
+}` + "\n\n")
+
+	buf.WriteString(`func serveWithoutResponse[
+	sessionType any,
+	pathParamsType any,
+	queryParamsType any,
+	bodyParamsType any,
+](
+	successStatusCode int,
+	server Server[sessionType],
+	function func(ctx context.Context, request Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) error,
+) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		requestID := "test-request-id"
+	
+		request, apiError := parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server.GetSessionFunc)
+		if apiError != nil {
+			c.JSON(apiError.HTTPStatusCode(), apiError)
+			return
+		}
+
+		err := server.ConvertErrorFunc(function(c.Request.Context(), request), requestID)
+		if err != nil {
+			c.JSON(err.HTTPStatusCode(), err)
+			return
+		}
+		
+		c.JSON(successStatusCode, nil)
+	}
+}` + "\n\n")
+
+	buf.WriteString(`func parseRequest[
+	sessionType any,
+	pathParamsType any,
+	queryParamsType any,
+	bodyParamsType any,
+](
+	c *gin.Context,
+	requestID string,
+	getSession getSessionFunc[sessionType],
+) (Request[sessionType, pathParamsType, queryParamsType, bodyParamsType], *Error) {
+	var nilRequest Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]
+
+	session, err := getSession(c.Request.Context(), c.Request.Header, requestID)
+	if err != nil {
+		return nilRequest, &Error{
+			Code:    ErrorCodeUnauthorized,
+			Message: types.NewString(err.Error()),
+		}
+	}
+
+	request := Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]{
+		requestID: requestID,
+		Session: session,
+	}
+
+	if _, ok := any(request.BodyParams).(struct{}); !ok {
+		bodyParams, err := decodeBodyParams[bodyParamsType](c.Request)
+		if err != nil {
+			return nilRequest, &Error{
+				Code:    ErrorCodeBadRequest,
+				Message: types.NewString("cannot decode json body params: " + err.Error()),
+			}
+		}
+
+		request.BodyParams = bodyParams
+	}
+
+	if _, ok := any(request.PathParams).(struct{}); !ok {
+		pathParams, err := decodePathParams[pathParamsType](c)
+		if err != nil {
+			return nilRequest, &Error{
+				Code:    ErrorCodeBadRequest,
+				Message: types.NewString("cannot decode path params: " + err.Error()),
+			}
+		}
+
+		request.PathParams = pathParams
+	}
+
+	if _, ok := any(request.QueryParams).(struct{}); !ok {
+		queryParams, err := decodeQueryParams[queryParamsType](c)
+		if err != nil {
+			return nilRequest, &Error{
+				Code:    ErrorCodeBadRequest,
+				Message: types.NewString("cannot decode query params: " + err.Error()),
+			}
+		}
+
+		request.QueryParams = queryParams
+	}
+
+	return request, nil
+}` + "\n\n")
+
+	buf.WriteString(`func decodeBodyParams[T any](r *http.Request) (T, error) {
+	var v T
+
+	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
+		return v, err
+	}
+
+	return v, nil
+}` + "\n\n")
+
+	buf.WriteString(`func decodePathParams[T any](c *gin.Context) (T, error) {
+	var result T
+
+	m := make(map[string]string, len(c.Params))
+	for _, p := range c.Params {
+		m[p.Key] = p.Value
+	}
+
+	data, err := json.Marshal(m)
+	if err != nil {
+		return result, err
+	}
+
+	if err := json.Unmarshal(data, &result); err != nil {
+		return result, err
+	}
+
+	return result, nil
+}` + "\n\n")
+
+	buf.WriteString(`// decodeQueryParams decodes the query parameters from the request into the given type,
+// it can be limit & offset keys for example and they should be parsed into the correct type
+func decodeQueryParams[T any](c *gin.Context) (T, error) {
+	var result T
+
+	if err := c.ShouldBindQuery(&result); err != nil {
+		return result, err
+	}
+
+	return result, nil
+}` + "\n")
+
+	return nil
+}
