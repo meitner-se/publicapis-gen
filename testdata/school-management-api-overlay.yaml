@@ -1230,7 +1230,7 @@ resources:
       body_params:
       - name: Filter
         description: Filter criteria to search for specific records
-        type: StudentsFilter
+        type: StudentFilter
     response:
       content_type: application/json
       status_code: 200

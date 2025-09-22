@@ -1580,9 +1580,9 @@ func TestApplyOverlay(t *testing.T) {
 		require.NotNil(t, result)
 		assert.Equal(t, input.Name, result.Name)
 
-		// Should have default ErrorCode and ErrorFieldCode enums, Error, ErrorField, Pagination, and Meta objects
-		assert.Equal(t, 2, len(result.Enums))   // ErrorCode and ErrorFieldCode enums
-		assert.Equal(t, 4, len(result.Objects)) // Error, ErrorField, Pagination, and Meta objects
+		// Should have default ErrorCode enum, Error, Pagination, and Meta objects
+		assert.Equal(t, 1, len(result.Enums))   // ErrorCode enum
+		assert.Equal(t, 3, len(result.Objects)) // Error, Pagination, and Meta objects
 		assert.Equal(t, 0, len(result.Resources))
 
 		// Verify Error object has RequestID field
