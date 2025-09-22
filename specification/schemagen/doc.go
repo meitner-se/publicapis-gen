@@ -1,110 +1,83 @@
-// Package schemagen provides JSON schema generation, validation, and parsing functionality for specification types.
+// Package schemagen provides JSON schema generation functionality for specification types.
 //
-// This package contains the SchemaGenerator type which can generate JSON schemas
-// for all specification struct types including Service, Enum, Object, Resource,
-// Field, ResourceField, Endpoint, EndpointRequest, and EndpointResponse.
-//
-// In addition to schema generation, this package provides comprehensive validation
-// and parsing capabilities that ensure data conforms to the generated schemas
-// before being unmarshaled into Go structs.
+// This package follows the same minimalistic API pattern as the servergen package,
+// providing a single exported function that generates JSON schemas for all
+// specification struct types including Service, Enum, Object, Resource, Field,
+// ResourceField, Endpoint, EndpointRequest, and EndpointResponse.
 //
 // # Schema Generation
 //
-// Basic schema generation example:
+// The package provides a single function for generating all schemas:
 //
-//	generator := schemagen.NewSchemaGenerator()
-//	jsonSchema, err := generator.GenerateServiceSchema()
+//	var buf bytes.Buffer
+//	err := schemagen.GenerateSchemas(&buf)
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
 //
-//	schemaJSON, err := generator.SchemaToJSON(jsonSchema)
+//	// Write to file
+//	err = os.WriteFile("schemas.json", buf.Bytes(), 0644)
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-//	fmt.Println(schemaJSON)
 //
-// # Validation
+// The generated output is a JSON object with schema names as keys and their
+// JSON schema definitions as values:
 //
-// Validation functions verify that JSON or YAML data conforms to the generated schemas:
-//
-//	generator := schemagen.NewSchemaGenerator()
-//
-//	// Validate JSON data against Service schema
-//	jsonData := []byte(`{"name": "MyAPI", "enums": [], "objects": [], "resources": []}`)
-//	err := generator.ValidateService(jsonData)
-//	if err != nil {
-//	    log.Fatalf("Validation failed: %v", err)
+//	{
+//	  "Service": {
+//	    "$schema": "https://json-schema.org/draft/2020-12/schema",
+//	    "type": "object",
+//	    "properties": {
+//	      "name": { "type": "string" },
+//	      "enums": { "type": "array", "items": { "$ref": "#/$defs/Enum" } },
+//	      ...
+//	    },
+//	    "required": ["name"]
+//	  },
+//	  "Enum": { ... },
+//	  ...
 //	}
 //
-//	// Validate YAML data against Enum schema
-//	yamlData := []byte(`
-//	name: Status
-//	description: Status enumeration
-//	values:
-//	  - name: Active
-//	    description: Active status`)
-//	err = generator.ValidateEnum(yamlData)
-//	if err != nil {
-//	    log.Fatalf("Validation failed: %v", err)
+// # Usage Pattern
+//
+// This package follows the servergen pattern where the main file is responsible
+// for deciding file names and handling the generated content:
+//
+//	func generateSchemaFiles() error {
+//	    var buf bytes.Buffer
+//
+//	    // Generate schemas
+//	    if err := schemagen.GenerateSchemas(&buf); err != nil {
+//	        return fmt.Errorf("failed to generate schemas: %w", err)
+//	    }
+//
+//	    // Main file decides the output path
+//	    outputPath := "api-schemas.json"
+//
+//	    // Write the buffer contents to file
+//	    if err := os.WriteFile(outputPath, buf.Bytes(), 0644); err != nil {
+//	        return fmt.Errorf("failed to write schemas: %w", err)
+//	    }
+//
+//	    return nil
 //	}
 //
-// # Parsing with Validation
+// # Generated Schemas
 //
-// Parsing functions combine validation and unmarshaling in a single operation:
+// The function generates JSON schemas for the following specification types:
+//   - Service: The top-level API service definition
+//   - Enum: Enumeration type definitions
+//   - Object: Object/model definitions
+//   - Resource: Resource definitions with CRUD operations
+//   - Field: Field definitions used in objects and resources
+//   - ResourceField: Field definitions specific to resources
+//   - Endpoint: API endpoint definitions
+//   - EndpointRequest: Request structure for endpoints
+//   - EndpointResponse: Response structure for endpoints
 //
-//	generator := schemagen.NewSchemaGenerator()
-//
-//	// Parse and validate Service from JSON
-//	jsonData := []byte(`{"name": "UserAPI", "enums": [], "objects": [], "resources": []}`)
-//	service, err := generator.ParseServiceFromJSON(jsonData)
-//	if err != nil {
-//	    log.Fatalf("Failed to parse service: %v", err)
-//	}
-//
-//	// Parse and validate Enum from YAML
-//	yamlData := []byte(`
-//	name: Priority
-//	description: Task priority levels
-//	values:
-//	  - name: Low
-//	    description: Low priority
-//	  - name: High
-//	    description: High priority`)
-//	enum, err := generator.ParseEnumFromYAML(yamlData)
-//	if err != nil {
-//	    log.Fatalf("Failed to parse enum: %v", err)
-//	}
-//
-// # Available Functions
-//
-// The SchemaGenerator provides the following categories of functions:
-//
-// Schema Generation:
-//   - GenerateServiceSchema, GenerateEnumSchema, GenerateObjectSchema
-//   - GenerateResourceSchema, GenerateFieldSchema, GenerateResourceFieldSchema
-//   - GenerateEndpointSchema, GenerateEndpointRequestSchema, GenerateEndpointResponseSchema
-//   - GenerateAllSchemas
-//
-// Validation:
-//   - ValidateService, ValidateEnum, ValidateObject, ValidateResource
-//   - ValidateField, ValidateResourceField, ValidateEndpoint
-//   - ValidateEndpointRequest, ValidateEndpointResponse
-//
-// Parsing with Validation:
-//   - ParseServiceFromJSON, ParseServiceFromYAML
-//   - ParseEnumFromJSON, ParseEnumFromYAML
-//   - ParseObjectFromJSON, ParseObjectFromYAML
-//   - ParseResourceFromJSON, ParseResourceFromYAML
-//
-// # Error Handling
-//
-// Validation and parsing functions provide detailed error messages when failures occur:
-//   - Schema generation errors indicate issues with reflection or schema creation
-//   - Validation errors include specific details about constraint violations
-//   - Parsing errors cover both validation failures and JSON/YAML unmarshaling issues
-//
-// The package supports generating individual schemas for each type or all schemas
-// at once using the GenerateAllSchemas method. All validation and parsing functions
-// automatically handle both JSON and YAML input formats.
+// All schemas are generated with the following configuration:
+//   - Additional properties are not allowed (strict validation)
+//   - References are expanded inline for clarity
+//   - Proper JSON Schema draft 2020-12 compatibility
 package schemagen

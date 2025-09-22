@@ -55,6 +55,8 @@ resources:
 package main
 
 import (
+    "bytes"
+    "encoding/json"
     "fmt"
     "log"
     
@@ -62,27 +64,30 @@ import (
 )
 
 func generateSchemas() {
-    generator := schema.NewSchemaGenerator()
+    var buf bytes.Buffer
     
-    // Generate schemas for all types
-    schemas, err := generator.GenerateAllSchemas()
+    // Generate all schemas
+    err := schemagen.GenerateSchemas(&buf)
     if err != nil {
         log.Fatal("Failed to generate schemas:", err)
     }
     
+    // Parse the generated JSON to inspect
+    var schemas map[string]interface{}
+    err = json.Unmarshal(buf.Bytes(), &schemas)
+    if err != nil {
+        log.Fatal("Failed to parse schemas:", err)
+    }
+    
     fmt.Printf("📋 Generated %d JSON schemas:\n", len(schemas))
-    for name, schema := range schemas {
+    for name := range schemas {
         fmt.Printf("  • %s\n", name)
     }
     
-    // Convert Service schema to JSON for inspection
-    serviceSchemaJSON, err := generator.SchemaToJSON(schemas["Service"])
-    if err != nil {
-        log.Fatal("Failed to convert schema:", err)
-    }
-    
-    fmt.Printf("\n🔍 Service schema (first 500 chars):\n%s...\n", 
-        serviceSchemaJSON[:500])
+    // Pretty print a sample of the output
+    output := buf.String()
+    fmt.Printf("\n🔍 Generated schemas (first 500 chars):\n%s...\n", 
+        output[:500])
 }
 
 func main() {

@@ -531,37 +531,16 @@ func generateOpenAPIYAML(ctx context.Context, service *specification.Service, in
 func generateSchema(ctx context.Context, service *specification.Service, inputFile, outputFile string) error {
 	slog.InfoContext(ctx, "Generating JSON schemas", logKeyMode, modeSchema)
 
-	// Create schema generator
-	generator := schemagen.NewSchemaGenerator()
+	// Create buffer for schema generation
+	var buf bytes.Buffer
 
-	// Generate all schemas
-	schemas, err := generator.GenerateAllSchemas()
-	if err != nil {
+	// Generate schemas using the new API
+	if err := schemagen.GenerateSchemas(&buf); err != nil {
 		return fmt.Errorf("failed to generate schemas: %w", err)
 	}
 
-	// Convert all schemas to a combined JSON structure
-	schemaMap := make(map[string]interface{})
-	for name, schemaObj := range schemas {
-		// Convert each schema to JSON and then parse it back to interface{} for clean structure
-		jsonStr, err := generator.SchemaToJSON(schemaObj)
-		if err != nil {
-			return fmt.Errorf("failed to convert %s schema to JSON: %w", name, err)
-		}
-
-		var schemaData interface{}
-		if err := json.Unmarshal([]byte(jsonStr), &schemaData); err != nil {
-			return fmt.Errorf("failed to parse %s schema JSON: %w", name, err)
-		}
-
-		schemaMap[name] = schemaData
-	}
-
-	// Marshal the combined schema map to JSON with proper indentation
-	outputData, err := json.MarshalIndent(schemaMap, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal combined schemas to JSON: %w", err)
-	}
+	// The buffer now contains the JSON data
+	outputData := buf.Bytes()
 
 	// Determine output file path - always use JSON for schemas
 	outputPath := outputFile

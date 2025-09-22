@@ -272,78 +272,56 @@ const (
 
 ## Package: specification/schemagen
 
-JSON schema generation and validation package.
-
-### Types
-
-#### SchemaGenerator
-Main type for generating and validating JSON schemas.
-
-```go
-type SchemaGenerator struct {
-    // Private fields
-}
-```
+JSON schema generation package following a minimalistic API design.
 
 ### Functions
 
-#### NewSchemaGenerator
-Creates a new schema generator with default configuration.
+#### GenerateSchemas
+Generates JSON schemas for all specification types and writes them to the provided buffer.
 
 ```go
-func NewSchemaGenerator() *SchemaGenerator
+func GenerateSchemas(buf *bytes.Buffer) error
 ```
 
-#### Schema Generation Methods
-Generate JSON schemas for specification types.
+**Parameters:**
+- `buf`: Buffer to write the generated JSON schemas to
 
-```go
-func (sg *SchemaGenerator) GenerateServiceSchema() (*jsonschema.Schema, error)
-func (sg *SchemaGenerator) GenerateEnumSchema() (*jsonschema.Schema, error)
-func (sg *SchemaGenerator) GenerateObjectSchema() (*jsonschema.Schema, error)
-func (sg *SchemaGenerator) GenerateResourceSchema() (*jsonschema.Schema, error)
-func (sg *SchemaGenerator) GenerateFieldSchema() (*jsonschema.Schema, error)
-func (sg *SchemaGenerator) GenerateResourceFieldSchema() (*jsonschema.Schema, error)
-func (sg *SchemaGenerator) GenerateEndpointSchema() (*jsonschema.Schema, error)
-func (sg *SchemaGenerator) GenerateEndpointRequestSchema() (*jsonschema.Schema, error)
-func (sg *SchemaGenerator) GenerateEndpointResponseSchema() (*jsonschema.Schema, error)
-func (sg *SchemaGenerator) GenerateAllSchemas() (map[string]*jsonschema.Schema, error)
+**Returns:**
+- `error`: Error if schema generation fails
+
+**Output Format:**
+The function writes a JSON object to the buffer with schema names as keys and their JSON schema definitions as values:
+
+```json
+{
+  "Service": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": { ... },
+    "required": ["name"]
+  },
+  "Enum": { ... },
+  "Object": { ... },
+  "Resource": { ... },
+  "Field": { ... },
+  "ResourceField": { ... },
+  "Endpoint": { ... },
+  "EndpointRequest": { ... },
+  "EndpointResponse": { ... }
+}
 ```
 
-#### Schema Utility Methods
-Convert schemas to JSON and manage validation.
-
+**Usage Example:**
 ```go
-func (sg *SchemaGenerator) SchemaToJSON(schema *jsonschema.Schema) (string, error)
-```
+var buf bytes.Buffer
+if err := schemagen.GenerateSchemas(&buf); err != nil {
+    return fmt.Errorf("failed to generate schemas: %w", err)
+}
 
-#### Validation Methods  
-Validate JSON/YAML data against generated schemas.
-
-```go
-func (sg *SchemaGenerator) ValidateService(data []byte) error
-func (sg *SchemaGenerator) ValidateEnum(data []byte) error
-func (sg *SchemaGenerator) ValidateObject(data []byte) error
-func (sg *SchemaGenerator) ValidateResource(data []byte) error
-func (sg *SchemaGenerator) ValidateField(data []byte) error
-func (sg *SchemaGenerator) ValidateResourceField(data []byte) error
-func (sg *SchemaGenerator) ValidateEndpoint(data []byte) error
-func (sg *SchemaGenerator) ValidateEndpointRequest(data []byte) error
-func (sg *SchemaGenerator) ValidateEndpointResponse(data []byte) error
-```
-
-#### Parsing Methods
-Parse and validate data into Go structs.
-
-```go
-func (sg *SchemaGenerator) ParseServiceFromJSON(data []byte) (*specification.Service, error)
-func (sg *SchemaGenerator) ParseServiceFromYAML(data []byte) (*specification.Service, error)
-func (sg *SchemaGenerator) ParseEnumFromJSON(data []byte) (*specification.Enum, error)
-func (sg *SchemaGenerator) ParseEnumFromYAML(data []byte) (*specification.Enum, error)
-func (sg *SchemaGenerator) ParseObjectFromJSON(data []byte) (*specification.Object, error)
-func (sg *SchemaGenerator) ParseObjectFromYAML(data []byte) (*specification.Object, error)
-func (sg *SchemaGenerator) ParseResourceFromJSON(data []byte) (*specification.Resource, error)
-func (sg *SchemaGenerator) ParseResourceFromYAML(data []byte) (*specification.Resource, error)
+// Write to file
+if err := os.WriteFile("schemas.json", buf.Bytes(), 0644); err != nil {
+    return fmt.Errorf("failed to write schemas: %w", err)
+}
 ```
 
 ---
