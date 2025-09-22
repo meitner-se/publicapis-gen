@@ -1,6 +1,7 @@
 package openapigen
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -37,7 +38,7 @@ func TestGenerator_GenerateFromService(t *testing.T) {
 	t.Run("nil service returns error", func(t *testing.T) {
 		generator := newGenerator()
 
-		document, err := generator.GenerateFromService(nil)
+		document, err := generator.generateFromService(nil)
 
 		assert.Nil(t, document, "Document should be nil when service is nil")
 		assert.EqualError(t, err, "invalid service: service cannot be nil", "Should return invalid service error")
@@ -50,7 +51,7 @@ func TestGenerator_GenerateFromService(t *testing.T) {
 			Name: "TestService",
 		}
 
-		document, err := generator.GenerateFromService(service)
+		document, err := generator.generateFromService(service)
 
 		assert.NotNil(t, document, "Document should not be nil with valid service")
 		assert.NoError(t, err, "Should not return error with valid service")
@@ -147,14 +148,14 @@ func TestGenerator_GenerateFromService(t *testing.T) {
 			},
 		}
 
-		document, err := generator.GenerateFromService(service)
+		document, err := generator.generateFromService(service)
 
 		assert.NoError(t, err, "Should generate document successfully")
 		assert.NotNil(t, document, "Document should not be nil")
 		assert.Equal(t, "UserAPI", document.Info.Title, "Document title should match service name")
 
 		// Test JSON output contains expected elements
-		jsonBytes, err := generator.ToJSON(document)
+		jsonBytes, err := generator.toJSON(document)
 		assert.NoError(t, err, "Should convert document to JSON successfully")
 		jsonString := string(jsonBytes)
 		assert.Contains(t, jsonString, "Status", "JSON should contain Status enum")
@@ -195,7 +196,7 @@ func TestGenerator_GenerateFromService(t *testing.T) {
 			},
 		}
 
-		document, err := generator.GenerateFromService(service)
+		document, err := generator.generateFromService(service)
 
 		assert.NoError(t, err, "Should generate document successfully")
 		assert.NotNil(t, document, "Document should not be nil")
@@ -207,7 +208,7 @@ func TestGenerator_GenerateFromService(t *testing.T) {
 		assert.Equal(t, "Staging server", document.Servers[1].Description, "Second server description should match service")
 
 		// Test JSON output
-		jsonBytes, err := generator.ToJSON(document)
+		jsonBytes, err := generator.toJSON(document)
 		assert.NoError(t, err, "Should convert document to JSON successfully")
 		jsonString := string(jsonBytes)
 		assert.Contains(t, jsonString, "2.0.0", "JSON should contain service version")
@@ -248,7 +249,7 @@ func TestGenerator_GenerateFromService(t *testing.T) {
 			},
 		}
 
-		document, err := generator.GenerateFromService(service)
+		document, err := generator.generateFromService(service)
 
 		assert.NoError(t, err, "Should generate document successfully")
 		assert.NotNil(t, document, "Document should not be nil")
@@ -271,7 +272,7 @@ func TestGenerator_GenerateFromService(t *testing.T) {
 		assert.Equal(t, "staging", serverIdNode2.Value, "Second server ID should be 'staging'")
 
 		// Test JSON output includes server IDs
-		jsonBytes, err := generator.ToJSON(document)
+		jsonBytes, err := generator.toJSON(document)
 		assert.NoError(t, err, "Should convert document to JSON successfully")
 		jsonString := string(jsonBytes)
 		assert.Contains(t, jsonString, "x-speakeasy-server-id", "JSON should contain x-speakeasy-server-id extension")
@@ -286,7 +287,7 @@ func TestGenerator_ToYAML(t *testing.T) {
 	t.Run("nil document returns error", func(t *testing.T) {
 		generator := newGenerator()
 
-		yamlBytes, err := generator.ToYAML(nil)
+		yamlBytes, err := generator.toYAML(nil)
 
 		assert.Nil(t, yamlBytes, "YAML bytes should be nil when document is nil")
 		assert.EqualError(t, err, "invalid document: document cannot be nil", "Should return invalid document error")
@@ -299,10 +300,10 @@ func TestGenerator_ToYAML(t *testing.T) {
 			Name: "TestService",
 		}
 
-		document, err := generator.GenerateFromService(service)
+		document, err := generator.generateFromService(service)
 		assert.NoError(t, err, "Should generate document successfully")
 
-		yamlBytes, err := generator.ToYAML(document)
+		yamlBytes, err := generator.toYAML(document)
 
 		assert.NoError(t, err, "Should convert document to YAML successfully")
 		assert.NotNil(t, yamlBytes, "YAML bytes should not be nil")
@@ -317,7 +318,7 @@ func TestGenerator_ToJSON(t *testing.T) {
 	t.Run("nil document returns error", func(t *testing.T) {
 		generator := newGenerator()
 
-		jsonBytes, err := generator.ToJSON(nil)
+		jsonBytes, err := generator.toJSON(nil)
 
 		assert.Nil(t, jsonBytes, "JSON bytes should be nil when document is nil")
 		assert.EqualError(t, err, "invalid document: document cannot be nil", "Should return invalid document error")
@@ -330,10 +331,10 @@ func TestGenerator_ToJSON(t *testing.T) {
 			Name: "TestService",
 		}
 
-		document, err := generator.GenerateFromService(service)
+		document, err := generator.generateFromService(service)
 		assert.NoError(t, err, "Should generate document successfully")
 
-		jsonBytes, err := generator.ToJSON(document)
+		jsonBytes, err := generator.toJSON(document)
 
 		assert.NoError(t, err, "Should convert document to JSON successfully")
 		assert.NotNil(t, jsonBytes, "JSON bytes should not be nil")
@@ -344,7 +345,7 @@ func TestGenerator_ToJSON(t *testing.T) {
 
 // TestGeneratorConfiguration tests generator configuration options.
 func TestGeneratorConfiguration(t *testing.T) {
-	generator := &Generator{
+	generator := &generator{
 		Version:     "3.1.0",
 		Title:       "Custom API",
 		Description: "Custom API Description",
@@ -620,12 +621,12 @@ func TestEndToEndErrorResponseGeneration(t *testing.T) {
 	service := specification.ApplyOverlay(inputService)
 
 	// Generate OpenAPI document
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 	assert.NoError(t, err, "Should generate OpenAPI document successfully")
 	assert.NotNil(t, document, "Generated document should not be nil")
 
 	// Convert to JSON to inspect the structure
-	jsonBytes, err := generator.ToJSON(document)
+	jsonBytes, err := generator.toJSON(document)
 	assert.NoError(t, err, "Should convert document to JSON successfully")
 
 	jsonString := string(jsonBytes)
@@ -747,13 +748,13 @@ func TestCamelCaseParametersInOpenAPI(t *testing.T) {
 		},
 	}
 
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 
 	assert.NoError(t, err, "Should generate document successfully")
 	assert.NotNil(t, document, "Document should not be nil")
 
 	// Generate JSON to check the actual parameter names
-	jsonBytes, err := generator.ToJSON(document)
+	jsonBytes, err := generator.toJSON(document)
 	assert.NoError(t, err, "Should convert to JSON successfully")
 	jsonString := string(jsonBytes)
 
@@ -796,12 +797,12 @@ func TestSpeakeasyRetryExtension(t *testing.T) {
 		// No retry configuration specified, should use defaults
 	}
 
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 	assert.NoError(t, err, "Should generate document successfully")
 	assert.NotNil(t, document, "Document should not be nil")
 
 	// Convert to JSON to verify the extension
-	jsonBytes, err := generator.ToJSON(document)
+	jsonBytes, err := generator.toJSON(document)
 	assert.NoError(t, err, "Should convert to JSON successfully")
 	jsonString := string(jsonBytes)
 
@@ -845,12 +846,12 @@ func TestSpeakeasyRetryExtensionWithCustomConfiguration(t *testing.T) {
 		},
 	}
 
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 	assert.NoError(t, err, "Should generate document successfully")
 	assert.NotNil(t, document, "Document should not be nil")
 
 	// Convert to JSON to verify the extension
-	jsonBytes, err := generator.ToJSON(document)
+	jsonBytes, err := generator.toJSON(document)
 	assert.NoError(t, err, "Should convert to JSON successfully")
 	jsonString := string(jsonBytes)
 
@@ -876,12 +877,12 @@ func TestSpeakeasyTimeoutExtension(t *testing.T) {
 		Version: "1.0.0",
 	}
 
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 	assert.NoError(t, err, "Should generate document successfully")
 	assert.NotNil(t, document, "Document should not be nil")
 
 	// Convert to JSON to verify the extension
-	jsonBytes, err := generator.ToJSON(document)
+	jsonBytes, err := generator.toJSON(document)
 	assert.NoError(t, err, "Should convert to JSON successfully")
 	jsonString := string(jsonBytes)
 
@@ -902,12 +903,12 @@ func TestSpeakeasyTimeoutExtensionWithCustomTimeout(t *testing.T) {
 		},
 	}
 
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 	assert.NoError(t, err, "Should generate document successfully")
 	assert.NotNil(t, document, "Document should not be nil")
 
 	// Convert to JSON to verify the extension
-	jsonBytes, err := generator.ToJSON(document)
+	jsonBytes, err := generator.toJSON(document)
 	assert.NoError(t, err, "Should convert to JSON successfully")
 	jsonString := string(jsonBytes)
 
@@ -928,12 +929,12 @@ func TestSpeakeasyTimeoutExtensionWithZeroTimeout(t *testing.T) {
 		},
 	}
 
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 	assert.NoError(t, err, "Should generate document successfully")
 	assert.NotNil(t, document, "Document should not be nil")
 
 	// Convert to JSON to verify the extension
-	jsonBytes, err := generator.ToJSON(document)
+	jsonBytes, err := generator.toJSON(document)
 	assert.NoError(t, err, "Should convert to JSON successfully")
 	jsonString := string(jsonBytes)
 
@@ -1099,12 +1100,12 @@ func TestSpeakeasyPaginationExtension(t *testing.T) {
 		},
 	}
 
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 	assert.NoError(t, err, "Should generate document successfully")
 	assert.NotNil(t, document, "Document should not be nil")
 
 	// Convert to JSON to verify the extension
-	jsonBytes, err := generator.ToJSON(document)
+	jsonBytes, err := generator.toJSON(document)
 	assert.NoError(t, err, "Should convert to JSON successfully")
 	jsonString := string(jsonBytes)
 
@@ -1223,12 +1224,12 @@ func TestOperationIdPrefixing(t *testing.T) {
 		},
 	}
 
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 	assert.NoError(t, err, "Should generate document successfully")
 	assert.NotNil(t, document, "Document should not be nil")
 
 	// Convert to JSON to check operationIds
-	jsonBytes, err := generator.ToJSON(document)
+	jsonBytes, err := generator.toJSON(document)
 	assert.NoError(t, err, "Should convert to JSON successfully")
 	jsonString := string(jsonBytes)
 
@@ -1254,6 +1255,64 @@ func TestOperationIdPrefixing(t *testing.T) {
 	assert.Equal(t, 1, productCreateCount, "Should have exactly one ProductCreate operationId")
 
 	t.Logf("Generated OpenAPI JSON with prefixed operationIds:\n%s", jsonString)
+}
+
+// TestGenerateOpenAPI tests the main exported function for generating OpenAPI JSON to a buffer.
+func TestGenerateOpenAPI(t *testing.T) {
+	// Test with nil service
+	t.Run("nil service returns error", func(t *testing.T) {
+		var buf bytes.Buffer
+		err := GenerateOpenAPI(&buf, nil)
+
+		assert.Error(t, err, "Should return error for nil service")
+		assert.Contains(t, err.Error(), "invalid service")
+		assert.Equal(t, 0, buf.Len(), "Buffer should be empty on error")
+	})
+
+	// Test with valid service
+	t.Run("valid service generates JSON", func(t *testing.T) {
+		service := &specification.Service{
+			Name:    "TestAPI",
+			Version: "v1",
+		}
+
+		var buf bytes.Buffer
+		err := GenerateOpenAPI(&buf, service)
+
+		assert.NoError(t, err, "Should not return error for valid service")
+		assert.Greater(t, buf.Len(), 0, "Buffer should contain data")
+
+		// Verify it's valid JSON
+		var result map[string]interface{}
+		err = json.Unmarshal(buf.Bytes(), &result)
+		assert.NoError(t, err, "Output should be valid JSON")
+
+		// Check basic OpenAPI structure
+		assert.Equal(t, "3.1.0", result["openapi"], "Should be OpenAPI 3.1.0")
+		assert.NotNil(t, result["info"], "Should have info section")
+		assert.NotNil(t, result["paths"], "Should have paths section")
+	})
+
+	// Test that output matches GenerateFromSpecificationToJSON
+	t.Run("output matches deprecated function", func(t *testing.T) {
+		service := &specification.Service{
+			Name:    "TestAPI",
+			Version: "v1",
+		}
+
+		// Generate using new API
+		var buf bytes.Buffer
+		err := GenerateOpenAPI(&buf, service)
+		assert.NoError(t, err)
+		newAPIOutput := buf.Bytes()
+
+		// Generate using deprecated API
+		deprecatedOutput, err := GenerateFromSpecificationToJSON(service)
+		assert.NoError(t, err)
+
+		// Compare outputs
+		assert.Equal(t, deprecatedOutput, newAPIOutput, "Both APIs should produce identical output")
+	})
 }
 
 // TestGenerateFromSpecificationToJSON tests the convenience method for generating JSON from a specification.
@@ -1303,10 +1362,10 @@ func TestGenerateFromSpecificationToJSON(t *testing.T) {
 		generator.Title = service.Name + " API"
 		generator.Description = "Generated API documentation"
 
-		document, err := generator.GenerateFromService(service)
+		document, err := generator.generateFromService(service)
 		assert.Nil(t, err, "Multi-step method should not return error")
 
-		multiStepJSON, err := generator.ToJSON(document)
+		multiStepJSON, err := generator.toJSON(document)
 		assert.Nil(t, err, "Multi-step ToJSON should not return error")
 
 		// Both methods should produce identical results
@@ -1359,12 +1418,12 @@ func TestSchemaReferences(t *testing.T) {
 		},
 	}
 
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 	assert.NoError(t, err, "Should generate document successfully")
 	assert.NotNil(t, document, "Document should not be nil")
 
 	// Convert to JSON to check schema references
-	jsonBytes, err := generator.ToJSON(document)
+	jsonBytes, err := generator.toJSON(document)
 	assert.NoError(t, err, "Should convert to JSON successfully")
 	jsonString := string(jsonBytes)
 
@@ -1431,12 +1490,12 @@ func TestRequestBodySchemaReferences(t *testing.T) {
 		},
 	}
 
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 	assert.NoError(t, err, "Should generate document successfully")
 	assert.NotNil(t, document, "Document should not be nil")
 
 	// Convert to JSON to check schema references
-	jsonBytes, err := generator.ToJSON(document)
+	jsonBytes, err := generator.toJSON(document)
 	assert.NoError(t, err, "Should convert to JSON successfully")
 	jsonString := string(jsonBytes)
 
@@ -1503,12 +1562,12 @@ func TestRequestBodyMultipleParams(t *testing.T) {
 		},
 	}
 
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 	assert.NoError(t, err, "Should generate document successfully")
 	assert.NotNil(t, document, "Document should not be nil")
 
 	// Convert to JSON to check schema references
-	jsonBytes, err := generator.ToJSON(document)
+	jsonBytes, err := generator.toJSON(document)
 	assert.NoError(t, err, "Should convert to JSON successfully")
 	jsonString := string(jsonBytes)
 
@@ -1639,7 +1698,7 @@ func TestGenerator_GenerateFromService_IncludesTags(t *testing.T) {
 			},
 		}
 
-		document, err := generator.GenerateFromService(service)
+		document, err := generator.generateFromService(service)
 		assert.NoError(t, err, "Should not return error for valid service")
 		assert.NotNil(t, document, "Document should not be nil")
 
@@ -1663,7 +1722,7 @@ func TestGenerator_GenerateFromService_IncludesTags(t *testing.T) {
 			Resources: []specification.Resource{},
 		}
 
-		document, err := generator.GenerateFromService(service)
+		document, err := generator.generateFromService(service)
 		assert.NoError(t, err, "Should not return error for valid service")
 		assert.NotNil(t, document, "Document should not be nil")
 		assert.Nil(t, document.Tags, "Document should have no tags when no resources")
@@ -1762,7 +1821,7 @@ func TestRequestBodiesComponentsSection(t *testing.T) {
 		},
 	}
 
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 	assert.NoError(t, err, "Should generate document successfully")
 	assert.NotNil(t, document, "Document should not be nil")
 
@@ -1771,7 +1830,7 @@ func TestRequestBodiesComponentsSection(t *testing.T) {
 	assert.NotNil(t, document.Components.RequestBodies, "Components should have RequestBodies section")
 
 	// Convert to JSON to check the structure
-	jsonBytes, err := generator.ToJSON(document)
+	jsonBytes, err := generator.toJSON(document)
 	assert.NoError(t, err, "Should convert to JSON successfully")
 	jsonString := string(jsonBytes)
 
@@ -1897,12 +1956,12 @@ func TestRequestBodyExamples(t *testing.T) {
 		},
 	}
 
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 	assert.NoError(t, err, "Should generate document successfully")
 	assert.NotNil(t, document, "Document should not be nil")
 
 	// Convert to JSON to examine structure
-	jsonBytes, err := generator.ToJSON(document)
+	jsonBytes, err := generator.toJSON(document)
 	assert.NoError(t, err, "Should convert to JSON successfully")
 	jsonString := string(jsonBytes)
 
@@ -2119,12 +2178,12 @@ func TestResponseBodyExamples(t *testing.T) {
 		},
 	}
 
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 	assert.NoError(t, err, "Should generate document successfully")
 	assert.NotNil(t, document, "Document should not be nil")
 
 	// Convert to JSON to examine structure
-	jsonBytes, err := generator.ToJSON(document)
+	jsonBytes, err := generator.toJSON(document)
 	assert.NoError(t, err, "Should convert to JSON successfully")
 	jsonString := string(jsonBytes)
 
@@ -2243,12 +2302,12 @@ func TestRequestBodyReferencesWithComponentSchemas(t *testing.T) {
 		},
 	}
 
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 	assert.NoError(t, err, "Should generate document successfully")
 	assert.NotNil(t, document, "Document should not be nil")
 
 	// Convert to JSON to check schema references
-	jsonBytes, err := generator.ToJSON(document)
+	jsonBytes, err := generator.toJSON(document)
 	assert.NoError(t, err, "Should convert to JSON successfully")
 	jsonString := string(jsonBytes)
 
@@ -2309,12 +2368,12 @@ func TestRequestBodyDuplicationPrevention(t *testing.T) {
 		},
 	}
 
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 	assert.NoError(t, err, "Should generate document successfully")
 	assert.NotNil(t, document, "Document should not be nil")
 
 	// Convert to JSON to check for duplicates
-	jsonBytes, err := generator.ToJSON(document)
+	jsonBytes, err := generator.toJSON(document)
 	assert.NoError(t, err, "Should convert to JSON successfully")
 	jsonString := string(jsonBytes)
 
@@ -2352,7 +2411,7 @@ func TestGenerator_GenerateFromService_ContactDetails(t *testing.T) {
 			},
 		}
 
-		document, err := generator.GenerateFromService(service)
+		document, err := generator.generateFromService(service)
 		assert.NoError(t, err, "Should generate document successfully")
 		assert.NotNil(t, document, "Document should not be nil")
 		assert.NotNil(t, document.Info, "Document Info should not be nil")
@@ -2364,7 +2423,7 @@ func TestGenerator_GenerateFromService_ContactDetails(t *testing.T) {
 		assert.Equal(t, "support@example.com", document.Info.Contact.Email, "Contact email should match service contact")
 
 		// Generate JSON to verify structure
-		jsonBytes, err := generator.ToJSON(document)
+		jsonBytes, err := generator.toJSON(document)
 		assert.NoError(t, err, "Should convert to JSON successfully")
 		jsonString := string(jsonBytes)
 
@@ -2387,7 +2446,7 @@ func TestGenerator_GenerateFromService_ContactDetails(t *testing.T) {
 			},
 		}
 
-		document, err := generator.GenerateFromService(service)
+		document, err := generator.generateFromService(service)
 		assert.NoError(t, err, "Should generate document successfully")
 		assert.NotNil(t, document, "Document should not be nil")
 		assert.NotNil(t, document.Info.Contact, "Document Info Contact should not be nil")
@@ -2398,7 +2457,7 @@ func TestGenerator_GenerateFromService_ContactDetails(t *testing.T) {
 		assert.Equal(t, "", document.Info.Contact.URL, "Contact URL should be empty when not provided")
 
 		// Generate JSON to verify structure
-		jsonBytes, err := generator.ToJSON(document)
+		jsonBytes, err := generator.toJSON(document)
 		assert.NoError(t, err, "Should convert to JSON successfully")
 		jsonString := string(jsonBytes)
 
@@ -2420,7 +2479,7 @@ func TestGenerator_GenerateFromService_ContactDetails(t *testing.T) {
 			},
 		}
 
-		document, err := generator.GenerateFromService(service)
+		document, err := generator.generateFromService(service)
 		assert.NoError(t, err, "Should generate document successfully")
 		assert.NotNil(t, document, "Document should not be nil")
 		assert.NotNil(t, document.Info.Contact, "Document Info Contact should not be nil")
@@ -2431,7 +2490,7 @@ func TestGenerator_GenerateFromService_ContactDetails(t *testing.T) {
 		assert.Equal(t, "contact@example.com", document.Info.Contact.Email, "Contact email should match service contact")
 
 		// Generate JSON to verify structure
-		jsonBytes, err := generator.ToJSON(document)
+		jsonBytes, err := generator.toJSON(document)
 		assert.NoError(t, err, "Should convert to JSON successfully")
 		jsonString := string(jsonBytes)
 
@@ -2450,14 +2509,14 @@ func TestGenerator_GenerateFromService_ContactDetails(t *testing.T) {
 			// Contact intentionally omitted
 		}
 
-		document, err := generator.GenerateFromService(service)
+		document, err := generator.generateFromService(service)
 		assert.NoError(t, err, "Should generate document successfully")
 		assert.NotNil(t, document, "Document should not be nil")
 		assert.NotNil(t, document.Info, "Document Info should not be nil")
 		assert.Nil(t, document.Info.Contact, "Document Info Contact should be nil when not provided")
 
 		// Generate JSON to verify structure
-		jsonBytes, err := generator.ToJSON(document)
+		jsonBytes, err := generator.toJSON(document)
 		assert.NoError(t, err, "Should convert to JSON successfully")
 		jsonString := string(jsonBytes)
 
@@ -2475,14 +2534,14 @@ func TestGenerator_GenerateFromService_ContactDetails(t *testing.T) {
 			},
 		}
 
-		document, err := generator.GenerateFromService(service)
+		document, err := generator.generateFromService(service)
 		assert.NoError(t, err, "Should generate document successfully")
 		assert.NotNil(t, document, "Document should not be nil")
 		assert.NotNil(t, document.Info, "Document Info should not be nil")
 		assert.Nil(t, document.Info.Contact, "Document Info Contact should be nil when all fields are empty")
 
 		// Generate JSON to verify structure
-		jsonBytes, err := generator.ToJSON(document)
+		jsonBytes, err := generator.toJSON(document)
 		assert.NoError(t, err, "Should convert to JSON successfully")
 		jsonString := string(jsonBytes)
 
@@ -2505,7 +2564,7 @@ func TestGenerator_GenerateFromService_WithLicense(t *testing.T) {
 			},
 		}
 
-		document, err := generator.GenerateFromService(service)
+		document, err := generator.generateFromService(service)
 		assert.NoError(t, err, "Should generate document successfully")
 		assert.NotNil(t, document, "Document should not be nil")
 		assert.NotNil(t, document.Info, "Document Info should not be nil")
@@ -2517,7 +2576,7 @@ func TestGenerator_GenerateFromService_WithLicense(t *testing.T) {
 		assert.Equal(t, "MIT", document.Info.License.Identifier, "License identifier should match service license")
 
 		// Generate JSON to verify structure
-		jsonBytes, err := generator.ToJSON(document)
+		jsonBytes, err := generator.toJSON(document)
 		assert.NoError(t, err, "Should convert to JSON successfully")
 		jsonString := string(jsonBytes)
 
@@ -2538,7 +2597,7 @@ func TestGenerator_GenerateFromService_WithLicense(t *testing.T) {
 			},
 		}
 
-		document, err := generator.GenerateFromService(service)
+		document, err := generator.generateFromService(service)
 		assert.NoError(t, err, "Should generate document successfully")
 		assert.NotNil(t, document, "Document should not be nil")
 		assert.NotNil(t, document.Info.License, "Document Info License should not be nil")
@@ -2549,7 +2608,7 @@ func TestGenerator_GenerateFromService_WithLicense(t *testing.T) {
 		assert.Equal(t, "", document.Info.License.Identifier, "License identifier should be empty when not provided")
 
 		// Generate JSON to verify structure
-		jsonBytes, err := generator.ToJSON(document)
+		jsonBytes, err := generator.toJSON(document)
 		assert.NoError(t, err, "Should convert to JSON successfully")
 		jsonString := string(jsonBytes)
 
@@ -2566,14 +2625,14 @@ func TestGenerator_GenerateFromService_WithLicense(t *testing.T) {
 			License: nil,
 		}
 
-		document, err := generator.GenerateFromService(service)
+		document, err := generator.generateFromService(service)
 		assert.NoError(t, err, "Should generate document successfully")
 		assert.NotNil(t, document, "Document should not be nil")
 		assert.NotNil(t, document.Info, "Document Info should not be nil")
 		assert.Nil(t, document.Info.License, "Document Info License should be nil when not provided")
 
 		// Generate JSON to verify structure
-		jsonBytes, err := generator.ToJSON(document)
+		jsonBytes, err := generator.toJSON(document)
 		assert.NoError(t, err, "Should convert to JSON successfully")
 		jsonString := string(jsonBytes)
 
@@ -2593,14 +2652,14 @@ func TestGenerator_GenerateFromService_WithLicense(t *testing.T) {
 			},
 		}
 
-		document, err := generator.GenerateFromService(service)
+		document, err := generator.generateFromService(service)
 		assert.NoError(t, err, "Should generate document successfully")
 		assert.NotNil(t, document, "Document should not be nil")
 		assert.NotNil(t, document.Info, "Document Info should not be nil")
 		assert.Nil(t, document.Info.License, "Document Info License should be nil when name is empty")
 
 		// Generate JSON to verify structure
-		jsonBytes, err := generator.ToJSON(document)
+		jsonBytes, err := generator.toJSON(document)
 		assert.NoError(t, err, "Should convert to JSON successfully")
 		jsonString := string(jsonBytes)
 
@@ -2665,12 +2724,12 @@ func TestParameterDescriptionNotDuplicated(t *testing.T) {
 		},
 	}
 
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 	assert.NoError(t, err, "Should generate document successfully")
 	assert.NotNil(t, document, "Document should not be nil")
 
 	// Generate JSON to inspect parameter structure
-	jsonBytes, err := generator.ToJSON(document)
+	jsonBytes, err := generator.toJSON(document)
 	assert.NoError(t, err, "Should convert to JSON successfully")
 	jsonString := string(jsonBytes)
 
@@ -2819,7 +2878,7 @@ func TestGenerator_GenerateFromServiceWithSecurity(t *testing.T) {
 
 	// Generate OpenAPI document
 	generator := newGenerator()
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 
 	assert.NoError(t, err, "Should generate document without error")
 	assert.NotNil(t, document, "Generated document should not be nil")
@@ -2916,7 +2975,7 @@ func TestGenerator_GenerateFromServiceSecurityYAML(t *testing.T) {
 
 	// Generate document
 	generator := newGenerator()
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 
 	assert.NoError(t, err, "Should generate document without error")
 	assert.NotNil(t, document, "Generated document should not be nil")
@@ -3038,7 +3097,7 @@ func TestStringFieldsWithNumericExamples(t *testing.T) {
 		},
 	}
 
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 
 	assert.NoError(t, err, "Should generate document without error")
 	assert.NotNil(t, document, "Document should not be nil")
@@ -3128,7 +3187,7 @@ func TestArrayFieldExamples(t *testing.T) {
 	generator.Version = "1.0.0"
 	generator.ServerURL = "https://api.test.com"
 
-	document, err := generator.GenerateFromService(testService)
+	document, err := generator.generateFromService(testService)
 	assert.NoError(t, err, "Should generate document without error")
 	assert.NotNil(t, document, "Document should not be nil")
 
@@ -3288,7 +3347,7 @@ func TestNullableFieldExamples(t *testing.T) {
 	generator.Version = "1.0.0"
 	generator.ServerURL = "https://api.test.com"
 
-	document, err := generator.GenerateFromService(testService)
+	document, err := generator.generateFromService(testService)
 	assert.NoError(t, err, "Should generate document without error")
 	assert.NotNil(t, document, "Document should not be nil")
 
@@ -3396,12 +3455,12 @@ func TestAllOfSchemaExamples(t *testing.T) {
 		},
 	}
 
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 	assert.NoError(t, err, "Should generate document successfully")
 	assert.NotNil(t, document, "Document should not be nil")
 
 	// Convert to JSON to check for examples in allOf schemas
-	jsonBytes, err := generator.ToJSON(document)
+	jsonBytes, err := generator.toJSON(document)
 	assert.NoError(t, err, "Should convert to JSON successfully")
 	jsonString := string(jsonBytes)
 
@@ -3510,12 +3569,12 @@ func TestCircularReferenceHandling(t *testing.T) {
 	}
 
 	// This should not hang or cause infinite recursion
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 	assert.NoError(t, err, "Should generate document successfully without infinite recursion")
 	assert.NotNil(t, document, "Document should not be nil")
 
 	// Convert to JSON to verify it contains the expected structure
-	jsonBytes, err := generator.ToJSON(document)
+	jsonBytes, err := generator.toJSON(document)
 	assert.NoError(t, err, "Should convert to JSON successfully")
 	jsonString := string(jsonBytes)
 

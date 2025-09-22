@@ -1,6 +1,7 @@
 package openapigen
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"net/http"
@@ -198,8 +199,8 @@ const (
 	securityTypeAPIKey = "apiKey"
 )
 
-// Generator handles OpenAPI 3.1 specification generation from specification.Service.
-type Generator struct {
+// generator handles OpenAPI 3.1 specification generation from specification.Service.
+type generator struct {
 	// Version specifies the OpenAPI version to generate (default: "3.1.0")
 	Version string
 
@@ -214,14 +215,14 @@ type Generator struct {
 }
 
 // newGenerator creates a new OpenAPI generator with default settings.
-func newGenerator() *Generator {
-	return &Generator{
+func newGenerator() *generator {
+	return &generator{
 		Version: defaultOpenAPIVersion,
 	}
 }
 
-// GenerateFromService generates an OpenAPI 3.1 document from a specification.Service.
-func (g *Generator) GenerateFromService(service *specification.Service) (*v3.Document, error) {
+// generateFromService generates an OpenAPI 3.1 document from a specification.Service.
+func (g *generator) generateFromService(service *specification.Service) (*v3.Document, error) {
 	if service == nil {
 		return nil, errors.New(errorInvalidService)
 	}
@@ -231,7 +232,7 @@ func (g *Generator) GenerateFromService(service *specification.Service) (*v3.Doc
 }
 
 // addSpeakeasyRetryExtension adds Speakeasy retry configuration extension to the OpenAPI document.
-func (g *Generator) addSpeakeasyRetryExtension(document *v3.Document, service *specification.Service) {
+func (g *generator) addSpeakeasyRetryExtension(document *v3.Document, service *specification.Service) {
 	// Initialize extensions map if it doesn't exist
 	if document.Extensions == nil {
 		document.Extensions = orderedmap.New[string, *yaml.Node]()
@@ -297,7 +298,7 @@ func (g *Generator) addSpeakeasyRetryExtension(document *v3.Document, service *s
 }
 
 // addSpeakeasyTimeoutExtension adds Speakeasy timeout configuration extension to the OpenAPI document.
-func (g *Generator) addSpeakeasyTimeoutExtension(document *v3.Document, service *specification.Service) {
+func (g *generator) addSpeakeasyTimeoutExtension(document *v3.Document, service *specification.Service) {
 	// Initialize extensions map if it doesn't exist
 	if document.Extensions == nil {
 		document.Extensions = orderedmap.New[string, *yaml.Node]()
@@ -320,7 +321,7 @@ func (g *Generator) addSpeakeasyTimeoutExtension(document *v3.Document, service 
 }
 
 // addSpeakeasyPaginationExtension adds Speakeasy pagination configuration extension to an operation.
-func (g *Generator) addSpeakeasyPaginationExtension(operation *v3.Operation) {
+func (g *generator) addSpeakeasyPaginationExtension(operation *v3.Operation) {
 	// Initialize extensions map if it doesn't exist
 	if operation.Extensions == nil {
 		operation.Extensions = orderedmap.New[string, *yaml.Node]()
@@ -391,7 +392,7 @@ func (g *Generator) addSpeakeasyPaginationExtension(operation *v3.Operation) {
 }
 
 // addSpeakeasyOperationNamingExtensions adds Speakeasy operation naming extensions to an operation.
-func (g *Generator) addSpeakeasyOperationNamingExtensions(operation *v3.Operation, endpoint specification.Endpoint, resource specification.Resource) {
+func (g *generator) addSpeakeasyOperationNamingExtensions(operation *v3.Operation, endpoint specification.Endpoint, resource specification.Resource) {
 	// Initialize extensions map if it doesn't exist
 	if operation.Extensions == nil {
 		operation.Extensions = orderedmap.New[string, *yaml.Node]()
@@ -416,7 +417,7 @@ func (g *Generator) addSpeakeasyOperationNamingExtensions(operation *v3.Operatio
 
 // isPaginatedOperation determines if an endpoint represents a paginated operation
 // by checking for the presence of limit/offset query parameters and data/pagination response fields.
-func (g *Generator) isPaginatedOperation(endpoint specification.Endpoint) bool {
+func (g *generator) isPaginatedOperation(endpoint specification.Endpoint) bool {
 	hasLimitParam := false
 	hasOffsetParam := false
 
@@ -453,7 +454,7 @@ func (g *Generator) isPaginatedOperation(endpoint specification.Endpoint) bool {
 }
 
 // buildV3Document creates a v3.Document using native libopenapi types.
-func (g *Generator) buildV3Document(service *specification.Service) *v3.Document {
+func (g *generator) buildV3Document(service *specification.Service) *v3.Document {
 	// Create document title
 	title := g.Title
 	if title == "" {
@@ -603,7 +604,7 @@ func (g *Generator) buildV3Document(service *specification.Service) *v3.Document
 }
 
 // createTagsFromResources creates a tags array from service resources for top-level document organization.
-func (g *Generator) createTagsFromResources(service *specification.Service) []*base.Tag {
+func (g *generator) createTagsFromResources(service *specification.Service) []*base.Tag {
 	if len(service.Resources) == 0 {
 		return nil
 	}
@@ -620,7 +621,7 @@ func (g *Generator) createTagsFromResources(service *specification.Service) []*b
 }
 
 // createEnumSchema creates a base.Schema for an enum using native types.
-func (g *Generator) createEnumSchema(enum specification.Enum) *base.Schema {
+func (g *generator) createEnumSchema(enum specification.Enum) *base.Schema {
 	schema := &base.Schema{
 		Type:        []string{schemaTypeString},
 		Description: enum.Description,
@@ -642,7 +643,7 @@ func (g *Generator) createEnumSchema(enum specification.Enum) *base.Schema {
 }
 
 // createObjectSchema creates a base.Schema for an object using native types.
-func (g *Generator) createObjectSchema(obj specification.Object, service *specification.Service) *base.Schema {
+func (g *generator) createObjectSchema(obj specification.Object, service *specification.Service) *base.Schema {
 	schema := &base.Schema{
 		Type:        []string{schemaTypeObject},
 		Description: obj.Description,
@@ -668,7 +669,7 @@ func (g *Generator) createObjectSchema(obj specification.Object, service *specif
 }
 
 // createFieldSchema creates a base.Schema for a field using native types.
-func (g *Generator) createFieldSchema(field specification.Field, service *specification.Service) *base.Schema {
+func (g *generator) createFieldSchema(field specification.Field, service *specification.Service) *base.Schema {
 	var schema *base.Schema
 
 	// Handle array modifier
@@ -772,7 +773,7 @@ func (g *Generator) createFieldSchema(field specification.Field, service *specif
 }
 
 // createParameterSchema creates a base.Schema for a field used in parameters, without description to avoid duplication.
-func (g *Generator) createParameterSchema(field specification.Field, service *specification.Service) *base.Schema {
+func (g *generator) createParameterSchema(field specification.Field, service *specification.Service) *base.Schema {
 	var schema *base.Schema
 
 	// Handle array modifier
@@ -838,7 +839,7 @@ func (g *Generator) createParameterSchema(field specification.Field, service *sp
 }
 
 // getTypeSchema returns a base.Schema for the given field type.
-func (g *Generator) getTypeSchema(fieldType string, service *specification.Service) *base.Schema {
+func (g *generator) getTypeSchema(fieldType string, service *specification.Service) *base.Schema {
 	switch fieldType {
 	case specification.FieldTypeString:
 		return &base.Schema{Type: []string{schemaTypeString}}
@@ -879,7 +880,7 @@ func (g *Generator) getTypeSchema(fieldType string, service *specification.Servi
 }
 
 // addResourceToPaths adds resource endpoints to paths using native v3 types.
-func (g *Generator) addResourceToPaths(resource specification.Resource, paths *orderedmap.Map[string, *v3.PathItem], service *specification.Service) {
+func (g *generator) addResourceToPaths(resource specification.Resource, paths *orderedmap.Map[string, *v3.PathItem], service *specification.Service) {
 	// Group endpoints by path
 	pathGroups := make(map[string][]*specification.Endpoint)
 	for _, endpoint := range resource.Endpoints {
@@ -914,7 +915,7 @@ func (g *Generator) addResourceToPaths(resource specification.Resource, paths *o
 }
 
 // createOperation creates a v3.Operation from an endpoint using native types.
-func (g *Generator) createOperation(endpoint specification.Endpoint, resource specification.Resource, service *specification.Service) *v3.Operation {
+func (g *generator) createOperation(endpoint specification.Endpoint, resource specification.Resource, service *specification.Service) *v3.Operation {
 	operation := &v3.Operation{
 		OperationId: resource.Name + endpoint.Name,
 		Summary:     endpoint.Summary,
@@ -968,7 +969,7 @@ func (g *Generator) createOperation(endpoint specification.Endpoint, resource sp
 }
 
 // createParameter creates a v3.Parameter from a field using native types.
-func (g *Generator) createParameter(field specification.Field, location string, service *specification.Service) *v3.Parameter {
+func (g *generator) createParameter(field specification.Field, location string, service *specification.Service) *v3.Parameter {
 	isRequired := field.IsRequired(service)
 	param := &v3.Parameter{
 		Name:        field.TagJSON(),
@@ -982,7 +983,7 @@ func (g *Generator) createParameter(field specification.Field, location string, 
 }
 
 // addRequestBodiesToComponents extracts request bodies from all endpoints and adds them to the components section.
-func (g *Generator) addRequestBodiesToComponents(components *v3.Components, service *specification.Service) {
+func (g *generator) addRequestBodiesToComponents(components *v3.Components, service *specification.Service) {
 	// Track unique request bodies to avoid duplicates
 	requestBodyMap := make(map[string]*v3.RequestBody)
 
@@ -1004,12 +1005,12 @@ func (g *Generator) addRequestBodiesToComponents(components *v3.Components, serv
 }
 
 // createRequestBodyName creates a systematic name for request bodies.
-func (g *Generator) createRequestBodyName(resourceName, endpointName string) string {
+func (g *generator) createRequestBodyName(resourceName, endpointName string) string {
 	return resourceName + endpointName
 }
 
 // isPrimitiveType returns true if the field type is a primitive type.
-func (g *Generator) isPrimitiveType(fieldType string) bool {
+func (g *generator) isPrimitiveType(fieldType string) bool {
 	switch fieldType {
 	case specification.FieldTypeUUID, specification.FieldTypeDate, specification.FieldTypeTimestamp,
 		specification.FieldTypeString, specification.FieldTypeInt, specification.FieldTypeBool:
@@ -1020,7 +1021,7 @@ func (g *Generator) isPrimitiveType(fieldType string) bool {
 }
 
 // createTypedExampleNode creates a properly typed YAML node for an example value based on the field type.
-func (g *Generator) createTypedExampleNode(fieldType, exampleValue string) *yaml.Node {
+func (g *generator) createTypedExampleNode(fieldType, exampleValue string) *yaml.Node {
 	switch fieldType {
 	case specification.FieldTypeInt:
 		// For integer types, create a numeric node
@@ -1055,7 +1056,7 @@ func (g *Generator) createTypedExampleNode(fieldType, exampleValue string) *yaml
 }
 
 // createNullExampleNode creates a YAML node representing a null value.
-func (g *Generator) createNullExampleNode() *yaml.Node {
+func (g *generator) createNullExampleNode() *yaml.Node {
 	return &yaml.Node{
 		Kind:  yaml.ScalarNode,
 		Tag:   "!!null",
@@ -1066,7 +1067,7 @@ func (g *Generator) createNullExampleNode() *yaml.Node {
 // generateRequestBodyExample generates an example value for a request body based on the body parameters.
 // For enum/primitive fields with examples, it uses the field example directly.
 // For object fields, it traverses to the object and builds examples from the object's fields.
-func (g *Generator) generateRequestBodyExample(bodyParams []specification.Field, service *specification.Service) *yaml.Node {
+func (g *generator) generateRequestBodyExample(bodyParams []specification.Field, service *specification.Service) *yaml.Node {
 	if len(bodyParams) == 0 {
 		return nil
 	}
@@ -1100,7 +1101,7 @@ func (g *Generator) generateRequestBodyExample(bodyParams []specification.Field,
 }
 
 // generateObjectExampleWithVisited generates an example from an object definition with circular reference protection.
-func (g *Generator) generateObjectExampleWithVisited(obj specification.Object, service *specification.Service, visited map[string]bool) *yaml.Node {
+func (g *generator) generateObjectExampleWithVisited(obj specification.Object, service *specification.Service, visited map[string]bool) *yaml.Node {
 	// Check for circular reference
 	if visited[obj.Name] {
 		return nil
@@ -1117,13 +1118,13 @@ func (g *Generator) generateObjectExampleWithVisited(obj specification.Object, s
 }
 
 // generateObjectExampleFromFields generates an example object from a slice of fields.
-func (g *Generator) generateObjectExampleFromFields(fields []specification.Field, service *specification.Service) *yaml.Node {
+func (g *generator) generateObjectExampleFromFields(fields []specification.Field, service *specification.Service) *yaml.Node {
 	visited := make(map[string]bool)
 	return g.generateObjectExampleFromFieldsWithVisited(fields, service, visited)
 }
 
 // generateObjectExampleFromFieldsWithVisited generates an example object from a slice of fields with circular reference protection.
-func (g *Generator) generateObjectExampleFromFieldsWithVisited(fields []specification.Field, service *specification.Service, visited map[string]bool) *yaml.Node {
+func (g *generator) generateObjectExampleFromFieldsWithVisited(fields []specification.Field, service *specification.Service, visited map[string]bool) *yaml.Node {
 	if len(fields) == 0 {
 		return nil
 	}
@@ -1186,7 +1187,7 @@ func (g *Generator) generateObjectExampleFromFieldsWithVisited(fields []specific
 // generateResponseBodyExample generates an example value for a response body based on the response definition.
 // For responses with BodyObject, it generates an example from the object definition.
 // For responses with BodyFields, it generates an example from the field definitions.
-func (g *Generator) generateResponseBodyExample(response specification.EndpointResponse, service *specification.Service) *yaml.Node {
+func (g *generator) generateResponseBodyExample(response specification.EndpointResponse, service *specification.Service) *yaml.Node {
 	// If response has a body object, generate example from the object definition
 	if response.BodyObject != nil {
 		if service.HasObject(*response.BodyObject) {
@@ -1209,7 +1210,7 @@ func (g *Generator) generateResponseBodyExample(response specification.EndpointR
 }
 
 // createComponentRequestBody creates a v3.RequestBody for the components section.
-func (g *Generator) createComponentRequestBody(bodyParams []specification.Field, service *specification.Service) *v3.RequestBody {
+func (g *generator) createComponentRequestBody(bodyParams []specification.Field, service *specification.Service) *v3.RequestBody {
 	var schema *base.Schema
 	var isRequired bool
 
@@ -1281,7 +1282,7 @@ func (g *Generator) createComponentRequestBody(bodyParams []specification.Field,
 }
 
 // addResponseBodiesToComponents extracts response bodies from all endpoints and adds them to the components section.
-func (g *Generator) addResponseBodiesToComponents(components *v3.Components, service *specification.Service) {
+func (g *generator) addResponseBodiesToComponents(components *v3.Components, service *specification.Service) {
 	// Track unique response bodies to avoid duplicates
 	responseBodyMap := make(map[string]*v3.Response)
 
@@ -1318,12 +1319,12 @@ func (g *Generator) addResponseBodiesToComponents(components *v3.Components, ser
 }
 
 // createResponseBodyName creates a systematic name for response bodies.
-func (g *Generator) createResponseBodyName(resourceName, endpointName string, statusCode int) string {
+func (g *generator) createResponseBodyName(resourceName, endpointName string, statusCode int) string {
 	return resourceName + endpointName
 }
 
 // generateAutoResponseDescription creates unique descriptions for autogenerated responses.
-func (g *Generator) generateAutoResponseDescription(resourceName, endpointName string, existingDescription string) string {
+func (g *generator) generateAutoResponseDescription(resourceName, endpointName string, existingDescription string) string {
 	// Generate unique description based on operation type - prioritize autogenerated descriptions
 	switch endpointName {
 	case "Create":
@@ -1348,7 +1349,7 @@ func (g *Generator) generateAutoResponseDescription(resourceName, endpointName s
 }
 
 // generateAutoErrorDescription creates unique descriptions for autogenerated error responses.
-func (g *Generator) generateAutoErrorDescription(resourceName, endpointName, statusCode string) string {
+func (g *generator) generateAutoErrorDescription(resourceName, endpointName, statusCode string) string {
 	// Generate unique description based on error status code
 	switch statusCode {
 	case httpStatus400:
@@ -1374,7 +1375,7 @@ func (g *Generator) generateAutoErrorDescription(resourceName, endpointName, sta
 }
 
 // createComponentResponse creates a v3.Response for the components section.
-func (g *Generator) createComponentResponse(response specification.EndpointResponse, resourceName, endpointName string, service *specification.Service) *v3.Response {
+func (g *generator) createComponentResponse(response specification.EndpointResponse, resourceName, endpointName string, service *specification.Service) *v3.Response {
 	componentResponse := &v3.Response{}
 
 	// Generate unique description that includes operation name
@@ -1469,7 +1470,7 @@ func (g *Generator) createComponentResponse(response specification.EndpointRespo
 }
 
 // generate422ErrorExample generates a realistic example for a 422 error response.
-func (g *Generator) generate422ErrorExample(resourceName, endpointName string, service *specification.Service) *yaml.Node {
+func (g *generator) generate422ErrorExample(resourceName, endpointName string, service *specification.Service) *yaml.Node {
 	// Create the root object
 	rootNode := &yaml.Node{
 		Kind: yaml.MappingNode,
@@ -1488,7 +1489,7 @@ func (g *Generator) generate422ErrorExample(resourceName, endpointName string, s
 }
 
 // generateErrorObjectExample generates an Error object example with code, message, and requestID fields.
-func (g *Generator) generateErrorObjectExample(resourceName, endpointName string) *yaml.Node {
+func (g *generator) generateErrorObjectExample(resourceName, endpointName string) *yaml.Node {
 	errorObjectNode := &yaml.Node{
 		Kind: yaml.MappingNode,
 	}
@@ -1536,7 +1537,7 @@ func (g *Generator) generateErrorObjectExample(resourceName, endpointName string
 }
 
 // createEndpointSpecific422ErrorResponse creates a 422 error response component for an endpoint.
-func (g *Generator) createEndpointSpecific422ErrorResponse(resourceName, endpointName string, service *specification.Service) *v3.Response {
+func (g *generator) createEndpointSpecific422ErrorResponse(resourceName, endpointName string, service *specification.Service) *v3.Response {
 	// Create schema with only error field (ErrorCode)
 	schema := &base.Schema{
 		Type:       []string{schemaTypeObject},
@@ -1598,7 +1599,7 @@ func (g *Generator) createEndpointSpecific422ErrorResponse(resourceName, endpoin
 }
 
 // createResponseReference creates a v3.Response that references a component response body.
-func (g *Generator) createResponseReference(response specification.EndpointResponse, resourceName, endpointName string, service *specification.Service) *v3.Response {
+func (g *generator) createResponseReference(response specification.EndpointResponse, resourceName, endpointName string, service *specification.Service) *v3.Response {
 	// Check if this response has content that should be referenced
 	if response.BodyObject != nil || len(response.BodyFields) > 0 {
 		// Since v3.Response doesn't directly support references, we use the Extensions field
@@ -1629,7 +1630,7 @@ func (g *Generator) createResponseReference(response specification.EndpointRespo
 }
 
 // generateStandardErrorObjectExample generates an error object example YAML node (without wrapper) for standard error responses.
-func (g *Generator) generateStandardErrorObjectExample(errorCode, message string) *yaml.Node {
+func (g *generator) generateStandardErrorObjectExample(errorCode, message string) *yaml.Node {
 	// Create the error object node
 	errorObjectNode := &yaml.Node{
 		Kind: yaml.MappingNode,
@@ -1678,7 +1679,7 @@ func (g *Generator) generateStandardErrorObjectExample(errorCode, message string
 }
 
 // createWrappedErrorSchema creates an error response schema with the error wrapped in an "error" object.
-func (g *Generator) createWrappedErrorSchema(service *specification.Service) *base.Schema {
+func (g *generator) createWrappedErrorSchema(service *specification.Service) *base.Schema {
 	// Create the inner error object schema
 	var innerErrorSchema *base.Schema
 	if service.HasObject(errorObjectName) {
@@ -1725,7 +1726,7 @@ func (g *Generator) createWrappedErrorSchema(service *specification.Service) *ba
 }
 
 // generateStandardErrorExample generates a wrapped error example YAML node for standard error responses.
-func (g *Generator) generateStandardErrorExample(errorCode, message string) *yaml.Node {
+func (g *generator) generateStandardErrorExample(errorCode, message string) *yaml.Node {
 	// Create the wrapper object node (contains the "error" field)
 	wrapperNode := &yaml.Node{
 		Kind: yaml.MappingNode,
@@ -1789,7 +1790,7 @@ func (g *Generator) generateStandardErrorExample(errorCode, message string) *yam
 }
 
 // addErrorResponseBodiesToComponents adds common error response bodies to the components section.
-func (g *Generator) addErrorResponseBodiesToComponents(components *v3.Components, service *specification.Service) {
+func (g *generator) addErrorResponseBodiesToComponents(components *v3.Components, service *specification.Service) {
 	// Create standard wrapped error schema
 	standardErrorSchema := g.createWrappedErrorSchema(service)
 
@@ -1885,7 +1886,7 @@ func (g *Generator) addErrorResponseBodiesToComponents(components *v3.Components
 }
 
 // createResponse creates a v3.Response from an endpoint response using native types.
-func (g *Generator) createResponse(response specification.EndpointResponse, resourceName, endpointName string, service *specification.Service) *v3.Response {
+func (g *generator) createResponse(response specification.EndpointResponse, resourceName, endpointName string, service *specification.Service) *v3.Response {
 	openAPIResponse := &v3.Response{}
 
 	// Generate unique description that includes operation name
@@ -1980,7 +1981,7 @@ func (g *Generator) createResponse(response specification.EndpointResponse, reso
 }
 
 // addErrorResponses adds error responses based on errorCodes from the specification.
-func (g *Generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Response], endpoint specification.Endpoint, resource specification.Resource, service *specification.Service) {
+func (g *generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Response], endpoint specification.Endpoint, resource specification.Resource, service *specification.Service) {
 	// Check if endpoint has body parameters
 	hasBodyParams := len(endpoint.Request.BodyParams) > 0
 
@@ -2021,7 +2022,7 @@ func (g *Generator) addErrorResponses(responses *orderedmap.Map[string, *v3.Resp
 }
 
 // addDefaultErrorResponseReferences adds fallback error response references when ErrorCode enum is not found.
-func (g *Generator) addDefaultErrorResponseReferences(responses *orderedmap.Map[string, *v3.Response], endpoint specification.Endpoint, resource specification.Resource, service *specification.Service) {
+func (g *generator) addDefaultErrorResponseReferences(responses *orderedmap.Map[string, *v3.Response], endpoint specification.Endpoint, resource specification.Resource, service *specification.Service) {
 	// Check if endpoint has body parameters to determine appropriate schema
 	hasBodyParams := len(endpoint.Request.BodyParams) > 0
 
@@ -2044,7 +2045,7 @@ func (g *Generator) addDefaultErrorResponseReferences(responses *orderedmap.Map[
 }
 
 // mapErrorCodeToStatusAndDescription maps error code names to HTTP status codes and descriptions.
-func (g *Generator) mapErrorCodeToStatusAndDescription(errorCodeName, errorCodeDescription string) (string, string) {
+func (g *generator) mapErrorCodeToStatusAndDescription(errorCodeName, errorCodeDescription string) (string, string) {
 	switch errorCodeName {
 	case errorCodeBadRequest:
 		return httpStatus400, errorCodeDescription
@@ -2068,8 +2069,8 @@ func (g *Generator) mapErrorCodeToStatusAndDescription(errorCodeName, errorCodeD
 	}
 }
 
-// ToYAML converts an OpenAPI document to YAML format.
-func (g *Generator) ToYAML(document *v3.Document) ([]byte, error) {
+// toYAML converts an OpenAPI document to YAML format.
+func (g *generator) toYAML(document *v3.Document) ([]byte, error) {
 	if document == nil {
 		return nil, errors.New(errorInvalidDocument)
 	}
@@ -2078,8 +2079,8 @@ func (g *Generator) ToYAML(document *v3.Document) ([]byte, error) {
 	return document.Render()
 }
 
-// ToJSON converts an OpenAPI document to JSON format.
-func (g *Generator) ToJSON(document *v3.Document) ([]byte, error) {
+// toJSON converts an OpenAPI document to JSON format.
+func (g *generator) toJSON(document *v3.Document) ([]byte, error) {
 	if document == nil {
 		return nil, errors.New(errorInvalidDocument)
 	}
@@ -2088,13 +2089,11 @@ func (g *Generator) ToJSON(document *v3.Document) ([]byte, error) {
 	return document.RenderJSON("  ")
 }
 
-// GenerateFromSpecificationToJSON is a convenience method that generates an OpenAPI document
-// from a specification.Service and returns it as JSON in a single call.
-// This method creates a generator with default settings, sets a standard title and description,
-// generates the OpenAPI document, and converts it to JSON format.
-func GenerateFromSpecificationToJSON(service *specification.Service) ([]byte, error) {
+// GenerateOpenAPI generates an OpenAPI 3.1 document from a specification.Service and writes it as JSON to the provided buffer.
+// This is the main exported function following the same pattern as servergen.GenerateServer.
+func GenerateOpenAPI(buf *bytes.Buffer, service *specification.Service) error {
 	if service == nil {
-		return nil, errors.New(errorInvalidService)
+		return errors.New(errorInvalidService)
 	}
 
 	// Create generator with default configuration
@@ -2105,22 +2104,39 @@ func GenerateFromSpecificationToJSON(service *specification.Service) ([]byte, er
 	generator.Description = defaultAPIDescription
 
 	// Generate OpenAPI document
-	document, err := generator.GenerateFromService(service)
+	document, err := generator.generateFromService(service)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate OpenAPI document: %w", err)
+		return fmt.Errorf("failed to generate OpenAPI document: %w", err)
 	}
 
 	// Convert to JSON
-	jsonBytes, err := generator.ToJSON(document)
+	jsonBytes, err := generator.toJSON(document)
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert OpenAPI document to JSON: %w", err)
+		return fmt.Errorf("failed to convert OpenAPI document to JSON: %w", err)
 	}
 
-	return jsonBytes, nil
+	// Write to buffer
+	buf.Write(jsonBytes)
+
+	return nil
+}
+
+// GenerateFromSpecificationToJSON is a convenience method that generates an OpenAPI document
+// from a specification.Service and returns it as JSON in a single call.
+// This method creates a generator with default settings, sets a standard title and description,
+// generates the OpenAPI document, and converts it to JSON format.
+// DEPRECATED: Use GenerateOpenAPI with a buffer instead. This is kept for backwards compatibility.
+func GenerateFromSpecificationToJSON(service *specification.Service) ([]byte, error) {
+	var buf bytes.Buffer
+	err := GenerateOpenAPI(&buf, service)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 // createRequestBodyReference creates a v3.RequestBody that renders as a reference to a component request body.
-func (g *Generator) createRequestBodyReference(resourceName, endpointName string) *v3.RequestBody {
+func (g *generator) createRequestBodyReference(resourceName, endpointName string) *v3.RequestBody {
 	// Since v3.RequestBody doesn't directly support references, we use the Extensions field
 	// with a $ref YAML node to create a reference that serializes properly
 	requestBodyName := g.createRequestBodyName(resourceName, endpointName)
@@ -2137,7 +2153,7 @@ func (g *Generator) createRequestBodyReference(resourceName, endpointName string
 }
 
 // createErrorResponseReference creates a v3.Response that references a component error response.
-func (g *Generator) createErrorResponseReference(statusCode string, resourceName, endpointName string, hasBodyParams bool) *v3.Response {
+func (g *generator) createErrorResponseReference(statusCode string, resourceName, endpointName string, hasBodyParams bool) *v3.Response {
 	// Create reference to the appropriate component error response
 	responseBodyName := errorResponseBodyPrefix + statusCode + responseBodySuffix
 	refString := responseBodyReferencePrefix + responseBodyName
@@ -2157,7 +2173,7 @@ func (g *Generator) createErrorResponseReference(statusCode string, resourceName
 }
 
 // createEndpointSpecificErrorResponseReference creates a v3.Response that references an endpoint-specific error response (for 422).
-func (g *Generator) createEndpointSpecificErrorResponseReference(statusCode string, resourceName, endpointName string) *v3.Response {
+func (g *generator) createEndpointSpecificErrorResponseReference(statusCode string, resourceName, endpointName string) *v3.Response {
 	// Create reference to the endpoint-specific error response (e.g., EmployeeCreate422ResponseBody)
 	responseBodyName := resourceName + endpointName + statusCode + responseBodySuffix
 	refString := responseBodyReferencePrefix + responseBodyName
@@ -2177,7 +2193,7 @@ func (g *Generator) createEndpointSpecificErrorResponseReference(statusCode stri
 }
 
 // addSecuritySchemesToComponents adds security schemes from the service to the OpenAPI components.
-func (g *Generator) addSecuritySchemesToComponents(components *v3.Components, service *specification.Service) {
+func (g *generator) addSecuritySchemesToComponents(components *v3.Components, service *specification.Service) {
 	if service.SecuritySchemes == nil {
 		return
 	}
@@ -2189,7 +2205,7 @@ func (g *Generator) addSecuritySchemesToComponents(components *v3.Components, se
 }
 
 // createSecurityScheme creates a v3.SecurityScheme from a specification.SecurityScheme.
-func (g *Generator) createSecurityScheme(scheme specification.SecurityScheme) *v3.SecurityScheme {
+func (g *generator) createSecurityScheme(scheme specification.SecurityScheme) *v3.SecurityScheme {
 	securityScheme := &v3.SecurityScheme{
 		Type:        scheme.Type,
 		Description: scheme.Description,
@@ -2210,7 +2226,7 @@ func (g *Generator) createSecurityScheme(scheme specification.SecurityScheme) *v
 }
 
 // addSecurityToDocument adds security requirements from the service to the OpenAPI document.
-func (g *Generator) addSecurityToDocument(document *v3.Document, service *specification.Service) {
+func (g *generator) addSecurityToDocument(document *v3.Document, service *specification.Service) {
 	if len(service.Security) == 0 {
 		return
 	}
