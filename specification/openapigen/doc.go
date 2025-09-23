@@ -11,24 +11,32 @@
 // compatibility with the official OpenAPI 3.1 specification and gain access to powerful
 // parsing, validation, and serialization capabilities.
 //
-// # Future Usage
+// # Usage
 //
-// Once implementation is complete, typical usage will be:
+// The package provides a simple function for generating OpenAPI 3.1 documents:
 //
-//	generator := openapigen.NewGenerator()
-//	document, err := generator.GenerateFromService(service)
+//	import (
+//	    "bytes"
+//	    "os"
+//	    "github.com/meitner-se/publicapis-gen/specification"
+//	    "github.com/meitner-se/publicapis-gen/specification/openapigen"
+//	)
+//
+//	// Load specification
+//	service, err := specification.ParseServiceFromFile("api-spec.yaml")
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
 //
-//	// Convert to YAML
-//	yamlBytes, err := generator.ToYAML(document)
+//	// Generate OpenAPI document
+//	var buf bytes.Buffer
+//	err = openapigen.GenerateOpenAPI(&buf, service)
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
 //
-//	// Convert to JSON
-//	jsonBytes, err := generator.ToJSON(document)
+//	// Write to file
+//	err = os.WriteFile("openapi.json", buf.Bytes(), 0644)
 //	if err != nil {
 //	    log.Fatal(err)
 //	}

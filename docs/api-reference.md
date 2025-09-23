@@ -13,12 +13,18 @@ Main service definition containing all API components.
 
 ```go
 type Service struct {
-    Name      string          `json:"name"`              // Service name
-    Version   string          `json:"version,omitempty"` // Service version  
-    Servers   []ServiceServer `json:"servers,omitempty"` // Server definitions
-    Enums     []Enum          `json:"enums"`             // Enum definitions
-    Objects   []Object        `json:"objects"`           // Shared objects
-    Resources []Resource      `json:"resources"`         // API resources
+    Name            string                     `json:"name"`                      // Service name
+    Version         string                     `json:"version,omitempty"`         // Service version  
+    Contact         *ServiceContact            `json:"contact,omitempty"`         // Contact information
+    License         *ServiceLicense            `json:"license,omitempty"`         // License information
+    Servers         []ServiceServer            `json:"servers,omitempty"`         // Server definitions
+    SecuritySchemes map[string]SecurityScheme  `json:"securitySchemes,omitempty"` // Security schemes
+    Security        []SecurityRequirement      `json:"security,omitempty"`        // Security requirements
+    Retry           *RetryConfiguration        `json:"retry,omitempty"`           // Retry configuration
+    Timeout         *TimeoutConfiguration      `json:"timeout,omitempty"`         // Timeout configuration
+    Enums           []Enum                     `json:"enums"`                     // Enum definitions
+    Objects         []Object                   `json:"objects"`                   // Shared objects
+    Resources       []Resource                 `json:"resources"`                 // API resources
 }
 ```
 
@@ -435,20 +441,18 @@ os.WriteFile("openapi.yaml", yamlBytes, 0644)
 
 ### Validation Pattern
 ```go
-// 1. Create schema generator
-generator := schema.NewSchemaGenerator()
-
-// 2. Validate specification file
-err := generator.ValidateService(data)
+// 1. Parse and validate specification (validation is automatic)
+service, err := specification.ParseServiceFromFile("api-spec.yaml")
 if err != nil {
-    log.Printf("Validation failed: %v", err)
+    log.Printf("Validation/parsing failed: %v", err)
     return
 }
 
-// 3. Parse if valid
-service, err := generator.ParseServiceFromYAML(data)
+// 2. Generate schemas if needed
+var buf bytes.Buffer
+err = schemagen.GenerateSchemas(&buf)
 if err != nil {
-    log.Fatal(err)
+    log.Printf("Schema generation failed: %v", err)
 }
 ```
 

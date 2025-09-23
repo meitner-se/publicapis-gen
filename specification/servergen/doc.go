@@ -26,7 +26,7 @@
 //	)
 //
 //	// Load specification
-//	service, err := specification.LoadFromFile("api-spec.yaml")
+//	service, err := specification.ParseServiceFromFile("api-spec.yaml")
 //	if err != nil {
 //	    log.Fatal(err)
 //	}

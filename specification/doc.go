@@ -17,121 +17,80 @@
 //   - ResourceField: Extends Field with operation-specific configuration
 //   - Endpoint: Defines individual API endpoints with request/response structure
 //
-// # JSON Schema Generation and Validation
+// # JSON Schema Generation
 //
-// JSON schema generation and validation capabilities are available through the schema sub-package,
-// which provides the SchemaGenerator type for producing JSON schemas and validating data against them.
+// JSON schema generation capabilities are available through the schemagen sub-package,
+// which provides a simple function for generating JSON schemas for all specification types.
 //
 // Basic schema generation example:
 //
-//	import "github.com/meitner-se/publicapis-gen/specification/schemagen"
+//	import (
+//	    "bytes"
+//	    "os"
+//	    "github.com/meitner-se/publicapis-gen/specification/schemagen"
+//	)
 //
-//	generator := schemagen.NewSchemaGenerator()
-//	jsonSchema, err := generator.GenerateServiceSchema()
+//	var buf bytes.Buffer
+//	err := schemagen.GenerateSchemas(&buf)
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-//	schemaJSON, err := generator.SchemaToJSON(jsonSchema)
+//
+//	// Write schemas to file
+//	err = os.WriteFile("schemas.json", buf.Bytes(), 0644)
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
 //
-// # Validation Support
+// # Parsing and Validation
 //
-// The schema package provides validation functions that verify JSON/YAML data against
-// the generated schemas before parsing. This ensures that only valid data is processed.
-//
-// Validation example:
-//
-//	generator := schemagen.NewSchemaGenerator()
-//
-//	// Validate JSON data
-//	jsonData := []byte(`{"name": "MyAPI", "enums": [], "objects": [], "resources": []}`)
-//	err := generator.ValidateService(jsonData)
-//	if err != nil {
-//	    log.Fatalf("Validation failed: %v", err)
-//	}
-//
-//	// Validate YAML data
-//	yamlData := []byte(`
-//	name: MyAPI
-//	enums: []
-//	objects: []
-//	resources: []`)
-//	err = generator.ValidateService(yamlData)
-//	if err != nil {
-//	    log.Fatalf("Validation failed: %v", err)
-//	}
-//
-// # Parsing with Validation
-//
-// The schema package provides parsing functions that combine validation and unmarshaling
-// into a single operation, ensuring that only valid, well-formed data is parsed.
+// The specification package provides parsing functions that automatically validate
+// specifications and apply overlays to ensure complete API definitions.
 //
 // Parsing example:
 //
-//	generator := schemagen.NewSchemaGenerator()
+//	import "github.com/meitner-se/publicapis-gen/specification"
 //
-//	// Parse and validate JSON
-//	jsonData := []byte(`{
-//	    "name": "UserAPI",
-//	    "enums": [
-//	        {
-//	            "name": "Status",
-//	            "description": "User status",
-//	            "values": [
-//	                {"name": "Active", "description": "Active user"},
-//	                {"name": "Inactive", "description": "Inactive user"}
-//	            ]
-//	        }
-//	    ],
-//	    "objects": [],
-//	    "resources": []
-//	}`)
-//
-//	service, err := generator.ParseServiceFromJSON(jsonData)
+//	// Parse from file (supports YAML and JSON)
+//	service, err := specification.ParseServiceFromFile("api-spec.yaml")
 //	if err != nil {
 //	    log.Fatalf("Failed to parse service: %v", err)
 //	}
 //
-//	// Parse and validate YAML
+//	// Parse from bytes
 //	yamlData := []byte(`
 //	name: UserAPI
-//	enums:
-//	  - name: Status
-//	    description: User status
-//	    values:
-//	      - name: Active
-//	        description: Active user
-//	      - name: Inactive
-//	        description: Inactive user
+//	enums: []
 //	objects: []
 //	resources: []`)
-//
-//	service, err = generator.ParseServiceFromYAML(yamlData)
+//	service, err = specification.ParseServiceFromYAML(yamlData)
 //	if err != nil {
 //	    log.Fatalf("Failed to parse service: %v", err)
 //	}
 //
-// # Available Validation and Parsing Functions
+// # Available Parsing Functions
 //
-// The schema package provides validation and parsing functions for all main specification types:
+// The specification package provides parsing functions for loading and validating specifications:
 //
-//   - ValidateService, ParseServiceFromJSON, ParseServiceFromYAML
-//   - ValidateEnum, ParseEnumFromJSON, ParseEnumFromYAML
-//   - ValidateObject, ParseObjectFromJSON, ParseObjectFromYAML
-//   - ValidateResource, ParseResourceFromJSON, ParseResourceFromYAML
-//   - ValidateField, ValidateResourceField
-//   - ValidateEndpoint, ValidateEndpointRequest, ValidateEndpointResponse
+//   - ParseServiceFromFile(filePath) - Parse from YAML or JSON file
+//   - ParseServiceFromBytes(data, fileExtension) - Parse from byte data
+//   - ParseServiceFromJSON(data) - Parse from JSON byte data
+//   - ParseServiceFromYAML(data) - Parse from YAML byte data
+//
+// All parsing functions automatically:
+//   - Validate the specification structure
+//   - Apply overlays to generate complete CRUD endpoints
+//   - Add default objects (Error, Pagination, Meta)
+//   - Generate filter objects for searchable resources
 //
 // # Error Handling
 //
-// Validation functions return detailed error information when validation fails,
-// including specific details about what constraints were violated:
+// Parsing functions return detailed error information when validation fails,
+// including line and column numbers for YAML files:
 //
-//	err := generator.ValidateService(invalidData)
+//	service, err := specification.ParseServiceFromFile("invalid.yaml")
 //	if err != nil {
-//	    // Error contains specific validation failure details
+//	    // Error contains specific validation failure details with line numbers
 //	    log.Printf("Validation error: %v", err)
 //	}
 //
