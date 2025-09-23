@@ -25,6 +25,8 @@ const (
 	errorInvalidFile    = "invalid input file"
 	errorInvalidMode    = "invalid operation mode"
 	errorFileWrite      = "failed to write file"
+	errorDiffFound      = "differences found between generated and existing files"
+	errorFileNotFound   = "output file does not exist"
 	logKeyError         = "error"
 	logKeyFile          = "file"
 	logKeyMode          = "mode"
@@ -80,6 +82,7 @@ const (
 // Command constants
 const (
 	commandGenerate     = "generate"
+	commandDiff         = "diff"
 	commandHelp         = "help"
 	errorInvalidCommand = "invalid command"
 	errorMissingCommand = "missing command"
@@ -88,8 +91,9 @@ const (
 // Command usage messages
 const (
 	mainUsageDescription     = "publicapis-gen - Generate API specifications and OpenAPI documents"
-	mainUsageCommands        = "\nAvailable Commands:\n  generate    Generate API specifications and OpenAPI documents\n  help        Show help for commands\n\nUse \"publicapis-gen [command] --help\" for more information about a command."
+	mainUsageCommands        = "\nAvailable Commands:\n  generate    Generate API specifications and OpenAPI documents\n  diff        Check for differences between generated and existing files\n  help        Show help for commands\n\nUse \"publicapis-gen [command] --help\" for more information about a command."
 	generateUsageDescription = "Generate API specifications and OpenAPI documents from specification files"
+	diffUsageDescription     = "Check for differences between generated and existing files"
 )
 
 // Job represents a single generation job in the config file
@@ -128,6 +132,8 @@ func run(ctx context.Context) error {
 	switch command {
 	case commandGenerate:
 		return runGenerateCommand(ctx, os.Args[2:])
+	case commandDiff:
+		return runDiffCommand(ctx, os.Args[2:])
 	case commandHelp:
 		if len(os.Args) >= 3 {
 			return showCommandHelp(os.Args[2])
@@ -154,6 +160,9 @@ func showCommandHelp(command string) error {
 	case commandGenerate:
 		showGenerateUsage()
 		return nil
+	case commandDiff:
+		showDiffUsage()
+		return nil
 	default:
 		showMainUsage()
 		return fmt.Errorf("%s: unknown command '%s'", errorInvalidCommand, command)
@@ -171,6 +180,21 @@ func showGenerateUsage() {
 	fmt.Fprintf(os.Stderr, "  -log-level string\n        Log level: 'debug', 'info', 'warn', 'error', or 'off' (default: off)\n")
 	fmt.Fprintf(os.Stderr, "  -help\n        Show this help message\n")
 	fmt.Fprintf(os.Stderr, "%s\n", usageExample)
+}
+
+func showDiffUsage() {
+	fmt.Fprintf(os.Stderr, "%s\n\n", diffUsageDescription)
+	fmt.Fprintf(os.Stderr, "Usage: %s diff [options]\n\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "Options:\n")
+	fmt.Fprintf(os.Stderr, "  -config string\n        Path to YAML config file containing multiple jobs\n")
+	fmt.Fprintf(os.Stderr, "  -log-level string\n        Log level: 'debug', 'info', 'warn', 'error', or 'off' (default: off)\n")
+	fmt.Fprintf(os.Stderr, "  -help\n        Show this help message\n")
+	fmt.Fprintf(os.Stderr, "\nExamples:\n")
+	fmt.Fprintf(os.Stderr, "  # Check differences using config file\n")
+	fmt.Fprintf(os.Stderr, "  %s diff -config=build-config.yaml\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "  %s diff -config=build-config.yaml -log-level=info\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "\n  # Auto-detect default config file\n")
+	fmt.Fprintf(os.Stderr, "  %s diff  # Looks for publicapis.yaml or publicapis.yml\n", os.Args[0])
 }
 
 func runGenerateCommand(ctx context.Context, args []string) error {
@@ -246,6 +270,96 @@ func runGenerateCommand(ctx context.Context, args []string) error {
 	}
 
 	return runLegacyMode(ctx, *fileFlag, *modeFlag, *outputFlag)
+}
+
+func runDiffCommand(ctx context.Context, args []string) error {
+	// Create a new FlagSet for the diff command
+	diffFlags := flag.NewFlagSet(commandDiff, flag.ContinueOnError)
+	diffFlags.Usage = showDiffUsage
+
+	// Parse command line flags for diff command
+	var (
+		configFlag   = diffFlags.String(configFileFlag, "", "Path to YAML config file containing multiple jobs")
+		logLevelFlag = diffFlags.String("log-level", logLevelOff, "Log level: 'debug', 'info', 'warn', 'error', or 'off' (default: off)")
+		helpFlag     = diffFlags.Bool("help", false, "Show help message")
+	)
+
+	if err := diffFlags.Parse(args); err != nil {
+		return err
+	}
+
+	// Configure logging
+	if err := configureLogging(*logLevelFlag); err != nil {
+		return fmt.Errorf("invalid log level: %w", err)
+	}
+
+	// Show help if requested
+	if *helpFlag {
+		showDiffUsage()
+		return nil
+	}
+
+	// Determine if using config file or looking for default
+	usingConfig := *configFlag != ""
+
+	// If no explicit config provided, try to find default config file
+	if !usingConfig {
+		defaultConfigPath := findDefaultConfigFile()
+		if defaultConfigPath != "" {
+			slog.InfoContext(ctx, "Using default config file for diff", logKeyFile, defaultConfigPath)
+			return runDiffMode(ctx, defaultConfigPath)
+		}
+
+		// No default config file found, require explicit configuration
+		showDiffUsage()
+		return fmt.Errorf("%s: config file is required for diff command", errorInvalidConfig)
+	}
+
+	return runDiffMode(ctx, *configFlag)
+}
+
+// runDiffMode processes jobs from a config file and checks for differences
+func runDiffMode(ctx context.Context, configPath string) error {
+	// Parse config file
+	config, err := parseConfigFile(configPath)
+	if err != nil {
+		return err
+	}
+
+	slog.InfoContext(ctx, "Successfully parsed config file for diff", logKeyFile, configPath)
+
+	var hasDifferences bool
+	var diffMessages []string
+
+	// Process each job in the config
+	for i, job := range config {
+		slog.InfoContext(ctx, "Checking differences for job", "job_index", i+1, "specification", job.Specification)
+
+		jobDiffs, err := checkJobDifferences(ctx, job)
+		if err != nil {
+			return fmt.Errorf("failed to check differences for job %d (spec: %s): %w", i+1, job.Specification, err)
+		}
+
+		if len(jobDiffs) > 0 {
+			hasDifferences = true
+			diffMessages = append(diffMessages, jobDiffs...)
+		}
+	}
+
+	if hasDifferences {
+		fmt.Printf("Found differences between generated and existing files:\n\n")
+		for _, msg := range diffMessages {
+			fmt.Printf("%s\n", msg)
+		}
+		fmt.Printf("\nTotal jobs checked: %d\n", len(config))
+		return fmt.Errorf(errorDiffFound)
+	}
+
+	slog.InfoContext(ctx, "No differences found", "total_jobs", len(config))
+	fmt.Printf("No differences found. All generated files match existing files.\n")
+	fmt.Printf("Total jobs checked: %d\n", len(config))
+
+	return nil
 }
 
 // runConfigMode processes jobs from a config file
@@ -720,6 +834,182 @@ func extractPackageNameFromPath(outputPath string) string {
 	packageName = strings.ReplaceAll(packageName, " ", "_")
 
 	return packageName
+}
+
+// checkJobDifferences checks for differences between generated and existing files for a single job
+func checkJobDifferences(ctx context.Context, job Job) ([]string, error) {
+	// Read and parse the specification file
+	service, err := readSpecificationFile(job.Specification)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read specification file '%s': %w", job.Specification, err)
+	}
+
+	slog.InfoContext(ctx, "Successfully parsed specification file for diff", logKeyFile, job.Specification)
+
+	var differences []string
+
+	// Check OpenAPI JSON differences
+	if job.OpenAPIJSON != "" {
+		if diff, err := checkOpenAPIJSONDiff(ctx, service, job.OpenAPIJSON); err != nil {
+			return nil, fmt.Errorf("failed to check OpenAPI JSON diff for '%s': %w", job.OpenAPIJSON, err)
+		} else if diff != "" {
+			differences = append(differences, diff)
+		}
+	}
+
+	// Check OpenAPI YAML differences
+	if job.OpenAPIYAML != "" {
+		if diff, err := checkOpenAPIYAMLDiff(ctx, service, job.OpenAPIYAML); err != nil {
+			return nil, fmt.Errorf("failed to check OpenAPI YAML diff for '%s': %w", job.OpenAPIYAML, err)
+		} else if diff != "" {
+			differences = append(differences, diff)
+		}
+	}
+
+	// Check Schema JSON differences
+	if job.SchemaJSON != "" {
+		if diff, err := checkSchemaJSONDiff(ctx, service, job.SchemaJSON); err != nil {
+			return nil, fmt.Errorf("failed to check schema JSON diff for '%s': %w", job.SchemaJSON, err)
+		} else if diff != "" {
+			differences = append(differences, diff)
+		}
+	}
+
+	// Check Overlay YAML differences
+	if job.OverlayYAML != "" {
+		if diff, err := checkOverlayDiff(ctx, service, job.OverlayYAML); err != nil {
+			return nil, fmt.Errorf("failed to check overlay YAML diff for '%s': %w", job.OverlayYAML, err)
+		} else if diff != "" {
+			differences = append(differences, diff)
+		}
+	}
+
+	// Check Overlay JSON differences
+	if job.OverlayJSON != "" {
+		if diff, err := checkOverlayDiff(ctx, service, job.OverlayJSON); err != nil {
+			return nil, fmt.Errorf("failed to check overlay JSON diff for '%s': %w", job.OverlayJSON, err)
+		} else if diff != "" {
+			differences = append(differences, diff)
+		}
+	}
+
+	// Check Server Go differences
+	if job.ServerGo != "" {
+		if diff, err := checkServerGoDiff(ctx, service, job.ServerGo); err != nil {
+			return nil, fmt.Errorf("failed to check server Go diff for '%s': %w", job.ServerGo, err)
+		} else if diff != "" {
+			differences = append(differences, diff)
+		}
+	}
+
+	return differences, nil
+}
+
+// checkOpenAPIJSONDiff checks if the generated OpenAPI JSON differs from the existing file
+func checkOpenAPIJSONDiff(ctx context.Context, service *specification.Service, outputPath string) (string, error) {
+	// Generate OpenAPI content in memory
+	generatedContent, err := generateOpenAPIBytes(ctx, service)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate OpenAPI JSON in memory: %w", err)
+	}
+
+	return compareWithExistingFile(outputPath, generatedContent)
+}
+
+// checkOpenAPIYAMLDiff checks if the generated OpenAPI YAML differs from the existing file
+func checkOpenAPIYAMLDiff(ctx context.Context, service *specification.Service, outputPath string) (string, error) {
+	// Generate OpenAPI JSON first
+	openAPIJSONBytes, err := generateOpenAPIBytes(ctx, service)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate OpenAPI JSON for YAML conversion: %w", err)
+	}
+
+	// Parse JSON to interface{} so we can convert to YAML
+	var openAPIDoc interface{}
+	if err := json.Unmarshal(openAPIJSONBytes, &openAPIDoc); err != nil {
+		return "", fmt.Errorf("failed to parse generated OpenAPI JSON for YAML conversion: %w", err)
+	}
+
+	// Convert to YAML
+	generatedContent, err := yaml.Marshal(openAPIDoc)
+	if err != nil {
+		return "", fmt.Errorf("failed to convert OpenAPI document to YAML: %w", err)
+	}
+
+	return compareWithExistingFile(outputPath, generatedContent)
+}
+
+// checkSchemaJSONDiff checks if the generated schema JSON differs from the existing file
+func checkSchemaJSONDiff(ctx context.Context, service *specification.Service, outputPath string) (string, error) {
+	// Generate schema content in memory
+	var buf bytes.Buffer
+	if err := schemagen.GenerateSchemas(&buf); err != nil {
+		return "", fmt.Errorf("failed to generate schemas in memory: %w", err)
+	}
+
+	generatedContent := buf.Bytes()
+	return compareWithExistingFile(outputPath, generatedContent)
+}
+
+// checkOverlayDiff checks if the generated overlay differs from the existing file
+func checkOverlayDiff(ctx context.Context, service *specification.Service, outputPath string) (string, error) {
+	// Generate overlay content in memory
+	// Determine output format based on extension
+	ext := strings.ToLower(filepath.Ext(outputPath))
+	var generatedContent []byte
+	var err error
+
+	switch ext {
+	case extYAML, extYML:
+		generatedContent, err = yaml.Marshal(service)
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal specification to YAML: %w", err)
+		}
+	case extJSON:
+		generatedContent, err = json.MarshalIndent(service, "", "  ")
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal specification to JSON: %w", err)
+		}
+	default:
+		// Default to YAML if extension is not recognized
+		generatedContent, err = yaml.Marshal(service)
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal specification to YAML: %w", err)
+		}
+	}
+
+	return compareWithExistingFile(outputPath, generatedContent)
+}
+
+// checkServerGoDiff checks if the generated server Go code differs from the existing file
+func checkServerGoDiff(ctx context.Context, service *specification.Service, outputPath string) (string, error) {
+	// Generate server content in memory
+	var buf bytes.Buffer
+	if err := servergen.GenerateServer(&buf, service); err != nil {
+		return "", fmt.Errorf("failed to generate server code in memory: %w", err)
+	}
+
+	generatedContent := buf.Bytes()
+	return compareWithExistingFile(outputPath, generatedContent)
+}
+
+// compareWithExistingFile compares generated content with existing file content
+func compareWithExistingFile(filePath string, generatedContent []byte) (string, error) {
+	// Check if file exists
+	existingContent, err := os.ReadFile(filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Sprintf("File does not exist: %s", filePath), nil
+		}
+		return "", fmt.Errorf("failed to read existing file '%s': %w", filePath, err)
+	}
+
+	// Compare content
+	if !bytes.Equal(existingContent, generatedContent) {
+		return fmt.Sprintf("File differs from generated content: %s", filePath), nil
+	}
+
+	return "", nil
 }
 
 // configureLogging configures the slog logger based on the specified log level.
