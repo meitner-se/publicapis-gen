@@ -243,7 +243,7 @@ func Test_run(t *testing.T) {
 
 		err = os.Chdir(tmpDirPath)
 		require.NoError(t, err)
-		defer os.Chdir(origDir)
+		defer func() { _ = os.Chdir(origDir) }()
 
 		// Create a test default config file (publicapis.yaml)
 		testConfig := Config{
@@ -297,7 +297,7 @@ func Test_run(t *testing.T) {
 
 		err = os.Chdir(tmpDirPath)
 		require.NoError(t, err)
-		defer os.Chdir(origDir)
+		defer func() { _ = os.Chdir(origDir) }()
 
 		// Create a test default config file (publicapis.yml)
 		testConfig := Config{
@@ -351,7 +351,7 @@ func Test_run(t *testing.T) {
 
 		err = os.Chdir(tmpDirPath)
 		require.NoError(t, err)
-		defer os.Chdir(origDir)
+		defer func() { _ = os.Chdir(origDir) }()
 
 		// Create both config files with different outputs to test preference
 		testConfigYAML := Config{
@@ -421,7 +421,7 @@ func Test_run(t *testing.T) {
 
 		err = os.Chdir(tmpDirPath)
 		require.NoError(t, err)
-		defer os.Chdir(origDir)
+		defer func() { _ = os.Chdir(origDir) }()
 
 		// Reset flag package for this test
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
@@ -740,7 +740,7 @@ func Test_findDefaultConfigFile(t *testing.T) {
 
 		err = os.Chdir(tmpDirPath)
 		require.NoError(t, err)
-		defer os.Chdir(origDir)
+		defer func() { _ = os.Chdir(origDir) }()
 
 		// Act
 		result := findDefaultConfigFile()
@@ -764,7 +764,7 @@ func Test_findDefaultConfigFile(t *testing.T) {
 
 		err = os.Chdir(tmpDirPath)
 		require.NoError(t, err)
-		defer os.Chdir(origDir)
+		defer func() { _ = os.Chdir(origDir) }()
 
 		// Create publicapis.yaml
 		err = os.WriteFile(defaultConfigYAML, []byte("# test config"), 0644)
@@ -792,7 +792,7 @@ func Test_findDefaultConfigFile(t *testing.T) {
 
 		err = os.Chdir(tmpDirPath)
 		require.NoError(t, err)
-		defer os.Chdir(origDir)
+		defer func() { _ = os.Chdir(origDir) }()
 
 		// Create publicapis.yml
 		err = os.WriteFile(defaultConfigYML, []byte("# test config"), 0644)
@@ -820,7 +820,7 @@ func Test_findDefaultConfigFile(t *testing.T) {
 
 		err = os.Chdir(tmpDirPath)
 		require.NoError(t, err)
-		defer os.Chdir(origDir)
+		defer func() { _ = os.Chdir(origDir) }()
 
 		// Create both files
 		err = os.WriteFile(defaultConfigYAML, []byte("# test yaml config"), 0644)

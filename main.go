@@ -645,32 +645,6 @@ func ensureYAMLExtension(outputPath string) string {
 	return outputPath
 }
 
-// generateServer generates Go server code from a specification file (for legacy mode).
-func generateServer(ctx context.Context, specPath, outputPath string) error {
-	slog.InfoContext(ctx, "Generating Go server code", logKeyMode, modeServer)
-
-	// Read and parse the specification file
-	service, err := readSpecificationFile(specPath)
-	if err != nil {
-		return fmt.Errorf("failed to read specification file for server generation: %w", err)
-	}
-
-	// Determine output file path
-	finalOutputPath := outputPath
-	if finalOutputPath == "" {
-		finalOutputPath = generateServerOutputPath(specPath)
-	} else {
-		// Ensure output path has .go extension
-		finalOutputPath = ensureGoExtension(finalOutputPath)
-	}
-
-	// Extract package name from output path for default
-	packageName := extractPackageNameFromPath(finalOutputPath)
-
-	// Generate server code using the specification
-	return generateServerFromSpecification(ctx, service, specPath, finalOutputPath, packageName)
-}
-
 // generateServerFromSpecification generates Go server code from a specification (for config mode).
 // It uses servergen to generate the server code directly from the specification.
 func generateServerFromSpecification(ctx context.Context, service *specification.Service, specPath, outputPath, packageName string) error {
@@ -694,44 +668,6 @@ func generateServerFromSpecification(ctx context.Context, service *specification
 	fmt.Printf("Go server code generated: %s\n", outputPath)
 
 	return nil
-}
-
-// generateServerOutputPath generates an output file path for Go server files (always .go).
-func generateServerOutputPath(inputFile string) string {
-	base := strings.TrimSuffix(inputFile, filepath.Ext(inputFile))
-	return base + suffixServer + ".go"
-}
-
-// ensureGoExtension ensures the output path has a .go extension.
-func ensureGoExtension(outputPath string) string {
-	ext := strings.ToLower(filepath.Ext(outputPath))
-	if ext != ".go" {
-		base := strings.TrimSuffix(outputPath, filepath.Ext(outputPath))
-		return base + ".go"
-	}
-	return outputPath
-}
-
-// extractPackageNameFromPath extracts a suitable package name from a file path.
-func extractPackageNameFromPath(outputPath string) string {
-	// Get the directory name
-	dir := filepath.Dir(outputPath)
-	if dir == "." || dir == "/" {
-		return "api" // Default package name
-	}
-
-	// Extract the last directory component
-	packageName := filepath.Base(dir)
-	if packageName == "." || packageName == "/" {
-		return "api"
-	}
-
-	// Clean up package name to be a valid Go identifier
-	// Replace hyphens and other invalid characters with underscores
-	packageName = strings.ReplaceAll(packageName, "-", "_")
-	packageName = strings.ReplaceAll(packageName, " ", "_")
-
-	return packageName
 }
 
 // runDiffMode processes jobs from a config file and checks for differences
