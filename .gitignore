@@ -26,6 +26,9 @@ publicapis-gen
 coverage.html
 coverage.out
 
+# Generated output files for testing
+output/
+
 # IDE and editor files
 .vscode/
 .idea/
