@@ -160,11 +160,8 @@ func validateSpecFile(filename string) {
         log.Fatal("Failed to read file:", err)
     }
     
-    // Create schema generator
-    generator := schema.NewSchemaGenerator()
-    
-    // Validate the specification
-    err = generator.ValidateService(data)
+    // Parse and validate the specification using the built-in validation
+    _, err = specification.ParseServiceFromBytes(data, strings.ToLower(filepath.Ext(filename)))
     if err != nil {
         fmt.Printf("❌ Validation failed for %s:\n", filename)
         fmt.Printf("   %v\n", err)
@@ -174,7 +171,7 @@ func validateSpecFile(filename string) {
     fmt.Printf("✅ %s is valid!\n", filename)
     
     // Parse and show summary
-    service, err := generator.ParseServiceFromYAML(data)
+    service, err := specification.ParseServiceFromBytes(data, strings.ToLower(filepath.Ext(filename)))
     if err != nil {
         fmt.Printf("⚠️  Parse warning: %v\n", err)
         return
@@ -314,12 +311,11 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-    // Load specification and generate schemas
+    // Load specification
     service, _ := specification.ParseServiceFromFile("api.yaml")
-    generator := schema.NewSchemaGenerator()
     
     // Setup routes with validation middleware
-    http.Handle("/posts", ValidateRequestBody(generator, "CreatePost")(http.HandlerFunc(createPost)))
+    http.Handle("/posts", ValidateRequestBody(service, "CreatePost")(http.HandlerFunc(createPost)))
     
     fmt.Println("🔒 API server with validation running on :8080")
     http.ListenAndServe(":8080", nil)
@@ -411,24 +407,20 @@ func generateRequestSchemas() {
         log.Fatal(err)
     }
     
-    generator := schema.NewSchemaGenerator()
-    
-    // Generate schemas for each endpoint's request body
-    for _, resource := range service.Resources {
-        for _, endpoint := range resource.Endpoints {
-            if len(endpoint.Request.BodyParams) > 0 {
-                schemaName := resource.Name + endpoint.Name + "Request"
-                schema := generateEndpointRequestSchema(generator, endpoint.Request.BodyParams)
-                
-                // Save schema to file
-                schemaJSON, _ := json.MarshalIndent(schema, "", "  ")
-                filename := fmt.Sprintf("schemas/%s.json", schemaName)
-                os.WriteFile(filename, schemaJSON, 0644)
-                
-                fmt.Printf("📄 Generated %s\n", filename)
-            }
-        }
+    // Generate all schemas using schemagen
+    var buf bytes.Buffer
+    err = schemagen.GenerateSchemas(&buf)
+    if err != nil {
+        log.Fatal("Failed to generate schemas:", err)
     }
+    
+    // Save all schemas to a single file
+    err = os.WriteFile("schemas/all-schemas.json", buf.Bytes(), 0644)
+    if err != nil {
+        log.Fatal("Failed to write schemas:", err)
+    }
+    
+    fmt.Printf("📄 Generated schemas/all-schemas.json\n")
 }
 
 func generateEndpointRequestSchema(generator *schema.SchemaGenerator, bodyParams []specification.Field) map[string]interface{} {

@@ -118,27 +118,34 @@ go install github.com/meitner-se/publicapis-gen@latest
 
 ## CLI Usage
 
-The CLI tool provides a `generate` command to process specification files and create OpenAPI documents, JSON schemas, and overlays.
+The CLI tool provides `generate` and `diff` commands to process specification files and create OpenAPI documents, JSON schemas, overlays, and server code.
 
 ### Basic Usage
 ```bash
 # Show available commands
 publicapis-gen help
 
-# Show help for generate command
+# Show help for specific commands
 publicapis-gen help generate
+publicapis-gen help diff
 publicapis-gen generate -help
+publicapis-gen diff -help
 
 # Generate from specification file (legacy mode)
 publicapis-gen generate -file=api-spec.yaml -mode=openapi -output=openapi.json
 publicapis-gen generate -file=api-spec.yaml -mode=schema -output=schemas.json
 publicapis-gen generate -file=api-spec.yaml -mode=overlay -output=complete-spec.yaml
+publicapis-gen generate -file=api-spec.yaml -mode=server -output=server.go
 
 # Using config file (recommended)
 publicapis-gen generate -config=build-config.yaml
 
 # Auto-detect default config file
 publicapis-gen generate  # Looks for publicapis.yaml or publicapis.yml
+
+# Check for differences between generated files and disk files
+publicapis-gen diff -config=build-config.yaml
+publicapis-gen diff  # Uses default config file
 ```
 
 ### Configuration File Example
@@ -149,23 +156,32 @@ Create a `publicapis.yaml` config file to process multiple specifications:
   openapi_json: "dist/users-openapi.json"
   schema_json: "dist/users-schema.json"
   overlay_yaml: "dist/users-complete.yaml"
+  server_go: "dist/users-server.go"
+  server_package: "api"
 
 - specification: "products-api.yaml"  
   openapi_yaml: "dist/products-openapi.yaml"
   schema_json: "dist/products-schema.json"
+  server_go: "dist/products-server.go"
 ```
 
 ### Available Modes
 - **`openapi`** - Generate OpenAPI 3.1 specification (JSON)
 - **`schema`** - Generate JSON schemas for validation  
 - **`overlay`** - Generate complete specification with overlays applied
+- **`server`** - Generate Go server code with Gin framework
 
 ### Options
 - **`-file`** - Path to input specification file (YAML or JSON)
-- **`-mode`** - Operation mode (openapi, schema, overlay)
+- **`-mode`** - Operation mode (openapi, schema, overlay, server)
 - **`-output`** - Output file path (optional, auto-generated if not specified)
 - **`-config`** - Path to YAML config file for batch processing
 - **`-log-level`** - Logging verbosity (debug, info, warn, error, off)
+
+### Commands
+- **`generate`** - Generate API specifications and output files
+- **`diff`** - Check for differences between generated content and files on disk
+- **`help`** - Show help information for commands
 
 ## Running Tests
 
