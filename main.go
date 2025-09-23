@@ -660,18 +660,20 @@ func generateServer(ctx context.Context, specPath, outputPath string) error {
 }
 
 // generateServerFromSpecification generates Go server code from a specification (for config mode).
-// It uses servergen to generate server code directly from the specification.
+// It uses servergen to generate the server code directly from the specification.
 func generateServerFromSpecification(ctx context.Context, service *specification.Service, specPath, outputPath, packageName string) error {
-	slog.InfoContext(ctx, "Generating Go server code from specification", logKeyMode, modeServer)
+	slog.InfoContext(ctx, "Generating Go server code from specification using servergen", logKeyMode, modeServer)
+
+	// Note: packageName parameter is currently not used as servergen hardcodes the package to "api"
+	// This is kept for future compatibility when servergen supports custom package names
 
 	// Generate server code using servergen
 	var buf bytes.Buffer
-	err := servergen.GenerateServer(&buf, service)
-	if err != nil {
+	if err := servergen.GenerateServer(&buf, service); err != nil {
 		return fmt.Errorf("failed to generate server code: %w", err)
 	}
 
-	// Write the generated code to the output file
+	// Write the generated code to file
 	if err := os.WriteFile(outputPath, buf.Bytes(), 0644); err != nil {
 		return fmt.Errorf("%s: %w", errorFileWrite, err)
 	}
