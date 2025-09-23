@@ -16,7 +16,6 @@ import (
 	"github.com/meitner-se/publicapis-gen/specification/openapigen"
 	"github.com/meitner-se/publicapis-gen/specification/schemagen"
 	"github.com/meitner-se/publicapis-gen/specification/servergen"
-	"github.com/meitner-se/publicapis-gen/specification/servergen"
 )
 
 // Error messages and log keys
@@ -675,31 +674,6 @@ func generateServerFromSpecification(ctx context.Context, service *specification
 	}
 
 	// Write the generated code to file
-	if err := os.WriteFile(outputPath, buf.Bytes(), 0644); err != nil {
-		return fmt.Errorf("%s: %w", errorFileWrite, err)
-	}
-
-	slog.InfoContext(ctx, "Successfully generated Go server code", logKeyFile, outputPath)
-	fmt.Printf("Go server code generated: %s\n", outputPath)
-
-	return nil
-}
-
-// generateServerFromBytes generates Go server code from OpenAPI specification bytes.
-func generateServerFromBytes(ctx context.Context, openAPIData []byte, outputPath, packageName string) error {
-	// Create server generator configuration
-	config := server.Config{
-		OutputPath:  outputPath,
-		PackageName: packageName,
-	}
-
-	// Create server generator
-	generator, err := server.New(config)
-	if err != nil {
-		return fmt.Errorf("failed to generate server code: %w", err)
-	}
-
-	// Write the generated code to the output file
 	if err := os.WriteFile(outputPath, buf.Bytes(), 0644); err != nil {
 		return fmt.Errorf("%s: %w", errorFileWrite, err)
 	}
