@@ -67,7 +67,7 @@ const (
 // Usage messages
 const (
 	usageDescription = "publicapis-gen - Generate API specifications and OpenAPI documents"
-	usageExample     = "\nExamples:\n  # Using command line flags (legacy)\n  publicapis-gen generate -file=spec.yaml -mode=overlay\n  publicapis-gen generate -file=spec.json -mode=openapi\n  publicapis-gen generate -file=spec.yaml -mode=schema\n  publicapis-gen generate -file=spec.yaml -mode=server\n  publicapis-gen generate -file=spec.yaml -mode=openapi -output=api-spec.json\n  publicapis-gen generate -file=spec.yaml -mode=schema -output=schemas.json\n  publicapis-gen generate -file=spec.yaml -mode=server -output=server.go\n  publicapis-gen generate -file=spec.yaml -mode=openapi -log-level=info\n\n  # Using config file (recommended)\n  publicapis-gen generate -config=build-config.yaml\n  publicapis-gen generate -config=build-config.yaml -log-level=info\n\n  # Using default config file (automatically detects publicapis.yaml or publicapis.yml)\n  publicapis-gen generate\n  publicapis-gen generate -log-level=info"
+	usageExample     = "\nExamples:\n  # Using config file\n  publicapis-gen generate -config=build-config.yaml\n  publicapis-gen generate -config=build-config.yaml -log-level=info\n\n  # Using default config file (automatically detects publicapis.yaml or publicapis.yml)\n  publicapis-gen generate\n  publicapis-gen generate -log-level=info"
 )
 
 // Config file constants
@@ -173,9 +173,6 @@ func showGenerateUsage() {
 	fmt.Fprintf(os.Stderr, "%s\n\n", generateUsageDescription)
 	fmt.Fprintf(os.Stderr, "Usage: %s generate [options]\n\n", os.Args[0])
 	fmt.Fprintf(os.Stderr, "Options:\n")
-	fmt.Fprintf(os.Stderr, "  -file string\n        Path to input specification file (YAML or JSON) - legacy mode\n")
-	fmt.Fprintf(os.Stderr, "  -mode string\n        Operation mode: 'overlay', 'openapi', 'schema', or 'server' - legacy mode\n")
-	fmt.Fprintf(os.Stderr, "  -output string\n        Output file path (optional, defaults to input name with suffix) - legacy mode\n")
 	fmt.Fprintf(os.Stderr, "  -config string\n        Path to YAML config file containing multiple jobs\n")
 	fmt.Fprintf(os.Stderr, "  -log-level string\n        Log level: 'debug', 'info', 'warn', 'error', or 'off' (default: off)\n")
 	fmt.Fprintf(os.Stderr, "  -help\n        Show this help message\n")
@@ -205,9 +202,6 @@ func runGenerateCommand(ctx context.Context, args []string) error {
 
 	// Parse command line flags for generate command
 	var (
-		fileFlag     = generateFlags.String("file", "", "Path to input specification file (YAML or JSON) - legacy mode")
-		modeFlag     = generateFlags.String("mode", "", "Operation mode: 'overlay', 'openapi', 'schema', or 'server' - legacy mode")
-		outputFlag   = generateFlags.String("output", "", "Output file path (optional, defaults to input name with suffix) - legacy mode")
 		configFlag   = generateFlags.String(configFileFlag, "", "Path to YAML config file containing multiple jobs")
 		logLevelFlag = generateFlags.String("log-level", logLevelOff, "Log level: 'debug', 'info', 'warn', 'error', or 'off' (default: off)")
 		helpFlag     = generateFlags.Bool("help", false, "Show help message")
@@ -228,49 +222,22 @@ func runGenerateCommand(ctx context.Context, args []string) error {
 		return nil
 	}
 
-	// Determine if using config file or legacy mode
-	usingConfig := *configFlag != ""
-	usingLegacy := *fileFlag != "" || *modeFlag != ""
-
-	if usingConfig && usingLegacy {
-		showGenerateUsage()
-		return fmt.Errorf("%s: cannot use both config file and legacy flags (file/mode) at the same time", errorInvalidConfig)
-	}
-
-	// If no explicit config or legacy flags provided, try to find default config file
-	if !usingConfig && !usingLegacy {
+	// Determine config file path
+	configPath := *configFlag
+	if configPath == "" {
+		// Try to find default config file
 		defaultConfigPath := findDefaultConfigFile()
 		if defaultConfigPath != "" {
 			slog.InfoContext(ctx, "Using default config file", logKeyFile, defaultConfigPath)
-			return runConfigMode(ctx, defaultConfigPath)
+			configPath = defaultConfigPath
+		} else {
+			// No default config file found, require explicit configuration
+			showGenerateUsage()
+			return fmt.Errorf("%s: config file is required", errorInvalidConfig)
 		}
-
-		// No default config file found, require explicit configuration
-		showGenerateUsage()
-		return fmt.Errorf("%s: either config file or legacy flags (file and mode) are required", errorInvalidFile)
 	}
 
-	if usingConfig {
-		return runConfigMode(ctx, *configFlag)
-	}
-
-	// Legacy mode - validate required flags
-	if *fileFlag == "" {
-		showGenerateUsage()
-		return fmt.Errorf("%s: file flag is required", errorInvalidFile)
-	}
-
-	if *modeFlag == "" {
-		showGenerateUsage()
-		return fmt.Errorf("%s: mode flag is required", errorInvalidMode)
-	}
-
-	// Validate mode
-	if *modeFlag != modeOverlay && *modeFlag != modeOpenAPI && *modeFlag != modeSchema && *modeFlag != modeServer {
-		return fmt.Errorf("%s: mode must be '%s', '%s', '%s', or '%s'", errorInvalidMode, modeOverlay, modeOpenAPI, modeSchema, modeServer)
-	}
-
-	return runLegacyMode(ctx, *fileFlag, *modeFlag, *outputFlag)
+	return runConfigMode(ctx, configPath)
 }
 
 func runDiffCommand(ctx context.Context, args []string) error {
@@ -341,31 +308,6 @@ func runConfigMode(ctx context.Context, configPath string) error {
 	fmt.Printf("Successfully processed %d jobs from config file: %s\n", len(config), configPath)
 
 	return nil
-}
-
-// runLegacyMode processes a single job using the legacy command line flags
-func runLegacyMode(ctx context.Context, filePath, mode, outputPath string) error {
-	// Read and parse input file
-	service, err := readSpecificationFile(filePath)
-	if err != nil {
-		return err
-	}
-
-	slog.InfoContext(ctx, "Successfully parsed input file", logKeyFile, filePath)
-
-	// Execute the requested operation
-	switch mode {
-	case modeOverlay:
-		return generateOverlay(ctx, service, filePath, outputPath)
-	case modeOpenAPI:
-		return generateOpenAPI(ctx, service, filePath, outputPath)
-	case modeSchema:
-		return generateSchema(ctx, service, filePath, outputPath)
-	case modeServer:
-		return generateServer(ctx, filePath, outputPath)
-	default:
-		return fmt.Errorf("%s: unsupported mode '%s'", errorInvalidMode, mode)
-	}
 }
 
 // findDefaultConfigFile searches for default config files in the current directory
@@ -703,32 +645,6 @@ func ensureYAMLExtension(outputPath string) string {
 	return outputPath
 }
 
-// generateServer generates Go server code from a specification file (for legacy mode).
-func generateServer(ctx context.Context, specPath, outputPath string) error {
-	slog.InfoContext(ctx, "Generating Go server code", logKeyMode, modeServer)
-
-	// Read and parse the specification file
-	service, err := readSpecificationFile(specPath)
-	if err != nil {
-		return fmt.Errorf("failed to read specification file for server generation: %w", err)
-	}
-
-	// Determine output file path
-	finalOutputPath := outputPath
-	if finalOutputPath == "" {
-		finalOutputPath = generateServerOutputPath(specPath)
-	} else {
-		// Ensure output path has .go extension
-		finalOutputPath = ensureGoExtension(finalOutputPath)
-	}
-
-	// Extract package name from output path for default
-	packageName := extractPackageNameFromPath(finalOutputPath)
-
-	// Generate server code using the specification
-	return generateServerFromSpecification(ctx, service, specPath, finalOutputPath, packageName)
-}
-
 // generateServerFromSpecification generates Go server code from a specification (for config mode).
 // It uses servergen to generate the server code directly from the specification.
 func generateServerFromSpecification(ctx context.Context, service *specification.Service, specPath, outputPath, packageName string) error {
@@ -752,44 +668,6 @@ func generateServerFromSpecification(ctx context.Context, service *specification
 	fmt.Printf("Go server code generated: %s\n", outputPath)
 
 	return nil
-}
-
-// generateServerOutputPath generates an output file path for Go server files (always .go).
-func generateServerOutputPath(inputFile string) string {
-	base := strings.TrimSuffix(inputFile, filepath.Ext(inputFile))
-	return base + suffixServer + ".go"
-}
-
-// ensureGoExtension ensures the output path has a .go extension.
-func ensureGoExtension(outputPath string) string {
-	ext := strings.ToLower(filepath.Ext(outputPath))
-	if ext != ".go" {
-		base := strings.TrimSuffix(outputPath, filepath.Ext(outputPath))
-		return base + ".go"
-	}
-	return outputPath
-}
-
-// extractPackageNameFromPath extracts a suitable package name from a file path.
-func extractPackageNameFromPath(outputPath string) string {
-	// Get the directory name
-	dir := filepath.Dir(outputPath)
-	if dir == "." || dir == "/" {
-		return "api" // Default package name
-	}
-
-	// Extract the last directory component
-	packageName := filepath.Base(dir)
-	if packageName == "." || packageName == "/" {
-		return "api"
-	}
-
-	// Clean up package name to be a valid Go identifier
-	// Replace hyphens and other invalid characters with underscores
-	packageName = strings.ReplaceAll(packageName, "-", "_")
-	packageName = strings.ReplaceAll(packageName, " ", "_")
-
-	return packageName
 }
 
 // runDiffMode processes jobs from a config file and checks for differences

@@ -61,7 +61,7 @@ func Test_run(t *testing.T) {
 		assert.Nil(t, err, "run() should not return an error when showing help")
 	})
 
-	t.Run("missing file flag returns error", func(t *testing.T) {
+	t.Run("missing config file returns error", func(t *testing.T) {
 		// Reset flag package for this test
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 
@@ -73,172 +73,44 @@ func Test_run(t *testing.T) {
 		err := run(ctx)
 
 		// Assert
-		require.Error(t, err, "run() should return an error when file flag is missing")
-		assert.Contains(t, err.Error(), errorInvalidFile, "Error should mention invalid file")
-	})
-
-	t.Run("missing mode flag returns error", func(t *testing.T) {
-		// Reset flag package for this test
-		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
-
-		// Arrange
-		os.Args = []string{"publicapis-gen", "generate", "-file=test.yaml"}
-		ctx := context.Background()
-
-		// Act
-		err := run(ctx)
-
-		// Assert
-		require.Error(t, err, "run() should return an error when mode flag is missing")
-		assert.Contains(t, err.Error(), errorInvalidMode, "Error should mention invalid mode")
-	})
-
-	t.Run("invalid mode returns error", func(t *testing.T) {
-		// Reset flag package for this test
-		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
-
-		// Arrange
-		os.Args = []string{"publicapis-gen", "generate", "-file=test.yaml", "-mode=invalid"}
-		ctx := context.Background()
-
-		// Act
-		err := run(ctx)
-
-		// Assert
-		require.Error(t, err, "run() should return an error for invalid mode")
-		assert.Contains(t, err.Error(), errorInvalidMode, "Error should mention invalid mode")
+		require.Error(t, err, "run() should return an error when no config file is found")
+		assert.Contains(t, err.Error(), errorInvalidConfig, "Error should mention invalid config")
 	})
 
 	t.Run("invalid log level returns error", func(t *testing.T) {
 		// Reset flag package for this test
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 
+		// Create a test config file
+		testConfig := Config{
+			{
+				Specification: "testdata/school-management-api.yaml",
+				OpenAPIJSON:   "test-invalid-log-openapi.json",
+			},
+		}
+
+		yamlData, err := yaml.Marshal(&testConfig)
+		require.NoError(t, err)
+
+		tmpConfigFile, err := os.CreateTemp("", "test-invalid-log-*.yaml")
+		require.NoError(t, err)
+		defer os.Remove(tmpConfigFile.Name())
+		defer os.Remove("test-invalid-log-openapi.json")
+
+		_, err = tmpConfigFile.Write(yamlData)
+		require.NoError(t, err)
+		tmpConfigFile.Close()
+
 		// Arrange
-		os.Args = []string{"publicapis-gen", "generate", "-file=test.yaml", "-mode=overlay", "-log-level=invalid"}
+		os.Args = []string{"publicapis-gen", "generate", "-config=" + tmpConfigFile.Name(), "-log-level=invalid"}
 		ctx := context.Background()
 
 		// Act
-		err := run(ctx)
+		err = run(ctx)
 
 		// Assert
 		require.Error(t, err, "run() should return an error for invalid log level")
 		assert.Contains(t, err.Error(), "invalid log level", "Error should mention invalid log level")
-	})
-
-	t.Run("nonexistent file returns error", func(t *testing.T) {
-		// Reset flag package for this test
-		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
-
-		// Arrange
-		os.Args = []string{"publicapis-gen", "generate", "-file=nonexistent.yaml", "-mode=overlay"}
-		ctx := context.Background()
-
-		// Act
-		err := run(ctx)
-
-		// Assert
-		require.Error(t, err, "run() should return an error for nonexistent file")
-		assert.Contains(t, err.Error(), errorInvalidFile, "Error should mention invalid file")
-	})
-
-	t.Run("complete YAML to OpenAPI JSON pipeline", func(t *testing.T) {
-		// Reset flag package for this test
-		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
-
-		// Use test data files
-		inputSpecFile := "testdata/school-management-api.yaml"
-		expectedOutputFile := "testdata/school-management-api-expected.json"
-
-		// Create temporary output file
-		tmpOutputFile, err := os.CreateTemp("", "test-output-*.json")
-		require.NoError(t, err)
-		defer os.Remove(tmpOutputFile.Name())
-		tmpOutputFile.Close()
-
-		// Arrange command line arguments for OpenAPI generation
-		os.Args = []string{"publicapis-gen", "generate", "-file=" + inputSpecFile, "-mode=openapi", "-output=" + tmpOutputFile.Name()}
-		ctx := context.Background()
-
-		// Act - run the command
-		err = run(ctx)
-
-		// Assert - command should succeed
-		require.NoError(t, err, "run() should not return an error for valid YAML to OpenAPI conversion")
-
-		// Verify output file was created
-		_, err = os.Stat(tmpOutputFile.Name())
-		require.NoError(t, err, "Output OpenAPI JSON file should be created")
-
-		// Read the generated JSON content
-		actualOutputData, err := os.ReadFile(tmpOutputFile.Name())
-		require.NoError(t, err, "Should be able to read generated OpenAPI JSON file")
-
-		// Read the expected JSON content
-		expectedOutputData, err := os.ReadFile(expectedOutputFile)
-		require.NoError(t, err, "Should be able to read expected OpenAPI JSON file")
-
-		// Parse both JSON files to ensure they're valid
-		var actualJSON, expectedJSON map[string]interface{}
-		err = json.Unmarshal(actualOutputData, &actualJSON)
-		require.NoError(t, err, "Generated file should contain valid JSON")
-		err = json.Unmarshal(expectedOutputData, &expectedJSON)
-		require.NoError(t, err, "Expected file should contain valid JSON")
-
-		// Assert exact JSON match
-		assert.JSONEq(t, string(expectedOutputData), string(actualOutputData), "Generated OpenAPI JSON should exactly match expected output")
-	})
-
-	t.Run("server generation from specification file", func(t *testing.T) {
-		// Reset flag package for this test
-		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
-
-		// Use the school management API specification for testing server generation
-		inputSpecFile := "testdata/school-management-api.yaml"
-
-		// Verify input file exists
-		_, err := os.Stat(inputSpecFile)
-		require.NoError(t, err, "Input specification file should exist")
-
-		// Create temporary output file
-		tmpOutputFile, err := os.CreateTemp("", "test-server-output-*.go")
-		require.NoError(t, err)
-		defer os.Remove(tmpOutputFile.Name())
-		tmpOutputFile.Close()
-
-		// Arrange command line arguments for server generation
-		os.Args = []string{"publicapis-gen", "generate", "-file=" + inputSpecFile, "-mode=server", "-output=" + tmpOutputFile.Name()}
-		ctx := context.Background()
-
-		// Act - run the command
-		err = run(ctx)
-
-		// Assert - command should succeed
-		require.NoError(t, err, "run() should not return an error for valid specification to Go server conversion")
-
-		// Verify output file was created
-		_, err = os.Stat(tmpOutputFile.Name())
-		require.NoError(t, err, "Output Go server file should be created")
-
-		// Read the generated Go server code content
-		actualOutputData, err := os.ReadFile(tmpOutputFile.Name())
-		require.NoError(t, err, "Should be able to read generated Go server file")
-
-		actualContent := string(actualOutputData)
-
-		// Assert that the file is valid Go code with servergen structure
-		assert.Contains(t, actualContent, "package api", "Generated file should contain package declaration")
-		assert.Contains(t, actualContent, "func RegisterSchoolManagementAPIAPI[Session any]", "Generated file should contain registration function")
-		assert.Contains(t, actualContent, "type SchoolManagementAPIAPI[Session any] struct", "Generated file should contain API struct")
-		assert.Contains(t, actualContent, "type Server[Session any] struct", "Generated file should contain Server struct")
-		assert.Contains(t, actualContent, "type Request[", "Generated file should contain generic Request type")
-
-		// Assert resource types are generated
-		assert.Contains(t, actualContent, "type Student struct", "Generated file should contain Student type")
-		assert.Contains(t, actualContent, "type StudentsCreateBodyParams struct", "Generated file should contain StudentsCreateBodyParams type")
-
-		// Assert enum types are generated
-		assert.Contains(t, actualContent, "type StudentStatus types.String", "Generated file should contain StudentStatus enum")
-		assert.Contains(t, actualContent, "type GradeLevel types.String", "Generated file should contain GradeLevel enum")
 	})
 
 	t.Run("config file with valid jobs succeeds", func(t *testing.T) {
@@ -336,22 +208,6 @@ func Test_run(t *testing.T) {
 		assert.Contains(t, serverContentStr, "type Student struct", "Generated server should contain Student type")
 	})
 
-	t.Run("mixing config and legacy flags returns error", func(t *testing.T) {
-		// Reset flag package for this test
-		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
-
-		// Arrange command line arguments with both config and legacy flags
-		os.Args = []string{"publicapis-gen", "generate", "-config=test.yaml", "-file=spec.yaml"}
-		ctx := context.Background()
-
-		// Act
-		err := run(ctx)
-
-		// Assert
-		require.Error(t, err, "run() should return an error when mixing config and legacy flags")
-		assert.Contains(t, err.Error(), errorInvalidConfig, "Error should mention invalid config")
-	})
-
 	t.Run("nonexistent config file returns error", func(t *testing.T) {
 		// Reset flag package for this test
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
@@ -387,7 +243,7 @@ func Test_run(t *testing.T) {
 
 		err = os.Chdir(tmpDirPath)
 		require.NoError(t, err)
-		defer os.Chdir(origDir)
+		defer func() { _ = os.Chdir(origDir) }()
 
 		// Create a test default config file (publicapis.yaml)
 		testConfig := Config{
@@ -441,7 +297,7 @@ func Test_run(t *testing.T) {
 
 		err = os.Chdir(tmpDirPath)
 		require.NoError(t, err)
-		defer os.Chdir(origDir)
+		defer func() { _ = os.Chdir(origDir) }()
 
 		// Create a test default config file (publicapis.yml)
 		testConfig := Config{
@@ -495,7 +351,7 @@ func Test_run(t *testing.T) {
 
 		err = os.Chdir(tmpDirPath)
 		require.NoError(t, err)
-		defer os.Chdir(origDir)
+		defer func() { _ = os.Chdir(origDir) }()
 
 		// Create both config files with different outputs to test preference
 		testConfigYAML := Config{
@@ -565,7 +421,7 @@ func Test_run(t *testing.T) {
 
 		err = os.Chdir(tmpDirPath)
 		require.NoError(t, err)
-		defer os.Chdir(origDir)
+		defer func() { _ = os.Chdir(origDir) }()
 
 		// Reset flag package for this test
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
@@ -579,7 +435,7 @@ func Test_run(t *testing.T) {
 
 		// Assert
 		require.Error(t, err, "run() should return an error when no config and no flags provided")
-		assert.Contains(t, err.Error(), errorInvalidFile, "Error should mention invalid file")
+		assert.Contains(t, err.Error(), errorInvalidConfig, "Error should mention invalid config")
 	})
 }
 
@@ -884,7 +740,7 @@ func Test_findDefaultConfigFile(t *testing.T) {
 
 		err = os.Chdir(tmpDirPath)
 		require.NoError(t, err)
-		defer os.Chdir(origDir)
+		defer func() { _ = os.Chdir(origDir) }()
 
 		// Act
 		result := findDefaultConfigFile()
@@ -908,7 +764,7 @@ func Test_findDefaultConfigFile(t *testing.T) {
 
 		err = os.Chdir(tmpDirPath)
 		require.NoError(t, err)
-		defer os.Chdir(origDir)
+		defer func() { _ = os.Chdir(origDir) }()
 
 		// Create publicapis.yaml
 		err = os.WriteFile(defaultConfigYAML, []byte("# test config"), 0644)
@@ -936,7 +792,7 @@ func Test_findDefaultConfigFile(t *testing.T) {
 
 		err = os.Chdir(tmpDirPath)
 		require.NoError(t, err)
-		defer os.Chdir(origDir)
+		defer func() { _ = os.Chdir(origDir) }()
 
 		// Create publicapis.yml
 		err = os.WriteFile(defaultConfigYML, []byte("# test config"), 0644)
@@ -964,7 +820,7 @@ func Test_findDefaultConfigFile(t *testing.T) {
 
 		err = os.Chdir(tmpDirPath)
 		require.NoError(t, err)
-		defer os.Chdir(origDir)
+		defer func() { _ = os.Chdir(origDir) }()
 
 		// Create both files
 		err = os.WriteFile(defaultConfigYAML, []byte("# test yaml config"), 0644)

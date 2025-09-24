@@ -131,13 +131,7 @@ publicapis-gen help diff
 publicapis-gen generate -help
 publicapis-gen diff -help
 
-# Generate from specification file (legacy mode)
-publicapis-gen generate -file=api-spec.yaml -mode=openapi -output=openapi.json
-publicapis-gen generate -file=api-spec.yaml -mode=schema -output=schemas.json
-publicapis-gen generate -file=api-spec.yaml -mode=overlay -output=complete-spec.yaml
-publicapis-gen generate -file=api-spec.yaml -mode=server -output=server.go
-
-# Using config file (recommended)
+# Using config file
 publicapis-gen generate -config=build-config.yaml
 
 # Auto-detect default config file
@@ -172,9 +166,6 @@ Create a `publicapis.yaml` config file to process multiple specifications:
 - **`server`** - Generate Go server code with Gin framework
 
 ### Options
-- **`-file`** - Path to input specification file (YAML or JSON)
-- **`-mode`** - Operation mode (openapi, schema, overlay, server)
-- **`-output`** - Output file path (optional, auto-generated if not specified)
 - **`-config`** - Path to YAML config file for batch processing
 - **`-log-level`** - Logging verbosity (debug, info, warn, error, off)
 
