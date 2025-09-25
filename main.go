@@ -16,6 +16,7 @@ import (
 	"github.com/meitner-se/publicapis-gen/specification/openapigen"
 	"github.com/meitner-se/publicapis-gen/specification/schemagen"
 	"github.com/meitner-se/publicapis-gen/specification/servergen"
+	"github.com/meitner-se/publicapis-gen/specification/testgen"
 )
 
 // Error messages and log keys
@@ -118,6 +119,8 @@ type Job struct {
 	OverlayJSON   string `yaml:"overlay_json,omitempty" json:"overlay_json,omitempty"`
 	ServerGo      string `yaml:"server_go,omitempty" json:"server_go,omitempty"`
 	ServerPackage string `yaml:"server_package,omitempty" json:"server_package,omitempty"`
+	TestGo        string `yaml:"test_go,omitempty" json:"test_go,omitempty"`
+	TestPackage   string `yaml:"test_package,omitempty" json:"test_package,omitempty"`
 }
 
 // Config represents the configuration file structure
@@ -371,8 +374,8 @@ func parseConfigFile(configPath string) (Config, error) {
 		}
 
 		// Check if at least one output format is specified
-		if job.OpenAPIJSON == "" && job.OpenAPIYAML == "" && job.SchemaJSON == "" && job.OverlayYAML == "" && job.OverlayJSON == "" && job.ServerGo == "" {
-			return nil, fmt.Errorf("%s: job %d must specify at least one output format (openapi_json, openapi_yaml, schema_json, overlay_yaml, overlay_json, or server_go)", errorInvalidConfig, i+1)
+		if job.OpenAPIJSON == "" && job.OpenAPIYAML == "" && job.SchemaJSON == "" && job.OverlayYAML == "" && job.OverlayJSON == "" && job.ServerGo == "" && job.TestGo == "" {
+			return nil, fmt.Errorf("%s: job %d must specify at least one output format (openapi_json, openapi_yaml, schema_json, overlay_yaml, overlay_json, server_go, or test_go)", errorInvalidConfig, i+1)
 		}
 	}
 
@@ -424,6 +427,13 @@ func processJob(ctx context.Context, job Job) error {
 		// Generate server code using servergen from the specification
 		if err := generateServerFromSpecification(ctx, service, job.Specification, job.ServerGo, job.ServerPackage); err != nil {
 			return fmt.Errorf("failed to generate Go server to '%s': %w", job.ServerGo, err)
+		}
+	}
+
+	if job.TestGo != "" {
+		// Generate test code using testgen from the specification
+		if err := generateTestsFromSpecification(ctx, service, job.Specification, job.TestGo, job.TestPackage); err != nil {
+			return fmt.Errorf("failed to generate Go tests to '%s': %w", job.TestGo, err)
 		}
 	}
 
@@ -678,6 +688,32 @@ func generateServerFromSpecification(ctx context.Context, service *specification
 
 	slog.InfoContext(ctx, "Successfully generated Go server code", logKeyFile, outputPath)
 	fmt.Printf("Go server code generated: %s\n", outputPath)
+
+	return nil
+}
+
+// generateTestsFromSpecification generates HTTP API tests from a service specification using testgen.
+func generateTestsFromSpecification(ctx context.Context, service *specification.Service, specPath, outputPath, packageName string) error {
+	slog.InfoContext(ctx, "Generating Go test code from specification using testgen", logKeyMode, "test")
+
+	// Default package name if not provided
+	if packageName == "" {
+		packageName = "main"
+	}
+
+	// Generate test code using testgen
+	var buf bytes.Buffer
+	if err := testgen.GenerateTests(&buf, service, packageName); err != nil {
+		return fmt.Errorf("failed to generate test code: %w", err)
+	}
+
+	// Write the generated code to file
+	if err := os.WriteFile(outputPath, buf.Bytes(), 0644); err != nil {
+		return fmt.Errorf("%s: %w", errorFileWrite, err)
+	}
+
+	slog.InfoContext(ctx, "Successfully generated Go test code", logKeyFile, outputPath)
+	fmt.Printf("Go test code generated: %s\n", outputPath)
 
 	return nil
 }
