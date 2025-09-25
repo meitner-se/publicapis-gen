@@ -791,7 +791,7 @@ func checkOpenAPIJSONDifference(ctx context.Context, service *specification.Serv
 		return "", err
 	}
 
-	return compareWithDiskFileJSON(filePath, generatedData)
+	return compareWithDiskFile(filePath, generatedData)
 }
 
 // checkOpenAPIYAMLDifference checks if the generated OpenAPI YAML differs from the file on disk
@@ -814,7 +814,7 @@ func checkOpenAPIYAMLDifference(ctx context.Context, service *specification.Serv
 		return "", fmt.Errorf("failed to convert OpenAPI document to YAML: %w", err)
 	}
 
-	return compareWithDiskFileYAML(filePath, yamlData)
+	return compareWithDiskFile(filePath, yamlData)
 }
 
 // checkSchemaJSONDifference checks if the generated Schema JSON differs from the file on disk
@@ -825,7 +825,7 @@ func checkSchemaJSONDifference(ctx context.Context, service *specification.Servi
 		return "", fmt.Errorf("failed to generate schemas: %w", err)
 	}
 
-	return compareWithDiskFileJSON(filePath, buf.Bytes())
+	return compareWithDiskFile(filePath, buf.Bytes())
 }
 
 // checkOverlayDifference checks if the generated overlay differs from the file on disk
@@ -841,21 +841,20 @@ func checkOverlayDifference(ctx context.Context, service *specification.Service,
 		if err != nil {
 			return "", fmt.Errorf("failed to marshal specification to YAML: %w", err)
 		}
-		return compareWithDiskFileYAML(filePath, generatedData)
 	case extJSON:
 		generatedData, err = json.MarshalIndent(service, "", "  ")
 		if err != nil {
 			return "", fmt.Errorf("failed to marshal specification to JSON: %w", err)
 		}
-		return compareWithDiskFileJSON(filePath, generatedData)
 	default:
 		// Default to YAML if extension is not recognized
 		generatedData, err = yaml.Marshal(service)
 		if err != nil {
 			return "", fmt.Errorf("failed to marshal specification to YAML: %w", err)
 		}
-		return compareWithDiskFileYAML(filePath, generatedData)
 	}
+
+	return compareWithDiskFile(filePath, generatedData)
 }
 
 // checkServerGoDifference checks if the generated Server Go code differs from the file on disk
@@ -887,118 +886,6 @@ func compareWithDiskFile(filePath string, generatedData []byte) (string, error) 
 
 	// Compare content
 	if !bytes.Equal(generatedData, diskData) {
-		return "content differs", nil
-	}
-
-	return "", nil
-}
-
-// compareJSONSemantics compares two JSON byte arrays semantically rather than byte-by-byte
-func compareJSONSemantics(generatedData, diskData []byte) (bool, error) {
-	// Parse both JSON data into interface{} for semantic comparison
-	var generatedJSON, diskJSON interface{}
-
-	if err := json.Unmarshal(generatedData, &generatedJSON); err != nil {
-		return false, fmt.Errorf("failed to parse generated JSON: %w", err)
-	}
-
-	if err := json.Unmarshal(diskData, &diskJSON); err != nil {
-		return false, fmt.Errorf("failed to parse disk JSON: %w", err)
-	}
-
-	// Convert both to normalized JSON strings for comparison
-	generatedNormalized, err := json.Marshal(generatedJSON)
-	if err != nil {
-		return false, fmt.Errorf("failed to normalize generated JSON: %w", err)
-	}
-
-	diskNormalized, err := json.Marshal(diskJSON)
-	if err != nil {
-		return false, fmt.Errorf("failed to normalize disk JSON: %w", err)
-	}
-
-	return bytes.Equal(generatedNormalized, diskNormalized), nil
-}
-
-// compareYAMLSemantics compares two YAML byte arrays semantically rather than byte-by-byte
-func compareYAMLSemantics(generatedData, diskData []byte) (bool, error) {
-	// Parse both YAML data into interface{} for semantic comparison
-	var generatedYAML, diskYAML interface{}
-
-	if err := yaml.Unmarshal(generatedData, &generatedYAML); err != nil {
-		return false, fmt.Errorf("failed to parse generated YAML: %w", err)
-	}
-
-	if err := yaml.Unmarshal(diskData, &diskYAML); err != nil {
-		return false, fmt.Errorf("failed to parse disk YAML: %w", err)
-	}
-
-	// Convert both to normalized YAML strings for comparison
-	generatedNormalized, err := yaml.Marshal(generatedYAML)
-	if err != nil {
-		return false, fmt.Errorf("failed to normalize generated YAML: %w", err)
-	}
-
-	diskNormalized, err := yaml.Marshal(diskYAML)
-	if err != nil {
-		return false, fmt.Errorf("failed to normalize disk YAML: %w", err)
-	}
-
-	return bytes.Equal(generatedNormalized, diskNormalized), nil
-}
-
-// compareWithDiskFileJSON compares generated JSON content with the content of a JSON file on disk using semantic comparison
-func compareWithDiskFileJSON(filePath string, generatedData []byte) (string, error) {
-	// Check if file exists
-	if _, err := os.Stat(filePath); err != nil {
-		if os.IsNotExist(err) {
-			return "file does not exist on disk", nil
-		}
-		return "", fmt.Errorf("%s: cannot access file: %w", errorFileRead, err)
-	}
-
-	// Read file content from disk
-	diskData, err := os.ReadFile(filePath)
-	if err != nil {
-		return "", fmt.Errorf("%s: %w", errorFileRead, err)
-	}
-
-	// Use semantic JSON comparison
-	isEqual, err := compareJSONSemantics(generatedData, diskData)
-	if err != nil {
-		return "", fmt.Errorf("failed to compare JSON semantically: %w", err)
-	}
-
-	if !isEqual {
-		return "content differs", nil
-	}
-
-	return "", nil
-}
-
-// compareWithDiskFileYAML compares generated YAML content with the content of a YAML file on disk using semantic comparison
-func compareWithDiskFileYAML(filePath string, generatedData []byte) (string, error) {
-	// Check if file exists
-	if _, err := os.Stat(filePath); err != nil {
-		if os.IsNotExist(err) {
-			return "file does not exist on disk", nil
-		}
-		return "", fmt.Errorf("%s: cannot access file: %w", errorFileRead, err)
-	}
-
-	// Read file content from disk
-	diskData, err := os.ReadFile(filePath)
-	if err != nil {
-		return "", fmt.Errorf("%s: %w", errorFileRead, err)
-	}
-
-	// Use semantic YAML comparison
-	isEqual, err := compareYAMLSemantics(generatedData, diskData)
-	if err != nil {
-		return "", fmt.Errorf("failed to compare YAML semantically: %w", err)
-	}
-
-	if !isEqual {
 		return "content differs", nil
 	}
 

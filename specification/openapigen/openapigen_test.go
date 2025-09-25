@@ -3588,3 +3588,128 @@ func TestCircularReferenceHandling(t *testing.T) {
 
 	t.Logf("Generated JSON for circular reference test (should not hang):\n%s", jsonString)
 }
+
+// TestDeterministicGeneration tests that OpenAPI generation produces identical output across multiple runs
+func TestDeterministicGeneration(t *testing.T) {
+	// Create a service with multiple resources and endpoints to test path ordering
+	service := &specification.Service{
+		Name:    "TestService",
+		Version: "v1",
+		Objects: []specification.Object{
+			{
+				Name:        "User",
+				Description: "User object",
+				Fields: []specification.Field{
+					{Name: "id", Type: specification.FieldTypeUUID, Description: "User ID"},
+					{Name: "name", Type: specification.FieldTypeString, Description: "User name"},
+				},
+			},
+			{
+				Name:        "Product",
+				Description: "Product object",
+				Fields: []specification.Field{
+					{Name: "id", Type: specification.FieldTypeUUID, Description: "Product ID"},
+					{Name: "name", Type: specification.FieldTypeString, Description: "Product name"},
+				},
+			},
+		},
+		Resources: []specification.Resource{
+			{
+				Name:        "User",
+				Description: "User resource",
+				Operations:  []string{specification.OperationCreate, specification.OperationRead, specification.OperationUpdate, specification.OperationDelete},
+				Endpoints: []specification.Endpoint{
+					{
+						Name:        "Get",
+						Title:       "Get User",
+						Description: "Get a user by ID",
+						Method:      "GET",
+						Path:        "/{id}",
+						Request: specification.EndpointRequest{
+							PathParams: []specification.Field{
+								{Name: "id", Type: specification.FieldTypeUUID, Description: "User ID"},
+							},
+						},
+						Response: specification.EndpointResponse{StatusCode: 200, ContentType: "application/json"},
+					},
+					{
+						Name:        "Create",
+						Title:       "Create User",
+						Description: "Create a new user",
+						Method:      "POST",
+						Path:        "",
+						Request: specification.EndpointRequest{
+							BodyParams: []specification.Field{
+								{Name: "name", Type: specification.FieldTypeString, Description: "User name"},
+							},
+						},
+						Response: specification.EndpointResponse{StatusCode: 201, ContentType: "application/json"},
+					},
+				},
+			},
+			{
+				Name:        "Product",
+				Description: "Product resource",
+				Operations:  []string{specification.OperationCreate, specification.OperationRead},
+				Endpoints: []specification.Endpoint{
+					{
+						Name:        "Get",
+						Title:       "Get Product",
+						Description: "Get a product by ID",
+						Method:      "GET",
+						Path:        "/{id}",
+						Request: specification.EndpointRequest{
+							PathParams: []specification.Field{
+								{Name: "id", Type: specification.FieldTypeUUID, Description: "Product ID"},
+							},
+						},
+						Response: specification.EndpointResponse{StatusCode: 200, ContentType: "application/json"},
+					},
+					{
+						Name:        "Create",
+						Title:       "Create Product",
+						Description: "Create a new product",
+						Method:      "POST",
+						Path:        "",
+						Request: specification.EndpointRequest{
+							BodyParams: []specification.Field{
+								{Name: "name", Type: specification.FieldTypeString, Description: "Product name"},
+							},
+						},
+						Response: specification.EndpointResponse{StatusCode: 201, ContentType: "application/json"},
+					},
+				},
+			},
+		},
+	}
+
+	// Generate OpenAPI JSON multiple times
+	var outputs [][]byte
+	for i := 0; i < 5; i++ {
+		var buf bytes.Buffer
+		err := GenerateOpenAPI(&buf, service)
+		assert.NoError(t, err, "Generation %d should not error", i+1)
+		outputs = append(outputs, buf.Bytes())
+	}
+
+	// All outputs should be identical
+	for i := 1; i < len(outputs); i++ {
+		assert.Equal(t, outputs[0], outputs[i],
+			"Generation %d should produce identical output to generation 1", i+1)
+	}
+
+	// Verify the output is valid JSON with expected structure
+	var result map[string]interface{}
+	err := json.Unmarshal(outputs[0], &result)
+	assert.NoError(t, err, "Output should be valid JSON")
+
+	// Check that paths are present and in expected structure
+	paths, ok := result["paths"].(map[string]interface{})
+	assert.True(t, ok, "Should have paths section")
+	assert.NotEmpty(t, paths, "Should have at least one path")
+
+	// Check that components are present
+	components, ok := result["components"].(map[string]interface{})
+	assert.True(t, ok, "Should have components section")
+	assert.NotEmpty(t, components, "Should have components")
+}
