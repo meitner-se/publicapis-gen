@@ -235,19 +235,15 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 		buf.WriteString(fmt.Sprintf("type %sAPI[Session any] interface {\n", resource.Name))
 		for _, endpoint := range resource.Endpoints {
 			if endpoint.HasResponseType() {
-				buf.WriteString(fmt.Sprintf("\t%s(ctx context.Context, request Request[Session, %s, %s, %s]) (*%s, error)\n",
+				buf.WriteString(fmt.Sprintf("\t%s(ctx context.Context, request %s[Session]) (*%s, error)\n",
 					endpoint.Name,
-					endpoint.GetPathParamsType(resource.Name),
-					endpoint.GetQueryParamsType(resource.Name),
-					endpoint.GetBodyParamsType(resource.Name),
+					endpoint.GetRequestType(resource.Name),
 					endpoint.GetResponseType(resource.Name),
 				))
 			} else {
-				buf.WriteString(fmt.Sprintf("\t%s(ctx context.Context, request Request[Session, %s, %s, %s]) error\n",
+				buf.WriteString(fmt.Sprintf("\t%s(ctx context.Context, request %s[Session]) error\n",
 					endpoint.Name,
-					endpoint.GetPathParamsType(resource.Name),
-					endpoint.GetQueryParamsType(resource.Name),
-					endpoint.GetBodyParamsType(resource.Name),
+					endpoint.GetRequestType(resource.Name),
 				))
 			}
 		}
@@ -295,6 +291,18 @@ func generateRequestTypes(buf *bytes.Buffer, service *specification.Service) err
 				}
 				buf.WriteString("}\n\n")
 			}
+		}
+	}
+
+	// Generate endpoint-specific request types
+	for _, resource := range service.Resources {
+		for _, endpoint := range resource.Endpoints {
+			buf.WriteString(fmt.Sprintf("type %s[Session any] Request[Session, %s, %s, %s]\n\n",
+				endpoint.GetRequestType(resource.Name),
+				endpoint.GetPathParamsType(resource.Name),
+				endpoint.GetQueryParamsType(resource.Name),
+				endpoint.GetBodyParamsType(resource.Name),
+			))
 		}
 	}
 
