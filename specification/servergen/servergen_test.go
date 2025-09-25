@@ -681,6 +681,57 @@ func TestGenerateServerFunc(t *testing.T) {
 			assert.Contains(t, generatedCode, "routerGroup.PATCH(", "Should register PATCH endpoint")
 			assert.Contains(t, generatedCode, "routerGroup.DELETE(", "Should register DELETE endpoint")
 		})
+
+		t.Run("interface methods use endpoint specific request types", func(t *testing.T) {
+			// Arrange
+			service := createTestServiceWithEndpoints()
+			buf := &bytes.Buffer{}
+
+			// Act
+			err := generateServer(buf, service)
+
+			// Assert
+			assert.Nil(t, err, "Expected no error when generating interface with specific request types")
+
+			generatedCode := buf.String()
+
+			// Verify interface methods use endpoint-specific request types instead of generic Request
+			expectedInterfaceMethods := []struct {
+				name            string
+				methodSignature string
+				description     string
+			}{
+				{
+					name:            "CreateUser interface method",
+					methodSignature: "CreateUser(ctx context.Context, request UserCreateUserRequest[Session]) (*User, error)",
+					description:     "Should use specific request type for CreateUser method",
+				},
+				{
+					name:            "DeleteUser interface method",
+					methodSignature: "DeleteUser(ctx context.Context, request UserDeleteUserRequest[Session]) error",
+					description:     "Should use specific request type for DeleteUser method",
+				},
+				{
+					name:            "ListUsers interface method",
+					methodSignature: "ListUsers(ctx context.Context, request UserListUsersRequest[Session]) (*UserListUsersResponse, error)",
+					description:     "Should use specific request type for ListUsers method",
+				},
+			}
+
+			for _, testCase := range expectedInterfaceMethods {
+				t.Run(testCase.name, func(t *testing.T) {
+					assert.Contains(t, generatedCode, testCase.methodSignature, testCase.description)
+				})
+			}
+
+			// Verify old generic Request pattern is NOT used in interface methods
+			assert.NotContains(t, generatedCode, "request Request[Session,",
+				"Interface methods should not use generic Request type")
+
+			// Verify UserAPI interface is still generated
+			assert.Contains(t, generatedCode, "type UserAPI[Session any] interface {",
+				"Should still generate resource API interface")
+		})
 	})
 }
 
@@ -791,6 +842,57 @@ func TestGenerateRequestTypes(t *testing.T) {
 			generatedCode := buf.String()
 			assert.Contains(t, generatedCode, "HomeAddress Address `json:\"homeAddress\"`",
 				"Should handle custom object types correctly")
+		})
+
+		t.Run("endpoint specific request types generation", func(t *testing.T) {
+			// Arrange
+			service := createTestServiceWithEndpoints()
+			buf := &bytes.Buffer{}
+
+			// Act
+			err := generateRequestTypes(buf, service)
+
+			// Assert
+			assert.Nil(t, err, "Expected no error when generating endpoint-specific request types")
+
+			generatedCode := buf.String()
+
+			// Verify endpoint-specific request types are generated for different parameter combinations
+			testCases := []struct {
+				name                string
+				expectedRequestType string
+				description         string
+			}{
+				{
+					name:                "CreateUser request type",
+					expectedRequestType: "type UserCreateUserRequest[Session any] Request[Session, struct{}, struct{}, UserCreateUserBodyParams]",
+					description:         "Should generate request type for endpoint with only body params",
+				},
+				{
+					name:                "DeleteUser request type",
+					expectedRequestType: "type UserDeleteUserRequest[Session any] Request[Session, UserDeleteUserPathParams, struct{}, struct{}]",
+					description:         "Should generate request type for endpoint with only path params",
+				},
+				{
+					name:                "ListUsers request type",
+					expectedRequestType: "type UserListUsersRequest[Session any] Request[Session, struct{}, UserListUsersQueryParams, struct{}]",
+					description:         "Should generate request type for endpoint with only query params",
+				},
+			}
+
+			for _, tc := range testCases {
+				t.Run(tc.name, func(t *testing.T) {
+					assert.Contains(t, generatedCode, tc.expectedRequestType, tc.description)
+				})
+			}
+
+			// Verify the generic Request type is still present
+			assert.Contains(t, generatedCode, expectedRequestType,
+				"Should still include the generic Request type for utility functions")
+
+			// Verify RequestID method is still present
+			assert.Contains(t, generatedCode, expectedRequestIDMethod,
+				"Should still include RequestID method for the generic Request type")
 		})
 	})
 }
