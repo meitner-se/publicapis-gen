@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -888,8 +889,16 @@ func (g *generator) addResourceToPaths(resource specification.Resource, paths *o
 		pathGroups[fullPath] = append(pathGroups[fullPath], &endpoint)
 	}
 
-	// Create PathItem for each unique path
-	for path, endpoints := range pathGroups {
+	// Get sorted list of paths for deterministic iteration
+	sortedPaths := make([]string, 0, len(pathGroups))
+	for path := range pathGroups {
+		sortedPaths = append(sortedPaths, path)
+	}
+	sort.Strings(sortedPaths)
+
+	// Create PathItem for each unique path in sorted order
+	for _, path := range sortedPaths {
+		endpoints := pathGroups[path]
 		pathItem := &v3.PathItem{}
 
 		for _, endpoint := range endpoints {
