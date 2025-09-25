@@ -32,6 +32,18 @@ const (
 	logKeyMode          = "mode"
 )
 
+// Diff output constants
+const (
+	diffFileNotExist    = "file does not exist on disk"
+	diffContentDiffers  = "content differs"
+	diffSeparator       = "---"
+	diffGeneratedHeader = "Generated content:"
+	diffDiskHeader      = "File on disk:"
+	diffLinePrefix      = "  "
+	diffMaxLinesToShow  = 10
+	diffContextLines    = 3
+)
+
 // Operation modes
 const (
 	modeOverlay = "overlay"
@@ -873,7 +885,7 @@ func compareWithDiskFile(filePath string, generatedData []byte) (string, error) 
 	// Check if file exists
 	if _, err := os.Stat(filePath); err != nil {
 		if os.IsNotExist(err) {
-			return "file does not exist on disk", nil
+			return diffFileNotExist, nil
 		}
 		return "", fmt.Errorf("%s: cannot access file: %w", errorFileRead, err)
 	}
@@ -886,10 +898,122 @@ func compareWithDiskFile(filePath string, generatedData []byte) (string, error) 
 
 	// Compare content
 	if !bytes.Equal(generatedData, diskData) {
-		return "content differs", nil
+		diffOutput := generateDetailedDiff(generatedData, diskData)
+		return fmt.Sprintf("%s\n%s", diffContentDiffers, diffOutput), nil
 	}
 
 	return "", nil
+}
+
+// generateDetailedDiff creates a detailed diff output showing line-by-line differences
+func generateDetailedDiff(generatedData, diskData []byte) string {
+	generatedLines := strings.Split(string(generatedData), "\n")
+	diskLines := strings.Split(string(diskData), "\n")
+
+	var diffOutput strings.Builder
+
+	// Find the first difference
+	firstDiffLine := findFirstDifference(generatedLines, diskLines)
+	if firstDiffLine == -1 {
+		// This shouldn't happen since we already know they differ
+		return diffContentDiffers
+	}
+
+	// Show context around the first difference
+	startLine := max(0, firstDiffLine-diffContextLines)
+	endLine := min(len(generatedLines), len(diskLines))
+	endLine = min(endLine, firstDiffLine+diffContextLines+1)
+
+	diffOutput.WriteString(fmt.Sprintf("\nFirst difference found at line %d:\n\n", firstDiffLine+1))
+
+	// Show generated content section
+	diffOutput.WriteString(diffGeneratedHeader)
+	diffOutput.WriteString("\n")
+	for i := startLine; i < min(endLine, len(generatedLines)); i++ {
+		marker := diffLinePrefix
+		if i == firstDiffLine {
+			marker = "→ "
+		}
+		diffOutput.WriteString(fmt.Sprintf("%s%d: %s\n", marker, i+1, generatedLines[i]))
+	}
+
+	diffOutput.WriteString("\n")
+	diffOutput.WriteString(diffSeparator)
+	diffOutput.WriteString("\n\n")
+
+	// Show disk file content section
+	diffOutput.WriteString(diffDiskHeader)
+	diffOutput.WriteString("\n")
+	for i := startLine; i < min(endLine, len(diskLines)); i++ {
+		marker := diffLinePrefix
+		if i == firstDiffLine {
+			marker = "→ "
+		}
+		diffOutput.WriteString(fmt.Sprintf("%s%d: %s\n", marker, i+1, diskLines[i]))
+	}
+
+	// Show additional differences if there are more
+	additionalDiffs := countAdditionalDifferences(generatedLines, diskLines, firstDiffLine+1)
+	if additionalDiffs > 0 {
+		diffOutput.WriteString(fmt.Sprintf("\n... and %d more line(s) differ\n", additionalDiffs))
+	}
+
+	return diffOutput.String()
+}
+
+// findFirstDifference finds the line number where files first differ
+func findFirstDifference(lines1, lines2 []string) int {
+	minLen := min(len(lines1), len(lines2))
+
+	for i := 0; i < minLen; i++ {
+		if lines1[i] != lines2[i] {
+			return i
+		}
+	}
+
+	// If one file is longer than the other
+	if len(lines1) != len(lines2) {
+		return minLen
+	}
+
+	return -1
+}
+
+// countAdditionalDifferences counts how many more lines differ after the first difference
+func countAdditionalDifferences(lines1, lines2 []string, startFrom int) int {
+	count := 0
+	maxLen := max(len(lines1), len(lines2))
+	minLen := min(len(lines1), len(lines2))
+
+	// Count different lines in the overlapping part
+	for i := startFrom; i < minLen; i++ {
+		if lines1[i] != lines2[i] {
+			count++
+		}
+	}
+
+	// Count extra lines if one file is longer
+	if len(lines1) != len(lines2) {
+		count += maxLen - minLen
+	}
+
+	return count
+}
+
+// min returns the minimum of two integers
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// max returns the maximum of two integers
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
 
 // configureLogging configures the slog logger based on the specified log level.

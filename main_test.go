@@ -1346,3 +1346,214 @@ func Test_generateServerFromSpecification_e2e(t *testing.T) {
 		})
 	})
 }
+
+// ============================================================================
+// Diff Functionality Tests
+// ============================================================================
+
+func TestCompareWithDiskFile(t *testing.T) {
+	// Create a temporary directory for test files
+	tempDir, err := os.MkdirTemp("", "diff_test")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+
+	t.Run("identical files return no difference", func(t *testing.T) {
+		// Arrange
+		content := "line 1\nline 2\nline 3\n"
+		testFile := tempDir + "/identical.txt"
+		err := os.WriteFile(testFile, []byte(content), 0644)
+		require.NoError(t, err)
+
+		// Act
+		diff, err := compareWithDiskFile(testFile, []byte(content))
+
+		// Assert
+		assert.NoError(t, err)
+		assert.Empty(t, diff, "Identical files should produce no diff output")
+	})
+
+	t.Run("non-existent file returns appropriate message", func(t *testing.T) {
+		// Arrange
+		nonExistentFile := tempDir + "/does_not_exist.txt"
+		content := []byte("some content")
+
+		// Act
+		diff, err := compareWithDiskFile(nonExistentFile, content)
+
+		// Assert
+		assert.NoError(t, err)
+		assert.Equal(t, diffFileNotExist, diff)
+	})
+
+	t.Run("different files show detailed diff", func(t *testing.T) {
+		// Arrange
+		diskContent := "line 1\noriginal line 2\nline 3\nline 4\n"
+		generatedContent := "line 1\nmodified line 2\nline 3\nline 4\n"
+		testFile := tempDir + "/different.txt"
+		err := os.WriteFile(testFile, []byte(diskContent), 0644)
+		require.NoError(t, err)
+
+		// Act
+		diff, err := compareWithDiskFile(testFile, []byte(generatedContent))
+
+		// Assert
+		assert.NoError(t, err)
+		assert.Contains(t, diff, diffContentDiffers, "Should indicate content differs")
+		assert.Contains(t, diff, "First difference found at line 2", "Should show line number of first difference")
+		assert.Contains(t, diff, diffGeneratedHeader, "Should show generated content header")
+		assert.Contains(t, diff, diffDiskHeader, "Should show disk content header")
+		assert.Contains(t, diff, "modified line 2", "Should show generated content")
+		assert.Contains(t, diff, "original line 2", "Should show disk content")
+		assert.Contains(t, diff, "→ 2:", "Should mark the differing line with arrow")
+	})
+
+	t.Run("files with different lengths show diff", func(t *testing.T) {
+		// Arrange
+		diskContent := "line 1\nline 2\n"
+		generatedContent := "line 1\nline 2\nline 3\nextra line\n"
+		testFile := tempDir + "/different_length.txt"
+		err := os.WriteFile(testFile, []byte(diskContent), 0644)
+		require.NoError(t, err)
+
+		// Act
+		diff, err := compareWithDiskFile(testFile, []byte(generatedContent))
+
+		// Assert
+		assert.NoError(t, err)
+		assert.Contains(t, diff, diffContentDiffers, "Should indicate content differs")
+		assert.Contains(t, diff, "First difference found at line 3", "Should show first difference at end of shorter file")
+		assert.Contains(t, diff, "more line(s) differ", "Should indicate additional differences")
+	})
+}
+
+func TestGenerateDetailedDiff(t *testing.T) {
+	t.Run("single line difference", func(t *testing.T) {
+		// Arrange
+		generated := []byte("line 1\nmodified line\nline 3")
+		disk := []byte("line 1\noriginal line\nline 3")
+
+		// Act
+		diff := generateDetailedDiff(generated, disk)
+
+		// Assert
+		assert.Contains(t, diff, "First difference found at line 2", "Should identify correct line number")
+		assert.Contains(t, diff, "modified line", "Should show generated content")
+		assert.Contains(t, diff, "original line", "Should show disk content")
+		assert.Contains(t, diff, "→ 2:", "Should mark differing line")
+	})
+
+	t.Run("difference at beginning", func(t *testing.T) {
+		// Arrange
+		generated := []byte("modified first line\nline 2\nline 3")
+		disk := []byte("original first line\nline 2\nline 3")
+
+		// Act
+		diff := generateDetailedDiff(generated, disk)
+
+		// Assert
+		assert.Contains(t, diff, "First difference found at line 1", "Should identify first line difference")
+		assert.Contains(t, diff, "→ 1:", "Should mark first line")
+	})
+
+	t.Run("multiple differences shows additional count", func(t *testing.T) {
+		// Arrange
+		generated := []byte("line 1\nmodified 2\nline 3\nmodified 4\nmodified 5")
+		disk := []byte("line 1\noriginal 2\nline 3\noriginal 4\noriginal 5")
+
+		// Act
+		diff := generateDetailedDiff(generated, disk)
+
+		// Assert
+		assert.Contains(t, diff, "First difference found at line 2", "Should show first difference")
+		assert.Contains(t, diff, "more line(s) differ", "Should indicate additional differences")
+	})
+
+	t.Run("files with different lengths", func(t *testing.T) {
+		// Arrange
+		generated := []byte("line 1\nline 2\nextra line")
+		disk := []byte("line 1\nline 2")
+
+		// Act
+		diff := generateDetailedDiff(generated, disk)
+
+		// Assert
+		assert.Contains(t, diff, "First difference found at line 3", "Should identify length difference")
+		assert.Contains(t, diff, "more line(s) differ", "Should indicate length difference")
+	})
+}
+
+func TestFindFirstDifference(t *testing.T) {
+	t.Run("identical content returns -1", func(t *testing.T) {
+		// Arrange
+		lines1 := []string{"line 1", "line 2", "line 3"}
+		lines2 := []string{"line 1", "line 2", "line 3"}
+
+		// Act
+		diff := findFirstDifference(lines1, lines2)
+
+		// Assert
+		assert.Equal(t, -1, diff, "Identical content should return -1")
+	})
+
+	t.Run("different content returns correct line", func(t *testing.T) {
+		// Arrange
+		lines1 := []string{"line 1", "modified", "line 3"}
+		lines2 := []string{"line 1", "original", "line 3"}
+
+		// Act
+		diff := findFirstDifference(lines1, lines2)
+
+		// Assert
+		assert.Equal(t, 1, diff, "Should return index of first different line")
+	})
+
+	t.Run("different lengths returns correct position", func(t *testing.T) {
+		// Arrange
+		lines1 := []string{"line 1", "line 2", "extra"}
+		lines2 := []string{"line 1", "line 2"}
+
+		// Act
+		diff := findFirstDifference(lines1, lines2)
+
+		// Assert
+		assert.Equal(t, 2, diff, "Should return position where lengths differ")
+	})
+}
+
+func TestCountAdditionalDifferences(t *testing.T) {
+	t.Run("no additional differences", func(t *testing.T) {
+		// Arrange
+		lines1 := []string{"line 1", "different", "line 3"}
+		lines2 := []string{"line 1", "original", "line 3"}
+
+		// Act
+		count := countAdditionalDifferences(lines1, lines2, 2) // Start after first diff at index 1
+
+		// Assert
+		assert.Equal(t, 0, count, "Should count no additional differences")
+	})
+
+	t.Run("multiple differences", func(t *testing.T) {
+		// Arrange
+		lines1 := []string{"line 1", "diff1", "line 3", "diff2", "diff3"}
+		lines2 := []string{"line 1", "orig1", "line 3", "orig2", "orig3"}
+
+		// Act
+		count := countAdditionalDifferences(lines1, lines2, 2) // Start after first diff at index 1
+
+		// Assert
+		assert.Equal(t, 2, count, "Should count remaining differences")
+	})
+
+	t.Run("different lengths", func(t *testing.T) {
+		// Arrange
+		lines1 := []string{"line 1", "diff", "line 3", "extra1", "extra2"}
+		lines2 := []string{"line 1", "orig", "line 3"}
+
+		// Act
+		count := countAdditionalDifferences(lines1, lines2, 2) // Start after first diff at index 1
+
+		// Assert
+		assert.Equal(t, 2, count, "Should count extra lines as differences")
+	})
+}
