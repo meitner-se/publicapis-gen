@@ -119,10 +119,9 @@ type Job struct {
 	OverlayJSON    string `yaml:"overlay_json,omitempty" json:"overlay_json,omitempty"`
 	ServerGo       string `yaml:"server_go,omitempty" json:"server_go,omitempty"`
 	ServerPackage  string `yaml:"server_package,omitempty" json:"server_package,omitempty"`
-	TestGo         string `yaml:"test_go,omitempty" json:"test_go,omitempty"`
-	TestPackage    string `yaml:"test_package,omitempty" json:"test_package,omitempty"`
-	TestAPIPackage string `yaml:"test_api_package,omitempty" json:"test_api_package,omitempty"`
-	TestAPIImport  string `yaml:"test_api_import,omitempty" json:"test_api_import,omitempty"`
+	TestGo      string `yaml:"test_go,omitempty" json:"test_go,omitempty"`
+	TestPackage string `yaml:"test_package,omitempty" json:"test_package,omitempty"`
+	TestImport  string `yaml:"test_import,omitempty" json:"test_import,omitempty"`
 }
 
 // Config represents the configuration file structure
@@ -434,7 +433,7 @@ func processJob(ctx context.Context, job Job) error {
 
 	if job.TestGo != "" {
 		// Generate test code using testgen from the specification
-		if err := generateTestsFromSpecification(ctx, service, job.Specification, job.TestGo, job.TestPackage, job.TestAPIPackage, job.TestAPIImport); err != nil {
+		if err := generateTestsFromSpecification(ctx, service, job.Specification, job.TestGo, job.TestPackage, job.ServerPackage, job.TestImport); err != nil {
 			return fmt.Errorf("failed to generate Go tests to '%s': %w", job.TestGo, err)
 		}
 	}
@@ -695,7 +694,7 @@ func generateServerFromSpecification(ctx context.Context, service *specification
 }
 
 // generateTestsFromSpecification generates HTTP API tests from a service specification using testgen.
-func generateTestsFromSpecification(ctx context.Context, service *specification.Service, specPath, outputPath, packageName, apiPackageName, apiPackageImport string) error {
+func generateTestsFromSpecification(ctx context.Context, service *specification.Service, specPath, outputPath, packageName, serverPackage, testImport string) error {
 	slog.InfoContext(ctx, "Generating Go test code from specification using testgen", logKeyMode, "test")
 
 	// Default package name if not provided
@@ -703,17 +702,19 @@ func generateTestsFromSpecification(ctx context.Context, service *specification.
 		packageName = "main"
 	}
 
-	// Default API package name and import if not provided
-	if apiPackageName == "" {
-		apiPackageName = "api"
+	// Default server package name if not provided (this will be the API package name)
+	if serverPackage == "" {
+		serverPackage = "api"
 	}
-	if apiPackageImport == "" {
-		apiPackageImport = "./api"
+
+	// Default test import if not provided
+	if testImport == "" {
+		testImport = "./api"
 	}
 
 	// Generate test code using testgen
 	var buf bytes.Buffer
-	if err := testgen.GenerateTests(&buf, service, packageName, apiPackageName, apiPackageImport); err != nil {
+	if err := testgen.GenerateTests(&buf, service, packageName, serverPackage, testImport); err != nil {
 		return fmt.Errorf("failed to generate test code: %w", err)
 	}
 
