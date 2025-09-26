@@ -173,7 +173,8 @@ func generateTestParameterValue(buf *bytes.Buffer, param specification.Field, pa
 		if param.Example != "" {
 			defaultValue = param.Example
 		}
-		buf.WriteString(fmt.Sprintf("\t\t%s := %s\n", varName, defaultValue))
+		// Use float64 for consistency with JSON unmarshaling
+		buf.WriteString(fmt.Sprintf("\t\t%s := float64(%s)\n", varName, defaultValue))
 	case "Bool":
 		defaultValue := "true"
 		if param.Example != "" {
@@ -211,7 +212,7 @@ func generateTestBody(buf *bytes.Buffer, bodyParams []specification.Field, servi
 				if param.Example != "" {
 					defaultValue = param.Example
 				}
-				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []interface{}{%s},\n", jsonKey, defaultValue))
+				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []interface{}{float64(%s)},\n", jsonKey, defaultValue))
 			case "Bool":
 				defaultValue := "true"
 				if param.Example != "" {
@@ -243,7 +244,7 @@ func generateTestBody(buf *bytes.Buffer, bodyParams []specification.Field, servi
 				if param.Example != "" {
 					defaultValue = param.Example
 				}
-				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": %s,\n", jsonKey, defaultValue))
+				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": float64(%s),\n", jsonKey, defaultValue))
 			case "Bool":
 				defaultValue := "true"
 				if param.Example != "" {
@@ -623,27 +624,27 @@ func getObjectTestData(objectType string, service *specification.Service) string
 					// Handle array fields in objects
 					switch field.Type {
 					case "UUID":
-						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []string{uuid.New().String()}", jsonKey))
+						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []interface{}{uuid.New().String()}", jsonKey))
 					case "String":
 						defaultValue := "test-value"
 						if field.Example != "" {
 							defaultValue = field.Example
 						}
-						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []string{\"%s\"}", jsonKey, defaultValue))
+						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []interface{}{\"%s\"}", jsonKey, defaultValue))
 					case "Int":
 						defaultValue := "123"
 						if field.Example != "" {
 							defaultValue = field.Example
 						}
-						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []int{%s}", jsonKey, defaultValue))
+						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []interface{}{float64(%s)}", jsonKey, defaultValue))
 					case "Bool":
 						defaultValue := "true"
 						if field.Example != "" {
 							defaultValue = field.Example
 						}
-						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []bool{%s}", jsonKey, defaultValue))
+						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []interface{}{%s}", jsonKey, defaultValue))
 					default:
-						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []string{\"test-%s-value\"}", jsonKey, strings.ToLower(field.Name)))
+						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []interface{}{\"test-%s-value\"}", jsonKey, strings.ToLower(field.Name)))
 					}
 				} else {
 					// Handle single value fields in objects
@@ -661,7 +662,7 @@ func getObjectTestData(objectType string, service *specification.Service) string
 						if field.Example != "" {
 							defaultValue = field.Example
 						}
-						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": %s", jsonKey, defaultValue))
+						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": float64(%s)", jsonKey, defaultValue))
 					case "Bool":
 						defaultValue := "true"
 						if field.Example != "" {
