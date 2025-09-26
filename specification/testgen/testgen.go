@@ -122,7 +122,7 @@ func generateEndpointTest(buf *bytes.Buffer, service *specification.Service, res
 	}
 
 	// Generate server setup
-	err = generateServerSetup(buf, serviceName, resource, apiPackageName)
+	err = generateServerSetup(buf, serviceName, service, resource, endpoint, apiPackageName)
 	if err != nil {
 		return err
 	}
@@ -235,55 +235,54 @@ func generateMockSetup(buf *bytes.Buffer, service *specification.Service, resour
 		getAPITypeReference(endpoint.GetPathParamsType(resource.Name), apiPackageName),
 		getAPITypeReference(endpoint.GetQueryParamsType(resource.Name), apiPackageName),
 		getAPITypeReference(endpoint.GetBodyParamsType(resource.Name), apiPackageName)))
-	buf.WriteString(fmt.Sprintf("\t\tmock%sAPI := &Mock%sAPI{}\n", resource.Name, resource.Name))
 
-	// Generate method setup that captures the incoming request
-	methodName := endpoint.Name
+	// The mock configuration is now handled in generateServerSetup
+	// This function just declares the captured request variable
 
-	if endpoint.HasResponseType() {
-		responseType := endpoint.GetResponseType(resource.Name)
+	return nil
+}
 
-		// For endpoints that return an object reference, use that object
-		if endpoint.Response.BodyObject != nil {
-			buf.WriteString(fmt.Sprintf("\t\texpected%s := &%s.%s{\n", responseType, apiPackageName, *endpoint.Response.BodyObject))
-			buf.WriteString("\t\t\t// Add expected response fields here based on your needs\n")
-			buf.WriteString("\t\t}\n")
-		} else if len(endpoint.Response.BodyFields) > 0 {
-			// For endpoints with response body fields, create response object
-			buf.WriteString(fmt.Sprintf("\t\texpected%s := &%s.%s{\n", responseType, apiPackageName, responseType))
-			buf.WriteString("\t\t\t// Add expected response fields here based on your needs\n")
-			buf.WriteString("\t\t}\n")
+// generateServerSetup generates HTTP server setup.
+func generateServerSetup(buf *bytes.Buffer, serviceName string, service *specification.Service, currentResource specification.Resource, currentEndpoint specification.Endpoint, apiPackageName string) error {
+	buf.WriteString("\t\t// Server setup\n")
+	buf.WriteString("\t\trouter := gin.New()\n")
+
+	// Generate mocks for all resources (not just the current one)
+	for _, res := range service.Resources {
+		if len(res.Endpoints) > 0 {
+			buf.WriteString(fmt.Sprintf("\t\tmock%sAPI := &Mock%sAPI{}\n", res.Name, res.Name))
 		}
+	}
+	buf.WriteString("\n")
 
+	// Configure the specific mock for the current endpoint being tested
+	methodName := currentEndpoint.Name
+	if currentEndpoint.HasResponseType() {
+		responseType := currentEndpoint.GetResponseType(currentResource.Name)
+		buf.WriteString(fmt.Sprintf("\t\texpected%s := &%s.%s{\n", responseType, apiPackageName, responseType))
+		buf.WriteString("\t\t\t// Add expected response fields here based on your needs\n")
+		buf.WriteString("\t\t}\n")
 		buf.WriteString(fmt.Sprintf("\t\tmock%sAPI.%sFunc = func(ctx context.Context, request %s.Request[any, %s, %s, %s]) (*%s.%s, error) {\n",
-			resource.Name, methodName, apiPackageName,
-			getAPITypeReference(endpoint.GetPathParamsType(resource.Name), apiPackageName),
-			getAPITypeReference(endpoint.GetQueryParamsType(resource.Name), apiPackageName),
-			getAPITypeReference(endpoint.GetBodyParamsType(resource.Name), apiPackageName),
+			currentResource.Name, methodName, apiPackageName,
+			getAPITypeReference(currentEndpoint.GetPathParamsType(currentResource.Name), apiPackageName),
+			getAPITypeReference(currentEndpoint.GetQueryParamsType(currentResource.Name), apiPackageName),
+			getAPITypeReference(currentEndpoint.GetBodyParamsType(currentResource.Name), apiPackageName),
 			apiPackageName, responseType))
 		buf.WriteString("\t\t\tcapturedRequest = request\n")
 		buf.WriteString(fmt.Sprintf("\t\t\treturn expected%s, nil\n", responseType))
 		buf.WriteString("\t\t}\n")
 	} else {
 		buf.WriteString(fmt.Sprintf("\t\tmock%sAPI.%sFunc = func(ctx context.Context, request %s.Request[any, %s, %s, %s]) error {\n",
-			resource.Name, methodName, apiPackageName,
-			getAPITypeReference(endpoint.GetPathParamsType(resource.Name), apiPackageName),
-			getAPITypeReference(endpoint.GetQueryParamsType(resource.Name), apiPackageName),
-			getAPITypeReference(endpoint.GetBodyParamsType(resource.Name), apiPackageName)))
+			currentResource.Name, methodName, apiPackageName,
+			getAPITypeReference(currentEndpoint.GetPathParamsType(currentResource.Name), apiPackageName),
+			getAPITypeReference(currentEndpoint.GetQueryParamsType(currentResource.Name), apiPackageName),
+			getAPITypeReference(currentEndpoint.GetBodyParamsType(currentResource.Name), apiPackageName)))
 		buf.WriteString("\t\t\tcapturedRequest = request\n")
 		buf.WriteString("\t\t\treturn nil\n")
 		buf.WriteString("\t\t}\n")
 	}
-
 	buf.WriteString("\n")
 
-	return nil
-}
-
-// generateServerSetup generates HTTP server setup.
-func generateServerSetup(buf *bytes.Buffer, serviceName string, resource specification.Resource, apiPackageName string) error {
-	buf.WriteString("\t\t// Server setup\n")
-	buf.WriteString("\t\trouter := gin.New()\n")
 	buf.WriteString(fmt.Sprintf("\t\t%s.Register%sAPI(router, &%s.%sAPI[any]{\n", apiPackageName, serviceName, apiPackageName, serviceName))
 	buf.WriteString(fmt.Sprintf("\t\t\tServer: %s.Server[any]{\n", apiPackageName))
 	buf.WriteString("\t\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header, requestID string) (any, error) {\n")
@@ -297,7 +296,14 @@ func generateServerSetup(buf *bytes.Buffer, serviceName string, resource specifi
 	buf.WriteString("\t\t\t\t\t}\n")
 	buf.WriteString("\t\t\t\t},\n")
 	buf.WriteString("\t\t\t},\n")
-	buf.WriteString(fmt.Sprintf("\t\t\t%s: mock%sAPI,\n", resource.Name, resource.Name))
+
+	// Add all resource mocks to the API struct
+	for _, resource := range service.Resources {
+		if len(resource.Endpoints) > 0 {
+			buf.WriteString(fmt.Sprintf("\t\t\t%s: mock%sAPI,\n", resource.Name, resource.Name))
+		}
+	}
+
 	buf.WriteString("\t\t})\n")
 	buf.WriteString("\t\tserver := httptest.NewServer(router)\n")
 	buf.WriteString("\t\tdefer server.Close()\n\n")
