@@ -109,7 +109,7 @@ func generateEndpointTest(buf *bytes.Buffer, service *specification.Service, res
 	buf.WriteString(fmt.Sprintf("func %s(t *testing.T) {\n", testName))
 	buf.WriteString("\tt.Run(\"Request\", func(t *testing.T) {\n")
 
-	// Generate test setup
+	// Generate test setup (without parameters)
 	err := generateTestSetup(buf, service, resource, endpoint)
 	if err != nil {
 		return err
@@ -127,7 +127,7 @@ func generateEndpointTest(buf *bytes.Buffer, service *specification.Service, res
 		return err
 	}
 
-	// Generate HTTP request
+	// Generate HTTP request (with parameters defined inline)
 	err = generateHTTPRequest(buf, service, resource, endpoint)
 	if err != nil {
 		return err
@@ -150,40 +150,6 @@ func generateTestSetup(buf *bytes.Buffer, service *specification.Service, resour
 	buf.WriteString("\t\t// Arrange\n")
 	buf.WriteString("\t\tgin.SetMode(gin.TestMode)\n")
 	buf.WriteString("\t\tctx := context.Background()\n\n")
-
-	// Generate test data for path parameters
-	if len(endpoint.Request.PathParams) > 0 {
-		buf.WriteString("\t\t// Path parameters\n")
-		for _, param := range endpoint.Request.PathParams {
-			err := generateTestParameterValue(buf, param, "path")
-			if err != nil {
-				return err
-			}
-		}
-		buf.WriteString("\n")
-	}
-
-	// Generate test data for query parameters
-	if len(endpoint.Request.QueryParams) > 0 {
-		buf.WriteString("\t\t// Query parameters\n")
-		for _, param := range endpoint.Request.QueryParams {
-			err := generateTestParameterValue(buf, param, "query")
-			if err != nil {
-				return err
-			}
-		}
-		buf.WriteString("\n")
-	}
-
-	// Generate test data for body parameters
-	if len(endpoint.Request.BodyParams) > 0 {
-		buf.WriteString("\t\t// Body parameters\n")
-		err := generateTestBody(buf, endpoint.Request.BodyParams)
-		if err != nil {
-			return err
-		}
-		buf.WriteString("\n")
-	}
 
 	return nil
 }
@@ -347,18 +313,38 @@ func generateHTTPRequest(buf *bytes.Buffer, service *specification.Service, reso
 	path := endpoint.GetFullPath(resource.Name)
 	buf.WriteString(fmt.Sprintf("\t\trequestURL := server.URL + \"/%s/%s%s\"\n", service.PathName(), service.Version, path))
 
-	// Replace path parameters with actual values
+	// Generate and use path parameters
 	if len(endpoint.Request.PathParams) > 0 {
+		buf.WriteString("\t\t// Path parameters\n")
+		for _, param := range endpoint.Request.PathParams {
+			err := generateTestParameterValue(buf, param, "path")
+			if err != nil {
+				return err
+			}
+		}
+		buf.WriteString("\n")
+
+		// Replace path parameters in URL
 		for _, param := range endpoint.Request.PathParams {
 			paramName := fmt.Sprintf("{%s}", strings.ToLower(param.Name))
 			varName := fmt.Sprintf("test%s%s", "Path", strmangle.TitleCase(param.Name))
 			buf.WriteString(fmt.Sprintf("\t\trequestURL = strings.ReplaceAll(requestURL, \"%s\", %s)\n", paramName, varName))
 		}
+		buf.WriteString("\n")
 	}
 
-	// Add query parameters
+	// Generate and use query parameters
 	if len(endpoint.Request.QueryParams) > 0 {
-		buf.WriteString("\t\t// Add query parameters\n")
+		buf.WriteString("\t\t// Query parameters\n")
+		for _, param := range endpoint.Request.QueryParams {
+			err := generateTestParameterValue(buf, param, "query")
+			if err != nil {
+				return err
+			}
+		}
+		buf.WriteString("\n")
+
+		buf.WriteString("\t\t// Add query parameters to URL\n")
 		buf.WriteString("\t\tquery := url.Values{}\n")
 		for _, param := range endpoint.Request.QueryParams {
 			varName := fmt.Sprintf("test%s%s", "Query", strmangle.TitleCase(param.Name))
@@ -368,6 +354,17 @@ func generateHTTPRequest(buf *bytes.Buffer, service *specification.Service, reso
 		buf.WriteString("\t\tif len(query) > 0 {\n")
 		buf.WriteString("\t\t\trequestURL += \"?\" + query.Encode()\n")
 		buf.WriteString("\t\t}\n")
+		buf.WriteString("\n")
+	}
+
+	// Generate and use body parameters
+	if len(endpoint.Request.BodyParams) > 0 {
+		buf.WriteString("\t\t// Body parameters\n")
+		err := generateTestBody(buf, endpoint.Request.BodyParams)
+		if err != nil {
+			return err
+		}
+		buf.WriteString("\n")
 	}
 
 	// Create request
