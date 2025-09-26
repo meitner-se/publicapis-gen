@@ -47,6 +47,12 @@ func GenerateTests(buf *bytes.Buffer, service *specification.Service, packageNam
 		return err
 	}
 
+	// Generate utility function tests
+	err = generateUtilityTests(buf, service, apiPackageName)
+	if err != nil {
+		return err
+	}
+
 	// Format the buffer content
 	formatted, err := format.Source(buf.Bytes())
 	if err != nil {
@@ -784,6 +790,223 @@ func getObjectTestDataWithVisited(objectType string, service *specification.Serv
 
 	// If object not found, return empty
 	return ""
+}
+
+// generateUtilityTests generates tests for utility functions.
+func generateUtilityTests(buf *bytes.Buffer, service *specification.Service, apiPackageName string) error {
+	buf.WriteString("// ============================================================================\n")
+	buf.WriteString("// Utility function tests\n")
+	buf.WriteString("// ============================================================================\n\n")
+
+	// Test serveWithResponse
+	err := generateServeWithResponseTest(buf, apiPackageName)
+	if err != nil {
+		return err
+	}
+
+	// Test serveWithoutResponse
+	err = generateServeWithoutResponseTest(buf, apiPackageName)
+	if err != nil {
+		return err
+	}
+
+	// Test parseRequest
+	err = generateParseRequestTest(buf, apiPackageName)
+	if err != nil {
+		return err
+	}
+
+	// Test decodeBodyParams
+	err = generateDecodeBodyParamsTest(buf, apiPackageName)
+	if err != nil {
+		return err
+	}
+
+	// Test decodePathParams
+	err = generateDecodePathParamsTest(buf, apiPackageName)
+	if err != nil {
+		return err
+	}
+
+	// Test decodeQueryParams
+	err = generateDecodeQueryParamsTest(buf, apiPackageName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// generateServeWithResponseTest generates test for serveWithResponse function.
+func generateServeWithResponseTest(buf *bytes.Buffer, apiPackageName string) error {
+	buf.WriteString("func TestServeWithResponse(t *testing.T) {\n")
+	buf.WriteString("\tgin.SetMode(gin.TestMode)\n")
+	buf.WriteString("\trouter := gin.New()\n\n")
+
+	buf.WriteString("\t// Mock function that returns a response\n")
+	buf.WriteString("\tmockFunction := func(ctx context.Context, request " + apiPackageName + ".Request[any, struct{}, struct{}, struct{}]) (*map[string]interface{}, error) {\n")
+	buf.WriteString("\t\treturn &map[string]interface{}{\"message\": \"success\"}, nil\n")
+	buf.WriteString("\t}\n\n")
+
+	buf.WriteString("\t// Create server configuration\n")
+	buf.WriteString("\tserver := " + apiPackageName + ".Server[any]{\n")
+	buf.WriteString("\t\tGetSessionFunc: func(ctx context.Context, headers http.Header, requestID string) (any, error) {\n")
+	buf.WriteString("\t\t\treturn \"test-session\", nil\n")
+	buf.WriteString("\t\t},\n")
+	buf.WriteString("\t\tConvertErrorFunc: func(err error, requestID string) *" + apiPackageName + ".Error {\n")
+	buf.WriteString("\t\t\treturn &" + apiPackageName + ".Error{\n")
+	buf.WriteString("\t\t\t\tCode:      " + apiPackageName + ".ErrorCodeInternal,\n")
+	buf.WriteString("\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t}\n")
+	buf.WriteString("\t\t},\n")
+	buf.WriteString("\t}\n\n")
+
+	buf.WriteString("\t// Create handler using serveWithResponse\n")
+	buf.WriteString("\thandler := " + apiPackageName + ".ServeWithResponse(200, server, mockFunction)\n")
+	buf.WriteString("\trouter.POST(\"/test\", handler)\n\n")
+
+	buf.WriteString("\t// Create test request\n")
+	buf.WriteString("\treq, err := http.NewRequest(\"POST\", \"/test\", nil)\n")
+	buf.WriteString("\tassert.NoError(t, err, \"Failed to create request\")\n")
+	buf.WriteString("\tw := httptest.NewRecorder()\n")
+	buf.WriteString("\trouter.ServeHTTP(w, req)\n\n")
+
+	buf.WriteString("\t// Assert response\n")
+	buf.WriteString("\tassert.Equal(t, 200, w.Code, \"Expected 200 status code\")\n")
+	buf.WriteString("\tassert.Contains(t, w.Body.String(), \"success\", \"Expected success message\")\n")
+	buf.WriteString("}\n\n")
+
+	return nil
+}
+
+// generateServeWithoutResponseTest generates test for serveWithoutResponse function.
+func generateServeWithoutResponseTest(buf *bytes.Buffer, apiPackageName string) error {
+	buf.WriteString("func TestServeWithoutResponse(t *testing.T) {\n")
+	buf.WriteString("\tgin.SetMode(gin.TestMode)\n")
+	buf.WriteString("\trouter := gin.New()\n\n")
+
+	buf.WriteString("\t// Mock function that doesn't return a response\n")
+	buf.WriteString("\tmockFunction := func(ctx context.Context, request " + apiPackageName + ".Request[any, struct{}, struct{}, struct{}]) error {\n")
+	buf.WriteString("\t\treturn nil\n")
+	buf.WriteString("\t}\n\n")
+
+	buf.WriteString("\t// Create server configuration\n")
+	buf.WriteString("\tserver := " + apiPackageName + ".Server[any]{\n")
+	buf.WriteString("\t\tGetSessionFunc: func(ctx context.Context, headers http.Header, requestID string) (any, error) {\n")
+	buf.WriteString("\t\t\treturn \"test-session\", nil\n")
+	buf.WriteString("\t\t},\n")
+	buf.WriteString("\t\tConvertErrorFunc: func(err error, requestID string) *" + apiPackageName + ".Error {\n")
+	buf.WriteString("\t\t\treturn &" + apiPackageName + ".Error{\n")
+	buf.WriteString("\t\t\t\tCode:      " + apiPackageName + ".ErrorCodeInternal,\n")
+	buf.WriteString("\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t}\n")
+	buf.WriteString("\t\t},\n")
+	buf.WriteString("\t}\n\n")
+
+	buf.WriteString("\t// Create handler using serveWithoutResponse\n")
+	buf.WriteString("\thandler := " + apiPackageName + ".ServeWithoutResponse(204, server, mockFunction)\n")
+	buf.WriteString("\trouter.DELETE(\"/test\", handler)\n\n")
+
+	buf.WriteString("\t// Create test request\n")
+	buf.WriteString("\treq, err := http.NewRequest(\"DELETE\", \"/test\", nil)\n")
+	buf.WriteString("\tassert.NoError(t, err, \"Failed to create request\")\n")
+	buf.WriteString("\tw := httptest.NewRecorder()\n")
+	buf.WriteString("\trouter.ServeHTTP(w, req)\n\n")
+
+	buf.WriteString("\t// Assert response\n")
+	buf.WriteString("\tassert.Equal(t, 204, w.Code, \"Expected 204 status code\")\n")
+	buf.WriteString("}\n\n")
+
+	return nil
+}
+
+// generateParseRequestTest generates test for parseRequest function.
+func generateParseRequestTest(buf *bytes.Buffer, apiPackageName string) error {
+	buf.WriteString("func TestParseRequest(t *testing.T) {\n")
+	buf.WriteString("\tgin.SetMode(gin.TestMode)\n")
+	buf.WriteString("\tc, _ := gin.CreateTestContext(httptest.NewRecorder())\n\n")
+
+	buf.WriteString("\t// Create test request with JSON body\n")
+	buf.WriteString("\ttestBody := `{\"name\": \"test\"}`\n")
+	buf.WriteString("\treq, err := http.NewRequest(\"POST\", \"/test?limit=10&offset=0\", strings.NewReader(testBody))\n")
+	buf.WriteString("\treq.Header.Set(\"Content-Type\", \"application/json\")\n")
+	buf.WriteString("\tassert.NoError(t, err, \"Failed to create request\")\n")
+	buf.WriteString("\tc.Request = req\n")
+	buf.WriteString("\tc.Params = []gin.Param{{Key: \"id\", Value: \"123\"}}\n\n")
+
+	buf.WriteString("\t// Mock session function\n")
+	buf.WriteString("\tgetSession := func(ctx context.Context, headers http.Header, requestID string) (any, error) {\n")
+	buf.WriteString("\t\treturn \"test-session\", nil\n")
+	buf.WriteString("\t}\n\n")
+
+	buf.WriteString("\t// Test parseRequest\n")
+	buf.WriteString("\trequest, apiError := " + apiPackageName + ".ParseRequest[any, struct{}, struct{}, struct{}](c, \"test-123\", getSession)\n")
+	buf.WriteString("\tassert.Nil(t, apiError, \"Expected no error from parseRequest\")\n")
+	buf.WriteString("\tassert.Equal(t, \"test-session\", request.Session, \"Session should be set\")\n")
+	buf.WriteString("\tassert.Equal(t, \"test-123\", request.RequestID(), \"RequestID should be set\")\n")
+	buf.WriteString("}\n\n")
+
+	return nil
+}
+
+// generateDecodeBodyParamsTest generates test for decodeBodyParams function.
+func generateDecodeBodyParamsTest(buf *bytes.Buffer, apiPackageName string) error {
+	buf.WriteString("func TestDecodeBodyParams(t *testing.T) {\n")
+	buf.WriteString("\ttestBody := `{\"name\": \"test\", \"age\": 25}`\n")
+	buf.WriteString("\treq, err := http.NewRequest(\"POST\", \"/test\", strings.NewReader(testBody))\n")
+	buf.WriteString("\treq.Header.Set(\"Content-Type\", \"application/json\")\n")
+	buf.WriteString("\tassert.NoError(t, err, \"Failed to create request\")\n\n")
+
+	buf.WriteString("\t// Test decodeBodyParams\n")
+	buf.WriteString("\tresult, err := " + apiPackageName + ".DecodeBodyParams[map[string]interface{}](req)\n")
+	buf.WriteString("\tassert.NoError(t, err, \"Expected no error from decodeBodyParams\")\n")
+	buf.WriteString("\tassert.Equal(t, \"test\", result[\"name\"], \"Name should be decoded\")\n")
+	buf.WriteString("\tassert.Equal(t, float64(25), result[\"age\"], \"Age should be decoded as float64\")\n")
+	buf.WriteString("}\n\n")
+
+	return nil
+}
+
+// generateDecodePathParamsTest generates test for decodePathParams function.
+func generateDecodePathParamsTest(buf *bytes.Buffer, apiPackageName string) error {
+	buf.WriteString("func TestDecodePathParams(t *testing.T) {\n")
+	buf.WriteString("\tgin.SetMode(gin.TestMode)\n")
+	buf.WriteString("\tc, _ := gin.CreateTestContext(httptest.NewRecorder())\n")
+	buf.WriteString("\tc.Params = []gin.Param{\n")
+	buf.WriteString("\t\t{Key: \"id\", Value: \"123\"},\n")
+	buf.WriteString("\t\t{Key: \"name\", Value: \"test\"},\n")
+	buf.WriteString("\t}\n\n")
+
+	buf.WriteString("\t// Test decodePathParams\n")
+	buf.WriteString("\tresult, err := " + apiPackageName + ".DecodePathParams[map[string]interface{}](c)\n")
+	buf.WriteString("\tassert.NoError(t, err, \"Expected no error from decodePathParams\")\n")
+	buf.WriteString("\tassert.Equal(t, \"123\", result[\"id\"], \"ID should be decoded\")\n")
+	buf.WriteString("\tassert.Equal(t, \"test\", result[\"name\"], \"Name should be decoded\")\n")
+	buf.WriteString("}\n\n")
+
+	return nil
+}
+
+// generateDecodeQueryParamsTest generates test for decodeQueryParams function.
+func generateDecodeQueryParamsTest(buf *bytes.Buffer, apiPackageName string) error {
+	buf.WriteString("func TestDecodeQueryParams(t *testing.T) {\n")
+	buf.WriteString("\tgin.SetMode(gin.TestMode)\n")
+	buf.WriteString("\tc, _ := gin.CreateTestContext(httptest.NewRecorder())\n")
+	buf.WriteString("\treq, err := http.NewRequest(\"GET\", \"/test?limit=10&offset=0&active=true\", nil)\n")
+	buf.WriteString("\tassert.NoError(t, err, \"Failed to create request\")\n")
+	buf.WriteString("\tc.Request = req\n\n")
+
+	buf.WriteString("\t// Test decodeQueryParams\n")
+	buf.WriteString("\tresult, err := " + apiPackageName + ".DecodeQueryParams[map[string]interface{}](c)\n")
+	buf.WriteString("\tassert.NoError(t, err, \"Expected no error from decodeQueryParams\")\n")
+	buf.WriteString("\tassert.Equal(t, \"10\", result[\"limit\"], \"Limit should be decoded\")\n")
+	buf.WriteString("\tassert.Equal(t, \"0\", result[\"offset\"], \"Offset should be decoded\")\n")
+	buf.WriteString("\tassert.Equal(t, \"true\", result[\"active\"], \"Active should be decoded\")\n")
+	buf.WriteString("}\n\n")
+
+	return nil
 }
 
 // getJSONKey converts a field name to its JSON key (camelCase).
