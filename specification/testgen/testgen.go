@@ -1036,7 +1036,7 @@ func generateParseRequestTest(buf *bytes.Buffer, apiPackageName string) error {
 	buf.WriteString("\t\t}\n\n")
 
 	buf.WriteString("\t\t// Test parseRequest with session error\n")
-	buf.WriteString("\t\trequest, apiError := " + apiPackageName + ".ParseRequest[any, struct{}, struct{}, struct{}](c, \"test-456\", getSessionWithError)\n")
+	buf.WriteString("\t\t_, apiError := " + apiPackageName + ".ParseRequest[any, struct{}, struct{}, struct{}](c, \"test-456\", getSessionWithError)\n")
 	buf.WriteString("\t\tassert.NotNil(t, apiError, \"Expected API error when session function fails\")\n")
 	buf.WriteString("\t\tassert.Equal(t, " + apiPackageName + ".ErrorCodeUnauthorized, apiError.Code, \"Should return Unauthorized error code\")\n")
 	buf.WriteString("\t\tassert.Contains(t, apiError.Message.String(), \"authentication failed\", \"Error message should contain session error\")\n")
@@ -1062,7 +1062,7 @@ func generateParseRequestTest(buf *bytes.Buffer, apiPackageName string) error {
 	buf.WriteString("\t\t}\n\n")
 
 	buf.WriteString("\t\t// Test parseRequest with invalid JSON\n")
-	buf.WriteString("\t\trequest, apiError := " + apiPackageName + ".ParseRequest[any, struct{}, struct{}, TestBodyParams](c, \"test-789\", getSession)\n")
+	buf.WriteString("\t\t_, apiError := " + apiPackageName + ".ParseRequest[any, struct{}, struct{}, TestBodyParams](c, \"test-789\", getSession)\n")
 	buf.WriteString("\t\tassert.NotNil(t, apiError, \"Expected API error when JSON is invalid\")\n")
 	buf.WriteString("\t\tassert.Equal(t, " + apiPackageName + ".ErrorCodeBadRequest, apiError.Code, \"Should return BadRequest error code\")\n")
 	buf.WriteString("\t\tassert.Contains(t, apiError.Message.String(), \"cannot decode json body params\", \"Error message should mention JSON decoding\")\n")
@@ -1565,7 +1565,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("\t\t}\n\n")
 
 	buf.WriteString("\t\t// Test parseRequest with session error\n")
-	buf.WriteString("\t\trequest, apiError := parseRequest[any, struct{}, struct{}, struct{}](c, \"test-456\", getSessionWithError)\n")
+	buf.WriteString("\t\t_, apiError := parseRequest[any, struct{}, struct{}, struct{}](c, \"test-456\", getSessionWithError)\n")
 	buf.WriteString("\t\tassert.NotNil(t, apiError, \"Expected API error when session function fails\")\n")
 	buf.WriteString("\t\tassert.Equal(t, ErrorCodeUnauthorized, apiError.Code, \"Should return Unauthorized error code\")\n")
 	buf.WriteString("\t\tassert.Contains(t, apiError.Message.String(), \"authentication failed\", \"Error message should contain session error\")\n")
@@ -1591,7 +1591,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("\t\t}\n\n")
 
 	buf.WriteString("\t\t// Test parseRequest with invalid JSON\n")
-	buf.WriteString("\t\trequest, apiError := parseRequest[any, struct{}, struct{}, TestBodyParams](c, \"test-789\", getSession)\n")
+	buf.WriteString("\t\t_, apiError := parseRequest[any, struct{}, struct{}, TestBodyParams](c, \"test-789\", getSession)\n")
 	buf.WriteString("\t\tassert.NotNil(t, apiError, \"Expected API error when JSON is invalid\")\n")
 	buf.WriteString("\t\tassert.Equal(t, ErrorCodeBadRequest, apiError.Code, \"Should return BadRequest error code\")\n")
 	buf.WriteString("\t\tassert.Contains(t, apiError.Message.String(), \"cannot decode json body params\", \"Error message should mention JSON decoding\")\n")
