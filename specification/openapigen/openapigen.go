@@ -179,6 +179,12 @@ const (
 	speakeasyDataFieldName        = "Data" // Still used in isPaginatedOperation
 )
 
+// List endpoint parameter names (should match specification package constants)
+const (
+	listLimitParamName  = "Limit"
+	listOffsetParamName = "Offset"
+)
+
 // Object and field names
 const (
 	errorObjectName         = "Error"
@@ -341,10 +347,14 @@ func (g *generator) addSpeakeasyPaginationExtension(operation *v3.Operation) {
 	inputsKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "inputs"}
 	inputsArrayNode := &yaml.Node{Kind: yaml.SequenceNode, Tag: "!!seq"}
 
+	// Create Field objects to get proper JSON tag names
+	offsetField := specification.Field{Name: listOffsetParamName}
+	limitField := specification.Field{Name: listLimitParamName}
+
 	// Create offset input object
 	offsetInputNode := &yaml.Node{Kind: yaml.MappingNode, Tag: "!!map"}
 	offsetNameKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "name"}
-	offsetNameValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyOffsetParamName}
+	offsetNameValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: offsetField.TagJSON()}
 	offsetInKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "in"}
 	offsetInValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyPaginationInputsIn}
 	offsetTypeKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "type"}
@@ -358,7 +368,7 @@ func (g *generator) addSpeakeasyPaginationExtension(operation *v3.Operation) {
 	// Create limit input object
 	limitInputNode := &yaml.Node{Kind: yaml.MappingNode, Tag: "!!map"}
 	limitNameKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "name"}
-	limitNameValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyLimitParamName}
+	limitNameValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: limitField.TagJSON()}
 	limitInKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "in"}
 	limitInValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyPaginationInputsIn}
 	limitTypeKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "type"}
@@ -423,11 +433,13 @@ func (g *generator) isPaginatedOperation(endpoint specification.Endpoint) bool {
 	hasOffsetParam := false
 
 	// Check query parameters for limit and offset
+	// Check based on the JSON tag name (camelCase) which is what appears in the actual API
 	for _, param := range endpoint.Request.QueryParams {
-		if param.Name == speakeasyLimitParamName {
+		paramTagJSON := param.TagJSON()
+		if paramTagJSON == speakeasyLimitParamName {
 			hasLimitParam = true
 		}
-		if param.Name == speakeasyOffsetParamName {
+		if paramTagJSON == speakeasyOffsetParamName {
 			hasOffsetParam = true
 		}
 	}
