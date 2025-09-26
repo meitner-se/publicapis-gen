@@ -81,9 +81,8 @@ const (
 	expectedOpenAPIRoute      = `routerGroup.StaticFileFS("/openapi.json", "openapi.json", http.FS(api.OpenAPI_JSON))`
 
 	// Type generation constants
-	expectedEnumType   = "type UserRole types.String"
 	expectedEnumVar    = "var ("
-	expectedEnumValue  = "UserRoleAdmin = UserRole(types.NewString(\"Admin\")) // Administrator role"
+	expectedEnumValue  = "UserRoleAdmin = types.NewString(\"Admin\") // Administrator role"
 	expectedObjectType = "type Address struct {"
 	expectedFieldDecl  = "Name types.String `json:\"name\"`"
 
@@ -142,7 +141,7 @@ func TestGenerateServer(t *testing.T) {
 	assert.Contains(t, generatedCode, expectedRegisterFunc, "Generated code should contain RegisterAPI function")
 
 	// Verify enum generation
-	assert.Contains(t, generatedCode, expectedEnumType, "Generated code should contain enum type declaration")
+	assert.Contains(t, generatedCode, expectedEnumVar, "Generated code should contain enum var declaration")
 
 	// Verify object generation
 	assert.Contains(t, generatedCode, expectedObjectType, "Generated code should contain object type declaration")
@@ -216,10 +215,9 @@ func TestGenerateEnums(t *testing.T) {
 	assert.Nil(t, err, "Expected no error when generating enums")
 
 	generatedCode := buf.String()
-	assert.Contains(t, generatedCode, expectedEnumType, "Should generate enum type declaration")
 	assert.Contains(t, generatedCode, expectedEnumVar, "Should generate var block")
 	assert.Contains(t, generatedCode, expectedEnumValue, "Should generate enum value with description")
-	assert.Contains(t, generatedCode, "UserRoleUser = UserRole(types.NewString(\"User\")) // Regular user role",
+	assert.Contains(t, generatedCode, "UserRoleUser = types.NewString(\"User\") // Regular user role",
 		"Should generate all enum values")
 
 	t.Run("edge cases", func(t *testing.T) {
@@ -252,7 +250,6 @@ func TestGenerateEnums(t *testing.T) {
 			// Assert
 			assert.Nil(t, err, "Expected no error")
 			generatedCode := buf.String()
-			assert.Contains(t, generatedCode, expectedEnumType, "Should still generate enum type")
 			assert.Contains(t, generatedCode, expectedEnumVar, "Should generate empty var block")
 		})
 
@@ -275,7 +272,7 @@ func TestGenerateEnums(t *testing.T) {
 			// Assert
 			assert.Nil(t, err, "Expected no error")
 			generatedCode := buf.String()
-			assert.Contains(t, generatedCode, `StatusIn-Progress = Status(types.NewString("In-Progress"))`,
+			assert.Contains(t, generatedCode, `StatusIn-Progress = types.NewString("In-Progress")`,
 				"Should handle special characters in enum names")
 		})
 	})
@@ -360,7 +357,7 @@ func TestGetTypeForGo(t *testing.T) {
 				Name: "Role",
 				Type: testEnumName,
 			},
-			expectedType: testEnumName,
+			expectedType: "types.String",
 		},
 	}
 
@@ -465,7 +462,7 @@ func TestGetTypePrefix(t *testing.T) {
 			field: specification.Field{
 				Type: testEnumName,
 			},
-			expectedPrefix: "",
+			expectedPrefix: "types.",
 		},
 	}
 
