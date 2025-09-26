@@ -222,8 +222,9 @@ func generateTestBody(buf *bytes.Buffer, bodyParams []specification.Field, servi
 			default:
 				// For custom object arrays, create an array with one test object
 				if service.IsObject(param.Type) {
-					objectFields := getObjectTestData(param.Type, service)
-					buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []map[string]interface{}{%s},\n", jsonKey, objectFields))
+					visited := make(map[string]bool)
+					objectFields := getObjectTestDataWithVisited(param.Type, service, visited)
+					buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []interface{}{map[string]interface{}{%s}},\n", jsonKey, objectFields))
 				} else {
 					buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []interface{}{\"test-%s-value\"},\n", jsonKey, strings.ToLower(param.Name)))
 				}
@@ -254,7 +255,8 @@ func generateTestBody(buf *bytes.Buffer, bodyParams []specification.Field, servi
 			default:
 				// For custom object types, create a nested object
 				if service.IsObject(param.Type) {
-					objectFields := getObjectTestData(param.Type, service)
+					visited := make(map[string]bool)
+					objectFields := getObjectTestDataWithVisited(param.Type, service, visited)
 					buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": map[string]interface{}{%s},\n", jsonKey, objectFields))
 				} else {
 					// For enums or unknown types, use string
@@ -613,6 +615,17 @@ func getAPITypeReference(typeName string, apiPackageName string) string {
 
 // getObjectTestData generates test data for a custom object type.
 func getObjectTestData(objectType string, service *specification.Service) string {
+	visited := make(map[string]bool)
+	return getObjectTestDataWithVisited(objectType, service, visited)
+}
+
+// getObjectTestDataWithVisited generates test data for a custom object type with recursion protection.
+func getObjectTestDataWithVisited(objectType string, service *specification.Service, visited map[string]bool) string {
+	// Check for circular references
+	if visited[objectType] {
+		return "" // Avoid infinite recursion
+	}
+	visited[objectType] = true
 	// Find the object definition
 	for _, obj := range service.Objects {
 		if obj.Name == objectType {
@@ -644,7 +657,17 @@ func getObjectTestData(objectType string, service *specification.Service) string
 						}
 						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []interface{}{%s}", jsonKey, defaultValue))
 					default:
-						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []interface{}{\"test-%s-value\"}", jsonKey, strings.ToLower(field.Name)))
+						// For custom object arrays, create an array with one test object
+						if service.IsObject(field.Type) {
+							nestedObjectFields := getObjectTestDataWithVisited(field.Type, service, visited)
+							if nestedObjectFields != "" {
+								fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []interface{}{map[string]interface{}{%s}}", jsonKey, nestedObjectFields))
+							} else {
+								fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []interface{}{}", jsonKey))
+							}
+						} else {
+							fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []interface{}{\"test-%s-value\"}", jsonKey, strings.ToLower(field.Name)))
+						}
 					}
 				} else {
 					// Handle single value fields in objects
@@ -670,8 +693,18 @@ func getObjectTestData(objectType string, service *specification.Service) string
 						}
 						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": %s", jsonKey, defaultValue))
 					default:
-						// For nested objects or enums, use string for simplicity
-						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": \"test-%s-value\"", jsonKey, strings.ToLower(field.Name)))
+						// For nested objects, create proper object structure recursively
+						if service.IsObject(field.Type) {
+							nestedObjectFields := getObjectTestDataWithVisited(field.Type, service, visited)
+							if nestedObjectFields != "" {
+								fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": map[string]interface{}{%s}", jsonKey, nestedObjectFields))
+							} else {
+								fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": map[string]interface{}{}", jsonKey))
+							}
+						} else {
+							// For enums, use string for simplicity
+							fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": \"test-%s-value\"", jsonKey, strings.ToLower(field.Name)))
+						}
 					}
 				}
 			}
