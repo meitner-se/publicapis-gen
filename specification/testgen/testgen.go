@@ -181,6 +181,18 @@ func generateTestParameterValue(buf *bytes.Buffer, param specification.Field, pa
 			defaultValue = param.Example
 		}
 		buf.WriteString(fmt.Sprintf("\t\t%s := %s\n", varName, defaultValue))
+	case "Date":
+		defaultValue := "2024-01-15"
+		if param.Example != "" {
+			defaultValue = param.Example
+		}
+		buf.WriteString(fmt.Sprintf("\t\t%s := \"%s\"\n", varName, defaultValue))
+	case "Timestamp":
+		defaultValue := "2024-01-15T10:30:00Z"
+		if param.Example != "" {
+			defaultValue = param.Example
+		}
+		buf.WriteString(fmt.Sprintf("\t\t%s := \"%s\"\n", varName, defaultValue))
 	default:
 		// For custom types, generate a basic string value
 		buf.WriteString(fmt.Sprintf("\t\t%s := \"test-%s-value\"\n", varName, strings.ToLower(param.Name)))
@@ -219,6 +231,18 @@ func generateTestBody(buf *bytes.Buffer, bodyParams []specification.Field, servi
 					defaultValue = param.Example
 				}
 				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []interface{}{%s},\n", jsonKey, defaultValue))
+			case "Date":
+				defaultValue := "2024-01-15"
+				if param.Example != "" {
+					defaultValue = param.Example
+				}
+				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []interface{}{\"%s\"},\n", jsonKey, defaultValue))
+			case "Timestamp":
+				defaultValue := "2024-01-15T10:30:00Z"
+				if param.Example != "" {
+					defaultValue = param.Example
+				}
+				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []interface{}{\"%s\"},\n", jsonKey, defaultValue))
 			default:
 				// For custom object arrays, create an array with one test object
 				if service.IsObject(param.Type) {
@@ -252,6 +276,18 @@ func generateTestBody(buf *bytes.Buffer, bodyParams []specification.Field, servi
 					defaultValue = param.Example
 				}
 				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": %s,\n", jsonKey, defaultValue))
+			case "Date":
+				defaultValue := "2024-01-15"
+				if param.Example != "" {
+					defaultValue = param.Example
+				}
+				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": \"%s\",\n", jsonKey, defaultValue))
+			case "Timestamp":
+				defaultValue := "2024-01-15T10:30:00Z"
+				if param.Example != "" {
+					defaultValue = param.Example
+				}
+				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": \"%s\",\n", jsonKey, defaultValue))
 			default:
 				// For custom object types, create a nested object
 				if service.IsObject(param.Type) {
@@ -656,6 +692,18 @@ func getObjectTestDataWithVisited(objectType string, service *specification.Serv
 							defaultValue = field.Example
 						}
 						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []interface{}{%s}", jsonKey, defaultValue))
+					case "Date":
+						defaultValue := "2024-01-15"
+						if field.Example != "" {
+							defaultValue = field.Example
+						}
+						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []interface{}{\"%s\"}", jsonKey, defaultValue))
+					case "Timestamp":
+						defaultValue := "2024-01-15T10:30:00Z"
+						if field.Example != "" {
+							defaultValue = field.Example
+						}
+						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []interface{}{\"%s\"}", jsonKey, defaultValue))
 					default:
 						// For custom object arrays, create an array with one test object
 						if service.IsObject(field.Type) {
@@ -692,6 +740,18 @@ func getObjectTestDataWithVisited(objectType string, service *specification.Serv
 							defaultValue = field.Example
 						}
 						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": %s", jsonKey, defaultValue))
+					case "Date":
+						defaultValue := "2024-01-15"
+						if field.Example != "" {
+							defaultValue = field.Example
+						}
+						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": \"%s\"", jsonKey, defaultValue))
+					case "Timestamp":
+						defaultValue := "2024-01-15T10:30:00Z"
+						if field.Example != "" {
+							defaultValue = field.Example
+						}
+						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": \"%s\"", jsonKey, defaultValue))
 					default:
 						// For nested objects, create proper object structure recursively
 						if service.IsObject(field.Type) {
