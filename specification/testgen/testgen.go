@@ -659,9 +659,14 @@ func getObjectTestData(objectType string, service *specification.Service) string
 func getObjectTestDataWithVisited(objectType string, service *specification.Service, visited map[string]bool) string {
 	// Check for circular references
 	if visited[objectType] {
-		return "" // Avoid infinite recursion
+		return "" // Avoid infinite recursion - return empty string for truly empty object
 	}
 	visited[objectType] = true
+
+	// For filter objects, create empty structures to avoid complex nested data
+	if strings.Contains(objectType, "Filter") {
+		return ""
+	}
 	// Find the object definition
 	for _, obj := range service.Objects {
 		if obj.Name == objectType {
@@ -711,6 +716,7 @@ func getObjectTestDataWithVisited(objectType string, service *specification.Serv
 							if nestedObjectFields != "" {
 								fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []interface{}{map[string]interface{}{%s}}", jsonKey, nestedObjectFields))
 							} else {
+								// For circular references, create empty array
 								fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []interface{}{}", jsonKey))
 							}
 						} else {
@@ -758,9 +764,8 @@ func getObjectTestDataWithVisited(objectType string, service *specification.Serv
 							nestedObjectFields := getObjectTestDataWithVisited(field.Type, service, visited)
 							if nestedObjectFields != "" {
 								fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": map[string]interface{}{%s}", jsonKey, nestedObjectFields))
-							} else {
-								fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": map[string]interface{}{}", jsonKey))
 							}
+							// Skip circular references entirely - don't add field at all
 						} else {
 							// For enums, use string for simplicity
 							fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": \"test-%s-value\"", jsonKey, strings.ToLower(field.Name)))
