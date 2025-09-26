@@ -48,12 +48,11 @@
 //
 // The generated server includes:
 //
-// 1. **Enum Types**: All enums are generated as typed strings using go-types:
+// 1. **Enum Variables**: All enums are generated as variables using go-types:
 //
-//	type ErrorCode types.String
 //	var (
-//	    ErrorCodeBadRequest = ErrorCode(types.NewString("BadRequest"))
-//	    ErrorCodeNotFound   = ErrorCode(types.NewString("NotFound"))
+//	    ErrorCodeBadRequest = types.NewString("BadRequest")
+//	    ErrorCodeNotFound   = types.NewString("NotFound")
 //	)
 //
 // 2. **Object Types**: Objects are generated as Go structs with JSON tags:

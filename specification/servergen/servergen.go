@@ -97,11 +97,9 @@ func GenerateServer(buf *bytes.Buffer, service *specification.Service) error {
 
 func generateEnums(buf *bytes.Buffer, enums []specification.Enum) error {
 	for _, enumStruct := range enums {
-		buf.WriteString(fmt.Sprintf("type %s types.String\n\n", enumStruct.Name))
-
 		buf.WriteString("var (\n")
 		for _, value := range enumStruct.Values {
-			buf.WriteString(fmt.Sprintf("\t%s%s = %s(types.NewString(\"%s\")) // %s\n", enumStruct.Name, value.Name, enumStruct.Name, value.Name, value.Description))
+			buf.WriteString(fmt.Sprintf("\t%s%s = types.NewString(\"%s\") // %s\n", enumStruct.Name, value.Name, value.Name, value.Description))
 		}
 		buf.WriteString(")\n\n")
 	}
@@ -112,16 +110,15 @@ func generateEnums(buf *bytes.Buffer, enums []specification.Enum) error {
 func getTypeForGo(field specification.Field, service *specification.Service) string {
 	fieldType := field.Type
 
-	//	if service.HasEnum(fieldType) {
-	//		fieldType = "String"
-	//	}
+	if service.HasEnum(fieldType) {
+		fieldType = "String"
+	}
 
 	return getTypePrefix(field, service) + fieldType
 }
 
 func getTypePrefix(field specification.Field, service *specification.Service) string {
 	isObject := service.IsObject(field.Type)
-	isEnum := service.HasEnum(field.Type)
 
 	prefixes := []string{}
 
@@ -133,7 +130,7 @@ func getTypePrefix(field specification.Field, service *specification.Service) st
 		prefixes = append(prefixes, "*")
 	}
 
-	if !isObject && !isEnum {
+	if !isObject {
 		prefixes = append(prefixes, "types.")
 	}
 
