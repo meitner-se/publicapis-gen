@@ -31,6 +31,24 @@ func GenerateTests(buf *bytes.Buffer, service *specification.Service, packageNam
 		return err
 	}
 
+	// Generate enums (needed for type definitions)
+	err = generateEnums(buf, service.Enums)
+	if err != nil {
+		return err
+	}
+
+	// Generate objects (needed for type definitions)
+	err = generateObjects(buf, service)
+	if err != nil {
+		return err
+	}
+
+	// Generate request types (needed for type-safe testing)
+	err = generateRequestTypes(buf, service)
+	if err != nil {
+		return err
+	}
+
 	// Generate tests for each resource endpoint
 	for _, resource := range service.Resources {
 		for _, endpoint := range resource.Endpoints {
@@ -91,6 +109,159 @@ func generateTestConstants(buf *bytes.Buffer, service *specification.Service) er
 	buf.WriteString(")\n\n")
 
 	return nil
+}
+
+// generateEnums generates enum types needed for testing.
+func generateEnums(buf *bytes.Buffer, enums []specification.Enum) error {
+	for _, enumStruct := range enums {
+		buf.WriteString(fmt.Sprintf("type %s types.String\n\n", enumStruct.Name))
+
+		buf.WriteString("var (\n")
+		for _, value := range enumStruct.Values {
+			buf.WriteString(fmt.Sprintf("\t%s%s = %s(types.NewString(\"%s\")) // %s\n", enumStruct.Name, value.Name, enumStruct.Name, value.Name, value.Description))
+		}
+		buf.WriteString(")\n\n")
+	}
+
+	return nil
+}
+
+// generateObjects generates object types needed for testing.
+func generateObjects(buf *bytes.Buffer, service *specification.Service) error {
+	for _, object := range service.Objects {
+		buf.WriteString(fmt.Sprintf("// %s\n", object.GetComment()))
+		buf.WriteString(fmt.Sprintf("type %s struct {\n", object.Name))
+
+		for _, field := range object.Fields {
+			buf.WriteString(fmt.Sprintf("%s\n", field.GetComment("\t")))
+			buf.WriteString(fmt.Sprintf("\t%s %s `json:\"%s\"`\n\n", field.Name, getGoTypeForField(field, service), field.TagJSON()))
+		}
+
+		buf.WriteString("}\n\n")
+
+		// Add Error methods if this is an Error object
+		if object.Name == "Error" {
+			buf.WriteString("func (e *Error) Error() string {\n")
+			buf.WriteString("\treturn e.Message.String()\n")
+			buf.WriteString("}\n\n")
+
+			buf.WriteString("func (e *Error) HTTPStatusCode() int {\n")
+			buf.WriteString("\tswitch e.Code {\n")
+			buf.WriteString("\tcase ErrorCodeBadRequest:\n")
+			buf.WriteString("\t\treturn http.StatusBadRequest\n")
+			buf.WriteString("\tcase ErrorCodeUnauthorized:\n")
+			buf.WriteString("\t\treturn http.StatusUnauthorized\n")
+			buf.WriteString("\tcase ErrorCodeForbidden:\n")
+			buf.WriteString("\t\treturn http.StatusForbidden\n")
+			buf.WriteString("\tcase ErrorCodeNotFound:\n")
+			buf.WriteString("\t\treturn http.StatusNotFound\n")
+			buf.WriteString("\tcase ErrorCodeConflict:\n")
+			buf.WriteString("\t\treturn http.StatusConflict\n")
+			buf.WriteString("\tcase ErrorCodeUnprocessableEntity:\n")
+			buf.WriteString("\t\treturn http.StatusUnprocessableEntity\n")
+			buf.WriteString("\tcase ErrorCodeRateLimited:\n")
+			buf.WriteString("\t\treturn http.StatusTooManyRequests\n")
+			buf.WriteString("\tcase ErrorCodeInternal:\n")
+			buf.WriteString("\t\treturn http.StatusInternalServerError\n")
+			buf.WriteString("\tdefault:\n")
+			buf.WriteString("\t\treturn http.StatusInternalServerError\n")
+			buf.WriteString("\t}\n")
+			buf.WriteString("}\n\n")
+		}
+	}
+
+	return nil
+}
+
+// generateRequestTypes generates the request types needed for testing.
+func generateRequestTypes(buf *bytes.Buffer, service *specification.Service) error {
+	// Generate the generic Request type
+	buf.WriteString("type Request[sessionType, pathParamsType, queryParamsType, bodyParamsType any] struct {\n")
+	buf.WriteString("\trequestID string `json:\"-\"` // Unexported field since it shouldn't be changed\n")
+	buf.WriteString("\tSession sessionType `json:\"-\"`\n")
+	buf.WriteString("\tPathParams pathParamsType `json:\"-\"`\n")
+	buf.WriteString("\tQueryParams queryParamsType `json:\"-\"`\n")
+	buf.WriteString("\tBodyParams bodyParamsType `json:\"-\"`\n")
+	buf.WriteString("}\n\n")
+
+	buf.WriteString("func (r Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) RequestID() string {\n")
+	buf.WriteString("\treturn r.requestID\n")
+	buf.WriteString("}\n\n")
+
+	// Generate parameter types for each endpoint
+	for _, resource := range service.Resources {
+		for _, endpoint := range resource.Endpoints {
+			if len(endpoint.Request.PathParams) > 0 {
+				buf.WriteString(fmt.Sprintf("type %s struct {\n", endpoint.GetPathParamsType(resource.Name)))
+				for _, field := range endpoint.Request.PathParams {
+					buf.WriteString(fmt.Sprintf("\t%s %s `json:\"%s\"`\n", field.Name, getGoTypeForField(field, service), field.TagJSON()))
+				}
+				buf.WriteString("}\n\n")
+			}
+
+			if len(endpoint.Request.QueryParams) > 0 {
+				buf.WriteString(fmt.Sprintf("type %s struct {\n", endpoint.GetQueryParamsType(resource.Name)))
+				for _, field := range endpoint.Request.QueryParams {
+					buf.WriteString(fmt.Sprintf("\t%s %s `form:\"%s\"`\n", field.Name, getGoTypeForField(field, service), field.TagJSON()))
+				}
+				buf.WriteString("}\n\n")
+			}
+
+			if len(endpoint.Request.BodyParams) > 0 {
+				buf.WriteString(fmt.Sprintf("type %s struct {\n", endpoint.GetBodyParamsType(resource.Name)))
+				for _, field := range endpoint.Request.BodyParams {
+					buf.WriteString(fmt.Sprintf("\t%s %s `json:\"%s\"`\n", field.Name, getGoTypeForField(field, service), field.TagJSON()))
+				}
+				buf.WriteString("}\n\n")
+			}
+		}
+	}
+
+	// Generate endpoint-specific request types
+	for _, resource := range service.Resources {
+		for _, endpoint := range resource.Endpoints {
+			buf.WriteString(fmt.Sprintf("type %s[Session any] Request[Session, %s, %s, %s]\n\n",
+				endpoint.GetRequestType(resource.Name),
+				endpoint.GetPathParamsType(resource.Name),
+				endpoint.GetQueryParamsType(resource.Name),
+				endpoint.GetBodyParamsType(resource.Name),
+			))
+		}
+	}
+
+	return nil
+}
+
+// getGoTypeForField converts a specification field to its Go type representation.
+func getGoTypeForField(field specification.Field, service *specification.Service) string {
+	fieldType := field.Type
+
+	// Handle type prefix based on modifiers and whether it's an object/enum
+	typePrefix := getTypePrefix(field, service)
+
+	return typePrefix + fieldType
+}
+
+// getTypePrefix returns the appropriate type prefix for a field.
+func getTypePrefix(field specification.Field, service *specification.Service) string {
+	isObject := service.IsObject(field.Type)
+	isEnum := service.HasEnum(field.Type)
+
+	prefixes := []string{}
+
+	if field.IsArray() {
+		prefixes = append(prefixes, "[]")
+	}
+
+	if field.IsNullable() && isObject {
+		prefixes = append(prefixes, "*")
+	}
+
+	if !isObject && !isEnum {
+		prefixes = append(prefixes, "types.")
+	}
+
+	return strings.Join(prefixes, "")
 }
 
 // generateEndpointTest generates a test function for a specific endpoint.
