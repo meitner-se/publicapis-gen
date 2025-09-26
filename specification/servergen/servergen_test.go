@@ -707,7 +707,7 @@ func TestGenerateRequestTypes(t *testing.T) {
 
 	// Check query params type generation
 	assert.Contains(t, generatedCode, "type UserListUsersQueryParams struct {", "Should generate query params type")
-	assert.Contains(t, generatedCode, `Limit types.Int `+"`form:\"limit\"`", "Should use form tag for query params")
+	assert.Contains(t, generatedCode, `Limit types.Int `+"`form:\"limit\" json:\"limit\"`", "Should use both form and json tags for query params")
 
 	// Check body params type generation
 	assert.Contains(t, generatedCode, "type UserCreateUserBodyParams struct {", "Should generate body params type")

@@ -304,7 +304,7 @@ func generateRequestTypes(buf *bytes.Buffer, service *specification.Service) err
 			if len(endpoint.Request.QueryParams) > 0 {
 				buf.WriteString(fmt.Sprintf("type %s struct {\n", endpoint.GetQueryParamsType(resource.Name)))
 				for _, field := range endpoint.Request.QueryParams {
-					buf.WriteString(fmt.Sprintf("\t%s %s `form:\"%s\"`\n", field.Name, getTypeForGo(field, service), field.TagJSON()))
+					buf.WriteString(fmt.Sprintf("\t%s %s `form:\"%s\" json:\"%s\"`\n", field.Name, getTypeForGo(field, service), field.TagJSON(), field.TagJSON()))
 				}
 				buf.WriteString("}\n\n")
 			}
