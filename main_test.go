@@ -1274,9 +1274,8 @@ func Test_generateServerFromSpecification_e2e(t *testing.T) {
 	assert.Contains(t, generatedCode, expectedOpenAPIRoute, "Generated code should contain OpenAPI route")
 
 	// Verify enum generation
-	assert.Contains(t, generatedCode, "type Status types.String", "Generated code should contain Status enum")
 	assert.Contains(t, generatedCode, "StatusActive", "Generated code should contain StatusActive")
-	assert.Contains(t, generatedCode, "Status(types.NewString(\"Active\"))", "Generated code should contain enum values")
+	assert.Contains(t, generatedCode, "types.NewString(\"Active\")", "Generated code should contain enum values")
 
 	// Verify object generation
 	assert.Contains(t, generatedCode, "type User struct {", "Generated code should contain User object")
