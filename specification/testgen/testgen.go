@@ -247,15 +247,9 @@ func generateServerSetup(buf *bytes.Buffer, serviceName string, service *specifi
 	buf.WriteString("\t\t// Server setup\n")
 	buf.WriteString("\t\trouter := gin.New()\n")
 
-	// Generate mocks for all resources (not just the current one)
-	for _, res := range service.Resources {
-		if len(res.Endpoints) > 0 {
-			buf.WriteString(fmt.Sprintf("\t\tmock%sAPI := &Mock%sAPI{}\n", res.Name, res.Name))
-		}
-	}
-	buf.WriteString("\n")
+	// Create and configure only the mock for the resource being tested
+	buf.WriteString(fmt.Sprintf("\t\tmock%sAPI := &Mock%sAPI{}\n", currentResource.Name, currentResource.Name))
 
-	// Configure the specific mock for the current endpoint being tested
 	methodName := currentEndpoint.Name
 	if currentEndpoint.HasResponseType() {
 		responseType := currentEndpoint.GetResponseType(currentResource.Name)
@@ -300,7 +294,13 @@ func generateServerSetup(buf *bytes.Buffer, serviceName string, service *specifi
 	// Add all resource mocks to the API struct
 	for _, resource := range service.Resources {
 		if len(resource.Endpoints) > 0 {
-			buf.WriteString(fmt.Sprintf("\t\t\t%s: mock%sAPI,\n", resource.Name, resource.Name))
+			if resource.Name == currentResource.Name {
+				// Use the configured mock for the resource being tested
+				buf.WriteString(fmt.Sprintf("\t\t\t%s: mock%sAPI,\n", resource.Name, resource.Name))
+			} else {
+				// Create inline mocks for other resources to prevent panics
+				buf.WriteString(fmt.Sprintf("\t\t\t%s: &Mock%sAPI{},\n", resource.Name, resource.Name))
+			}
 		}
 	}
 
