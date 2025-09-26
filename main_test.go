@@ -1284,7 +1284,7 @@ func Test_generateServerFromSpecification_e2e(t *testing.T) {
 
 	// Verify endpoint generation (Note: servergen includes resource name in path)
 	assert.Contains(t, generatedCode, "routerGroup.POST(\"/user/users\", serveWithResponse(201, api.Server, api.User.CreateUser))", "Generated code should contain POST endpoint")
-	assert.Contains(t, generatedCode, "routerGroup.GET(\"/user/users/{id}\", serveWithResponse(200, api.Server, api.User.GetUser))", "Generated code should contain GET endpoint")
+	assert.Contains(t, generatedCode, "routerGroup.GET(\"/user/users/:id\", serveWithResponse(200, api.Server, api.User.GetUser))", "Generated code should contain GET endpoint")
 
 	// Verify request/response types
 	assert.Contains(t, generatedCode, "type UserCreateUserBodyParams struct {", "Generated code should contain request body type")

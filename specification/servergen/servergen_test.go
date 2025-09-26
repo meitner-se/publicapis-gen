@@ -634,7 +634,7 @@ func TestGenerateServerFunc(t *testing.T) {
 	// Check endpoint registration (note: generates singular paths)
 	assert.Contains(t, generatedCode, `routerGroup.POST("/user", serveWithResponse(201, api.Server, api.User.CreateUser))`,
 		"Should register POST endpoint with response")
-	assert.Contains(t, generatedCode, `routerGroup.DELETE("/user/{id}", serveWithoutResponse(204, api.Server, api.User.DeleteUser))`,
+	assert.Contains(t, generatedCode, `routerGroup.DELETE("/user/:id", serveWithoutResponse(204, api.Server, api.User.DeleteUser))`,
 		"Should register DELETE endpoint without response")
 
 	// Check type definitions
@@ -1122,4 +1122,76 @@ func createTestServiceWithVariousHTTPMethods() *specification.Service {
 			},
 		},
 	}
+}
+
+// ============================================================================
+// Path Conversion Tests
+// ============================================================================
+
+func TestConvertOpenAPIPathToGin(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "single path parameter",
+			input:    "/user/{id}",
+			expected: "/user/:id",
+		},
+		{
+			name:     "multiple path parameters",
+			input:    "/user/{userId}/posts/{postId}",
+			expected: "/user/:userId/posts/:postId",
+		},
+		{
+			name:     "no path parameters",
+			input:    "/users",
+			expected: "/users",
+		},
+		{
+			name:     "empty path",
+			input:    "",
+			expected: "",
+		},
+		{
+			name:     "path with query-like syntax but no parameters",
+			input:    "/search?query=test",
+			expected: "/search?query=test",
+		},
+		{
+			name:     "parameter at the beginning",
+			input:    "/{id}/children",
+			expected: "/:id/children",
+		},
+		{
+			name:     "parameter at the end",
+			input:    "/users/{id}",
+			expected: "/users/:id",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := convertOpenAPIPathToGin(tc.input)
+			assert.Equal(t, tc.expected, result, "Path conversion should match expected result")
+		})
+	}
+
+	t.Run("edge cases", func(t *testing.T) {
+		t.Run("malformed parameter missing closing brace", func(t *testing.T) {
+			result := convertOpenAPIPathToGin("/user/{id")
+			assert.Equal(t, "/user/{id", result, "Should not modify malformed parameter")
+		})
+
+		t.Run("malformed parameter missing opening brace", func(t *testing.T) {
+			result := convertOpenAPIPathToGin("/user/id}")
+			assert.Equal(t, "/user/id}", result, "Should not modify malformed parameter")
+		})
+
+		t.Run("empty parameter name", func(t *testing.T) {
+			result := convertOpenAPIPathToGin("/user/{}")
+			assert.Equal(t, "/user/:", result, "Should convert empty parameter to colon")
+		})
+	})
 }
