@@ -31,6 +31,12 @@ func GenerateTests(buf *bytes.Buffer, service *specification.Service, packageNam
 		return err
 	}
 
+	// Generate minimal request types needed for testing
+	err = generateMinimalRequestTypes(buf, service)
+	if err != nil {
+		return err
+	}
+
 	// Generate tests for each resource endpoint
 	for _, resource := range service.Resources {
 		for _, endpoint := range resource.Endpoints {
@@ -89,6 +95,67 @@ func generateTestConstants(buf *bytes.Buffer, service *specification.Service) er
 	buf.WriteString("\ttestSessionUserID = \"test-session-user-id\"\n")
 	buf.WriteString("\ttestTimeout = \"30s\"\n")
 	buf.WriteString(")\n\n")
+
+	return nil
+}
+
+// generateMinimalRequestTypes generates only the minimal request types needed for interface compatibility.
+func generateMinimalRequestTypes(buf *bytes.Buffer, service *specification.Service) error {
+	// Generate the generic Request type
+	buf.WriteString("type Request[sessionType, pathParamsType, queryParamsType, bodyParamsType any] struct {\n")
+	buf.WriteString("\trequestID string `json:\"-\"`\n")
+	buf.WriteString("\tSession sessionType `json:\"-\"`\n")
+	buf.WriteString("\tPathParams pathParamsType `json:\"-\"`\n")
+	buf.WriteString("\tQueryParams queryParamsType `json:\"-\"`\n")
+	buf.WriteString("\tBodyParams bodyParamsType `json:\"-\"`\n")
+	buf.WriteString("}\n\n")
+
+	buf.WriteString("func (r Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) RequestID() string {\n")
+	buf.WriteString("\treturn r.requestID\n")
+	buf.WriteString("}\n\n")
+
+	// Generate only the parameter types that are actually used
+	generated := make(map[string]bool)
+
+	for _, resource := range service.Resources {
+		for _, endpoint := range resource.Endpoints {
+			// Generate path params type if needed
+			pathParamsType := endpoint.GetPathParamsType(resource.Name)
+			if pathParamsType != "struct{}" && !generated[pathParamsType] {
+				buf.WriteString(fmt.Sprintf("type %s struct {\n", pathParamsType))
+				for _, field := range endpoint.Request.PathParams {
+					fieldType := getFieldTypeForTest(field, service)
+					buf.WriteString(fmt.Sprintf("\t%s %s `json:\"%s\"`\n", field.Name, fieldType, field.TagJSON()))
+				}
+				buf.WriteString("}\n\n")
+				generated[pathParamsType] = true
+			}
+
+			// Generate query params type if needed
+			queryParamsType := endpoint.GetQueryParamsType(resource.Name)
+			if queryParamsType != "struct{}" && !generated[queryParamsType] {
+				buf.WriteString(fmt.Sprintf("type %s struct {\n", queryParamsType))
+				for _, field := range endpoint.Request.QueryParams {
+					fieldType := getFieldTypeForTest(field, service)
+					buf.WriteString(fmt.Sprintf("\t%s %s `form:\"%s\"`\n", field.Name, fieldType, field.TagJSON()))
+				}
+				buf.WriteString("}\n\n")
+				generated[queryParamsType] = true
+			}
+
+			// Generate body params type if needed
+			bodyParamsType := endpoint.GetBodyParamsType(resource.Name)
+			if bodyParamsType != "struct{}" && !generated[bodyParamsType] {
+				buf.WriteString(fmt.Sprintf("type %s struct {\n", bodyParamsType))
+				for _, field := range endpoint.Request.BodyParams {
+					fieldType := getFieldTypeForTest(field, service)
+					buf.WriteString(fmt.Sprintf("\t%s %s `json:\"%s\"`\n", field.Name, fieldType, field.TagJSON()))
+				}
+				buf.WriteString("}\n\n")
+				generated[bodyParamsType] = true
+			}
+		}
+	}
 
 	return nil
 }
@@ -278,14 +345,21 @@ func generateMockSetup(buf *bytes.Buffer, service *specification.Service, resour
 			buf.WriteString("\t\t}\n")
 		}
 
-		buf.WriteString(fmt.Sprintf("\t\tmock%sAPI.%sFunc = func(ctx context.Context, request interface{}) (*%s, error) {\n",
-			resource.Name, methodName, responseType))
+		buf.WriteString(fmt.Sprintf("\t\tmock%sAPI.%sFunc = func(ctx context.Context, request Request[any, %s, %s, %s]) (*%s, error) {\n",
+			resource.Name, methodName,
+			endpoint.GetPathParamsType(resource.Name),
+			endpoint.GetQueryParamsType(resource.Name),
+			endpoint.GetBodyParamsType(resource.Name),
+			responseType))
 		buf.WriteString("\t\t\tcapturedRequest = request\n")
 		buf.WriteString(fmt.Sprintf("\t\t\treturn expected%s, nil\n", responseType))
 		buf.WriteString("\t\t}\n")
 	} else {
-		buf.WriteString(fmt.Sprintf("\t\tmock%sAPI.%sFunc = func(ctx context.Context, request interface{}) error {\n",
-			resource.Name, methodName))
+		buf.WriteString(fmt.Sprintf("\t\tmock%sAPI.%sFunc = func(ctx context.Context, request Request[any, %s, %s, %s]) error {\n",
+			resource.Name, methodName,
+			endpoint.GetPathParamsType(resource.Name),
+			endpoint.GetQueryParamsType(resource.Name),
+			endpoint.GetBodyParamsType(resource.Name)))
 		buf.WriteString("\t\t\tcapturedRequest = request\n")
 		buf.WriteString("\t\t\treturn nil\n")
 		buf.WriteString("\t\t}\n")
@@ -417,11 +491,18 @@ func generateHelperFunctions(buf *bytes.Buffer, service *specification.Service) 
 
 			if endpoint.HasResponseType() {
 				responseType := endpoint.GetResponseType(resource.Name)
-				buf.WriteString(fmt.Sprintf("\t%sFunc func(ctx context.Context, request interface{}) (*%s, error)\n",
-					methodName, responseType))
+				buf.WriteString(fmt.Sprintf("\t%sFunc func(ctx context.Context, request Request[any, %s, %s, %s]) (*%s, error)\n",
+					methodName,
+					endpoint.GetPathParamsType(resource.Name),
+					endpoint.GetQueryParamsType(resource.Name),
+					endpoint.GetBodyParamsType(resource.Name),
+					responseType))
 			} else {
-				buf.WriteString(fmt.Sprintf("\t%sFunc func(ctx context.Context, request interface{}) error\n",
-					methodName))
+				buf.WriteString(fmt.Sprintf("\t%sFunc func(ctx context.Context, request Request[any, %s, %s, %s]) error\n",
+					methodName,
+					endpoint.GetPathParamsType(resource.Name),
+					endpoint.GetQueryParamsType(resource.Name),
+					endpoint.GetBodyParamsType(resource.Name)))
 			}
 		}
 
@@ -445,15 +526,22 @@ func generateMockMethod(buf *bytes.Buffer, resource specification.Resource, endp
 
 	if endpoint.HasResponseType() {
 		responseType := endpoint.GetResponseType(resource.Name)
-		buf.WriteString(fmt.Sprintf("func (m *Mock%sAPI) %s(ctx context.Context, request interface{}) (*%s, error) {\n",
-			resource.Name, methodName, responseType))
+		buf.WriteString(fmt.Sprintf("func (m *Mock%sAPI) %s(ctx context.Context, request Request[any, %s, %s, %s]) (*%s, error) {\n",
+			resource.Name, methodName,
+			endpoint.GetPathParamsType(resource.Name),
+			endpoint.GetQueryParamsType(resource.Name),
+			endpoint.GetBodyParamsType(resource.Name),
+			responseType))
 		buf.WriteString(fmt.Sprintf("\tif m.%sFunc != nil {\n", methodName))
 		buf.WriteString(fmt.Sprintf("\t\treturn m.%sFunc(ctx, request)\n", methodName))
 		buf.WriteString("\t}\n")
 		buf.WriteString(fmt.Sprintf("\treturn nil, nil\n"))
 	} else {
-		buf.WriteString(fmt.Sprintf("func (m *Mock%sAPI) %s(ctx context.Context, request interface{}) error {\n",
-			resource.Name, methodName))
+		buf.WriteString(fmt.Sprintf("func (m *Mock%sAPI) %s(ctx context.Context, request Request[any, %s, %s, %s]) error {\n",
+			resource.Name, methodName,
+			endpoint.GetPathParamsType(resource.Name),
+			endpoint.GetQueryParamsType(resource.Name),
+			endpoint.GetBodyParamsType(resource.Name)))
 		buf.WriteString(fmt.Sprintf("\tif m.%sFunc != nil {\n", methodName))
 		buf.WriteString(fmt.Sprintf("\t\treturn m.%sFunc(ctx, request)\n", methodName))
 		buf.WriteString("\t}\n")
@@ -463,6 +551,31 @@ func generateMockMethod(buf *bytes.Buffer, resource specification.Resource, endp
 	buf.WriteString("}\n\n")
 
 	return nil
+}
+
+// getFieldTypeForTest returns the appropriate Go type for a field in test context.
+func getFieldTypeForTest(field specification.Field, service *specification.Service) string {
+	fieldType := field.Type
+
+	// Handle arrays
+	prefix := ""
+	if field.IsArray() {
+		prefix = "[]"
+	}
+
+	// Handle nullability for objects
+	if field.IsNullable() && service.IsObject(field.Type) {
+		prefix += "*"
+	}
+
+	// For primitive types, use types package
+	switch fieldType {
+	case "UUID", "String", "Int", "Bool", "Date", "Timestamp":
+		return prefix + "types." + fieldType
+	default:
+		// For custom objects/enums, use the type name directly (assuming it's available in scope)
+		return prefix + fieldType
+	}
 }
 
 // getJSONKey converts a field name to its JSON key (camelCase).
