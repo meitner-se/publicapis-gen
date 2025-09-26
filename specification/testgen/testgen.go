@@ -69,6 +69,7 @@ func generateImports(buf *bytes.Buffer) error {
 	buf.WriteString("\t\"fmt\"\n")
 	buf.WriteString("\t\"net/http\"\n")
 	buf.WriteString("\t\"net/http/httptest\"\n")
+	buf.WriteString("\t\"net/url\"\n")
 	buf.WriteString("\t\"strings\"\n")
 	buf.WriteString("\t\"testing\"\n\n")
 	buf.WriteString("\t\"github.com/gin-gonic/gin\"\n")

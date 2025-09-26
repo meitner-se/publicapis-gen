@@ -42,6 +42,7 @@ const (
 	expectedContextImport  = `"context"`
 	expectedHTTPImport     = "\"net/http\""
 	expectedHTTPTestImport = "\"net/http/httptest\""
+	expectedURLImport      = "\"net/url\""
 	expectedTestingImport  = "\"testing\""
 	expectedGinImport      = "\"github.com/gin-gonic/gin\""
 	expectedUUIDImport     = "\"github.com/google/uuid\""
@@ -98,6 +99,7 @@ func TestGenerateTests(t *testing.T) {
 	assert.Contains(t, generatedCode, expectedContextImport, "Generated code should import context")
 	assert.Contains(t, generatedCode, expectedHTTPImport, "Generated code should import net/http")
 	assert.Contains(t, generatedCode, expectedHTTPTestImport, "Generated code should import net/http/httptest")
+	assert.Contains(t, generatedCode, expectedURLImport, "Generated code should import net/url")
 	assert.Contains(t, generatedCode, expectedTestingImport, "Generated code should import testing")
 	assert.Contains(t, generatedCode, expectedGinImport, "Generated code should import gin")
 	assert.Contains(t, generatedCode, expectedUUIDImport, "Generated code should import uuid")
@@ -195,6 +197,7 @@ func TestGenerateImports(t *testing.T) {
 	assert.Contains(t, generatedCode, expectedContextImport, "Should import context")
 	assert.Contains(t, generatedCode, expectedHTTPImport, "Should import net/http")
 	assert.Contains(t, generatedCode, expectedHTTPTestImport, "Should import net/http/httptest")
+	assert.Contains(t, generatedCode, expectedURLImport, "Should import net/url")
 	assert.Contains(t, generatedCode, expectedTestingImport, "Should import testing")
 	assert.Contains(t, generatedCode, expectedGinImport, "Should import gin")
 	assert.Contains(t, generatedCode, expectedUUIDImport, "Should import uuid")
