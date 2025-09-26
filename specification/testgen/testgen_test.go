@@ -67,7 +67,7 @@ const (
 	expectedHTTPRequest       = "http.NewRequestWithContext(ctx, \"POST\""
 	expectedHTTPStatusAssert  = "assert.Equal(t, 201, resp.StatusCode"
 	expectedServerSetup       = "server := httptest.NewServer(router)"
-	expectedURLConstruction   = "url := server.URL + \"/"
+	expectedURLConstruction   = "requestURL := server.URL + \"/"
 	expectedResponseBodyCheck = "var responseBody map[string]interface{}"
 )
 

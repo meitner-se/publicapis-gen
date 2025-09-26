@@ -255,13 +255,13 @@ func generateTestBody(buf *bytes.Buffer, bodyParams []specification.Field) error
 
 // generateMockSetup generates mock service setup that captures the request for parameter validation.
 func generateMockSetup(buf *bytes.Buffer, service *specification.Service, resource specification.Resource, endpoint specification.Endpoint) error {
+	requestType := endpoint.GetRequestType(resource.Name)
 	buf.WriteString("\t\t// Mock service setup\n")
-	buf.WriteString("\t\tvar capturedRequest interface{}\n")
+	buf.WriteString(fmt.Sprintf("\t\tvar capturedRequest %s[any]\n", requestType))
 	buf.WriteString(fmt.Sprintf("\t\tmock%sAPI := &Mock%sAPI{}\n", resource.Name, resource.Name))
 
 	// Generate method setup that captures the incoming request
 	methodName := endpoint.Name
-	requestType := endpoint.GetRequestType(resource.Name)
 
 	if endpoint.HasResponseType() {
 		responseType := endpoint.GetResponseType(resource.Name)
@@ -328,98 +328,101 @@ func generateHTTPRequest(buf *bytes.Buffer, service *specification.Service, reso
 
 	// Build URL
 	path := endpoint.GetFullPath(resource.Name)
-	buf.WriteString(fmt.Sprintf("\t\turl := server.URL + \"/%s/%s%s\"\n", service.PathName(), service.Version, path))
+	buf.WriteString(fmt.Sprintf("\t\trequestURL := server.URL + \"/%s/%s%s\"\n", service.PathName(), service.Version, path))
 
 	// Replace path parameters with actual values
 	if len(endpoint.Request.PathParams) > 0 {
 		for _, param := range endpoint.Request.PathParams {
 			paramName := fmt.Sprintf("{%s}", strings.ToLower(param.Name))
 			varName := fmt.Sprintf("test%s%s", "Path", strmangle.TitleCase(param.Name))
-			buf.WriteString(fmt.Sprintf("\turl = strings.ReplaceAll(url, \"%s\", %s)\n", paramName, varName))
+			buf.WriteString(fmt.Sprintf("\t\trequestURL = strings.ReplaceAll(requestURL, \"%s\", %s)\n", paramName, varName))
 		}
 	}
 
 	// Add query parameters
 	if len(endpoint.Request.QueryParams) > 0 {
-		buf.WriteString("\t// Add query parameters\n")
-		buf.WriteString("\tquery := url.Values{}\n")
+		buf.WriteString("\t\t// Add query parameters\n")
+		buf.WriteString("\t\tquery := url.Values{}\n")
 		for _, param := range endpoint.Request.QueryParams {
 			varName := fmt.Sprintf("test%s%s", "Query", strmangle.TitleCase(param.Name))
 			jsonKey := getJSONKey(param.Name)
-			buf.WriteString(fmt.Sprintf("\tquery.Add(\"%s\", fmt.Sprintf(\"%%v\", %s))\n", jsonKey, varName))
+			buf.WriteString(fmt.Sprintf("\t\tquery.Add(\"%s\", fmt.Sprintf(\"%%v\", %s))\n", jsonKey, varName))
 		}
-		buf.WriteString("\tif len(query) > 0 {\n")
-		buf.WriteString("\t\turl += \"?\" + query.Encode()\n")
-		buf.WriteString("\t}\n")
+		buf.WriteString("\t\tif len(query) > 0 {\n")
+		buf.WriteString("\t\t\trequestURL += \"?\" + query.Encode()\n")
+		buf.WriteString("\t\t}\n")
 	}
 
 	// Create request
 	method := strings.ToUpper(endpoint.Method)
 	if len(endpoint.Request.BodyParams) > 0 {
-		buf.WriteString(fmt.Sprintf("\treq, err := http.NewRequestWithContext(ctx, \"%s\", url, bytes.NewBuffer(testBodyBytes))\n", method))
+		buf.WriteString(fmt.Sprintf("\t\treq, err := http.NewRequestWithContext(ctx, \"%s\", requestURL, bytes.NewBuffer(testBodyBytes))\n", method))
 	} else {
-		buf.WriteString(fmt.Sprintf("\treq, err := http.NewRequestWithContext(ctx, \"%s\", url, nil)\n", method))
+		buf.WriteString(fmt.Sprintf("\t\treq, err := http.NewRequestWithContext(ctx, \"%s\", requestURL, nil)\n", method))
 	}
 
-	buf.WriteString("\tassert.NoError(t, err, \"Failed to create HTTP request\")\n")
+	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create HTTP request\")\n")
 
 	if len(endpoint.Request.BodyParams) > 0 {
-		buf.WriteString("\treq.Header.Set(\"Content-Type\", \"application/json\")\n")
+		buf.WriteString("\t\treq.Header.Set(\"Content-Type\", \"application/json\")\n")
 	}
 
 	// Execute request
-	buf.WriteString("\tresp, err := http.DefaultClient.Do(req)\n")
-	buf.WriteString("\tassert.NoError(t, err, \"Failed to execute HTTP request\")\n")
-	buf.WriteString("\tdefer resp.Body.Close()\n\n")
+	buf.WriteString("\t\tresp, err := http.DefaultClient.Do(req)\n")
+	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to execute HTTP request\")\n")
+	buf.WriteString("\t\tdefer resp.Body.Close()\n\n")
 
 	return nil
 }
 
 // generateAssertions generates test assertions.
 func generateAssertions(buf *bytes.Buffer, service *specification.Service, resource specification.Resource, endpoint specification.Endpoint) error {
-	buf.WriteString("\t// Assert\n")
-	buf.WriteString(fmt.Sprintf("\tassert.Equal(t, %d, resp.StatusCode, \"Expected HTTP status %d\")\n",
+	buf.WriteString("\t\t// Assert\n")
+	buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %d, resp.StatusCode, \"Expected HTTP status %d\")\n",
 		endpoint.Response.StatusCode, endpoint.Response.StatusCode))
 
 	if endpoint.HasResponseType() {
-		buf.WriteString("\t// Verify response body\n")
-		buf.WriteString("\tvar responseBody map[string]interface{}\n")
-		buf.WriteString("\terr = json.NewDecoder(resp.Body).Decode(&responseBody)\n")
-		buf.WriteString("\tassert.NoError(t, err, \"Failed to decode response body\")\n")
-		buf.WriteString("\tassert.NotNil(t, responseBody, \"Response body should not be nil\")\n")
+		buf.WriteString("\t\t// Verify response body\n")
+		buf.WriteString("\t\tvar responseBody map[string]interface{}\n")
+		buf.WriteString("\t\terr = json.NewDecoder(resp.Body).Decode(&responseBody)\n")
+		buf.WriteString("\t\tassert.NoError(t, err, \"Failed to decode response body\")\n")
+		buf.WriteString("\t\tassert.NotNil(t, responseBody, \"Response body should not be nil\")\n")
 	}
 
 	// Verify the request was captured and has correct parameters
-	buf.WriteString("\t// Verify request parameters were passed correctly\n")
-	buf.WriteString("\tassert.NotNil(t, capturedRequest, \"Request should have been captured\")\n")
-
-	requestType := endpoint.GetRequestType(resource.Name)
-	buf.WriteString(fmt.Sprintf("\trequest, ok := capturedRequest.(%s[any])\n", requestType))
-	buf.WriteString("\tassert.True(t, ok, \"Captured request should be of correct type\")\n\n")
+	buf.WriteString("\t\t// Verify request parameters were passed correctly\n")
+	buf.WriteString("\t\tassert.NotNil(t, capturedRequest, \"Request should have been captured\")\n\n")
 
 	// Assert path parameters
 	if len(endpoint.Request.PathParams) > 0 {
-		buf.WriteString("\t// Verify path parameters\n")
+		buf.WriteString("\t\t// Verify path parameters\n")
 		for _, param := range endpoint.Request.PathParams {
 			varName := fmt.Sprintf("test%s%s", "Path", strmangle.TitleCase(param.Name))
 			fieldName := strmangle.TitleCase(param.Name)
 
-			switch param.Type {
-			case "UUID":
-				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, %s, request.PathParams.%s.String(), \"Path parameter %s should match\")\n",
+			if param.IsArray() {
+				// Handle array parameters
+				buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedRequest.PathParams.%s, \"Path parameter %s should match\")\n",
 					varName, fieldName, param.Name))
-			case "String":
-				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, %s, request.PathParams.%s.String(), \"Path parameter %s should match\")\n",
-					varName, fieldName, param.Name))
-			case "Int":
-				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, %s, request.PathParams.%s.Int(), \"Path parameter %s should match\")\n",
-					varName, fieldName, param.Name))
-			case "Bool":
-				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, %s, request.PathParams.%s.Bool(), \"Path parameter %s should match\")\n",
-					varName, fieldName, param.Name))
-			default:
-				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, %s, request.PathParams.%s, \"Path parameter %s should match\")\n",
-					varName, fieldName, param.Name))
+			} else {
+				// Handle single value parameters
+				switch param.Type {
+				case "UUID":
+					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedRequest.PathParams.%s.String(), \"Path parameter %s should match\")\n",
+						varName, fieldName, param.Name))
+				case "String":
+					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedRequest.PathParams.%s.String(), \"Path parameter %s should match\")\n",
+						varName, fieldName, param.Name))
+				case "Int":
+					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedRequest.PathParams.%s.Int(), \"Path parameter %s should match\")\n",
+						varName, fieldName, param.Name))
+				case "Bool":
+					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedRequest.PathParams.%s.Bool(), \"Path parameter %s should match\")\n",
+						varName, fieldName, param.Name))
+				default:
+					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedRequest.PathParams.%s, \"Path parameter %s should match\")\n",
+						varName, fieldName, param.Name))
+				}
 			}
 		}
 		buf.WriteString("\n")
@@ -427,27 +430,34 @@ func generateAssertions(buf *bytes.Buffer, service *specification.Service, resou
 
 	// Assert query parameters
 	if len(endpoint.Request.QueryParams) > 0 {
-		buf.WriteString("\t// Verify query parameters\n")
+		buf.WriteString("\t\t// Verify query parameters\n")
 		for _, param := range endpoint.Request.QueryParams {
 			varName := fmt.Sprintf("test%s%s", "Query", strmangle.TitleCase(param.Name))
 			fieldName := strmangle.TitleCase(param.Name)
 
-			switch param.Type {
-			case "UUID":
-				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, %s, request.QueryParams.%s.String(), \"Query parameter %s should match\")\n",
+			if param.IsArray() {
+				// Handle array parameters
+				buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedRequest.QueryParams.%s, \"Query parameter %s should match\")\n",
 					varName, fieldName, param.Name))
-			case "String":
-				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, %s, request.QueryParams.%s.String(), \"Query parameter %s should match\")\n",
-					varName, fieldName, param.Name))
-			case "Int":
-				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, %s, request.QueryParams.%s.Int(), \"Query parameter %s should match\")\n",
-					varName, fieldName, param.Name))
-			case "Bool":
-				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, %s, request.QueryParams.%s.Bool(), \"Query parameter %s should match\")\n",
-					varName, fieldName, param.Name))
-			default:
-				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, %s, request.QueryParams.%s, \"Query parameter %s should match\")\n",
-					varName, fieldName, param.Name))
+			} else {
+				// Handle single value parameters
+				switch param.Type {
+				case "UUID":
+					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedRequest.QueryParams.%s.String(), \"Query parameter %s should match\")\n",
+						varName, fieldName, param.Name))
+				case "String":
+					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedRequest.QueryParams.%s.String(), \"Query parameter %s should match\")\n",
+						varName, fieldName, param.Name))
+				case "Int":
+					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedRequest.QueryParams.%s.Int(), \"Query parameter %s should match\")\n",
+						varName, fieldName, param.Name))
+				case "Bool":
+					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedRequest.QueryParams.%s.Bool(), \"Query parameter %s should match\")\n",
+						varName, fieldName, param.Name))
+				default:
+					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedRequest.QueryParams.%s, \"Query parameter %s should match\")\n",
+						varName, fieldName, param.Name))
+				}
 			}
 		}
 		buf.WriteString("\n")
@@ -455,27 +465,34 @@ func generateAssertions(buf *bytes.Buffer, service *specification.Service, resou
 
 	// Assert body parameters
 	if len(endpoint.Request.BodyParams) > 0 {
-		buf.WriteString("\t// Verify body parameters\n")
+		buf.WriteString("\t\t// Verify body parameters\n")
 		for _, param := range endpoint.Request.BodyParams {
 			fieldName := strmangle.TitleCase(param.Name)
 			jsonKey := getJSONKey(param.Name)
 
-			switch param.Type {
-			case "UUID":
-				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, testBody[\"%s\"], request.BodyParams.%s.String(), \"Body parameter %s should match\")\n",
+			if param.IsArray() {
+				// Handle array parameters
+				buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, testBody[\"%s\"], capturedRequest.BodyParams.%s, \"Body parameter %s should match\")\n",
 					jsonKey, fieldName, param.Name))
-			case "String":
-				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, testBody[\"%s\"], request.BodyParams.%s.String(), \"Body parameter %s should match\")\n",
-					jsonKey, fieldName, param.Name))
-			case "Int":
-				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, testBody[\"%s\"], request.BodyParams.%s.Int(), \"Body parameter %s should match\")\n",
-					jsonKey, fieldName, param.Name))
-			case "Bool":
-				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, testBody[\"%s\"], request.BodyParams.%s.Bool(), \"Body parameter %s should match\")\n",
-					jsonKey, fieldName, param.Name))
-			default:
-				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, testBody[\"%s\"], request.BodyParams.%s, \"Body parameter %s should match\")\n",
-					jsonKey, fieldName, param.Name))
+			} else {
+				// Handle single value parameters
+				switch param.Type {
+				case "UUID":
+					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, testBody[\"%s\"], capturedRequest.BodyParams.%s.String(), \"Body parameter %s should match\")\n",
+						jsonKey, fieldName, param.Name))
+				case "String":
+					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, testBody[\"%s\"], capturedRequest.BodyParams.%s.String(), \"Body parameter %s should match\")\n",
+						jsonKey, fieldName, param.Name))
+				case "Int":
+					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, testBody[\"%s\"], capturedRequest.BodyParams.%s.Int(), \"Body parameter %s should match\")\n",
+						jsonKey, fieldName, param.Name))
+				case "Bool":
+					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, testBody[\"%s\"], capturedRequest.BodyParams.%s.Bool(), \"Body parameter %s should match\")\n",
+						jsonKey, fieldName, param.Name))
+				default:
+					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, testBody[\"%s\"], capturedRequest.BodyParams.%s, \"Body parameter %s should match\")\n",
+						jsonKey, fieldName, param.Name))
+				}
 			}
 		}
 		buf.WriteString("\n")
