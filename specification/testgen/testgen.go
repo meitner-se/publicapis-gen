@@ -188,35 +188,77 @@ func generateTestParameterValue(buf *bytes.Buffer, param specification.Field, pa
 }
 
 // generateTestBody generates test data for request body.
-func generateTestBody(buf *bytes.Buffer, bodyParams []specification.Field) error {
+func generateTestBody(buf *bytes.Buffer, bodyParams []specification.Field, service *specification.Service) error {
 	buf.WriteString("\t\ttestBody := map[string]interface{}{\n")
 
 	for _, param := range bodyParams {
 		jsonKey := getJSONKey(param.Name)
 
-		switch param.Type {
-		case "UUID":
-			buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": uuid.New().String(),\n", jsonKey))
-		case "String":
-			defaultValue := "test-value"
-			if param.Example != "" {
-				defaultValue = param.Example
+		if param.IsArray() {
+			// Handle array types
+			switch param.Type {
+			case "UUID":
+				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []string{uuid.New().String()},\n", jsonKey))
+			case "String":
+				defaultValue := "test-value"
+				if param.Example != "" {
+					defaultValue = param.Example
+				}
+				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []string{\"%s\"},\n", jsonKey, defaultValue))
+			case "Int":
+				defaultValue := "123"
+				if param.Example != "" {
+					defaultValue = param.Example
+				}
+				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []int{%s},\n", jsonKey, defaultValue))
+			case "Bool":
+				defaultValue := "true"
+				if param.Example != "" {
+					defaultValue = param.Example
+				}
+				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []bool{%s},\n", jsonKey, defaultValue))
+			default:
+				// For custom object arrays, create an array with one test object
+				if service.IsObject(param.Type) {
+					objectFields := getObjectTestData(param.Type, service)
+					buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []map[string]interface{}{%s},\n", jsonKey, objectFields))
+				} else {
+					buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []string{\"test-%s-value\"},\n", jsonKey, strings.ToLower(param.Name)))
+				}
 			}
-			buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": \"%s\",\n", jsonKey, defaultValue))
-		case "Int":
-			defaultValue := "123"
-			if param.Example != "" {
-				defaultValue = param.Example
+		} else {
+			// Handle single value types
+			switch param.Type {
+			case "UUID":
+				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": uuid.New().String(),\n", jsonKey))
+			case "String":
+				defaultValue := "test-value"
+				if param.Example != "" {
+					defaultValue = param.Example
+				}
+				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": \"%s\",\n", jsonKey, defaultValue))
+			case "Int":
+				defaultValue := "123"
+				if param.Example != "" {
+					defaultValue = param.Example
+				}
+				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": %s,\n", jsonKey, defaultValue))
+			case "Bool":
+				defaultValue := "true"
+				if param.Example != "" {
+					defaultValue = param.Example
+				}
+				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": %s,\n", jsonKey, defaultValue))
+			default:
+				// For custom object types, create a nested object
+				if service.IsObject(param.Type) {
+					objectFields := getObjectTestData(param.Type, service)
+					buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": map[string]interface{}{%s},\n", jsonKey, objectFields))
+				} else {
+					// For enums or unknown types, use string
+					buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": \"test-%s-value\",\n", jsonKey, strings.ToLower(param.Name)))
+				}
 			}
-			buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": %s,\n", jsonKey, defaultValue))
-		case "Bool":
-			defaultValue := "true"
-			if param.Example != "" {
-				defaultValue = param.Example
-			}
-			buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": %s,\n", jsonKey, defaultValue))
-		default:
-			buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": \"test-%s-value\",\n", jsonKey, strings.ToLower(param.Name)))
 		}
 	}
 
@@ -366,7 +408,7 @@ func generateHTTPRequest(buf *bytes.Buffer, service *specification.Service, reso
 	// Generate and use body parameters
 	if len(endpoint.Request.BodyParams) > 0 {
 		buf.WriteString("\t\t// Body parameters\n")
-		err := generateTestBody(buf, endpoint.Request.BodyParams)
+		err := generateTestBody(buf, endpoint.Request.BodyParams, service)
 		if err != nil {
 			return err
 		}
@@ -601,6 +643,82 @@ func getAPITypeReference(typeName string, apiPackageName string) string {
 		return "struct{}"
 	}
 	return apiPackageName + "." + typeName
+}
+
+// getObjectTestData generates test data for a custom object type.
+func getObjectTestData(objectType string, service *specification.Service) string {
+	// Find the object definition
+	for _, obj := range service.Objects {
+		if obj.Name == objectType {
+			var fields []string
+			for _, field := range obj.Fields {
+				jsonKey := getJSONKey(field.Name)
+
+				if field.IsArray() {
+					// Handle array fields in objects
+					switch field.Type {
+					case "UUID":
+						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []string{uuid.New().String()}", jsonKey))
+					case "String":
+						defaultValue := "test-value"
+						if field.Example != "" {
+							defaultValue = field.Example
+						}
+						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []string{\"%s\"}", jsonKey, defaultValue))
+					case "Int":
+						defaultValue := "123"
+						if field.Example != "" {
+							defaultValue = field.Example
+						}
+						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []int{%s}", jsonKey, defaultValue))
+					case "Bool":
+						defaultValue := "true"
+						if field.Example != "" {
+							defaultValue = field.Example
+						}
+						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []bool{%s}", jsonKey, defaultValue))
+					default:
+						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []string{\"test-%s-value\"}", jsonKey, strings.ToLower(field.Name)))
+					}
+				} else {
+					// Handle single value fields in objects
+					switch field.Type {
+					case "UUID":
+						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": uuid.New().String()", jsonKey))
+					case "String":
+						defaultValue := "test-value"
+						if field.Example != "" {
+							defaultValue = field.Example
+						}
+						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": \"%s\"", jsonKey, defaultValue))
+					case "Int":
+						defaultValue := "123"
+						if field.Example != "" {
+							defaultValue = field.Example
+						}
+						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": %s", jsonKey, defaultValue))
+					case "Bool":
+						defaultValue := "true"
+						if field.Example != "" {
+							defaultValue = field.Example
+						}
+						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": %s", jsonKey, defaultValue))
+					default:
+						// For nested objects or enums, use string for simplicity
+						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": \"test-%s-value\"", jsonKey, strings.ToLower(field.Name)))
+					}
+				}
+			}
+
+			if len(fields) > 0 {
+				return strings.Join(fields, ",") + ",\n\t\t\t"
+			}
+			return ""
+		}
+	}
+
+	// If object not found, return empty
+	return ""
 }
 
 // getJSONKey converts a field name to its JSON key (camelCase).
