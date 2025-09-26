@@ -983,13 +983,13 @@ func TestSpeakeasyPaginationExtension(t *testing.T) {
 							ContentType: "application/json",
 							QueryParams: []specification.Field{
 								{
-									Name:        "limit",
+									Name:        "Limit",
 									Description: "Maximum number of items to return",
 									Type:        specification.FieldTypeInt,
 									Default:     "50",
 								},
 								{
-									Name:        "offset",
+									Name:        "Offset",
 									Description: "Number of items to skip",
 									Type:        specification.FieldTypeInt,
 									Default:     "0",
@@ -1024,13 +1024,13 @@ func TestSpeakeasyPaginationExtension(t *testing.T) {
 							ContentType: "application/json",
 							QueryParams: []specification.Field{
 								{
-									Name:        "limit",
+									Name:        "Limit",
 									Description: "Maximum number of items to return",
 									Type:        specification.FieldTypeInt,
 									Default:     "50",
 								},
 								{
-									Name:        "offset",
+									Name:        "Offset",
 									Description: "Number of items to skip",
 									Type:        specification.FieldTypeInt,
 									Default:     "0",

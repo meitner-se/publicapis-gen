@@ -322,10 +322,21 @@ func (g *generator) addSpeakeasyTimeoutExtension(document *v3.Document, service 
 }
 
 // addSpeakeasyPaginationExtension adds Speakeasy pagination configuration extension to an operation.
-func (g *generator) addSpeakeasyPaginationExtension(operation *v3.Operation) {
+func (g *generator) addSpeakeasyPaginationExtension(operation *v3.Operation, endpoint specification.Endpoint) {
 	// Initialize extensions map if it doesn't exist
 	if operation.Extensions == nil {
 		operation.Extensions = orderedmap.New[string, *yaml.Node]()
+	}
+
+	// Find the actual limit and offset parameters from the endpoint to get their TagJSON names
+	var limitFieldTagJSON, offsetFieldTagJSON string
+	for _, param := range endpoint.Request.QueryParams {
+		if param.Name == "Limit" {
+			limitFieldTagJSON = param.TagJSON()
+		}
+		if param.Name == "Offset" {
+			offsetFieldTagJSON = param.TagJSON()
+		}
 	}
 
 	// Convert the pagination configuration to a YAML node
@@ -341,10 +352,10 @@ func (g *generator) addSpeakeasyPaginationExtension(operation *v3.Operation) {
 	inputsKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "inputs"}
 	inputsArrayNode := &yaml.Node{Kind: yaml.SequenceNode, Tag: "!!seq"}
 
-	// Create offset input object
+	// Create offset input object using TagJSON for the name
 	offsetInputNode := &yaml.Node{Kind: yaml.MappingNode, Tag: "!!map"}
 	offsetNameKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "name"}
-	offsetNameValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyOffsetParamName}
+	offsetNameValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: offsetFieldTagJSON}
 	offsetInKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "in"}
 	offsetInValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyPaginationInputsIn}
 	offsetTypeKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "type"}
@@ -355,10 +366,10 @@ func (g *generator) addSpeakeasyPaginationExtension(operation *v3.Operation) {
 		offsetTypeKeyNode, offsetTypeValueNode,
 	}
 
-	// Create limit input object
+	// Create limit input object using TagJSON for the name
 	limitInputNode := &yaml.Node{Kind: yaml.MappingNode, Tag: "!!map"}
 	limitNameKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "name"}
-	limitNameValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyLimitParamName}
+	limitNameValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: limitFieldTagJSON}
 	limitInKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "in"}
 	limitInValueNode := &yaml.Node{Kind: yaml.ScalarNode, Value: speakeasyPaginationInputsIn}
 	limitTypeKeyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: "type"}
@@ -422,12 +433,12 @@ func (g *generator) isPaginatedOperation(endpoint specification.Endpoint) bool {
 	hasLimitParam := false
 	hasOffsetParam := false
 
-	// Check query parameters for limit and offset
+	// Check query parameters for limit and offset using actual parameter names
 	for _, param := range endpoint.Request.QueryParams {
-		if param.Name == speakeasyLimitParamName {
+		if param.Name == "Limit" {
 			hasLimitParam = true
 		}
-		if param.Name == speakeasyOffsetParamName {
+		if param.Name == "Offset" {
 			hasOffsetParam = true
 		}
 	}
@@ -968,7 +979,7 @@ func (g *generator) createOperation(endpoint specification.Endpoint, resource sp
 
 	// Add Speakeasy pagination extension if this is a paginated operation
 	if g.isPaginatedOperation(endpoint) {
-		g.addSpeakeasyPaginationExtension(operation)
+		g.addSpeakeasyPaginationExtension(operation, endpoint)
 	}
 
 	// Add Speakeasy operation naming extensions
