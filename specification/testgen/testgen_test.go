@@ -83,7 +83,7 @@ func TestGenerateTests(t *testing.T) {
 	buf := &bytes.Buffer{}
 
 	// Act
-	err := GenerateTests(buf, service, packageName)
+	err := GenerateTests(buf, service, packageName, "api")
 
 	// Assert
 	assert.Nil(t, err, "Expected no error when generating tests")
@@ -138,7 +138,7 @@ func TestGenerateTests(t *testing.T) {
 			buf := &bytes.Buffer{}
 
 			// Act
-			err := GenerateTests(buf, emptyService, packageName)
+			err := GenerateTests(buf, emptyService, packageName, "api")
 
 			// Assert
 			assert.Nil(t, err, "Expected no error with empty service")
@@ -153,7 +153,7 @@ func TestGenerateTests(t *testing.T) {
 			buf := &bytes.Buffer{}
 
 			// Act
-			err := GenerateTests(buf, service, customPackage)
+			err := GenerateTests(buf, service, customPackage, "api")
 
 			// Assert
 			assert.Nil(t, err, "Expected no error with custom package")
@@ -167,7 +167,7 @@ func TestGenerateTests(t *testing.T) {
 			buf := &bytes.Buffer{}
 
 			// Act
-			err := GenerateTests(buf, service, packageName)
+			err := GenerateTests(buf, service, packageName, "api")
 
 			// Assert
 			assert.Nil(t, err, "Expected no error")
@@ -187,7 +187,7 @@ func TestGenerateImports(t *testing.T) {
 	buf := &bytes.Buffer{}
 
 	// Act
-	err := generateImports(buf)
+	err := generateImports(buf, "api")
 
 	// Assert
 	assert.Nil(t, err, "Expected no error when generating imports")
