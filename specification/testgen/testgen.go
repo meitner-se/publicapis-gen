@@ -199,32 +199,32 @@ func generateTestBody(buf *bytes.Buffer, bodyParams []specification.Field, servi
 			// Handle array types
 			switch param.Type {
 			case "UUID":
-				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []string{uuid.New().String()},\n", jsonKey))
+				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []interface{}{uuid.New().String()},\n", jsonKey))
 			case "String":
 				defaultValue := "test-value"
 				if param.Example != "" {
 					defaultValue = param.Example
 				}
-				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []string{\"%s\"},\n", jsonKey, defaultValue))
+				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []interface{}{\"%s\"},\n", jsonKey, defaultValue))
 			case "Int":
 				defaultValue := "123"
 				if param.Example != "" {
 					defaultValue = param.Example
 				}
-				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []int{%s},\n", jsonKey, defaultValue))
+				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []interface{}{%s},\n", jsonKey, defaultValue))
 			case "Bool":
 				defaultValue := "true"
 				if param.Example != "" {
 					defaultValue = param.Example
 				}
-				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []bool{%s},\n", jsonKey, defaultValue))
+				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []interface{}{%s},\n", jsonKey, defaultValue))
 			default:
 				// For custom object arrays, create an array with one test object
 				if service.IsObject(param.Type) {
 					objectFields := getObjectTestData(param.Type, service)
 					buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []map[string]interface{}{%s},\n", jsonKey, objectFields))
 				} else {
-					buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []string{\"test-%s-value\"},\n", jsonKey, strings.ToLower(param.Name)))
+					buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []interface{}{\"test-%s-value\"},\n", jsonKey, strings.ToLower(param.Name)))
 				}
 			}
 		} else {
