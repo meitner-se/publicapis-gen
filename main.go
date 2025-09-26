@@ -119,9 +119,6 @@ type Job struct {
 	OverlayJSON   string `yaml:"overlay_json,omitempty" json:"overlay_json,omitempty"`
 	ServerGo      string `yaml:"server_go,omitempty" json:"server_go,omitempty"`
 	ServerPackage string `yaml:"server_package,omitempty" json:"server_package,omitempty"`
-	TestGo        string `yaml:"test_go,omitempty" json:"test_go,omitempty"`
-	TestPackage   string `yaml:"test_package,omitempty" json:"test_package,omitempty"`
-	TestImport    string `yaml:"test_import,omitempty" json:"test_import,omitempty"`
 }
 
 // Config represents the configuration file structure
@@ -375,8 +372,8 @@ func parseConfigFile(configPath string) (Config, error) {
 		}
 
 		// Check if at least one output format is specified
-		if job.OpenAPIJSON == "" && job.OpenAPIYAML == "" && job.SchemaJSON == "" && job.OverlayYAML == "" && job.OverlayJSON == "" && job.ServerGo == "" && job.TestGo == "" {
-			return nil, fmt.Errorf("%s: job %d must specify at least one output format (openapi_json, openapi_yaml, schema_json, overlay_yaml, overlay_json, server_go, or test_go)", errorInvalidConfig, i+1)
+		if job.OpenAPIJSON == "" && job.OpenAPIYAML == "" && job.SchemaJSON == "" && job.OverlayYAML == "" && job.OverlayJSON == "" && job.ServerGo == "" {
+			return nil, fmt.Errorf("%s: job %d must specify at least one output format (openapi_json, openapi_yaml, schema_json, overlay_yaml, overlay_json, server_go)", errorInvalidConfig, i+1)
 		}
 	}
 
@@ -429,12 +426,11 @@ func processJob(ctx context.Context, job Job) error {
 		if err := generateServerFromSpecification(ctx, service, job.Specification, job.ServerGo, job.ServerPackage); err != nil {
 			return fmt.Errorf("failed to generate Go server to '%s': %w", job.ServerGo, err)
 		}
-	}
 
-	if job.TestGo != "" {
-		// Generate test code using testgen from the specification
-		if err := generateTestsFromSpecification(ctx, service, job.Specification, job.TestGo, job.TestPackage, job.ServerPackage, job.TestImport); err != nil {
-			return fmt.Errorf("failed to generate Go tests to '%s': %w", job.TestGo, err)
+		// Automatically generate internal tests for the server
+		testFilePath := generateTestFilePath(job.ServerGo)
+		if err := generateInternalTestsFromSpecification(ctx, service, job.Specification, testFilePath, job.ServerPackage); err != nil {
+			return fmt.Errorf("failed to generate Go tests to '%s': %w", testFilePath, err)
 		}
 	}
 
@@ -689,6 +685,55 @@ func generateServerFromSpecification(ctx context.Context, service *specification
 
 	slog.InfoContext(ctx, "Successfully generated Go server code", logKeyFile, outputPath)
 	fmt.Printf("Go server code generated: %s\n", outputPath)
+
+	return nil
+}
+
+// generateTestFilePath converts a server file path to a test file path by adding _test before the first dot.
+func generateTestFilePath(serverGoPath string) string {
+	// Find the first dot in the filename
+	lastSlash := strings.LastIndex(serverGoPath, "/")
+	filename := serverGoPath
+	dir := ""
+
+	if lastSlash >= 0 {
+		dir = serverGoPath[:lastSlash+1]
+		filename = serverGoPath[lastSlash+1:]
+	}
+
+	// Find first dot in filename
+	firstDot := strings.Index(filename, ".")
+	if firstDot >= 0 {
+		// Insert _test before the first dot
+		testFilename := filename[:firstDot] + "_test" + filename[firstDot:]
+		return dir + testFilename
+	}
+
+	// If no dot found, just append _test.go
+	return serverGoPath + "_test.go"
+}
+
+// generateInternalTestsFromSpecification generates internal HTTP API tests from a service specification using testgen.
+func generateInternalTestsFromSpecification(ctx context.Context, service *specification.Service, specPath, outputPath, packageName string) error {
+	slog.InfoContext(ctx, "Generating internal Go test code from specification using testgen", logKeyMode, "test")
+
+	// Internal tests should always use "api" package name to match servergen
+	// This ensures they can access unexported functions and are truly internal tests
+	packageName = "api"
+
+	// Generate test code using testgen (internal tests don't need imports)
+	var buf bytes.Buffer
+	if err := testgen.GenerateInternalTests(&buf, service, packageName); err != nil {
+		return fmt.Errorf("failed to generate test code: %w", err)
+	}
+
+	// Write the generated code to file
+	if err := os.WriteFile(outputPath, buf.Bytes(), 0644); err != nil {
+		return fmt.Errorf("%s: %w", errorFileWrite, err)
+	}
+
+	slog.InfoContext(ctx, "Successfully generated internal Go test code", logKeyFile, outputPath)
+	fmt.Printf("Go test code generated: %s\n", outputPath)
 
 	return nil
 }

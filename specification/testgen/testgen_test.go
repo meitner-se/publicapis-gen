@@ -74,6 +74,55 @@ const (
 )
 
 // ============================================================================
+// GenerateInternalTests Tests
+// ============================================================================
+
+func TestGenerateInternalTests(t *testing.T) {
+	// Arrange
+	service := createTestService()
+	buf := &bytes.Buffer{}
+	packageName := "myapi"
+
+	// Act
+	err := GenerateInternalTests(buf, service, packageName)
+
+	// Assert
+	assert.Nil(t, err, "Expected no error when generating internal tests")
+
+	generatedCode := buf.String()
+
+	// Check package declaration
+	assert.Contains(t, generatedCode, "package myapi", "Should use specified package name")
+
+	// Check imports (no external API import)
+	assert.Contains(t, generatedCode, "\"github.com/gin-gonic/gin\"", "Should import gin")
+	assert.Contains(t, generatedCode, "\"github.com/stretchr/testify/assert\"", "Should import testify")
+	assert.NotContains(t, generatedCode, "\"./api\"", "Should not import external API package")
+
+	// Check endpoint tests (no package prefixes)
+	assert.Contains(t, generatedCode, "func TestStudentCreateStudent(t *testing.T) {", "Should generate endpoint test")
+	assert.Contains(t, generatedCode, "var capturedRequest Request[any,", "Should use Request type without prefix")
+	assert.Contains(t, generatedCode, "RegisterTestServiceAPI(router, &TestServiceAPI[any]{", "Should register API without prefix")
+
+	// Check mock structures (no package prefixes)
+	assert.Contains(t, generatedCode, "type MockStudentAPI struct {", "Should generate mock struct")
+	assert.Contains(t, generatedCode, "func (m *MockStudentAPI) CreateStudent(", "Should generate mock method")
+
+	// Check utility function tests (no package prefixes)
+	assert.Contains(t, generatedCode, "func TestServeWithResponse(t *testing.T) {", "Should generate serveWithResponse test")
+	assert.Contains(t, generatedCode, "func TestServeWithoutResponse(t *testing.T) {", "Should generate serveWithoutResponse test")
+	assert.Contains(t, generatedCode, "func TestParseRequest(t *testing.T) {", "Should generate parseRequest test")
+	assert.Contains(t, generatedCode, "func TestDecodeBodyParams(t *testing.T) {", "Should generate decodeBodyParams test")
+	assert.Contains(t, generatedCode, "func TestDecodePathParams(t *testing.T) {", "Should generate decodePathParams test")
+	assert.Contains(t, generatedCode, "func TestDecodeQueryParams(t *testing.T) {", "Should generate decodeQueryParams test")
+
+	// Verify no package prefixes are used
+	assert.Contains(t, generatedCode, "handler := serveWithResponse(", "Should call serveWithResponse without prefix")
+	assert.Contains(t, generatedCode, "parseRequest[any, struct{}, struct{}, struct{}](", "Should call parseRequest without prefix")
+	assert.Contains(t, generatedCode, "decodeBodyParams[map[string]interface{}](", "Should call decodeBodyParams without prefix")
+}
+
+// ============================================================================
 // GenerateTests Tests
 // ============================================================================
 

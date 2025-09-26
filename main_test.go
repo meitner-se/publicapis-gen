@@ -196,6 +196,11 @@ func Test_run(t *testing.T) {
 		_, err = os.Stat("test-config-server.go")
 		require.NoError(t, err, "Go server file should be created from config")
 
+		// Verify test output file was automatically created
+		_, err = os.Stat("test-config-server_test.go")
+		require.NoError(t, err, "Go test file should be automatically created from config")
+		defer os.Remove("test-config-server_test.go")
+
 		// Read and verify the generated server file contains expected content
 		serverContent, err := os.ReadFile("test-config-server.go")
 		require.NoError(t, err, "Should be able to read generated server file")
@@ -206,6 +211,19 @@ func Test_run(t *testing.T) {
 		assert.Contains(t, serverContentStr, "func RegisterSchoolManagementAPIAPI[Session any]", "Generated server should contain registration function")
 		assert.Contains(t, serverContentStr, "type SchoolManagementAPIAPI[Session any] struct", "Generated server should contain API struct")
 		assert.Contains(t, serverContentStr, "type Student struct", "Generated server should contain Student type")
+
+		// Read and verify the generated test file contains expected content
+		testContent, err := os.ReadFile("test-config-server_test.go")
+		require.NoError(t, err, "Should be able to read generated test file")
+
+		testContentStr := string(testContent)
+		// Verify internal test structure
+		assert.Contains(t, testContentStr, "package api", "Generated test should use same package as server")
+		assert.Contains(t, testContentStr, "func TestStudents", "Generated test should contain endpoint tests")
+		assert.Contains(t, testContentStr, "type MockStudentsAPI struct", "Generated test should contain mock interfaces")
+		assert.Contains(t, testContentStr, "func TestServeWithResponse(t *testing.T)", "Generated test should contain utility function tests")
+		assert.NotContains(t, testContentStr, "api.Request", "Generated test should not use package prefixes")
+		assert.Contains(t, testContentStr, "var capturedRequest Request[any,", "Generated test should use Request type without prefix")
 	})
 
 	t.Run("nonexistent config file returns error", func(t *testing.T) {
@@ -1076,6 +1094,55 @@ func Test_ensureYAMLExtension(t *testing.T) {
 
 			// Assert
 			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestGenerateTestFilePath(t *testing.T) {
+	testCases := []struct {
+		name           string
+		serverGoPath   string
+		expectedResult string
+	}{
+		{
+			name:           "basic .go file",
+			serverGoPath:   "api.go",
+			expectedResult: "api_test.go",
+		},
+		{
+			name:           "generated .gen.go file",
+			serverGoPath:   "api.gen.go",
+			expectedResult: "api_test.gen.go",
+		},
+		{
+			name:           "file with path",
+			serverGoPath:   "directory/api.go",
+			expectedResult: "directory/api_test.go",
+		},
+		{
+			name:           "file with path and .gen.go",
+			serverGoPath:   "directory/api/api.gen.go",
+			expectedResult: "directory/api/api_test.gen.go",
+		},
+		{
+			name:           "file without extension",
+			serverGoPath:   "api",
+			expectedResult: "api_test.go",
+		},
+		{
+			name:           "multiple dots in filename",
+			serverGoPath:   "api.v1.gen.go",
+			expectedResult: "api_test.v1.gen.go",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Act
+			result := generateTestFilePath(tc.serverGoPath)
+
+			// Assert
+			assert.Equal(t, tc.expectedResult, result, "Test file path should be generated correctly")
 		})
 	}
 }
