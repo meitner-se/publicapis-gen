@@ -701,9 +701,12 @@ func generateTestsFromSpecification(ctx context.Context, service *specification.
 		packageName = "main"
 	}
 
+	// For now, assume the API package is in the same module (this could be made configurable)
+	apiPackageImport := "./api"
+
 	// Generate test code using testgen
 	var buf bytes.Buffer
-	if err := testgen.GenerateTests(&buf, service, packageName); err != nil {
+	if err := testgen.GenerateTests(&buf, service, packageName, apiPackageImport); err != nil {
 		return fmt.Errorf("failed to generate test code: %w", err)
 	}
 
