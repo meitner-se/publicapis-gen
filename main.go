@@ -111,17 +111,17 @@ const (
 
 // Job represents a single generation job in the config file
 type Job struct {
-	Specification  string `yaml:"specification" json:"specification"`
-	OpenAPIJSON    string `yaml:"openapi_json,omitempty" json:"openapi_json,omitempty"`
-	OpenAPIYAML    string `yaml:"openapi_yaml,omitempty" json:"openapi_yaml,omitempty"`
-	SchemaJSON     string `yaml:"schema_json,omitempty" json:"schema_json,omitempty"`
-	OverlayYAML    string `yaml:"overlay_yaml,omitempty" json:"overlay_yaml,omitempty"`
-	OverlayJSON    string `yaml:"overlay_json,omitempty" json:"overlay_json,omitempty"`
-	ServerGo       string `yaml:"server_go,omitempty" json:"server_go,omitempty"`
-	ServerPackage  string `yaml:"server_package,omitempty" json:"server_package,omitempty"`
-	TestGo      string `yaml:"test_go,omitempty" json:"test_go,omitempty"`
-	TestPackage string `yaml:"test_package,omitempty" json:"test_package,omitempty"`
-	TestImport  string `yaml:"test_import,omitempty" json:"test_import,omitempty"`
+	Specification string `yaml:"specification" json:"specification"`
+	OpenAPIJSON   string `yaml:"openapi_json,omitempty" json:"openapi_json,omitempty"`
+	OpenAPIYAML   string `yaml:"openapi_yaml,omitempty" json:"openapi_yaml,omitempty"`
+	SchemaJSON    string `yaml:"schema_json,omitempty" json:"schema_json,omitempty"`
+	OverlayYAML   string `yaml:"overlay_yaml,omitempty" json:"overlay_yaml,omitempty"`
+	OverlayJSON   string `yaml:"overlay_json,omitempty" json:"overlay_json,omitempty"`
+	ServerGo      string `yaml:"server_go,omitempty" json:"server_go,omitempty"`
+	ServerPackage string `yaml:"server_package,omitempty" json:"server_package,omitempty"`
+	TestGo        string `yaml:"test_go,omitempty" json:"test_go,omitempty"`
+	TestPackage   string `yaml:"test_package,omitempty" json:"test_package,omitempty"`
+	TestImport    string `yaml:"test_import,omitempty" json:"test_import,omitempty"`
 }
 
 // Config represents the configuration file structure
