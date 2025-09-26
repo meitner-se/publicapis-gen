@@ -663,15 +663,6 @@ func getObjectTestDataWithVisited(objectType string, service *specification.Serv
 	}
 	visited[objectType] = true
 
-	// For filter objects, create empty structures to avoid complex nested data
-	if strings.Contains(objectType, "Filter") ||
-		strings.HasSuffix(objectType, "FilterEquals") ||
-		strings.HasSuffix(objectType, "FilterRange") ||
-		strings.HasSuffix(objectType, "FilterContains") ||
-		strings.HasSuffix(objectType, "FilterLike") ||
-		strings.HasSuffix(objectType, "FilterNull") {
-		return ""
-	}
 	// Find the object definition
 	for _, obj := range service.Objects {
 		if obj.Name == objectType {
