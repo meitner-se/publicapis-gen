@@ -2516,6 +2516,64 @@ func TestEndpoint_GetFullPath(t *testing.T) {
 	}
 }
 
+func TestEndpoint_GetGinPath(t *testing.T) {
+	testCases := []struct {
+		name         string
+		resourceName string
+		endpointPath string
+		expectedPath string
+	}{
+		{
+			name:         "endpoint with id path parameter",
+			resourceName: "Users",
+			endpointPath: "/{id}",
+			expectedPath: "/users/:id",
+		},
+		{
+			name:         "endpoint with multiple path parameters",
+			resourceName: "Organizations",
+			endpointPath: "/{orgId}/users/{userId}",
+			expectedPath: "/organizations/:orgId/users/:userId",
+		},
+		{
+			name:         "endpoint with empty path",
+			resourceName: "Companies",
+			endpointPath: "",
+			expectedPath: "/companies",
+		},
+		{
+			name:         "endpoint with search path no params",
+			resourceName: "Products",
+			endpointPath: "/_search",
+			expectedPath: "/products/_search",
+		},
+		{
+			name:         "PascalCase resource name converted to kebab-case with params",
+			resourceName: "StudentPlacement",
+			endpointPath: "/{id}/details",
+			expectedPath: "/student-placement/:id/details",
+		},
+		{
+			name:         "complex path with nested resources",
+			resourceName: "Schools",
+			endpointPath: "/{schoolId}/students/{studentId}/grades/{gradeId}",
+			expectedPath: "/schools/:schoolId/students/:studentId/grades/:gradeId",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			endpoint := Endpoint{
+				Name: "TestEndpoint",
+				Path: tc.endpointPath,
+			}
+
+			result := endpoint.GetGinPath(tc.resourceName)
+			assert.Equal(t, tc.expectedPath, result, "Gin path should match expected format")
+		})
+	}
+}
+
 func TestEndpoint_SummaryField(t *testing.T) {
 	t.Run("endpoint with summary field marshaling and unmarshaling", func(t *testing.T) {
 		endpoint := Endpoint{

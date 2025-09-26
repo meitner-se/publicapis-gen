@@ -1458,6 +1458,16 @@ func (e Endpoint) GetFullPath(resourceName string) string {
 	return pathSeparator + toKebabCase(resourceName) + e.Path
 }
 
+// GetGinPath returns the full path for the endpoint formatted for Gin server with colon-style path parameters.
+func (e Endpoint) GetGinPath(resourceName string) string {
+	fullPath := e.GetFullPath(resourceName)
+	// Convert OpenAPI path parameters {param} to Gin format :param
+	// Use a regular expression to replace all {param} with :param
+	ginPath := strings.ReplaceAll(fullPath, "{", ":")
+	ginPath = strings.ReplaceAll(ginPath, "}", "")
+	return ginPath
+}
+
 func (e Endpoint) GetPathParamsType(resourceName string) string {
 	if len(e.Request.PathParams) > 0 {
 		return resourceName + e.Name + "PathParams"

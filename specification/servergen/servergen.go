@@ -191,7 +191,7 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 			if endpoint.HasResponseType() {
 				buf.WriteString(fmt.Sprintf("\trouterGroup.%s(\"%s\", serveWithResponse(%d, api.Server, api.%s.%s))\n",
 					endpoint.Method,
-					endpoint.GetFullPath(resource.Name),
+					endpoint.GetGinPath(resource.Name),
 					endpoint.Response.StatusCode,
 					resource.Name,
 					endpoint.Name,
@@ -199,7 +199,7 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 			} else {
 				buf.WriteString(fmt.Sprintf("\trouterGroup.%s(\"%s\", serveWithoutResponse(%d, api.Server, api.%s.%s))\n",
 					endpoint.Method,
-					endpoint.GetFullPath(resource.Name),
+					endpoint.GetGinPath(resource.Name),
 					endpoint.Response.StatusCode,
 					resource.Name,
 					endpoint.Name,

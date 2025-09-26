@@ -634,7 +634,7 @@ func TestGenerateServerFunc(t *testing.T) {
 	// Check endpoint registration (note: generates singular paths)
 	assert.Contains(t, generatedCode, `routerGroup.POST("/user", serveWithResponse(201, api.Server, api.User.CreateUser))`,
 		"Should register POST endpoint with response")
-	assert.Contains(t, generatedCode, `routerGroup.DELETE("/user/{id}", serveWithoutResponse(204, api.Server, api.User.DeleteUser))`,
+	assert.Contains(t, generatedCode, `routerGroup.DELETE("/user/:id", serveWithoutResponse(204, api.Server, api.User.DeleteUser))`,
 		"Should register DELETE endpoint without response")
 
 	// Check type definitions
