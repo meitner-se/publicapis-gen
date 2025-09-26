@@ -750,8 +750,9 @@ func getObjectTestDataWithVisited(objectType string, service *specification.Serv
 			for _, field := range obj.Fields {
 				jsonKey := getJSONKey(field.Name)
 
-				// Skip nullable fields to avoid nil value issues in test data
+				// Include nullable fields with nil values to match JSON marshaling behavior
 				if field.IsNullable() {
+					fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": nil", jsonKey))
 					continue
 				}
 

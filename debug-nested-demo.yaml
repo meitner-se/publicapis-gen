@@ -1,0 +1,2 @@
+- specification: testdata/school-management-api.yaml
+  server_go: /tmp/debug_nested.go
