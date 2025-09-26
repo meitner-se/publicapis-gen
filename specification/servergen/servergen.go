@@ -304,7 +304,7 @@ func generateRequestTypes(buf *bytes.Buffer, service *specification.Service) err
 			if len(endpoint.Request.QueryParams) > 0 {
 				buf.WriteString(fmt.Sprintf("type %s struct {\n", endpoint.GetQueryParamsType(resource.Name)))
 				for _, field := range endpoint.Request.QueryParams {
-					buf.WriteString(fmt.Sprintf("\t%s %s `form:\"%s\"`\n", field.Name, getTypeForGo(field, service), field.TagJSON()))
+					buf.WriteString(fmt.Sprintf("\t%s %s `form:\"%s\" json:\"%s\"`\n", field.Name, getTypeForGo(field, service), field.TagJSON(), field.TagJSON()))
 				}
 				buf.WriteString("}\n\n")
 			}
@@ -391,9 +391,10 @@ func generateUtils(buf *bytes.Buffer) error {
 			return
 		}
 
-		err := server.ConvertErrorFunc(function(c.Request.Context(), request), requestID)
+		err := function(c.Request.Context(), request)
 		if err != nil {
-			c.JSON(err.HTTPStatusCode(), err)
+			apiError := server.ConvertErrorFunc(err, requestID)
+			c.JSON(apiError.HTTPStatusCode(), apiError)
 			return
 		}
 		
@@ -416,8 +417,9 @@ func generateUtils(buf *bytes.Buffer) error {
 	session, err := getSession(c.Request.Context(), c.Request.Header, requestID)
 	if err != nil {
 		return nilRequest, &Error{
-			Code:    ErrorCodeUnauthorized,
-			Message: types.NewString(err.Error()),
+			Code:      ErrorCodeUnauthorized,
+			Message:   types.NewString(err.Error()),
+			RequestID: types.NewString(requestID),
 		}
 	}
 
@@ -430,8 +432,9 @@ func generateUtils(buf *bytes.Buffer) error {
 		bodyParams, err := decodeBodyParams[bodyParamsType](c.Request)
 		if err != nil {
 			return nilRequest, &Error{
-				Code:    ErrorCodeBadRequest,
-				Message: types.NewString("cannot decode json body params: " + err.Error()),
+				Code:      ErrorCodeBadRequest,
+				Message:   types.NewString("cannot decode json body params: " + err.Error()),
+				RequestID: types.NewString(requestID),
 			}
 		}
 
@@ -442,8 +445,9 @@ func generateUtils(buf *bytes.Buffer) error {
 		pathParams, err := decodePathParams[pathParamsType](c)
 		if err != nil {
 			return nilRequest, &Error{
-				Code:    ErrorCodeBadRequest,
-				Message: types.NewString("cannot decode path params: " + err.Error()),
+				Code:      ErrorCodeBadRequest,
+				Message:   types.NewString("cannot decode path params: " + err.Error()),
+				RequestID: types.NewString(requestID),
 			}
 		}
 
@@ -454,8 +458,9 @@ func generateUtils(buf *bytes.Buffer) error {
 		queryParams, err := decodeQueryParams[queryParamsType](c)
 		if err != nil {
 			return nilRequest, &Error{
-				Code:    ErrorCodeBadRequest,
-				Message: types.NewString("cannot decode query params: " + err.Error()),
+				Code:      ErrorCodeBadRequest,
+				Message:   types.NewString("cannot decode query params: " + err.Error()),
+				RequestID: types.NewString(requestID),
 			}
 		}
 
