@@ -83,7 +83,7 @@ func TestGenerateTests(t *testing.T) {
 	buf := &bytes.Buffer{}
 
 	// Act
-	err := GenerateTests(buf, service, packageName, "api")
+	err := GenerateTests(buf, service, packageName, "api", "./api")
 
 	// Assert
 	assert.Nil(t, err, "Expected no error when generating tests")
@@ -138,7 +138,7 @@ func TestGenerateTests(t *testing.T) {
 			buf := &bytes.Buffer{}
 
 			// Act
-			err := GenerateTests(buf, emptyService, packageName, "api")
+			err := GenerateTests(buf, emptyService, packageName, "api", "./api")
 
 			// Assert
 			assert.Nil(t, err, "Expected no error with empty service")
@@ -153,7 +153,7 @@ func TestGenerateTests(t *testing.T) {
 			buf := &bytes.Buffer{}
 
 			// Act
-			err := GenerateTests(buf, service, customPackage, "api")
+			err := GenerateTests(buf, service, customPackage, "api", "./api")
 
 			// Assert
 			assert.Nil(t, err, "Expected no error with custom package")
@@ -167,7 +167,7 @@ func TestGenerateTests(t *testing.T) {
 			buf := &bytes.Buffer{}
 
 			// Act
-			err := GenerateTests(buf, service, packageName, "api")
+			err := GenerateTests(buf, service, packageName, "api", "./api")
 
 			// Assert
 			assert.Nil(t, err, "Expected no error")
@@ -187,7 +187,7 @@ func TestGenerateImports(t *testing.T) {
 	buf := &bytes.Buffer{}
 
 	// Act
-	err := generateImports(buf, "api")
+	err := generateImports(buf, "api", "./api")
 
 	// Assert
 	assert.Nil(t, err, "Expected no error when generating imports")
@@ -239,7 +239,7 @@ func TestGenerateEndpointTest(t *testing.T) {
 	buf := &bytes.Buffer{}
 
 	// Act
-	err := generateEndpointTest(buf, service, resource, endpoint)
+	err := generateEndpointTest(buf, service, resource, endpoint, "api")
 
 	// Assert
 	assert.Nil(t, err, "Expected no error when generating endpoint test")
@@ -260,7 +260,7 @@ func TestGenerateEndpointTest(t *testing.T) {
 			buf := &bytes.Buffer{}
 
 			// Act
-			err := generateEndpointTest(buf, service, resource, endpoint)
+			err := generateEndpointTest(buf, service, resource, endpoint, "api")
 
 			// Assert
 			assert.Nil(t, err, "Expected no error")
@@ -277,7 +277,7 @@ func TestGenerateEndpointTest(t *testing.T) {
 			buf := &bytes.Buffer{}
 
 			// Act
-			err := generateEndpointTest(buf, service, resource, endpoint)
+			err := generateEndpointTest(buf, service, resource, endpoint, "api")
 
 			// Assert
 			assert.Nil(t, err, "Expected no error")
@@ -294,7 +294,7 @@ func TestGenerateEndpointTest(t *testing.T) {
 			buf := &bytes.Buffer{}
 
 			// Act
-			err := generateEndpointTest(buf, service, resource, endpoint)
+			err := generateEndpointTest(buf, service, resource, endpoint, "api")
 
 			// Assert
 			assert.Nil(t, err, "Expected no error")
@@ -315,7 +315,7 @@ func TestGenerateHelperFunctions(t *testing.T) {
 	buf := &bytes.Buffer{}
 
 	// Act
-	err := generateHelperFunctions(buf, service)
+	err := generateHelperFunctions(buf, service, "api")
 
 	// Assert
 	assert.Nil(t, err, "Expected no error when generating helper functions")
@@ -336,7 +336,7 @@ func TestGenerateHelperFunctions(t *testing.T) {
 			buf := &bytes.Buffer{}
 
 			// Act
-			err := generateHelperFunctions(buf, serviceNoResources)
+			err := generateHelperFunctions(buf, serviceNoResources, "api")
 
 			// Assert
 			assert.Nil(t, err, "Expected no error with no resources")
@@ -360,7 +360,7 @@ func TestGenerateHelperFunctions(t *testing.T) {
 			buf := &bytes.Buffer{}
 
 			// Act
-			err := generateHelperFunctions(buf, serviceNoEndpoints)
+			err := generateHelperFunctions(buf, serviceNoEndpoints, "api")
 
 			// Assert
 			assert.Nil(t, err, "Expected no error with no endpoints")
