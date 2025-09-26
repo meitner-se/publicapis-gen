@@ -50,13 +50,13 @@ const (
 	expectedMockImport     = "\"github.com/stretchr/testify/mock\""
 
 	// Test function constants
-	expectedTestFunction      = "func TestStudentCreateStudent(t *testing.T) {"
-	expectedTestConstants     = "const ("
-	expectedTestRequestID        = "testRequestID = \"test-request-id-123\""
-	expectedTestSessionUserID    = "testSessionUserID = \"test-session-user-id\""
-	expectedTestRequestIDFormatted    = "testRequestID     = \"test-request-id-123\""
+	expectedTestFunction               = "func TestStudentCreateStudent(t *testing.T) {"
+	expectedTestConstants              = "const ("
+	expectedTestRequestID              = "testRequestID = \"test-request-id-123\""
+	expectedTestSessionUserID          = "testSessionUserID = \"test-session-user-id\""
+	expectedTestRequestIDFormatted     = "testRequestID     = \"test-request-id-123\""
 	expectedTestSessionUserIDFormatted = "testSessionUserID = \"test-session-user-id\""
-	expectedGinTestMode       = "gin.SetMode(gin.TestMode)"
+	expectedGinTestMode                = "gin.SetMode(gin.TestMode)"
 
 	// Mock constants
 	expectedMockInterface  = "type MockStudentAPI struct {"
