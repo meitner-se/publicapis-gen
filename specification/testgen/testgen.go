@@ -664,7 +664,12 @@ func getObjectTestDataWithVisited(objectType string, service *specification.Serv
 	visited[objectType] = true
 
 	// For filter objects, create empty structures to avoid complex nested data
-	if strings.Contains(objectType, "Filter") {
+	if strings.Contains(objectType, "Filter") ||
+		strings.HasSuffix(objectType, "FilterEquals") ||
+		strings.HasSuffix(objectType, "FilterRange") ||
+		strings.HasSuffix(objectType, "FilterContains") ||
+		strings.HasSuffix(objectType, "FilterLike") ||
+		strings.HasSuffix(objectType, "FilterNull") {
 		return ""
 	}
 	// Find the object definition
@@ -673,6 +678,11 @@ func getObjectTestDataWithVisited(objectType string, service *specification.Serv
 			var fields []string
 			for _, field := range obj.Fields {
 				jsonKey := getJSONKey(field.Name)
+
+				// Skip nullable fields to avoid nil value issues in test data
+				if field.IsNullable() {
+					continue
+				}
 
 				if field.IsArray() {
 					// Handle array fields in objects
