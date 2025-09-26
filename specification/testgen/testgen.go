@@ -703,7 +703,7 @@ func generateMockMethod(buf *bytes.Buffer, resource specification.Resource, endp
 		buf.WriteString(fmt.Sprintf("\tif m.%sFunc != nil {\n", methodName))
 		buf.WriteString(fmt.Sprintf("\t\treturn m.%sFunc(ctx, request)\n", methodName))
 		buf.WriteString("\t}\n")
-		buf.WriteString(fmt.Sprintf("\treturn nil, nil\n"))
+		buf.WriteString("\treturn nil, nil\n")
 	} else {
 		buf.WriteString(fmt.Sprintf("func (m *Mock%sAPI) %s(ctx context.Context, request %s.Request[any, %s, %s, %s]) error {\n",
 			resource.Name, methodName, apiPackageName,
@@ -727,12 +727,6 @@ func getAPITypeReference(typeName string, apiPackageName string) string {
 		return "struct{}"
 	}
 	return apiPackageName + "." + typeName
-}
-
-// getObjectTestData generates test data for a custom object type.
-func getObjectTestData(objectType string, service *specification.Service) string {
-	visited := make(map[string]bool)
-	return getObjectTestDataWithVisited(objectType, service, visited)
 }
 
 // getObjectTestDataWithVisited generates test data for a custom object type with recursion protection.
@@ -1426,7 +1420,7 @@ func generateInternalMockMethod(buf *bytes.Buffer, resource specification.Resour
 		buf.WriteString(fmt.Sprintf("\tif m.%sFunc != nil {\n", methodName))
 		buf.WriteString(fmt.Sprintf("\t\treturn m.%sFunc(ctx, request)\n", methodName))
 		buf.WriteString("\t}\n")
-		buf.WriteString(fmt.Sprintf("\treturn nil, nil\n"))
+		buf.WriteString("\treturn nil, nil\n")
 	} else {
 		buf.WriteString(fmt.Sprintf("func (m *Mock%sAPI) %s(ctx context.Context, request Request[any, %s, %s, %s]) error {\n",
 			resource.Name, methodName,

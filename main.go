@@ -429,7 +429,7 @@ func processJob(ctx context.Context, job Job) error {
 
 		// Automatically generate internal tests for the server
 		testFilePath := generateTestFilePath(job.ServerGo)
-		if err := generateInternalTestsFromSpecification(ctx, service, job.Specification, testFilePath, job.ServerPackage); err != nil {
+		if err := generateInternalTestsFromSpecification(ctx, service, job.Specification, testFilePath); err != nil {
 			return fmt.Errorf("failed to generate Go tests to '%s': %w", testFilePath, err)
 		}
 	}
@@ -714,12 +714,12 @@ func generateTestFilePath(serverGoPath string) string {
 }
 
 // generateInternalTestsFromSpecification generates internal HTTP API tests from a service specification using testgen.
-func generateInternalTestsFromSpecification(ctx context.Context, service *specification.Service, specPath, outputPath, packageName string) error {
+func generateInternalTestsFromSpecification(ctx context.Context, service *specification.Service, specPath, outputPath string) error {
 	slog.InfoContext(ctx, "Generating internal Go test code from specification using testgen", logKeyMode, "test")
 
 	// Internal tests should always use "api" package name to match servergen
 	// This ensures they can access unexported functions and are truly internal tests
-	packageName = "api"
+	packageName := "api"
 
 	// Generate test code using testgen (internal tests don't need imports)
 	var buf bytes.Buffer
@@ -733,42 +733,6 @@ func generateInternalTestsFromSpecification(ctx context.Context, service *specif
 	}
 
 	slog.InfoContext(ctx, "Successfully generated internal Go test code", logKeyFile, outputPath)
-	fmt.Printf("Go test code generated: %s\n", outputPath)
-
-	return nil
-}
-
-// generateTestsFromSpecification generates HTTP API tests from a service specification using testgen.
-func generateTestsFromSpecification(ctx context.Context, service *specification.Service, specPath, outputPath, packageName, serverPackage, testImport string) error {
-	slog.InfoContext(ctx, "Generating Go test code from specification using testgen", logKeyMode, "test")
-
-	// Default package name if not provided
-	if packageName == "" {
-		packageName = "main"
-	}
-
-	// Default server package name if not provided (this will be the API package name)
-	if serverPackage == "" {
-		serverPackage = "api"
-	}
-
-	// Default test import if not provided
-	if testImport == "" {
-		testImport = "./api"
-	}
-
-	// Generate test code using testgen
-	var buf bytes.Buffer
-	if err := testgen.GenerateTests(&buf, service, packageName, serverPackage, testImport); err != nil {
-		return fmt.Errorf("failed to generate test code: %w", err)
-	}
-
-	// Write the generated code to file
-	if err := os.WriteFile(outputPath, buf.Bytes(), 0644); err != nil {
-		return fmt.Errorf("%s: %w", errorFileWrite, err)
-	}
-
-	slog.InfoContext(ctx, "Successfully generated Go test code", logKeyFile, outputPath)
 	fmt.Printf("Go test code generated: %s\n", outputPath)
 
 	return nil
