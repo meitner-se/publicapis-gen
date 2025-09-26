@@ -221,7 +221,7 @@ func Test_run(t *testing.T) {
 		assert.Contains(t, testContentStr, "package api", "Generated test should use same package as server")
 		assert.Contains(t, testContentStr, "func TestStudents", "Generated test should contain endpoint tests")
 		assert.Contains(t, testContentStr, "type MockStudentsAPI struct", "Generated test should contain mock interfaces")
-		assert.Contains(t, testContentStr, "func TestServeWithResponse(t *testing.T)", "Generated test should contain utility function tests")
+		assert.Contains(t, testContentStr, "func Test_serveWithResponse(t *testing.T)", "Generated test should contain utility function tests")
 		assert.NotContains(t, testContentStr, "api.Request", "Generated test should not use package prefixes")
 		assert.Contains(t, testContentStr, "var capturedRequest Request[any,", "Generated test should use Request type without prefix")
 	})

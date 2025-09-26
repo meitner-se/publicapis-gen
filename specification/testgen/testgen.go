@@ -913,7 +913,7 @@ func generateUtilityTests(buf *bytes.Buffer, service *specification.Service, api
 
 // generateServeWithResponseTest generates test for serveWithResponse function.
 func generateServeWithResponseTest(buf *bytes.Buffer, apiPackageName string) error {
-	buf.WriteString("func TestServeWithResponse(t *testing.T) {\n")
+	buf.WriteString("func Test_serveWithResponse(t *testing.T) {\n")
 	buf.WriteString("\tgin.SetMode(gin.TestMode)\n")
 	buf.WriteString("\trouter := gin.New()\n\n")
 
@@ -956,7 +956,7 @@ func generateServeWithResponseTest(buf *bytes.Buffer, apiPackageName string) err
 
 // generateServeWithoutResponseTest generates test for serveWithoutResponse function.
 func generateServeWithoutResponseTest(buf *bytes.Buffer, apiPackageName string) error {
-	buf.WriteString("func TestServeWithoutResponse(t *testing.T) {\n")
+	buf.WriteString("func Test_serveWithoutResponse(t *testing.T) {\n")
 	buf.WriteString("\tgin.SetMode(gin.TestMode)\n")
 	buf.WriteString("\trouter := gin.New()\n\n")
 
@@ -998,7 +998,7 @@ func generateServeWithoutResponseTest(buf *bytes.Buffer, apiPackageName string) 
 
 // generateParseRequestTest generates test for parseRequest function.
 func generateParseRequestTest(buf *bytes.Buffer, apiPackageName string) error {
-	buf.WriteString("func TestParseRequest(t *testing.T) {\n")
+	buf.WriteString("func Test_parseRequest(t *testing.T) {\n")
 	buf.WriteString("\tgin.SetMode(gin.TestMode)\n")
 	buf.WriteString("\tc, _ := gin.CreateTestContext(httptest.NewRecorder())\n\n")
 
@@ -1027,7 +1027,7 @@ func generateParseRequestTest(buf *bytes.Buffer, apiPackageName string) error {
 
 // generateDecodeBodyParamsTest generates test for decodeBodyParams function.
 func generateDecodeBodyParamsTest(buf *bytes.Buffer, apiPackageName string) error {
-	buf.WriteString("func TestDecodeBodyParams(t *testing.T) {\n")
+	buf.WriteString("func Test_decodeBodyParams(t *testing.T) {\n")
 	buf.WriteString("\ttestBody := `{\"name\": \"test\", \"age\": 25}`\n")
 	buf.WriteString("\treq, err := http.NewRequest(\"POST\", \"/test\", strings.NewReader(testBody))\n")
 	buf.WriteString("\treq.Header.Set(\"Content-Type\", \"application/json\")\n")
@@ -1045,7 +1045,7 @@ func generateDecodeBodyParamsTest(buf *bytes.Buffer, apiPackageName string) erro
 
 // generateDecodePathParamsTest generates test for decodePathParams function.
 func generateDecodePathParamsTest(buf *bytes.Buffer, apiPackageName string) error {
-	buf.WriteString("func TestDecodePathParams(t *testing.T) {\n")
+	buf.WriteString("func Test_decodePathParams(t *testing.T) {\n")
 	buf.WriteString("\tgin.SetMode(gin.TestMode)\n")
 	buf.WriteString("\tc, _ := gin.CreateTestContext(httptest.NewRecorder())\n")
 	buf.WriteString("\tc.Params = []gin.Param{\n")
@@ -1065,7 +1065,7 @@ func generateDecodePathParamsTest(buf *bytes.Buffer, apiPackageName string) erro
 
 // generateDecodeQueryParamsTest generates test for decodeQueryParams function.
 func generateDecodeQueryParamsTest(buf *bytes.Buffer, apiPackageName string) error {
-	buf.WriteString("func TestDecodeQueryParams(t *testing.T) {\n")
+	buf.WriteString("func Test_decodeQueryParams(t *testing.T) {\n")
 	buf.WriteString("\tgin.SetMode(gin.TestMode)\n")
 	buf.WriteString("\tc, _ := gin.CreateTestContext(httptest.NewRecorder())\n")
 	buf.WriteString("\treq, err := http.NewRequest(\"GET\", \"/test?limit=10&offset=0&active=true\", nil)\n")
@@ -1383,7 +1383,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("// ============================================================================\n\n")
 
 	// Test serveWithResponse (no package prefixes)
-	buf.WriteString("func TestServeWithResponse(t *testing.T) {\n")
+	buf.WriteString("func Test_serveWithResponse(t *testing.T) {\n")
 	buf.WriteString("\tgin.SetMode(gin.TestMode)\n")
 	buf.WriteString("\trouter := gin.New()\n\n")
 
@@ -1422,7 +1422,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("}\n\n")
 
 	// Test serveWithoutResponse
-	buf.WriteString("func TestServeWithoutResponse(t *testing.T) {\n")
+	buf.WriteString("func Test_serveWithoutResponse(t *testing.T) {\n")
 	buf.WriteString("\tgin.SetMode(gin.TestMode)\n")
 	buf.WriteString("\trouter := gin.New()\n\n")
 
@@ -1460,7 +1460,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("}\n\n")
 
 	// Test parseRequest
-	buf.WriteString("func TestParseRequest(t *testing.T) {\n")
+	buf.WriteString("func Test_parseRequest(t *testing.T) {\n")
 	buf.WriteString("\tgin.SetMode(gin.TestMode)\n")
 	buf.WriteString("\tc, _ := gin.CreateTestContext(httptest.NewRecorder())\n\n")
 
@@ -1485,7 +1485,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("}\n\n")
 
 	// Test decodeBodyParams
-	buf.WriteString("func TestDecodeBodyParams(t *testing.T) {\n")
+	buf.WriteString("func Test_decodeBodyParams(t *testing.T) {\n")
 	buf.WriteString("\ttestBody := `{\"name\": \"test\", \"age\": 25}`\n")
 	buf.WriteString("\treq, err := http.NewRequest(\"POST\", \"/test\", strings.NewReader(testBody))\n")
 	buf.WriteString("\treq.Header.Set(\"Content-Type\", \"application/json\")\n")
@@ -1499,7 +1499,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("}\n\n")
 
 	// Test decodePathParams
-	buf.WriteString("func TestDecodePathParams(t *testing.T) {\n")
+	buf.WriteString("func Test_decodePathParams(t *testing.T) {\n")
 	buf.WriteString("\tgin.SetMode(gin.TestMode)\n")
 	buf.WriteString("\tc, _ := gin.CreateTestContext(httptest.NewRecorder())\n")
 	buf.WriteString("\tc.Params = []gin.Param{\n")
@@ -1515,7 +1515,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("}\n\n")
 
 	// Test decodeQueryParams
-	buf.WriteString("func TestDecodeQueryParams(t *testing.T) {\n")
+	buf.WriteString("func Test_decodeQueryParams(t *testing.T) {\n")
 	buf.WriteString("\tgin.SetMode(gin.TestMode)\n")
 	buf.WriteString("\tc, _ := gin.CreateTestContext(httptest.NewRecorder())\n")
 	buf.WriteString("\treq, err := http.NewRequest(\"GET\", \"/test?limit=10&offset=0&active=true\", nil)\n")

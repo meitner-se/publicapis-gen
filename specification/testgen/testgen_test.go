@@ -109,12 +109,12 @@ func TestGenerateInternalTests(t *testing.T) {
 	assert.Contains(t, generatedCode, "func (m *MockStudentAPI) CreateStudent(", "Should generate mock method")
 
 	// Check utility function tests (no package prefixes)
-	assert.Contains(t, generatedCode, "func TestServeWithResponse(t *testing.T) {", "Should generate serveWithResponse test")
-	assert.Contains(t, generatedCode, "func TestServeWithoutResponse(t *testing.T) {", "Should generate serveWithoutResponse test")
-	assert.Contains(t, generatedCode, "func TestParseRequest(t *testing.T) {", "Should generate parseRequest test")
-	assert.Contains(t, generatedCode, "func TestDecodeBodyParams(t *testing.T) {", "Should generate decodeBodyParams test")
-	assert.Contains(t, generatedCode, "func TestDecodePathParams(t *testing.T) {", "Should generate decodePathParams test")
-	assert.Contains(t, generatedCode, "func TestDecodeQueryParams(t *testing.T) {", "Should generate decodeQueryParams test")
+	assert.Contains(t, generatedCode, "func Test_serveWithResponse(t *testing.T) {", "Should generate serveWithResponse test")
+	assert.Contains(t, generatedCode, "func Test_serveWithoutResponse(t *testing.T) {", "Should generate serveWithoutResponse test")
+	assert.Contains(t, generatedCode, "func Test_parseRequest(t *testing.T) {", "Should generate parseRequest test")
+	assert.Contains(t, generatedCode, "func Test_decodeBodyParams(t *testing.T) {", "Should generate decodeBodyParams test")
+	assert.Contains(t, generatedCode, "func Test_decodePathParams(t *testing.T) {", "Should generate decodePathParams test")
+	assert.Contains(t, generatedCode, "func Test_decodeQueryParams(t *testing.T) {", "Should generate decodeQueryParams test")
 
 	// Verify no package prefixes are used
 	assert.Contains(t, generatedCode, "handler := serveWithResponse(", "Should call serveWithResponse without prefix")
