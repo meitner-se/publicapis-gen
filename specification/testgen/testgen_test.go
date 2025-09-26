@@ -47,7 +47,6 @@ const (
 	expectedUUIDImport     = "\"github.com/google/uuid\""
 	expectedTypesImport    = "\"github.com/meitner-se/go-types\""
 	expectedTestifyImport  = "\"github.com/stretchr/testify/assert\""
-	expectedMockImport     = "\"github.com/stretchr/testify/mock\""
 
 	// Test function constants
 	expectedTestFunction               = "func TestStudentCreateStudent(t *testing.T) {"
@@ -61,7 +60,8 @@ const (
 	// Mock constants
 	expectedMockInterface  = "type MockStudentAPI struct {"
 	expectedMockMethod     = "func (m *MockStudentAPI) CreateStudent"
-	expectedMockAssertions = "mockStudentAPI.AssertExpectations(t)"
+	expectedFuncField      = "CreateStudentFunc func(ctx context.Context"
+	expectedRequestCapture = "capturedRequest = request"
 
 	// HTTP request constants
 	expectedHTTPRequest       = "http.NewRequestWithContext(ctx, \"POST\""
@@ -103,7 +103,6 @@ func TestGenerateTests(t *testing.T) {
 	assert.Contains(t, generatedCode, expectedUUIDImport, "Generated code should import uuid")
 	assert.Contains(t, generatedCode, expectedTypesImport, "Generated code should import go-types")
 	assert.Contains(t, generatedCode, expectedTestifyImport, "Generated code should import testify assert")
-	assert.Contains(t, generatedCode, expectedMockImport, "Generated code should import testify mock")
 
 	// Verify test constants
 	assert.Contains(t, generatedCode, expectedTestConstants, "Generated code should contain test constants")
@@ -117,7 +116,8 @@ func TestGenerateTests(t *testing.T) {
 	// Verify mock generation
 	assert.Contains(t, generatedCode, expectedMockInterface, "Generated code should contain mock interface")
 	assert.Contains(t, generatedCode, expectedMockMethod, "Generated code should contain mock method")
-	assert.Contains(t, generatedCode, expectedMockAssertions, "Generated code should contain mock assertions")
+	assert.Contains(t, generatedCode, expectedFuncField, "Generated code should contain function field")
+	assert.Contains(t, generatedCode, expectedRequestCapture, "Generated code should capture request")
 
 	// Verify HTTP request generation
 	assert.Contains(t, generatedCode, expectedHTTPRequest, "Generated code should contain HTTP request creation")
@@ -200,7 +200,6 @@ func TestGenerateImports(t *testing.T) {
 	assert.Contains(t, generatedCode, expectedUUIDImport, "Should import uuid")
 	assert.Contains(t, generatedCode, expectedTypesImport, "Should import go-types")
 	assert.Contains(t, generatedCode, expectedTestifyImport, "Should import testify assert")
-	assert.Contains(t, generatedCode, expectedMockImport, "Should import testify mock")
 }
 
 // ============================================================================
@@ -321,7 +320,7 @@ func TestGenerateHelperFunctions(t *testing.T) {
 	generatedCode := buf.String()
 	assert.Contains(t, generatedCode, expectedMockInterface, "Should generate mock interface")
 	assert.Contains(t, generatedCode, expectedMockMethod, "Should generate mock method")
-	assert.Contains(t, generatedCode, "mock.Mock", "Should embed mock.Mock")
+	assert.Contains(t, generatedCode, expectedFuncField, "Should generate function field")
 
 	t.Run("edge cases", func(t *testing.T) {
 		t.Run("service with no resources", func(t *testing.T) {

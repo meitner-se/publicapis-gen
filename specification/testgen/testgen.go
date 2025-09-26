@@ -75,7 +75,6 @@ func generateImports(buf *bytes.Buffer) error {
 	buf.WriteString("\t\"github.com/google/uuid\"\n")
 	buf.WriteString("\t\"github.com/meitner-se/go-types\"\n")
 	buf.WriteString("\t\"github.com/stretchr/testify/assert\"\n")
-	buf.WriteString("\t\"github.com/stretchr/testify/mock\"\n")
 	buf.WriteString(")\n\n")
 
 	return nil
@@ -100,6 +99,7 @@ func generateEndpointTest(buf *bytes.Buffer, service *specification.Service, res
 
 	buf.WriteString(fmt.Sprintf("// %s tests the %s endpoint for %s\n", testName, endpoint.Name, resource.Name))
 	buf.WriteString(fmt.Sprintf("func %s(t *testing.T) {\n", testName))
+	buf.WriteString("\tt.Run(\"Request\", func(t *testing.T) {\n")
 
 	// Generate test setup
 	err := generateTestSetup(buf, service, resource, endpoint)
@@ -131,6 +131,7 @@ func generateEndpointTest(buf *bytes.Buffer, service *specification.Service, res
 		return err
 	}
 
+	buf.WriteString("\t})\n")
 	buf.WriteString("}\n\n")
 
 	return nil
@@ -138,13 +139,13 @@ func generateEndpointTest(buf *bytes.Buffer, service *specification.Service, res
 
 // generateTestSetup generates the test setup section.
 func generateTestSetup(buf *bytes.Buffer, service *specification.Service, resource specification.Resource, endpoint specification.Endpoint) error {
-	buf.WriteString("\t// Arrange\n")
-	buf.WriteString("\tgin.SetMode(gin.TestMode)\n")
-	buf.WriteString("\tctx := context.Background()\n\n")
+	buf.WriteString("\t\t// Arrange\n")
+	buf.WriteString("\t\tgin.SetMode(gin.TestMode)\n")
+	buf.WriteString("\t\tctx := context.Background()\n\n")
 
 	// Generate test data for path parameters
 	if len(endpoint.Request.PathParams) > 0 {
-		buf.WriteString("\t// Path parameters\n")
+		buf.WriteString("\t\t// Path parameters\n")
 		for _, param := range endpoint.Request.PathParams {
 			err := generateTestParameterValue(buf, param, "path")
 			if err != nil {
@@ -156,7 +157,7 @@ func generateTestSetup(buf *bytes.Buffer, service *specification.Service, resour
 
 	// Generate test data for query parameters
 	if len(endpoint.Request.QueryParams) > 0 {
-		buf.WriteString("\t// Query parameters\n")
+		buf.WriteString("\t\t// Query parameters\n")
 		for _, param := range endpoint.Request.QueryParams {
 			err := generateTestParameterValue(buf, param, "query")
 			if err != nil {
@@ -168,7 +169,7 @@ func generateTestSetup(buf *bytes.Buffer, service *specification.Service, resour
 
 	// Generate test data for body parameters
 	if len(endpoint.Request.BodyParams) > 0 {
-		buf.WriteString("\t// Body parameters\n")
+		buf.WriteString("\t\t// Body parameters\n")
 		err := generateTestBody(buf, endpoint.Request.BodyParams)
 		if err != nil {
 			return err
@@ -185,28 +186,28 @@ func generateTestParameterValue(buf *bytes.Buffer, param specification.Field, pa
 
 	switch param.Type {
 	case "UUID":
-		buf.WriteString(fmt.Sprintf("\t%s := uuid.New().String()\n", varName))
+		buf.WriteString(fmt.Sprintf("\t\t%s := uuid.New().String()\n", varName))
 	case "String":
 		defaultValue := "test-value"
 		if param.Example != "" {
 			defaultValue = param.Example
 		}
-		buf.WriteString(fmt.Sprintf("\t%s := \"%s\"\n", varName, defaultValue))
+		buf.WriteString(fmt.Sprintf("\t\t%s := \"%s\"\n", varName, defaultValue))
 	case "Int":
 		defaultValue := "123"
 		if param.Example != "" {
 			defaultValue = param.Example
 		}
-		buf.WriteString(fmt.Sprintf("\t%s := %s\n", varName, defaultValue))
+		buf.WriteString(fmt.Sprintf("\t\t%s := %s\n", varName, defaultValue))
 	case "Bool":
 		defaultValue := "true"
 		if param.Example != "" {
 			defaultValue = param.Example
 		}
-		buf.WriteString(fmt.Sprintf("\t%s := %s\n", varName, defaultValue))
+		buf.WriteString(fmt.Sprintf("\t\t%s := %s\n", varName, defaultValue))
 	default:
 		// For custom types, generate a basic string value
-		buf.WriteString(fmt.Sprintf("\t%s := \"test-%s-value\"\n", varName, strings.ToLower(param.Name)))
+		buf.WriteString(fmt.Sprintf("\t\t%s := \"test-%s-value\"\n", varName, strings.ToLower(param.Name)))
 	}
 
 	return nil
@@ -214,50 +215,51 @@ func generateTestParameterValue(buf *bytes.Buffer, param specification.Field, pa
 
 // generateTestBody generates test data for request body.
 func generateTestBody(buf *bytes.Buffer, bodyParams []specification.Field) error {
-	buf.WriteString("\ttestBody := map[string]interface{}{\n")
+	buf.WriteString("\t\ttestBody := map[string]interface{}{\n")
 
 	for _, param := range bodyParams {
 		jsonKey := getJSONKey(param.Name)
 
 		switch param.Type {
 		case "UUID":
-			buf.WriteString(fmt.Sprintf("\t\t\"%s\": uuid.New().String(),\n", jsonKey))
+			buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": uuid.New().String(),\n", jsonKey))
 		case "String":
 			defaultValue := "test-value"
 			if param.Example != "" {
 				defaultValue = param.Example
 			}
-			buf.WriteString(fmt.Sprintf("\t\t\"%s\": \"%s\",\n", jsonKey, defaultValue))
+			buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": \"%s\",\n", jsonKey, defaultValue))
 		case "Int":
 			defaultValue := "123"
 			if param.Example != "" {
 				defaultValue = param.Example
 			}
-			buf.WriteString(fmt.Sprintf("\t\t\"%s\": %s,\n", jsonKey, defaultValue))
+			buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": %s,\n", jsonKey, defaultValue))
 		case "Bool":
 			defaultValue := "true"
 			if param.Example != "" {
 				defaultValue = param.Example
 			}
-			buf.WriteString(fmt.Sprintf("\t\t\"%s\": %s,\n", jsonKey, defaultValue))
+			buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": %s,\n", jsonKey, defaultValue))
 		default:
-			buf.WriteString(fmt.Sprintf("\t\t\"%s\": \"test-%s-value\",\n", jsonKey, strings.ToLower(param.Name)))
+			buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": \"test-%s-value\",\n", jsonKey, strings.ToLower(param.Name)))
 		}
 	}
 
-	buf.WriteString("\t}\n")
-	buf.WriteString("\ttestBodyBytes, err := json.Marshal(testBody)\n")
-	buf.WriteString("\tassert.NoError(t, err, \"Failed to marshal test body\")\n")
+	buf.WriteString("\t\t}\n")
+	buf.WriteString("\t\ttestBodyBytes, err := json.Marshal(testBody)\n")
+	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to marshal test body\")\n")
 
 	return nil
 }
 
-// generateMockSetup generates mock service setup.
+// generateMockSetup generates mock service setup that captures the request for parameter validation.
 func generateMockSetup(buf *bytes.Buffer, service *specification.Service, resource specification.Resource, endpoint specification.Endpoint) error {
-	buf.WriteString("\t// Mock service setup\n")
-	buf.WriteString(fmt.Sprintf("\tmock%sAPI := &Mock%sAPI{}\n", resource.Name, resource.Name))
+	buf.WriteString("\t\t// Mock service setup\n")
+	buf.WriteString("\t\tvar capturedRequest interface{}\n")
+	buf.WriteString(fmt.Sprintf("\t\tmock%sAPI := &Mock%sAPI{}\n", resource.Name, resource.Name))
 
-	// Generate expected method call setup
+	// Generate method setup that captures the incoming request
 	methodName := endpoint.Name
 	requestType := endpoint.GetRequestType(resource.Name)
 
@@ -266,21 +268,27 @@ func generateMockSetup(buf *bytes.Buffer, service *specification.Service, resour
 
 		// For endpoints that return an object reference, use that object
 		if endpoint.Response.BodyObject != nil {
-			buf.WriteString(fmt.Sprintf("\texpected%s := &%s{\n", responseType, *endpoint.Response.BodyObject))
-			buf.WriteString("\t\t// Add expected response fields here based on your needs\n")
-			buf.WriteString("\t}\n")
+			buf.WriteString(fmt.Sprintf("\t\texpected%s := &%s{\n", responseType, *endpoint.Response.BodyObject))
+			buf.WriteString("\t\t\t// Add expected response fields here based on your needs\n")
+			buf.WriteString("\t\t}\n")
 		} else if len(endpoint.Response.BodyFields) > 0 {
 			// For endpoints with response body fields, create response object
-			buf.WriteString(fmt.Sprintf("\texpected%s := &%s{\n", responseType, responseType))
-			buf.WriteString("\t\t// Add expected response fields here based on your needs\n")
-			buf.WriteString("\t}\n")
+			buf.WriteString(fmt.Sprintf("\t\texpected%s := &%s{\n", responseType, responseType))
+			buf.WriteString("\t\t\t// Add expected response fields here based on your needs\n")
+			buf.WriteString("\t\t}\n")
 		}
 
-		buf.WriteString(fmt.Sprintf("\tmock%sAPI.On(\"%s\", mock.AnythingOfType(\"context.Context\"), mock.AnythingOfType(\"%s[any]\")).Return(expected%s, nil)\n",
+		buf.WriteString(fmt.Sprintf("\t\tmock%sAPI.%sFunc = func(ctx context.Context, request %s[any]) (*%s, error) {\n",
 			resource.Name, methodName, requestType, responseType))
+		buf.WriteString("\t\t\tcapturedRequest = request\n")
+		buf.WriteString(fmt.Sprintf("\t\t\treturn expected%s, nil\n", responseType))
+		buf.WriteString("\t\t}\n")
 	} else {
-		buf.WriteString(fmt.Sprintf("\tmock%sAPI.On(\"%s\", mock.AnythingOfType(\"context.Context\"), mock.AnythingOfType(\"%s[any]\")).Return(nil)\n",
+		buf.WriteString(fmt.Sprintf("\t\tmock%sAPI.%sFunc = func(ctx context.Context, request %s[any]) error {\n",
 			resource.Name, methodName, requestType))
+		buf.WriteString("\t\t\tcapturedRequest = request\n")
+		buf.WriteString("\t\t\treturn nil\n")
+		buf.WriteString("\t\t}\n")
 	}
 
 	buf.WriteString("\n")
@@ -290,37 +298,37 @@ func generateMockSetup(buf *bytes.Buffer, service *specification.Service, resour
 
 // generateServerSetup generates HTTP server setup.
 func generateServerSetup(buf *bytes.Buffer, serviceName string, resource specification.Resource) error {
-	buf.WriteString("\t// Server setup\n")
-	buf.WriteString("\trouter := gin.New()\n")
-	buf.WriteString(fmt.Sprintf("\tapi := &%sAPI[any]{\n", serviceName))
-	buf.WriteString("\t\tServer: Server[any]{\n")
-	buf.WriteString("\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header, requestID string) (any, error) {\n")
-	buf.WriteString("\t\t\t\treturn testSessionUserID, nil\n")
+	buf.WriteString("\t\t// Server setup\n")
+	buf.WriteString("\t\trouter := gin.New()\n")
+	buf.WriteString(fmt.Sprintf("\t\tapi := &%sAPI[any]{\n", serviceName))
+	buf.WriteString("\t\t\tServer: Server[any]{\n")
+	buf.WriteString("\t\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header, requestID string) (any, error) {\n")
+	buf.WriteString("\t\t\t\t\treturn testSessionUserID, nil\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t\tConvertErrorFunc: func(err error, requestID string) *Error {\n")
+	buf.WriteString("\t\t\t\t\treturn &Error{\n")
+	buf.WriteString("\t\t\t\t\t\tCode:      ErrorCodeInternal,\n")
+	buf.WriteString("\t\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t\t\t}\n")
+	buf.WriteString("\t\t\t\t},\n")
 	buf.WriteString("\t\t\t},\n")
-	buf.WriteString("\t\t\tConvertErrorFunc: func(err error, requestID string) *Error {\n")
-	buf.WriteString("\t\t\t\treturn &Error{\n")
-	buf.WriteString("\t\t\t\t\tCode:      ErrorCodeInternal,\n")
-	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
-	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestID),\n")
-	buf.WriteString("\t\t\t\t}\n")
-	buf.WriteString("\t\t\t},\n")
-	buf.WriteString("\t\t},\n")
-	buf.WriteString(fmt.Sprintf("\t\t%s: mock%sAPI,\n", resource.Name, resource.Name))
-	buf.WriteString("\t}\n")
-	buf.WriteString(fmt.Sprintf("\tRegister%sAPI(router, api)\n", serviceName))
-	buf.WriteString("\tserver := httptest.NewServer(router)\n")
-	buf.WriteString("\tdefer server.Close()\n\n")
+	buf.WriteString(fmt.Sprintf("\t\t\t%s: mock%sAPI,\n", resource.Name, resource.Name))
+	buf.WriteString("\t\t}\n")
+	buf.WriteString(fmt.Sprintf("\t\tRegister%sAPI(router, api)\n", serviceName))
+	buf.WriteString("\t\tserver := httptest.NewServer(router)\n")
+	buf.WriteString("\t\tdefer server.Close()\n\n")
 
 	return nil
 }
 
 // generateHTTPRequest generates the HTTP request execution.
 func generateHTTPRequest(buf *bytes.Buffer, service *specification.Service, resource specification.Resource, endpoint specification.Endpoint) error {
-	buf.WriteString("\t// Act - Execute HTTP request\n")
+	buf.WriteString("\t\t// Act - Execute HTTP request\n")
 
 	// Build URL
 	path := endpoint.GetFullPath(resource.Name)
-	buf.WriteString(fmt.Sprintf("\turl := server.URL + \"/%s/%s%s\"\n", service.PathName(), service.Version, path))
+	buf.WriteString(fmt.Sprintf("\t\turl := server.URL + \"/%s/%s%s\"\n", service.PathName(), service.Version, path))
 
 	// Replace path parameters with actual values
 	if len(endpoint.Request.PathParams) > 0 {
@@ -381,11 +389,97 @@ func generateAssertions(buf *bytes.Buffer, service *specification.Service, resou
 		buf.WriteString("\tassert.NotNil(t, responseBody, \"Response body should not be nil\")\n")
 	}
 
-	// Verify mock was called
-	buf.WriteString(fmt.Sprintf("\t// Verify mock was called correctly\n"))
-	buf.WriteString(fmt.Sprintf("\tmock%sAPI.AssertExpectations(t)\n", resource.Name))
-	buf.WriteString(fmt.Sprintf("\tmock%sAPI.AssertCalled(t, \"%s\", mock.AnythingOfType(\"context.Context\"), mock.AnythingOfType(\"%s[any]\"))\n",
-		resource.Name, endpoint.Name, endpoint.GetRequestType(resource.Name)))
+	// Verify the request was captured and has correct parameters
+	buf.WriteString("\t// Verify request parameters were passed correctly\n")
+	buf.WriteString("\tassert.NotNil(t, capturedRequest, \"Request should have been captured\")\n")
+
+	requestType := endpoint.GetRequestType(resource.Name)
+	buf.WriteString(fmt.Sprintf("\trequest, ok := capturedRequest.(%s[any])\n", requestType))
+	buf.WriteString("\tassert.True(t, ok, \"Captured request should be of correct type\")\n\n")
+
+	// Assert path parameters
+	if len(endpoint.Request.PathParams) > 0 {
+		buf.WriteString("\t// Verify path parameters\n")
+		for _, param := range endpoint.Request.PathParams {
+			varName := fmt.Sprintf("test%s%s", "Path", strmangle.TitleCase(param.Name))
+			fieldName := strmangle.TitleCase(param.Name)
+
+			switch param.Type {
+			case "UUID":
+				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, %s, request.PathParams.%s.String(), \"Path parameter %s should match\")\n",
+					varName, fieldName, param.Name))
+			case "String":
+				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, %s, request.PathParams.%s.String(), \"Path parameter %s should match\")\n",
+					varName, fieldName, param.Name))
+			case "Int":
+				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, %s, request.PathParams.%s.Int(), \"Path parameter %s should match\")\n",
+					varName, fieldName, param.Name))
+			case "Bool":
+				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, %s, request.PathParams.%s.Bool(), \"Path parameter %s should match\")\n",
+					varName, fieldName, param.Name))
+			default:
+				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, %s, request.PathParams.%s, \"Path parameter %s should match\")\n",
+					varName, fieldName, param.Name))
+			}
+		}
+		buf.WriteString("\n")
+	}
+
+	// Assert query parameters
+	if len(endpoint.Request.QueryParams) > 0 {
+		buf.WriteString("\t// Verify query parameters\n")
+		for _, param := range endpoint.Request.QueryParams {
+			varName := fmt.Sprintf("test%s%s", "Query", strmangle.TitleCase(param.Name))
+			fieldName := strmangle.TitleCase(param.Name)
+
+			switch param.Type {
+			case "UUID":
+				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, %s, request.QueryParams.%s.String(), \"Query parameter %s should match\")\n",
+					varName, fieldName, param.Name))
+			case "String":
+				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, %s, request.QueryParams.%s.String(), \"Query parameter %s should match\")\n",
+					varName, fieldName, param.Name))
+			case "Int":
+				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, %s, request.QueryParams.%s.Int(), \"Query parameter %s should match\")\n",
+					varName, fieldName, param.Name))
+			case "Bool":
+				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, %s, request.QueryParams.%s.Bool(), \"Query parameter %s should match\")\n",
+					varName, fieldName, param.Name))
+			default:
+				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, %s, request.QueryParams.%s, \"Query parameter %s should match\")\n",
+					varName, fieldName, param.Name))
+			}
+		}
+		buf.WriteString("\n")
+	}
+
+	// Assert body parameters
+	if len(endpoint.Request.BodyParams) > 0 {
+		buf.WriteString("\t// Verify body parameters\n")
+		for _, param := range endpoint.Request.BodyParams {
+			fieldName := strmangle.TitleCase(param.Name)
+			jsonKey := getJSONKey(param.Name)
+
+			switch param.Type {
+			case "UUID":
+				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, testBody[\"%s\"], request.BodyParams.%s.String(), \"Body parameter %s should match\")\n",
+					jsonKey, fieldName, param.Name))
+			case "String":
+				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, testBody[\"%s\"], request.BodyParams.%s.String(), \"Body parameter %s should match\")\n",
+					jsonKey, fieldName, param.Name))
+			case "Int":
+				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, testBody[\"%s\"], request.BodyParams.%s.Int(), \"Body parameter %s should match\")\n",
+					jsonKey, fieldName, param.Name))
+			case "Bool":
+				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, testBody[\"%s\"], request.BodyParams.%s.Bool(), \"Body parameter %s should match\")\n",
+					jsonKey, fieldName, param.Name))
+			default:
+				buf.WriteString(fmt.Sprintf("\tassert.Equal(t, testBody[\"%s\"], request.BodyParams.%s, \"Body parameter %s should match\")\n",
+					jsonKey, fieldName, param.Name))
+			}
+		}
+		buf.WriteString("\n")
+	}
 
 	return nil
 }
@@ -404,7 +498,22 @@ func generateHelperFunctions(buf *bytes.Buffer, service *specification.Service) 
 
 		buf.WriteString(fmt.Sprintf("// Mock%sAPI is a mock implementation of %sAPI\n", resource.Name, resource.Name))
 		buf.WriteString(fmt.Sprintf("type Mock%sAPI struct {\n", resource.Name))
-		buf.WriteString("\tmock.Mock\n")
+
+		// Generate function fields for each endpoint
+		for _, endpoint := range resource.Endpoints {
+			methodName := endpoint.Name
+			requestType := endpoint.GetRequestType(resource.Name)
+
+			if endpoint.HasResponseType() {
+				responseType := endpoint.GetResponseType(resource.Name)
+				buf.WriteString(fmt.Sprintf("\t%sFunc func(ctx context.Context, request %s[any]) (*%s, error)\n",
+					methodName, requestType, responseType))
+			} else {
+				buf.WriteString(fmt.Sprintf("\t%sFunc func(ctx context.Context, request %s[any]) error\n",
+					methodName, requestType))
+			}
+		}
+
 		buf.WriteString("}\n\n")
 
 		// Generate mock methods for each endpoint
@@ -428,13 +537,17 @@ func generateMockMethod(buf *bytes.Buffer, resource specification.Resource, endp
 		responseType := endpoint.GetResponseType(resource.Name)
 		buf.WriteString(fmt.Sprintf("func (m *Mock%sAPI) %s(ctx context.Context, request %s[any]) (*%s, error) {\n",
 			resource.Name, methodName, requestType, responseType))
-		buf.WriteString("\targs := m.Called(ctx, request)\n")
-		buf.WriteString(fmt.Sprintf("\treturn args.Get(0).(*%s), args.Error(1)\n", responseType))
+		buf.WriteString(fmt.Sprintf("\tif m.%sFunc != nil {\n", methodName))
+		buf.WriteString(fmt.Sprintf("\t\treturn m.%sFunc(ctx, request)\n", methodName))
+		buf.WriteString("\t}\n")
+		buf.WriteString(fmt.Sprintf("\treturn nil, nil\n"))
 	} else {
 		buf.WriteString(fmt.Sprintf("func (m *Mock%sAPI) %s(ctx context.Context, request %s[any]) error {\n",
 			resource.Name, methodName, requestType))
-		buf.WriteString("\targs := m.Called(ctx, request)\n")
-		buf.WriteString("\treturn args.Error(0)\n")
+		buf.WriteString(fmt.Sprintf("\tif m.%sFunc != nil {\n", methodName))
+		buf.WriteString(fmt.Sprintf("\t\treturn m.%sFunc(ctx, request)\n", methodName))
+		buf.WriteString("\t}\n")
+		buf.WriteString("\treturn nil\n")
 	}
 
 	buf.WriteString("}\n\n")
