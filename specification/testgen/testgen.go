@@ -67,6 +67,7 @@ func generateImports(buf *bytes.Buffer, apiPackageName string, apiPackageImport 
 	buf.WriteString("\t\"context\"\n")
 	buf.WriteString("\t\"encoding/json\"\n")
 	buf.WriteString("\t\"fmt\"\n")
+	buf.WriteString("\t\"io\"\n")
 	buf.WriteString("\t\"net/http\"\n")
 	buf.WriteString("\t\"net/http/httptest\"\n")
 	buf.WriteString("\t\"net/url\"\n")
@@ -440,13 +441,20 @@ func generateHTTPRequest(buf *bytes.Buffer, service *specification.Service, reso
 // generateAssertions generates test assertions.
 func generateAssertions(buf *bytes.Buffer, service *specification.Service, resource specification.Resource, endpoint specification.Endpoint) error {
 	buf.WriteString("\t\t// Assert\n")
-	buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %d, resp.StatusCode, \"Expected HTTP status %d\")\n",
-		endpoint.Response.StatusCode, endpoint.Response.StatusCode))
+	buf.WriteString("\t\t// Read response body for debugging and verification\n")
+	buf.WriteString("\t\tresponseBodyBytes, err := io.ReadAll(resp.Body)\n")
+	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to read response body\")\n\n")
+
+	buf.WriteString("\t\t// Check status code and print response body if unexpected\n")
+	buf.WriteString("\t\tif resp.StatusCode != " + fmt.Sprintf("%d", endpoint.Response.StatusCode) + " {\n")
+	buf.WriteString("\t\t\tt.Errorf(\"Expected HTTP status %d, got %d. Response body: %s\", " + fmt.Sprintf("%d", endpoint.Response.StatusCode) + ", resp.StatusCode, string(responseBodyBytes))\n")
+	buf.WriteString("\t\t\treturn\n")
+	buf.WriteString("\t\t}\n\n")
 
 	if endpoint.HasResponseType() {
 		buf.WriteString("\t\t// Verify response body\n")
 		buf.WriteString("\t\tvar responseBody map[string]interface{}\n")
-		buf.WriteString("\t\terr = json.NewDecoder(resp.Body).Decode(&responseBody)\n")
+		buf.WriteString("\t\terr = json.Unmarshal(responseBodyBytes, &responseBody)\n")
 		buf.WriteString("\t\tassert.NoError(t, err, \"Failed to decode response body\")\n")
 		buf.WriteString("\t\tassert.NotNil(t, responseBody, \"Response body should not be nil\")\n")
 	}

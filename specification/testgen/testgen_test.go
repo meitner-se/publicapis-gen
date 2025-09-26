@@ -40,6 +40,7 @@ const (
 	expectedPackageDecl    = "package main"
 	expectedImportStmt     = "import ("
 	expectedContextImport  = `"context"`
+	expectedIOImport       = "\"io\""
 	expectedHTTPImport     = "\"net/http\""
 	expectedHTTPTestImport = "\"net/http/httptest\""
 	expectedURLImport      = "\"net/url\""
@@ -66,7 +67,7 @@ const (
 
 	// HTTP request constants
 	expectedHTTPRequest       = "http.NewRequestWithContext(ctx, \"POST\""
-	expectedHTTPStatusAssert  = "assert.Equal(t, 201, resp.StatusCode"
+	expectedHTTPStatusAssert  = "if resp.StatusCode != 201"
 	expectedServerSetup       = "server := httptest.NewServer(router)"
 	expectedURLConstruction   = "requestURL := server.URL + \"/"
 	expectedResponseBodyCheck = "var responseBody map[string]interface{}"
@@ -97,6 +98,7 @@ func TestGenerateTests(t *testing.T) {
 	// Verify imports
 	assert.Contains(t, generatedCode, expectedImportStmt, "Generated code should contain import statement")
 	assert.Contains(t, generatedCode, expectedContextImport, "Generated code should import context")
+	assert.Contains(t, generatedCode, expectedIOImport, "Generated code should import io")
 	assert.Contains(t, generatedCode, expectedHTTPImport, "Generated code should import net/http")
 	assert.Contains(t, generatedCode, expectedHTTPTestImport, "Generated code should import net/http/httptest")
 	assert.Contains(t, generatedCode, expectedURLImport, "Generated code should import net/url")
@@ -195,6 +197,7 @@ func TestGenerateImports(t *testing.T) {
 	generatedCode := buf.String()
 	assert.Contains(t, generatedCode, expectedImportStmt, "Should generate import statement")
 	assert.Contains(t, generatedCode, expectedContextImport, "Should import context")
+	assert.Contains(t, generatedCode, expectedIOImport, "Should import io")
 	assert.Contains(t, generatedCode, expectedHTTPImport, "Should import net/http")
 	assert.Contains(t, generatedCode, expectedHTTPTestImport, "Should import net/http/httptest")
 	assert.Contains(t, generatedCode, expectedURLImport, "Should import net/url")
