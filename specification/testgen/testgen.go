@@ -1082,7 +1082,7 @@ func generateDecodeBodyParamsTest(buf *bytes.Buffer, apiPackageName string) erro
 	buf.WriteString("\t\tName string `json:\"name\"`\n")
 	buf.WriteString("\t\tAge  int    `json:\"age\"`\n")
 	buf.WriteString("\t}\n\n")
-	
+
 	buf.WriteString("\ttestBody := `{\"name\": \"test\", \"age\": 25}`\n")
 	buf.WriteString("\treq, err := http.NewRequest(\"POST\", \"/test\", strings.NewReader(testBody))\n")
 	buf.WriteString("\treq.Header.Set(\"Content-Type\", \"application/json\")\n")
@@ -1106,7 +1106,7 @@ func generateDecodePathParamsTest(buf *bytes.Buffer, apiPackageName string) erro
 	buf.WriteString("\t\tID   string `json:\"id\"`\n")
 	buf.WriteString("\t\tName string `json:\"name\"`\n")
 	buf.WriteString("\t}\n\n")
-	
+
 	buf.WriteString("\tgin.SetMode(gin.TestMode)\n")
 	buf.WriteString("\tc, _ := gin.CreateTestContext(httptest.NewRecorder())\n")
 	buf.WriteString("\tc.Params = []gin.Param{\n")
@@ -1133,7 +1133,7 @@ func generateDecodeQueryParamsTest(buf *bytes.Buffer, apiPackageName string) err
 	buf.WriteString("\t\tOffset int  `form:\"offset\"`\n")
 	buf.WriteString("\t\tActive bool `form:\"active\"`\n")
 	buf.WriteString("\t}\n\n")
-	
+
 	buf.WriteString("\tgin.SetMode(gin.TestMode)\n")
 	buf.WriteString("\tc, _ := gin.CreateTestContext(httptest.NewRecorder())\n")
 	buf.WriteString("\treq, err := http.NewRequest(\"GET\", \"/test?limit=10&offset=0&active=true\", nil)\n")
@@ -1607,7 +1607,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("\t\tName string `json:\"name\"`\n")
 	buf.WriteString("\t\tAge  int    `json:\"age\"`\n")
 	buf.WriteString("\t}\n\n")
-	
+
 	buf.WriteString("\ttestBody := `{\"name\": \"test\", \"age\": 25}`\n")
 	buf.WriteString("\treq, err := http.NewRequest(\"POST\", \"/test\", strings.NewReader(testBody))\n")
 	buf.WriteString("\treq.Header.Set(\"Content-Type\", \"application/json\")\n")
@@ -1627,7 +1627,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("\t\tID   string `json:\"id\"`\n")
 	buf.WriteString("\t\tName string `json:\"name\"`\n")
 	buf.WriteString("\t}\n\n")
-	
+
 	buf.WriteString("\tgin.SetMode(gin.TestMode)\n")
 	buf.WriteString("\tc, _ := gin.CreateTestContext(httptest.NewRecorder())\n")
 	buf.WriteString("\tc.Params = []gin.Param{\n")
@@ -1650,7 +1650,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("\t\tOffset int  `form:\"offset\"`\n")
 	buf.WriteString("\t\tActive bool `form:\"active\"`\n")
 	buf.WriteString("\t}\n\n")
-	
+
 	buf.WriteString("\tgin.SetMode(gin.TestMode)\n")
 	buf.WriteString("\tc, _ := gin.CreateTestContext(httptest.NewRecorder())\n")
 	buf.WriteString("\treq, err := http.NewRequest(\"GET\", \"/test?limit=10&offset=0&active=true\", nil)\n")
