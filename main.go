@@ -111,16 +111,18 @@ const (
 
 // Job represents a single generation job in the config file
 type Job struct {
-	Specification string `yaml:"specification" json:"specification"`
-	OpenAPIJSON   string `yaml:"openapi_json,omitempty" json:"openapi_json,omitempty"`
-	OpenAPIYAML   string `yaml:"openapi_yaml,omitempty" json:"openapi_yaml,omitempty"`
-	SchemaJSON    string `yaml:"schema_json,omitempty" json:"schema_json,omitempty"`
-	OverlayYAML   string `yaml:"overlay_yaml,omitempty" json:"overlay_yaml,omitempty"`
-	OverlayJSON   string `yaml:"overlay_json,omitempty" json:"overlay_json,omitempty"`
-	ServerGo      string `yaml:"server_go,omitempty" json:"server_go,omitempty"`
-	ServerPackage string `yaml:"server_package,omitempty" json:"server_package,omitempty"`
-	TestGo        string `yaml:"test_go,omitempty" json:"test_go,omitempty"`
-	TestPackage   string `yaml:"test_package,omitempty" json:"test_package,omitempty"`
+	Specification  string `yaml:"specification" json:"specification"`
+	OpenAPIJSON    string `yaml:"openapi_json,omitempty" json:"openapi_json,omitempty"`
+	OpenAPIYAML    string `yaml:"openapi_yaml,omitempty" json:"openapi_yaml,omitempty"`
+	SchemaJSON     string `yaml:"schema_json,omitempty" json:"schema_json,omitempty"`
+	OverlayYAML    string `yaml:"overlay_yaml,omitempty" json:"overlay_yaml,omitempty"`
+	OverlayJSON    string `yaml:"overlay_json,omitempty" json:"overlay_json,omitempty"`
+	ServerGo       string `yaml:"server_go,omitempty" json:"server_go,omitempty"`
+	ServerPackage  string `yaml:"server_package,omitempty" json:"server_package,omitempty"`
+	TestGo         string `yaml:"test_go,omitempty" json:"test_go,omitempty"`
+	TestPackage    string `yaml:"test_package,omitempty" json:"test_package,omitempty"`
+	TestAPIPackage string `yaml:"test_api_package,omitempty" json:"test_api_package,omitempty"`
+	TestAPIImport  string `yaml:"test_api_import,omitempty" json:"test_api_import,omitempty"`
 }
 
 // Config represents the configuration file structure
@@ -432,7 +434,7 @@ func processJob(ctx context.Context, job Job) error {
 
 	if job.TestGo != "" {
 		// Generate test code using testgen from the specification
-		if err := generateTestsFromSpecification(ctx, service, job.Specification, job.TestGo, job.TestPackage); err != nil {
+		if err := generateTestsFromSpecification(ctx, service, job.Specification, job.TestGo, job.TestPackage, job.TestAPIPackage, job.TestAPIImport); err != nil {
 			return fmt.Errorf("failed to generate Go tests to '%s': %w", job.TestGo, err)
 		}
 	}
@@ -693,7 +695,7 @@ func generateServerFromSpecification(ctx context.Context, service *specification
 }
 
 // generateTestsFromSpecification generates HTTP API tests from a service specification using testgen.
-func generateTestsFromSpecification(ctx context.Context, service *specification.Service, specPath, outputPath, packageName string) error {
+func generateTestsFromSpecification(ctx context.Context, service *specification.Service, specPath, outputPath, packageName, apiPackageName, apiPackageImport string) error {
 	slog.InfoContext(ctx, "Generating Go test code from specification using testgen", logKeyMode, "test")
 
 	// Default package name if not provided
@@ -701,12 +703,17 @@ func generateTestsFromSpecification(ctx context.Context, service *specification.
 		packageName = "main"
 	}
 
-	// For now, assume the API package is in the same module (this could be made configurable)
-	apiPackageImport := "./api"
+	// Default API package name and import if not provided
+	if apiPackageName == "" {
+		apiPackageName = "api"
+	}
+	if apiPackageImport == "" {
+		apiPackageImport = "./api"
+	}
 
 	// Generate test code using testgen
 	var buf bytes.Buffer
-	if err := testgen.GenerateTests(&buf, service, packageName, apiPackageImport); err != nil {
+	if err := testgen.GenerateTests(&buf, service, packageName, apiPackageName, apiPackageImport); err != nil {
 		return fmt.Errorf("failed to generate test code: %w", err)
 	}
 
