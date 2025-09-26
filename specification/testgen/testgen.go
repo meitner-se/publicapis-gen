@@ -463,120 +463,55 @@ func generateAssertions(buf *bytes.Buffer, service *specification.Service, resou
 	buf.WriteString("\t\t// Verify service method was called (indicating HTTP request was processed)\n")
 	buf.WriteString("\t\tassert.NotNil(t, capturedRequest, \"Service method should have been called with a request\")\n\n")
 
-	// Assert path parameters
+	// Assert path parameters by converting to JSON for easy comparison
 	if len(endpoint.Request.PathParams) > 0 {
-		buf.WriteString("\t\t// Verify path parameters\n")
+		buf.WriteString("\t\t// Verify path parameters by converting to JSON\n")
+		buf.WriteString("\t\tcapturedPathBytes, err := json.Marshal(capturedRequest.PathParams)\n")
+		buf.WriteString("\t\tassert.NoError(t, err, \"Failed to marshal captured path params\")\n")
+		buf.WriteString("\t\tvar capturedPathParams map[string]interface{}\n")
+		buf.WriteString("\t\terr = json.Unmarshal(capturedPathBytes, &capturedPathParams)\n")
+		buf.WriteString("\t\tassert.NoError(t, err, \"Failed to unmarshal captured path params\")\n\n")
+
 		for _, param := range endpoint.Request.PathParams {
 			varName := fmt.Sprintf("test%s%s", "Path", strmangle.TitleCase(param.Name))
-			fieldName := strmangle.TitleCase(param.Name)
-
-			if param.IsArray() {
-				// Handle array parameters
-				buf.WriteString(fmt.Sprintf("\t\tassert.NotNil(t, capturedRequest.PathParams.%s, \"Path parameter %s should exist\")\n",
-					fieldName, param.Name))
-			} else {
-				// Handle single value parameters
-				switch param.Type {
-				case "UUID":
-					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedRequest.PathParams.%s.String(), \"Path parameter %s should match\")\n",
-						varName, fieldName, param.Name))
-				case "String":
-					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedRequest.PathParams.%s.String(), \"Path parameter %s should match\")\n",
-						varName, fieldName, param.Name))
-				case "Int":
-					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedRequest.PathParams.%s.Int(), \"Path parameter %s should match\")\n",
-						varName, fieldName, param.Name))
-				case "Bool":
-					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedRequest.PathParams.%s.Bool(), \"Path parameter %s should match\")\n",
-						varName, fieldName, param.Name))
-				default:
-					// For enums, compare the string representation
-					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedRequest.PathParams.%s.String(), \"Path parameter %s should match\")\n",
-						varName, fieldName, param.Name))
-				}
-			}
+			jsonKey := getJSONKey(param.Name)
+			buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedPathParams[\"%s\"], \"Path parameter %s should match\")\n",
+				varName, jsonKey, param.Name))
 		}
 		buf.WriteString("\n")
 	}
 
-	// Assert query parameters
+	// Assert query parameters by converting to JSON for easy comparison
 	if len(endpoint.Request.QueryParams) > 0 {
-		buf.WriteString("\t\t// Verify query parameters\n")
+		buf.WriteString("\t\t// Verify query parameters by converting to JSON\n")
+		buf.WriteString("\t\tcapturedQueryBytes, err := json.Marshal(capturedRequest.QueryParams)\n")
+		buf.WriteString("\t\tassert.NoError(t, err, \"Failed to marshal captured query params\")\n")
+		buf.WriteString("\t\tvar capturedQueryParams map[string]interface{}\n")
+		buf.WriteString("\t\terr = json.Unmarshal(capturedQueryBytes, &capturedQueryParams)\n")
+		buf.WriteString("\t\tassert.NoError(t, err, \"Failed to unmarshal captured query params\")\n\n")
+
 		for _, param := range endpoint.Request.QueryParams {
 			varName := fmt.Sprintf("test%s%s", "Query", strmangle.TitleCase(param.Name))
-			fieldName := strmangle.TitleCase(param.Name)
-
-			if param.IsArray() {
-				// Handle array parameters
-				buf.WriteString(fmt.Sprintf("\t\tassert.NotNil(t, capturedRequest.QueryParams.%s, \"Query parameter %s should exist\")\n",
-					fieldName, param.Name))
-			} else {
-				// Handle single value parameters
-				switch param.Type {
-				case "UUID":
-					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedRequest.QueryParams.%s.String(), \"Query parameter %s should match\")\n",
-						varName, fieldName, param.Name))
-				case "String":
-					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedRequest.QueryParams.%s.String(), \"Query parameter %s should match\")\n",
-						varName, fieldName, param.Name))
-				case "Int":
-					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedRequest.QueryParams.%s.Int(), \"Query parameter %s should match\")\n",
-						varName, fieldName, param.Name))
-				case "Bool":
-					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedRequest.QueryParams.%s.Bool(), \"Query parameter %s should match\")\n",
-						varName, fieldName, param.Name))
-				default:
-					// For enums, compare the string representation
-					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedRequest.QueryParams.%s.String(), \"Query parameter %s should match\")\n",
-						varName, fieldName, param.Name))
-				}
-			}
+			jsonKey := getJSONKey(param.Name)
+			buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, %s, capturedQueryParams[\"%s\"], \"Query parameter %s should match\")\n",
+				varName, jsonKey, param.Name))
 		}
 		buf.WriteString("\n")
 	}
 
-	// Assert body parameters
+	// Assert body parameters by converting captured request body to JSON for easy comparison
 	if len(endpoint.Request.BodyParams) > 0 {
-		buf.WriteString("\t\t// Verify body parameters\n")
-		for _, param := range endpoint.Request.BodyParams {
-			fieldName := strmangle.TitleCase(param.Name)
-			jsonKey := getJSONKey(param.Name)
+		buf.WriteString("\t\t// Verify body parameters by converting to JSON\n")
+		buf.WriteString("\t\tcapturedBodyBytes, err := json.Marshal(capturedRequest.BodyParams)\n")
+		buf.WriteString("\t\tassert.NoError(t, err, \"Failed to marshal captured body params\")\n")
+		buf.WriteString("\t\tvar capturedRequestBody map[string]interface{}\n")
+		buf.WriteString("\t\terr = json.Unmarshal(capturedBodyBytes, &capturedRequestBody)\n")
+		buf.WriteString("\t\tassert.NoError(t, err, \"Failed to unmarshal captured body params\")\n\n")
 
-			if param.IsArray() {
-				// Handle array parameters - these are typically complex and hard to compare directly
-				buf.WriteString(fmt.Sprintf("\t\t// Note: Array parameter %s is complex to compare, just verify it exists\n", param.Name))
-				buf.WriteString(fmt.Sprintf("\t\tassert.NotNil(t, capturedRequest.BodyParams.%s, \"Body parameter %s should exist\")\n",
-					fieldName, param.Name))
-			} else {
-				// Handle single value parameters with proper type conversion
-				switch param.Type {
-				case "UUID":
-					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, testBody[\"%s\"], capturedRequest.BodyParams.%s.String(), \"Body parameter %s should match\")\n",
-						jsonKey, fieldName, param.Name))
-				case "String":
-					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, testBody[\"%s\"], capturedRequest.BodyParams.%s.String(), \"Body parameter %s should match\")\n",
-						jsonKey, fieldName, param.Name))
-				case "Int":
-					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, testBody[\"%s\"], capturedRequest.BodyParams.%s.Int(), \"Body parameter %s should match\")\n",
-						jsonKey, fieldName, param.Name))
-				case "Bool":
-					buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, testBody[\"%s\"], capturedRequest.BodyParams.%s.Bool(), \"Body parameter %s should match\")\n",
-						jsonKey, fieldName, param.Name))
-				default:
-					// For custom objects/enums, compare with the original test data
-					if service.IsObject(param.Type) {
-						// For object types, the test data is a map[string]interface{} and the captured request has a structured object
-						// This is complex to compare directly, so just verify the field exists
-						buf.WriteString(fmt.Sprintf("\t\t// Note: Object parameter %s is complex to compare, just verify it exists\n", param.Name))
-						buf.WriteString(fmt.Sprintf("\t\tassert.NotNil(t, capturedRequest.BodyParams.%s, \"Body parameter %s should exist\")\n",
-							fieldName, param.Name))
-					} else {
-						// For enums, compare the string representation
-						buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, testBody[\"%s\"], capturedRequest.BodyParams.%s.String(), \"Body parameter %s should match\")\n",
-							jsonKey, fieldName, param.Name))
-					}
-				}
-			}
+		for _, param := range endpoint.Request.BodyParams {
+			jsonKey := getJSONKey(param.Name)
+			buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, testBody[\"%s\"], capturedRequestBody[\"%s\"], \"Body parameter %s should match\")\n",
+				jsonKey, jsonKey, param.Name))
 		}
 		buf.WriteString("\n")
 	}
