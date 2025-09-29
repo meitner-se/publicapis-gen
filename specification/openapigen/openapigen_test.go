@@ -833,7 +833,7 @@ func TestSpeakeasyRetryExtensionWithCustomConfiguration(t *testing.T) {
 	service := &specification.Service{
 		Name:    "TestAPI",
 		Version: "1.0.0",
-		Retry: specification.RetryConfiguration{
+		Retry: &specification.RetryConfiguration{
 			Strategy: "backoff",
 			Backoff: specification.RetryBackoffConfiguration{
 				InitialInterval: 1000,
@@ -898,7 +898,7 @@ func TestSpeakeasyTimeoutExtensionWithCustomTimeout(t *testing.T) {
 	service := &specification.Service{
 		Name:    "TestAPI",
 		Version: "1.0.0",
-		Timeout: specification.TimeoutConfiguration{
+		Timeout: &specification.TimeoutConfiguration{
 			Timeout: customTimeoutMs,
 		},
 	}
@@ -924,7 +924,7 @@ func TestSpeakeasyTimeoutExtensionWithZeroTimeout(t *testing.T) {
 	service := &specification.Service{
 		Name:    "TestAPI",
 		Version: "1.0.0",
-		Timeout: specification.TimeoutConfiguration{
+		Timeout: &specification.TimeoutConfiguration{
 			Timeout: 0, // Zero timeout should fall back to default
 		},
 	}
@@ -2404,7 +2404,7 @@ func TestGenerator_GenerateFromService_ContactDetails(t *testing.T) {
 		service := &specification.Service{
 			Name:    "Test API",
 			Version: "1.0.0",
-			Contact: specification.ServiceContact{
+			Contact: &specification.ServiceContact{
 				Name:  "API Support Team",
 				URL:   "https://example.com/support",
 				Email: "support@example.com",
@@ -2439,7 +2439,7 @@ func TestGenerator_GenerateFromService_ContactDetails(t *testing.T) {
 		service := &specification.Service{
 			Name:    "Partial Contact API",
 			Version: "1.0.0",
-			Contact: specification.ServiceContact{
+			Contact: &specification.ServiceContact{
 				Name:  "Support",
 				Email: "help@example.com",
 				// URL intentionally omitted
@@ -2473,7 +2473,7 @@ func TestGenerator_GenerateFromService_ContactDetails(t *testing.T) {
 		service := &specification.Service{
 			Name:    "Email Only API",
 			Version: "1.0.0",
-			Contact: specification.ServiceContact{
+			Contact: &specification.ServiceContact{
 				Email: "contact@example.com",
 				// Name and URL intentionally omitted
 			},
@@ -2529,7 +2529,7 @@ func TestGenerator_GenerateFromService_ContactDetails(t *testing.T) {
 		service := &specification.Service{
 			Name:    "Empty Contact API",
 			Version: "1.0.0",
-			Contact: specification.ServiceContact{
+			Contact: &specification.ServiceContact{
 				// All fields intentionally empty
 			},
 		}
@@ -2557,7 +2557,7 @@ func TestGenerator_GenerateFromService_WithLicense(t *testing.T) {
 		service := &specification.Service{
 			Name:    "TestService",
 			Version: "1.0.0",
-			License: specification.ServiceLicense{
+			License: &specification.ServiceLicense{
 				Name:       "MIT License",
 				URL:        "https://opensource.org/licenses/MIT",
 				Identifier: "MIT",
@@ -2592,7 +2592,7 @@ func TestGenerator_GenerateFromService_WithLicense(t *testing.T) {
 		service := &specification.Service{
 			Name:    "TestService",
 			Version: "1.0.0",
-			License: specification.ServiceLicense{
+			License: &specification.ServiceLicense{
 				Name: "Apache License 2.0",
 			},
 		}
@@ -2622,7 +2622,7 @@ func TestGenerator_GenerateFromService_WithLicense(t *testing.T) {
 		service := &specification.Service{
 			Name:    "TestService",
 			Version: "1.0.0",
-			// License left as zero value (no license information)
+			License: nil,
 		}
 
 		document, err := generator.generateFromService(service)
@@ -2645,7 +2645,7 @@ func TestGenerator_GenerateFromService_WithLicense(t *testing.T) {
 		service := &specification.Service{
 			Name:    "TestService",
 			Version: "1.0.0",
-			License: specification.ServiceLicense{
+			License: &specification.ServiceLicense{
 				Name:       "",
 				URL:        "https://example.com/license",
 				Identifier: "EXAMPLE",

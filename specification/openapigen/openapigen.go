@@ -313,7 +313,7 @@ func (g *generator) addSpeakeasyTimeoutExtension(document *v3.Document, service 
 
 	// Determine timeout value from service configuration or use default
 	timeoutMs := defaultTimeoutMs
-	if service.Timeout.Timeout > 0 {
+	if service.Timeout != nil && service.Timeout.Timeout > 0 {
 		timeoutMs = service.Timeout.Timeout
 	}
 
@@ -487,7 +487,7 @@ func (g *generator) buildV3Document(service *specification.Service) *v3.Document
 	}
 
 	// Add contact information if available in the service
-	if service.Contact.Name != "" || service.Contact.URL != "" || service.Contact.Email != "" {
+	if service.Contact != nil {
 		contact := &base.Contact{}
 		if service.Contact.Name != "" {
 			contact.Name = service.Contact.Name
@@ -498,11 +498,14 @@ func (g *generator) buildV3Document(service *specification.Service) *v3.Document
 		if service.Contact.Email != "" {
 			contact.Email = service.Contact.Email
 		}
-		info.Contact = contact
+		// Only set contact if at least one field is provided
+		if service.Contact.Name != "" || service.Contact.URL != "" || service.Contact.Email != "" {
+			info.Contact = contact
+		}
 	}
 
 	// Add license information if available in the service
-	if service.License.Name != "" {
+	if service.License != nil && service.License.Name != "" {
 		license := &base.License{
 			Name: service.License.Name,
 		}
