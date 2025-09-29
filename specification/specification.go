@@ -1654,7 +1654,7 @@ func (o Object) IsFilter() bool {
 }
 
 func (o Object) GetComment() string {
-	return getComment(commentPrefix, o.Description, o.Name)
+	return getComment("", o.Description, o.Name)
 }
 
 // Utility factory methods

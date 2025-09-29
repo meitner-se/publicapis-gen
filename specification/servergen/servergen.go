@@ -141,7 +141,7 @@ func getTypePrefix(field specification.Field, service *specification.Service) st
 
 func generateObjects(buf *bytes.Buffer, service *specification.Service) error {
 	for _, object := range service.Objects {
-		buf.WriteString(fmt.Sprintf("// %s\n", object.GetComment()))
+		buf.WriteString(fmt.Sprintf("%s\n", object.GetComment()))
 		buf.WriteString(fmt.Sprintf("type %s struct {\n", object.Name))
 
 		for _, field := range object.Fields {
