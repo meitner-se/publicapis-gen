@@ -1318,7 +1318,7 @@ func TestCreateDefaultMeta(t *testing.T) {
 	// Verify modifiers are correct
 	assert.Empty(t, metaObject.Fields[0].Modifiers, "CreatedAt should have no modifiers")
 	assert.Equal(t, []string{ModifierNullable}, metaObject.Fields[1].Modifiers, "CreatedBy should be nullable")
-	assert.Empty(t, metaObject.Fields[2].Modifiers, "UpdatedAt should have no modifiers")
+	assert.Equal(t, []string{ModifierNullable}, metaObject.Fields[2].Modifiers, "UpdatedAt should be nullable")
 	assert.Equal(t, []string{ModifierNullable}, metaObject.Fields[3].Modifiers, "UpdatedBy should be nullable")
 
 	// Verify descriptions are generic (not resource-specific)
@@ -3141,7 +3141,7 @@ func TestApplyFilterOverlay_MetaObjectFilters(t *testing.T) {
 			"MetaFilterRange":    2,  // Only Timestamp fields: CreatedAt, UpdatedAt
 			"MetaFilterContains": 2,  // Only UUID fields: CreatedBy, UpdatedBy (Timestamp excluded)
 			"MetaFilterLike":     0,  // No String fields in Meta object
-			"MetaFilterNull":     2,  // Only nullable fields: CreatedBy, UpdatedBy
+			"MetaFilterNull":     3,  // Only nullable fields: CreatedBy, UpdatedAt, UpdatedBy
 		}
 
 		for expectedFilter, expectedFieldCount := range expectedMetaFilters {
