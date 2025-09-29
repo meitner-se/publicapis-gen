@@ -1847,6 +1847,7 @@ func createDefaultMeta() Object {
 				Name:        autoColumnUpdatedAtName,
 				Description: "Timestamp when the resource was last updated",
 				Type:        FieldTypeTimestamp,
+				Modifiers:   []string{ModifierNullable},
 				Example:     "2024-01-15T14:45:00Z",
 			},
 			{
