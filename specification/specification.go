@@ -1303,14 +1303,14 @@ func generateLikeFilterObject(obj Object, allObjects []Object) Object {
 // generateNullFilterObject generates the FilterNull object for null checks.
 func generateNullFilterObject(obj Object, allObjects []Object) Object {
 	fields := processFieldsForFilter(obj.Fields, allObjects, func(field Field, objects []Object) (Field, bool) {
-		// Only nullable fields or arrays
-		if !canBeNull(field) {
-			return Field{}, false
-		}
-
+		// Include nullable fields, arrays, and object types (objects can be null checked)
 		if isObjectType(field.Type, objects) {
 			// For nested objects, use the nested filter type for null check
 			return generateNestedFilterField(field, filterNullSuffix, true, false, objects), true
+		}
+		// For primitive types, only include if explicitly nullable or array
+		if !canBeNull(field) {
+			return Field{}, false
 		}
 		// For primitive types, create boolean field
 		return generateFilterField(Field{
