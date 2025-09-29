@@ -972,6 +972,39 @@ func TestField_GetComment(t *testing.T) {
 	}
 }
 
+func TestObject_GetComment(t *testing.T) {
+	// Test Object.GetComment method which uses the getComment helper
+	testCases := []struct {
+		name     string
+		object   Object
+		expected string
+	}{
+		{
+			name: "basic object comment",
+			object: Object{
+				Name:        "User",
+				Description: "A user entity",
+			},
+			expected: "// User: A user entity",
+		},
+		{
+			name: "object with description starting with object name",
+			object: Object{
+				Name:        "Address",
+				Description: "Address object",
+			},
+			expected: "// Address object",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.object.GetComment()
+			assert.Equal(t, tc.expected, result, "Object comment should match expected for case '%s'", tc.name)
+		})
+	}
+}
+
 // ============================================================================
 // Factory Function Tests
 // ============================================================================
