@@ -309,7 +309,7 @@ func TestService(t *testing.T) {
 		service := Service{
 			Name:    "TestService",
 			Version: "1.0.0",
-			License: &ServiceLicense{
+			License: ServiceLicense{
 				Name:       "MIT License",
 				URL:        "https://opensource.org/licenses/MIT",
 				Identifier: "MIT",
@@ -3528,7 +3528,7 @@ func TestService_HasRetryConfiguration(t *testing.T) {
 	// Test service with retry configuration
 	serviceWithRetry := Service{
 		Name: "TestService",
-		Retry: &RetryConfiguration{
+		Retry: RetryConfiguration{
 			Strategy: RetryStrategyBackoff,
 		},
 	}
@@ -3553,7 +3553,7 @@ func TestService_GetRetryConfigurationWithDefaults(t *testing.T) {
 	})
 
 	t.Run("service with complete retry configuration returns configuration as is", func(t *testing.T) {
-		expectedConfig := &RetryConfiguration{
+		expectedConfig := RetryConfiguration{
 			Strategy: RetryStrategyBackoff,
 			Backoff: RetryBackoffConfiguration{
 				InitialInterval: 1000,
@@ -3582,7 +3582,7 @@ func TestService_GetRetryConfigurationWithDefaults(t *testing.T) {
 	})
 
 	t.Run("service with partial retry configuration applies defaults for missing values", func(t *testing.T) {
-		partialConfig := &RetryConfiguration{
+		partialConfig := RetryConfiguration{
 			Backoff: RetryBackoffConfiguration{
 				InitialInterval: 2000,
 				// MaxInterval and MaxElapsedTime missing, should use defaults
@@ -3635,7 +3635,7 @@ func TestValidateRetryConfiguration(t *testing.T) {
 	})
 
 	t.Run("valid configuration", func(t *testing.T) {
-		config := &RetryConfiguration{
+		config := RetryConfiguration{
 			Strategy: RetryStrategyBackoff,
 			Backoff: RetryBackoffConfiguration{
 				InitialInterval: 1000,
@@ -3647,97 +3647,97 @@ func TestValidateRetryConfiguration(t *testing.T) {
 			RetryConnectionErrors: false,
 		}
 
-		err := validateRetryConfiguration(config)
+		err := validateRetryConfiguration(&config)
 		assert.NoError(t, err, "Valid retry configuration should pass validation")
 	})
 
 	t.Run("invalid strategy", func(t *testing.T) {
-		config := &RetryConfiguration{
+		config := RetryConfiguration{
 			Strategy: "invalid_strategy",
 		}
 
-		err := validateRetryConfiguration(config)
+		err := validateRetryConfiguration(&config)
 		assert.Error(t, err, "Invalid strategy should fail validation")
 		assert.Contains(t, err.Error(), "retry strategy 'invalid_strategy' must be 'backoff'")
 	})
 
 	t.Run("negative initial interval", func(t *testing.T) {
-		config := &RetryConfiguration{
+		config := RetryConfiguration{
 			Backoff: RetryBackoffConfiguration{
 				InitialInterval: -1000,
 			},
 		}
 
-		err := validateRetryConfiguration(config)
+		err := validateRetryConfiguration(&config)
 		assert.Error(t, err, "Negative initial interval should fail validation")
 		assert.Contains(t, err.Error(), "initial interval must be non-negative")
 	})
 
 	t.Run("negative max interval", func(t *testing.T) {
-		config := &RetryConfiguration{
+		config := RetryConfiguration{
 			Backoff: RetryBackoffConfiguration{
 				MaxInterval: -5000,
 			},
 		}
 
-		err := validateRetryConfiguration(config)
+		err := validateRetryConfiguration(&config)
 		assert.Error(t, err, "Negative max interval should fail validation")
 		assert.Contains(t, err.Error(), "max interval must be non-negative")
 	})
 
 	t.Run("negative max elapsed time", func(t *testing.T) {
-		config := &RetryConfiguration{
+		config := RetryConfiguration{
 			Backoff: RetryBackoffConfiguration{
 				MaxElapsedTime: -10000,
 			},
 		}
 
-		err := validateRetryConfiguration(config)
+		err := validateRetryConfiguration(&config)
 		assert.Error(t, err, "Negative max elapsed time should fail validation")
 		assert.Contains(t, err.Error(), "max elapsed time must be non-negative")
 	})
 
 	t.Run("negative exponent", func(t *testing.T) {
-		config := &RetryConfiguration{
+		config := RetryConfiguration{
 			Backoff: RetryBackoffConfiguration{
 				Exponent: -1.5,
 			},
 		}
 
-		err := validateRetryConfiguration(config)
+		err := validateRetryConfiguration(&config)
 		assert.Error(t, err, "Negative exponent should fail validation")
 		assert.Contains(t, err.Error(), "exponent must be non-negative")
 	})
 
 	t.Run("initial interval greater than max interval", func(t *testing.T) {
-		config := &RetryConfiguration{
+		config := RetryConfiguration{
 			Backoff: RetryBackoffConfiguration{
 				InitialInterval: 5000,
 				MaxInterval:     1000,
 			},
 		}
 
-		err := validateRetryConfiguration(config)
+		err := validateRetryConfiguration(&config)
 		assert.Error(t, err, "Initial interval greater than max interval should fail validation")
 		assert.Contains(t, err.Error(), "initial interval (5000) cannot be greater than max interval (1000)")
 	})
 
 	t.Run("empty status code", func(t *testing.T) {
-		config := &RetryConfiguration{
+		config := RetryConfiguration{
 			StatusCodes: []string{"5XX", "", "429"},
 		}
 
-		err := validateRetryConfiguration(config)
+		err := validateRetryConfiguration(&config)
 		assert.Error(t, err, "Empty status code should fail validation")
 		assert.Contains(t, err.Error(), "status codes cannot contain empty strings")
 	})
 
 	t.Run("invalid status code", func(t *testing.T) {
-		config := &RetryConfiguration{
+		config := RetryConfiguration{
 			StatusCodes: []string{"invalid"},
 		}
 
-		err := validateRetryConfiguration(config)
+		err := validateRetryConfiguration(&config)
 		assert.Error(t, err, "Invalid status code should fail validation")
 		assert.Contains(t, err.Error(), "status code 'invalid' is not valid")
 	})

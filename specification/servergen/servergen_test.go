@@ -322,7 +322,7 @@ func TestGetTypeForGo(t *testing.T) {
 				Type:      testObjectName,
 				Modifiers: []string{"Nullable"},
 			},
-			expectedType: "*" + testObjectName,
+			expectedType: testObjectName, // No pointer for nested objects per INF-407
 		},
 		{
 			name: "array of strings",
@@ -349,7 +349,7 @@ func TestGetTypeForGo(t *testing.T) {
 				Type:      testObjectName,
 				Modifiers: []string{"Array", "Nullable"},
 			},
-			expectedType: "[]*" + testObjectName,
+			expectedType: "[]" + testObjectName, // No pointer for nested objects per INF-407
 		},
 		{
 			name: "enum type",
@@ -400,8 +400,8 @@ func TestGetTypeForGo(t *testing.T) {
 			result := getTypeForGo(field, service)
 
 			// Assert
-			assert.Equal(t, "[]*"+testObjectName, result,
-				"Should handle both array and nullable modifiers correctly")
+			assert.Equal(t, "[]"+testObjectName, result,
+				"Should handle both array and nullable modifiers correctly (no pointer per INF-407)")
 		})
 	})
 }
@@ -447,7 +447,7 @@ func TestGetTypePrefix(t *testing.T) {
 				Type:      testObjectName,
 				Modifiers: []string{"Nullable"},
 			},
-			expectedPrefix: "*",
+			expectedPrefix: "", // No pointer for nullable objects per INF-407
 		},
 		{
 			name: "array nullable object",
@@ -455,7 +455,7 @@ func TestGetTypePrefix(t *testing.T) {
 				Type:      testObjectName,
 				Modifiers: []string{"Array", "Nullable"},
 			},
-			expectedPrefix: "[]*",
+			expectedPrefix: "[]", // No pointer for nullable objects per INF-407
 		},
 		{
 			name: "enum type",

@@ -415,10 +415,10 @@ type Service struct {
 	Version string `json:"version,omitempty"`
 
 	// Contact information for the service
-	Contact *ServiceContact `json:"contact,omitempty"`
+	Contact ServiceContact `json:"contact,omitempty"`
 
 	// License information for the service
-	License *ServiceLicense `json:"license,omitempty"`
+	License ServiceLicense `json:"license,omitempty"`
 
 	// Servers that are part of the service
 	Servers []ServiceServer `json:"servers,omitempty"`
@@ -430,10 +430,10 @@ type Service struct {
 	Security []SecurityRequirement `json:"security,omitempty"`
 
 	// Retry configuration for the service
-	Retry *RetryConfiguration `json:"retry,omitempty"`
+	Retry RetryConfiguration `json:"retry,omitempty"`
 
 	// Timeout configuration for the service
-	Timeout *TimeoutConfiguration `json:"timeout,omitempty"`
+	Timeout TimeoutConfiguration `json:"timeout,omitempty"`
 
 	// Enums that are used in the service
 	Enums []Enum `json:"enums"`
@@ -2163,8 +2163,8 @@ func (pt *PositionTracker) findFieldInAST(fieldName string, node ast.Node) *toke
 // validateService validates the entire service specification against the defined rules.
 func validateService(service *Service) error {
 	// Validate retry configuration
-	if service.Retry != nil {
-		if err := validateRetryConfiguration(service.Retry); err != nil {
+	if service.HasRetryConfiguration() {
+		if err := validateRetryConfiguration(&service.Retry); err != nil {
 			return fmt.Errorf("retry configuration: %w", err)
 		}
 	}
@@ -2571,16 +2571,19 @@ func applyDefaultOverlays(service *Service) *Service {
 
 // HasRetryConfiguration checks if the service has retry configuration defined.
 func (s Service) HasRetryConfiguration() bool {
-	return s.Retry != nil
+	// Check if retry configuration has any non-zero values
+	return s.Retry.Strategy != "" || len(s.Retry.StatusCodes) > 0 || s.Retry.RetryConnectionErrors ||
+		s.Retry.Backoff.InitialInterval != 0 || s.Retry.Backoff.MaxInterval != 0 ||
+		s.Retry.Backoff.MaxElapsedTime != 0 || s.Retry.Backoff.Exponent != 0
 }
 
 // GetRetryConfigurationWithDefaults returns the retry configuration with default values applied.
 func (s Service) GetRetryConfigurationWithDefaults() RetryConfiguration {
-	if s.Retry == nil {
+	if !s.HasRetryConfiguration() {
 		return createDefaultRetryConfiguration()
 	}
 
-	config := *s.Retry
+	config := s.Retry
 
 	// Apply defaults for missing values
 	if config.Strategy == "" {

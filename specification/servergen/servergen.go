@@ -126,9 +126,10 @@ func getTypePrefix(field specification.Field, service *specification.Service) st
 		prefixes = append(prefixes, "[]")
 	}
 
-	if field.IsNullable() && isObject {
-		prefixes = append(prefixes, "*")
-	}
+	// Note: Removed pointer prefix for nullable objects as per INF-407
+	// if field.IsNullable() && isObject {
+	//     prefixes = append(prefixes, "*")
+	// }
 
 	if !isObject {
 		prefixes = append(prefixes, "types.")
