@@ -117,6 +117,17 @@ func getTypeForGo(field specification.Field, service *specification.Service) str
 	return getTypePrefix(field, service) + fieldType
 }
 
+// getTypeForGoFilter generates Go type for fields in filter objects with special pointer handling.
+func getTypeForGoFilter(field specification.Field, service *specification.Service, parentObject specification.Object) string {
+	fieldType := field.Type
+
+	if service.HasEnum(fieldType) {
+		fieldType = "String"
+	}
+
+	return getTypePrefixForFilter(field, service, parentObject) + fieldType
+}
+
 func getTypePrefix(field specification.Field, service *specification.Service) string {
 	isObject := service.IsObject(field.Type)
 
@@ -126,8 +137,40 @@ func getTypePrefix(field specification.Field, service *specification.Service) st
 		prefixes = append(prefixes, "[]")
 	}
 
-	if field.IsNullable() && isObject {
-		prefixes = append(prefixes, "*")
+	// Note: Removed pointer prefix for nullable objects as per INF-407
+	// if field.IsNullable() && isObject {
+	//     prefixes = append(prefixes, "*")
+	// }
+
+	if !isObject {
+		prefixes = append(prefixes, "types.")
+	}
+
+	typePrefix := strings.Join(prefixes, "")
+
+	return typePrefix
+}
+
+// getTypePrefixForFilter handles filter objects specifically.
+// Filter type fields (Equals, NotEquals, etc.) should be pointers.
+// Nested filter object fields should NOT be pointers.
+func getTypePrefixForFilter(field specification.Field, service *specification.Service, parentObject specification.Object) string {
+	isObject := service.IsObject(field.Type)
+
+	prefixes := []string{}
+
+	if field.IsArray() {
+		prefixes = append(prefixes, "[]")
+	}
+
+	// Special logic for filter objects
+	if parentObject.IsFilter() {
+		// Check if this is a filter type field (Equals, NotEquals, etc.)
+		if isFilterTypeField(field.Name) && field.IsNullable() && isObject {
+			prefixes = append(prefixes, "*")
+		}
+		// For nested filter object fields (like Meta, External), don't add pointer
+		// even if they're nullable - this follows the user's requirement
 	}
 
 	if !isObject {
@@ -139,6 +182,22 @@ func getTypePrefix(field specification.Field, service *specification.Service) st
 	return typePrefix
 }
 
+// isFilterTypeField checks if a field name is one of the standard filter type fields.
+func isFilterTypeField(fieldName string) bool {
+	filterFields := []string{
+		"Equals", "NotEquals", "GreaterThan", "SmallerThan",
+		"GreaterOrEqual", "SmallerOrEqual", "Contains", "NotContains",
+		"Like", "NotLike", "Null", "NotNull",
+	}
+
+	for _, filterField := range filterFields {
+		if fieldName == filterField {
+			return true
+		}
+	}
+	return false
+}
+
 func generateObjects(buf *bytes.Buffer, service *specification.Service) error {
 	for _, object := range service.Objects {
 		buf.WriteString(fmt.Sprintf("%s\n", object.GetComment()))
@@ -147,7 +206,15 @@ func generateObjects(buf *bytes.Buffer, service *specification.Service) error {
 		for _, field := range object.Fields {
 			buf.WriteString(fmt.Sprintf("%s\n", field.GetComment("\t")))
 
-			buf.WriteString(fmt.Sprintf("\t%s %s `json:\"%s\"`\n\n", field.Name, getTypeForGo(field, service), field.TagJSON()))
+			// Use filter-aware type generation for filter objects
+			var fieldType string
+			if object.IsFilter() {
+				fieldType = getTypeForGoFilter(field, service, object)
+			} else {
+				fieldType = getTypeForGo(field, service)
+			}
+
+			buf.WriteString(fmt.Sprintf("\t%s %s `json:\"%s\"`\n\n", field.Name, fieldType, field.TagJSON()))
 		}
 
 		buf.WriteString("}\n\n")

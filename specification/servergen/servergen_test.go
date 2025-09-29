@@ -322,7 +322,7 @@ func TestGetTypeForGo(t *testing.T) {
 				Type:      testObjectName,
 				Modifiers: []string{"Nullable"},
 			},
-			expectedType: "*" + testObjectName,
+			expectedType: testObjectName, // No pointer for nested objects per INF-407
 		},
 		{
 			name: "array of strings",
@@ -349,7 +349,7 @@ func TestGetTypeForGo(t *testing.T) {
 				Type:      testObjectName,
 				Modifiers: []string{"Array", "Nullable"},
 			},
-			expectedType: "[]*" + testObjectName,
+			expectedType: "[]" + testObjectName, // No pointer for nested objects per INF-407
 		},
 		{
 			name: "enum type",
@@ -400,9 +400,143 @@ func TestGetTypeForGo(t *testing.T) {
 			result := getTypeForGo(field, service)
 
 			// Assert
-			assert.Equal(t, "[]*"+testObjectName, result,
-				"Should handle both array and nullable modifiers correctly")
+			assert.Equal(t, "[]"+testObjectName, result,
+				"Should handle both array and nullable modifiers correctly (no pointer per INF-407)")
 		})
+	})
+}
+
+// ============================================================================
+// Filter Object Type Generation Tests
+// ============================================================================
+
+func TestGetTypeForGoFilter(t *testing.T) {
+	// Arrange
+	service := createTestService()
+
+	testCases := []struct {
+		name         string
+		field        specification.Field
+		parentObject specification.Object
+		expectedType string
+	}{
+		{
+			name: "filter type field should be pointer",
+			field: specification.Field{
+				Name:      "Equals",
+				Type:      "SchoolFilterEquals",
+				Modifiers: []string{"Nullable"},
+			},
+			parentObject: specification.Object{
+				Name: "SchoolFilter",
+			},
+			expectedType: "*SchoolFilterEquals",
+		},
+		{
+			name: "nested filter object field should not be pointer",
+			field: specification.Field{
+				Name:      "Meta",
+				Type:      "MetaFilterEquals",
+				Modifiers: []string{"Nullable"},
+			},
+			parentObject: specification.Object{
+				Name: "SchoolFilterEquals",
+			},
+			expectedType: "MetaFilterEquals",
+		},
+		{
+			name: "nested filter array should not have pointer elements",
+			field: specification.Field{
+				Name:      "NestedFilters",
+				Type:      "SchoolFilter",
+				Modifiers: []string{"Array"},
+			},
+			parentObject: specification.Object{
+				Name: "SchoolFilter",
+			},
+			expectedType: "[]SchoolFilter",
+		},
+		{
+			name: "primitive type in filter object",
+			field: specification.Field{
+				Name: "OrCondition",
+				Type: "Bool",
+			},
+			parentObject: specification.Object{
+				Name: "SchoolFilter",
+			},
+			expectedType: "types.Bool",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Act
+			result := getTypeForGoFilter(tc.field, service, tc.parentObject)
+
+			// Assert
+			assert.Equal(t, tc.expectedType, result,
+				"Expected Go type to be %s for field %s in %s", tc.expectedType, tc.field.Name, tc.parentObject.Name)
+		})
+	}
+
+	t.Run("non-filter object should behave normally", func(t *testing.T) {
+		// Arrange
+		field := specification.Field{
+			Name:      "Address",
+			Type:      testObjectName,
+			Modifiers: []string{"Nullable"},
+		}
+		parentObject := specification.Object{
+			Name: "User", // Not a filter object
+		}
+
+		// Act
+		result := getTypeForGoFilter(field, service, parentObject)
+
+		// Assert
+		assert.Equal(t, testObjectName, result,
+			"Non-filter objects should not use pointers for nullable objects")
+	})
+}
+
+// ============================================================================
+// Filter Object Generation Integration Tests
+// ============================================================================
+
+func TestGenerateFilterObjects(t *testing.T) {
+	// Arrange
+	service := createTestService()
+	buf := &bytes.Buffer{}
+
+	// Act
+	err := generateObjects(buf, service)
+
+	// Assert
+	assert.Nil(t, err, "Expected no error when generating filter objects")
+
+	generatedCode := buf.String()
+
+	// Test that filter type fields use pointers
+	assert.Contains(t, generatedCode, "Equals *SchoolFilterEquals `json:\"equals\"`",
+		"Filter type fields should use pointers")
+
+	// Test that nested filter object fields don't use pointers
+	assert.Contains(t, generatedCode, "Meta MetaFilterEquals `json:\"meta\"`",
+		"Nested filter object fields should NOT use pointers")
+
+	// Test that nested filter arrays don't use pointers for elements
+	assert.Contains(t, generatedCode, "NestedFilters []SchoolFilter `json:\"nestedFilters\"`",
+		"Nested filter arrays should NOT use pointers for elements")
+
+	// Test that primitive types work normally in filter objects
+	assert.Contains(t, generatedCode, "OrCondition types.Bool `json:\"orCondition\"`",
+		"Primitive types in filter objects should work normally")
+
+	t.Run("generated filter code is properly formatted", func(t *testing.T) {
+		// Verify the generated code can be parsed as valid Go
+		assert.NotContains(t, generatedCode, "**", "Should not have double pointers")
+		assert.NotContains(t, generatedCode, "*[]", "Should not have pointer to array")
 	})
 }
 
@@ -447,7 +581,7 @@ func TestGetTypePrefix(t *testing.T) {
 				Type:      testObjectName,
 				Modifiers: []string{"Nullable"},
 			},
-			expectedPrefix: "*",
+			expectedPrefix: "", // No pointer for nullable objects per INF-407
 		},
 		{
 			name: "array nullable object",
@@ -455,7 +589,7 @@ func TestGetTypePrefix(t *testing.T) {
 				Type:      testObjectName,
 				Modifiers: []string{"Array", "Nullable"},
 			},
-			expectedPrefix: "[]*",
+			expectedPrefix: "[]", // No pointer for nullable objects per INF-407
 		},
 		{
 			name: "enum type",
@@ -977,6 +1111,52 @@ func createTestService() *specification.Service {
 						Name:        testFieldName,
 						Description: testFieldDesc,
 						Type:        testFieldType,
+					},
+				},
+			},
+			// Add filter objects for testing
+			{
+				Name:        "SchoolFilter",
+				Description: "Filter object for School",
+				Fields: []specification.Field{
+					{
+						Name:      "Equals",
+						Type:      "SchoolFilterEquals",
+						Modifiers: []string{"Nullable"},
+					},
+					{
+						Name: "OrCondition",
+						Type: "Bool",
+					},
+					{
+						Name:      "NestedFilters",
+						Type:      "SchoolFilter",
+						Modifiers: []string{"Array"},
+					},
+				},
+			},
+			{
+				Name:        "SchoolFilterEquals",
+				Description: "Equality filter fields for School",
+				Fields: []specification.Field{
+					{
+						Name: "ID",
+						Type: "UUID",
+					},
+					{
+						Name:      "Meta",
+						Type:      "MetaFilterEquals",
+						Modifiers: []string{"Nullable"},
+					},
+				},
+			},
+			{
+				Name:        "MetaFilterEquals",
+				Description: "Equality filter fields for Meta",
+				Fields: []specification.Field{
+					{
+						Name: "Version",
+						Type: "String",
 					},
 				},
 			},
