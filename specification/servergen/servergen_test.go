@@ -516,19 +516,19 @@ func TestGenerateFilterObjects(t *testing.T) {
 	assert.Nil(t, err, "Expected no error when generating filter objects")
 
 	generatedCode := buf.String()
-	
+
 	// Test that filter type fields use pointers
 	assert.Contains(t, generatedCode, "Equals *SchoolFilterEquals `json:\"equals\"`",
 		"Filter type fields should use pointers")
-	
+
 	// Test that nested filter object fields don't use pointers
 	assert.Contains(t, generatedCode, "Meta MetaFilterEquals `json:\"meta\"`",
 		"Nested filter object fields should NOT use pointers")
-	
+
 	// Test that nested filter arrays don't use pointers for elements
 	assert.Contains(t, generatedCode, "NestedFilters []SchoolFilter `json:\"nestedFilters\"`",
 		"Nested filter arrays should NOT use pointers for elements")
-	
+
 	// Test that primitive types work normally in filter objects
 	assert.Contains(t, generatedCode, "OrCondition types.Bool `json:\"orCondition\"`",
 		"Primitive types in filter objects should work normally")
