@@ -1309,10 +1309,8 @@ func generateNullFilterObject(obj Object, allObjects []Object) Object {
 		}
 
 		if isObjectType(field.Type, objects) {
-			// For nested objects, create boolean field for null check
-			nestedField := generateNestedFilterField(field, filterNullSuffix, true, false, objects)
-			nestedField.Type = FieldTypeBool
-			return nestedField, true
+			// For nested objects, use the nested filter type for null check
+			return generateNestedFilterField(field, filterNullSuffix, true, false, objects), true
 		}
 		// For primitive types, create boolean field
 		return generateFilterField(Field{
