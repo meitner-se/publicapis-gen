@@ -995,6 +995,14 @@ func TestObject_GetComment(t *testing.T) {
 			},
 			expected: "// Address object",
 		},
+		{
+			name: "object with multiline description",
+			object: Object{
+				Name:        "User",
+				Description: "User entity representing a person\nContains profile and contact information",
+			},
+			expected: "// User entity representing a person\n// Contains profile and contact information",
+		},
 	}
 
 	for _, tc := range testCases {
