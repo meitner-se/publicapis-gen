@@ -2999,6 +2999,89 @@ func TestGenerator_GenerateFromServiceSecurityYAML(t *testing.T) {
 	t.Logf("Generated Security YAML:\n%s", yamlStr)
 }
 
+// TestSecuritySchemesDeterministicOrder tests that security schemes are generated in a consistent order.
+func TestSecuritySchemesDeterministicOrder(t *testing.T) {
+	// Create a service with multiple security schemes
+	service := &specification.Service{
+		Name:    "Deterministic Security Test",
+		Version: "1.0.0",
+		SecuritySchemes: map[string]specification.SecurityScheme{
+			"ClientSecret": {
+				Type:        "apiKey",
+				Name:        "ClientSecret",
+				In:          "header",
+				Description: "Client secret in header",
+			},
+			"ClientCredentials": {
+				Type:        "apiKey",
+				Name:        "ClientID",
+				In:          "header",
+				Description: "Client ID in header",
+			},
+			"BearerAuth": {
+				Type:         "http",
+				Scheme:       "bearer",
+				BearerFormat: "JWT",
+				Description:  "Bearer token authentication",
+			},
+			"ApiKey": {
+				Type:        "apiKey",
+				Name:        "X-API-Key",
+				In:          "header",
+				Description: "API key authentication",
+			},
+		},
+		Enums:     []specification.Enum{},
+		Objects:   []specification.Object{},
+		Resources: []specification.Resource{},
+	}
+
+	// Generate document multiple times and verify output is consistent
+	generator := newGenerator()
+
+	// Generate first time
+	document1, err := generator.generateFromService(service)
+	assert.NoError(t, err, "Should generate document without error")
+
+	json1, err := document1.RenderJSON("  ")
+	assert.NoError(t, err, "Should render JSON without error")
+
+	// Generate second time
+	document2, err := generator.generateFromService(service)
+	assert.NoError(t, err, "Should generate document without error")
+
+	json2, err := document2.RenderJSON("  ")
+	assert.NoError(t, err, "Should render JSON without error")
+
+	// Compare outputs - they should be identical
+	assert.Equal(t, string(json1), string(json2), "Generated JSON should be identical across multiple runs")
+
+	// Verify the order is alphabetical
+	jsonStr := string(json1)
+
+	// Find the position of each security scheme in the JSON
+	apiKeyPos := strings.Index(jsonStr, `"ApiKey":`)
+	bearerAuthPos := strings.Index(jsonStr, `"BearerAuth":`)
+	clientCredentialsPos := strings.Index(jsonStr, `"ClientCredentials":`)
+	clientSecretPos := strings.Index(jsonStr, `"ClientSecret":`)
+
+	// Verify they appear in alphabetical order
+	assert.True(t, apiKeyPos < bearerAuthPos, "ApiKey should appear before BearerAuth")
+	assert.True(t, bearerAuthPos < clientCredentialsPos, "BearerAuth should appear before ClientCredentials")
+	assert.True(t, clientCredentialsPos < clientSecretPos, "ClientCredentials should appear before ClientSecret")
+
+	// Run generation 10 more times to ensure consistency
+	for i := 0; i < 10; i++ {
+		document, err := generator.generateFromService(service)
+		assert.NoError(t, err, "Should generate document without error on iteration %d", i)
+
+		json, err := document.RenderJSON("  ")
+		assert.NoError(t, err, "Should render JSON without error on iteration %d", i)
+
+		assert.Equal(t, string(json1), string(json), "Generated JSON should be identical on iteration %d", i)
+	}
+}
+
 // TestStringFieldsWithNumericExamples tests that string fields with numeric examples are properly typed as strings.
 func TestStringFieldsWithNumericExamples(t *testing.T) {
 	generator := newGenerator()
