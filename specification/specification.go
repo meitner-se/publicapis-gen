@@ -370,6 +370,9 @@ type SecurityScheme struct {
 // SecurityRequirement represents scheme names that must be satisfied together.
 type SecurityRequirement []string
 
+// SecurityDefinition represents a single security configuration combining schemes and requirements.
+type SecurityDefinition map[string][]SecurityScheme
+
 // RetryBackoffConfiguration defines the backoff behavior for retry attempts.
 type RetryBackoffConfiguration struct {
 	// InitialInterval is the initial interval between retries in milliseconds
@@ -423,11 +426,8 @@ type Service struct {
 	// Servers that are part of the service
 	Servers []ServiceServer `json:"servers,omitempty"`
 
-	// SecuritySchemes defines available security schemes
-	SecuritySchemes map[string]SecurityScheme `json:"securitySchemes,omitempty"`
-
-	// Security defines global security requirements (OR logic between requirements)
-	Security []SecurityRequirement `json:"security,omitempty"`
+	// Security defines security configurations combining schemes and requirements
+	Security SecurityDefinition `json:"security,omitempty"`
 
 	// Retry configuration for the service
 	Retry *RetryConfiguration `json:"retry,omitempty"`
@@ -611,18 +611,17 @@ func ApplyOverlay(input *Service) *Service {
 
 	// Create a deep copy of the input service
 	result := &Service{
-		Name:            input.Name,
-		Version:         input.Version,
-		Contact:         input.Contact,                               // Copy contact information
-		License:         input.License,                               // Copy license information
-		Servers:         append([]ServiceServer{}, input.Servers...), // Copy servers slice
-		SecuritySchemes: input.SecuritySchemes,                       // Copy security schemes
-		Security:        input.Security,                              // Copy security requirements
-		Retry:           input.Retry,                                 // Copy retry configuration
-		Timeout:         input.Timeout,                               // Copy timeout configuration
-		Enums:           make([]Enum, 0, len(input.Enums)+1),         // +1 for ErrorCode enum
-		Objects:         make([]Object, 0, len(input.Objects)+3),     // +3 for Error, Pagination, and Meta objects
-		Resources:       make([]Resource, len(input.Resources)),
+		Name:      input.Name,
+		Version:   input.Version,
+		Contact:   input.Contact,                               // Copy contact information
+		License:   input.License,                               // Copy license information
+		Servers:   append([]ServiceServer{}, input.Servers...), // Copy servers slice
+		Security:  input.Security,                              // Copy security configuration
+		Retry:     input.Retry,                                 // Copy retry configuration
+		Timeout:   input.Timeout,                               // Copy timeout configuration
+		Enums:     make([]Enum, 0, len(input.Enums)+1),         // +1 for ErrorCode enum
+		Objects:   make([]Object, 0, len(input.Objects)+3),     // +3 for Error, Pagination, and Meta objects
+		Resources: make([]Resource, len(input.Resources)),
 	}
 
 	// Add default enums and objects if they don't already exist
@@ -1104,18 +1103,17 @@ func ApplyFilterOverlay(input *Service) *Service {
 
 	// Create a deep copy of the input service
 	result := &Service{
-		Name:            input.Name,
-		Version:         input.Version,
-		Contact:         input.Contact,                               // Copy contact information
-		License:         input.License,                               // Copy license information
-		Servers:         append([]ServiceServer{}, input.Servers...), // Copy servers slice
-		SecuritySchemes: input.SecuritySchemes,                       // Copy security schemes
-		Security:        input.Security,                              // Copy security requirements
-		Retry:           input.Retry,                                 // Copy retry configuration
-		Timeout:         input.Timeout,                               // Copy timeout configuration
-		Enums:           make([]Enum, len(input.Enums)),
-		Objects:         make([]Object, 0, len(input.Objects)*7), // Estimate for filter objects
-		Resources:       make([]Resource, len(input.Resources)),
+		Name:      input.Name,
+		Version:   input.Version,
+		Contact:   input.Contact,                               // Copy contact information
+		License:   input.License,                               // Copy license information
+		Servers:   append([]ServiceServer{}, input.Servers...), // Copy servers slice
+		Security:  input.Security,                              // Copy security configuration
+		Retry:     input.Retry,                                 // Copy retry configuration
+		Timeout:   input.Timeout,                               // Copy timeout configuration
+		Enums:     make([]Enum, len(input.Enums)),
+		Objects:   make([]Object, 0, len(input.Objects)*7), // Estimate for filter objects
+		Resources: make([]Resource, len(input.Resources)),
 	}
 
 	// Copy enums

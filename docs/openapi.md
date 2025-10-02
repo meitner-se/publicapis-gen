@@ -402,11 +402,6 @@ func customizeOpenAPI() {
     generator.SetContactInfo("API Team", "api@company.com", "https://company.com")
     generator.SetLicenseInfo("MIT", "https://opensource.org/licenses/MIT")  
     generator.AddTag("pets", "Everything about your Pets")
-    generator.AddSecurityScheme("apiKey", openapi.SecurityScheme{
-        Type: "apiKey",
-        Name: "X-API-Key",  
-        In:   "header",
-    })
     
     // Generate with customization
     document, _ := generator.GenerateFromService(service)

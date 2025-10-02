@@ -202,8 +202,9 @@ const (
 
 // Security scheme constants
 const (
-	securityTypeHTTP   = "http"
-	securityTypeAPIKey = "apiKey"
+	securityTypeHTTP      = "http"
+	securityTypeAPIKey    = "apiKey"
+	securityTypeMutualTLS = "mutualTLS"
 )
 
 // generator handles OpenAPI 3.1 specification generation from specification.Service.
@@ -2215,13 +2216,18 @@ func (g *generator) createEndpointSpecificErrorResponseReference(statusCode stri
 
 // addSecuritySchemesToComponents adds security schemes from the service to the OpenAPI components.
 func (g *generator) addSecuritySchemesToComponents(components *v3.Components, service *specification.Service) {
-	if service.SecuritySchemes == nil {
+	if service.Security == nil {
 		return
 	}
 
-	for schemeName, scheme := range service.SecuritySchemes {
-		securityScheme := g.createSecurityScheme(scheme)
-		components.SecuritySchemes.Set(schemeName, securityScheme)
+	// Extract unique security schemes from all security configurations
+	for configName, schemes := range service.Security {
+		for _, scheme := range schemes {
+			// Generate unique scheme name based on config and scheme properties
+			schemeName := g.generateSchemeName(configName, scheme)
+			securityScheme := g.createSecurityScheme(scheme)
+			components.SecuritySchemes.Set(schemeName, securityScheme)
+		}
 	}
 }
 
@@ -2246,25 +2252,50 @@ func (g *generator) createSecurityScheme(scheme specification.SecurityScheme) *v
 	return securityScheme
 }
 
+// generateSchemeName generates a unique scheme name based on the configuration name and scheme properties.
+func (g *generator) generateSchemeName(configName string, scheme specification.SecurityScheme) string {
+	// For named schemes (like apiKey), use the Name field if available
+	if scheme.Type == securityTypeAPIKey && scheme.Name != "" {
+		return scheme.Name
+	}
+
+	// For other schemes, use the configName or generate based on type
+	if scheme.Type == securityTypeHTTP && scheme.Scheme != "" {
+		if scheme.Scheme == "bearer" {
+			return "Bearer"
+		}
+		return scheme.Scheme
+	}
+
+	if scheme.Type == securityTypeMutualTLS {
+		return "mTLS"
+	}
+
+	// Default to config name
+	return configName
+}
+
 // addSecurityToDocument adds security requirements from the service to the OpenAPI document.
 func (g *generator) addSecurityToDocument(document *v3.Document, service *specification.Service) {
-	if len(service.Security) == 0 {
+	if service.Security == nil || len(service.Security) == 0 {
 		return
 	}
 
-	// Convert simplified SecurityRequirement to base.SecurityRequirement
-	securityRequirements := make([]*base.SecurityRequirement, len(service.Security))
-	for i, requirement := range service.Security {
+	// Convert security definitions to OpenAPI security requirements
+	var securityRequirements []*base.SecurityRequirement
+
+	for configName, schemes := range service.Security {
 		securityRequirement := &base.SecurityRequirement{
 			Requirements: orderedmap.New[string, []string](),
 		}
 
-		// Each requirement is a list of scheme names that must be satisfied together
-		for _, schemeName := range requirement {
+		// Each config represents a group of schemes that must be satisfied together
+		for _, scheme := range schemes {
+			schemeName := g.generateSchemeName(configName, scheme)
 			securityRequirement.Requirements.Set(schemeName, []string{}) // Empty scopes for non-OAuth schemes
 		}
 
-		securityRequirements[i] = securityRequirement
+		securityRequirements = append(securityRequirements, securityRequirement)
 	}
 
 	document.Security = securityRequirements

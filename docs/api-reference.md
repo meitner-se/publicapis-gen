@@ -17,10 +17,9 @@ type Service struct {
     Version         string                     `json:"version,omitempty"`         // Service version  
     Contact         *ServiceContact            `json:"contact,omitempty"`         // Contact information
     License         *ServiceLicense            `json:"license,omitempty"`         // License information
-    Servers         []ServiceServer            `json:"servers,omitempty"`         // Server definitions
-    SecuritySchemes map[string]SecurityScheme  `json:"securitySchemes,omitempty"` // Security schemes
-    Security        []SecurityRequirement      `json:"security,omitempty"`        // Security requirements
-    Retry           *RetryConfiguration        `json:"retry,omitempty"`           // Retry configuration
+    Servers  []ServiceServer       `json:"servers,omitempty"`  // Server definitions
+    Security SecurityDefinition    `json:"security,omitempty"` // Security configurations
+    Retry    *RetryConfiguration   `json:"retry,omitempty"`    // Retry configuration
     Timeout         *TimeoutConfiguration      `json:"timeout,omitempty"`         // Timeout configuration
     Enums           []Enum                     `json:"enums"`                     // Enum definitions
     Objects         []Object                   `json:"objects"`                   // Shared objects
@@ -392,14 +391,24 @@ func (g *Generator) GetDocumentStats(document *v3.Document) DocumentStats
 
 ### Types
 
+#### SecurityDefinition
+Security configuration combining schemes and requirements.
+
+```go
+type SecurityDefinition map[string][]SecurityScheme
+```
+
 #### SecurityScheme
 Security scheme definition for OpenAPI.
 
 ```go
 type SecurityScheme struct {
-    Type string `json:"type"`
-    Name string `json:"name,omitempty"`
-    In   string `json:"in,omitempty"`
+    Type         string `json:"type"`
+    Description  string `json:"description,omitempty"`
+    Scheme       string `json:"scheme,omitempty"`
+    BearerFormat string `json:"bearerFormat,omitempty"`
+    Name         string `json:"name,omitempty"`
+    In           string `json:"in,omitempty"`
 }
 ```
 
