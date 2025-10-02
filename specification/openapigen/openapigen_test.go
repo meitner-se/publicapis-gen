@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"testing"
 
@@ -3712,4 +3713,72 @@ func TestDeterministicGeneration(t *testing.T) {
 	components, ok := result["components"].(map[string]interface{})
 	assert.True(t, ok, "Should have components section")
 	assert.NotEmpty(t, components, "Should have components")
+}
+
+// TestGenerator_SecuritySchemesConsistentOrder tests that security schemes are generated in a consistent order.
+func TestGenerator_SecuritySchemesConsistentOrder(t *testing.T) {
+	// Create a service with multiple security schemes
+	service := &specification.Service{
+		Name:    "Consistent Order Test",
+		Version: "1.0.0",
+		SecuritySchemes: map[string]specification.SecurityScheme{
+			"ClientSecret": {
+				Type:        "apiKey",
+				Name:        "ClientSecret",
+				In:          "header",
+				Description: "Client secret in header",
+			},
+			"ClientCredentials": {
+				Type:        "apiKey",
+				Name:        "ClientID",
+				In:          "header",
+				Description: "Client ID in header",
+			},
+			"Bearer": {
+				Type:         "http",
+				Scheme:       "bearer",
+				BearerFormat: "JWT",
+				Description:  "Bearer token",
+			},
+		},
+		Resources: []specification.Resource{},
+		Enums:     []specification.Enum{},
+		Objects:   []specification.Object{},
+	}
+
+	// Generate multiple times and verify consistency
+	previousJSON := ""
+	for i := 0; i < 10; i++ {
+		generator := newGenerator()
+		document, err := generator.generateFromService(service)
+		assert.NoError(t, err, "Should generate document without error on iteration %d", i)
+
+		// Convert to JSON
+		jsonBytes, err := generator.toJSON(document)
+		assert.NoError(t, err, "Should convert to JSON without error on iteration %d", i)
+
+		currentJSON := string(jsonBytes)
+		if previousJSON != "" {
+			assert.Equal(t, previousJSON, currentJSON, "JSON output should be consistent across runs (iteration %d)", i)
+		}
+		previousJSON = currentJSON
+	}
+
+	// Also verify that all expected security schemes are present
+	var result map[string]interface{}
+	err := json.Unmarshal([]byte(previousJSON), &result)
+	assert.NoError(t, err, "Should unmarshal JSON")
+
+	components := result["components"].(map[string]interface{})
+	securitySchemes := components["securitySchemes"].(map[string]interface{})
+
+	// Extract keys and verify all expected schemes are present
+	var keys []string
+	for key := range securitySchemes {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys) // Sort for deterministic comparison
+	
+	expectedKeys := []string{"Bearer", "ClientCredentials", "ClientSecret"}
+	assert.Equal(t, expectedKeys, keys, "All security schemes should be present")
 }
