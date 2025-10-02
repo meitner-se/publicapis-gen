@@ -1,0 +1,52 @@
+name: Security Example API
+version: 1.0.0
+contact:
+  name: API Team
+  email: api@example.com
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+
+# New grouped security format
+# Groups multiple schemes that work together
+security:
+  Basic:
+    - name: ClientID
+      type: apiKey
+      in: header
+      description: Client identifier for API access
+    - name: ClientSecret
+      type: apiKey
+      in: header
+      description: Client secret for API access
+  Secure:
+    - name: mTLS
+      type: mutualTLS
+      description: Mutual TLS certificate authentication
+    - name: Bearer
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token authentication
+
+resources:
+  - name: User
+    description: User management endpoints
+    operations: [Create, Read, Update, Delete]
+    fields:
+      - name: id
+        type: UUID
+        description: Unique identifier for the user
+        modifiers: []
+      - name: email
+        type: String
+        description: User's email address
+        modifiers: []
+      - name: name
+        type: String
+        description: User's full name
+        modifiers: []
+      - name: role
+        type: String
+        description: User's role
+        modifiers: [Nullable]

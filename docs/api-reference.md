@@ -417,6 +417,72 @@ type DocumentStats struct {
 
 ---
 
+## Security Configuration
+
+The specification supports two ways to define security:
+
+### 1. Traditional Format (Separate SecuritySchemes and Security)
+```yaml
+# Define available security schemes
+securitySchemes:
+  apiKey:
+    type: apiKey
+    in: header
+    name: X-API-Key
+  bearerAuth:
+    type: http
+    scheme: bearer
+    bearerFormat: JWT
+
+# Define security requirements (schemes that must be satisfied together)
+security:
+  - [apiKey]           # Only API key required
+  - [bearerAuth]       # Only bearer token required
+  - [apiKey, bearerAuth]  # Both required together
+```
+
+### 2. New Grouped Format (Recommended)
+Groups related security schemes that work together:
+
+```yaml
+# Define security groups with their schemes
+security:
+  Basic:
+    - name: ClientID
+      type: apiKey
+      in: header
+      description: Client identifier
+    - name: ClientSecret
+      type: apiKey
+      in: header
+      description: Client secret
+  Secure:
+    - name: mTLS
+      type: mutualTLS
+      description: Mutual TLS authentication
+    - name: Bearer
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token authentication
+```
+
+This generates:
+- Security schemes: `Basic_ClientID`, `Basic_ClientSecret`, `Secure_mTLS`, `Secure_Bearer`
+- Security requirements: All schemes in a group are required together
+
+### Supported Security Types
+
+| Type | Fields | Description |
+|------|--------|-------------|
+| `apiKey` | `name`, `in` | API key in header, query, or cookie |
+| `http` | `scheme`, `bearerFormat` | HTTP authentication (basic, bearer, etc.) |
+| `mutualTLS` | - | Mutual TLS certificate authentication |
+| `oauth2` | `flows` | OAuth 2.0 (not shown in examples) |
+| `openIdConnect` | `openIdConnectUrl` | OpenID Connect Discovery (not shown) |
+
+---
+
 ## Usage Patterns
 
 ### Basic Usage Pattern

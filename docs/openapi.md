@@ -23,6 +23,25 @@ retry:
   status_codes: ["5XX", "429"]
   retry_connection_errors: false
 
+# Security configuration (new grouped format)
+# Groups multiple schemes that work together
+security:
+  BasicAuth:
+    - name: ApiKey
+      type: apiKey
+      in: header
+      description: API key for authentication
+    - name: ApiSecret
+      type: apiKey
+      in: header
+      description: API secret for authentication
+  TokenAuth:
+    - name: Bearer
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token authentication
+
 enums:
   - name: "PetStatus"
     description: "Pet availability status"

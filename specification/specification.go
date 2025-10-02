@@ -370,6 +370,19 @@ type SecurityScheme struct {
 // SecurityRequirement represents scheme names that must be satisfied together.
 type SecurityRequirement []string
 
+// SecurityGroupScheme represents a single security scheme within a group.
+type SecurityGroupScheme struct {
+	Name         string `json:"name"`
+	Type         string `json:"type"`
+	Description  string `json:"description,omitempty"`
+	Scheme       string `json:"scheme,omitempty"`
+	BearerFormat string `json:"bearerFormat,omitempty"`
+	In           string `json:"in,omitempty"`
+}
+
+// SecurityGroup represents a group of security schemes that work together.
+type SecurityGroup map[string][]SecurityGroupScheme
+
 // RetryBackoffConfiguration defines the backoff behavior for retry attempts.
 type RetryBackoffConfiguration struct {
 	// InitialInterval is the initial interval between retries in milliseconds
@@ -423,11 +436,12 @@ type Service struct {
 	// Servers that are part of the service
 	Servers []ServiceServer `json:"servers,omitempty"`
 
-	// SecuritySchemes defines available security schemes
+	// SecuritySchemes defines available security schemes (deprecated - use Security instead)
 	SecuritySchemes map[string]SecurityScheme `json:"securitySchemes,omitempty"`
 
-	// Security defines global security requirements (OR logic between requirements)
-	Security []SecurityRequirement `json:"security,omitempty"`
+	// Security defines security configuration - either grouped format or requirements list
+	// Can be either SecurityGroup (new format) or []SecurityRequirement (old format)
+	Security interface{} `json:"security,omitempty"`
 
 	// Retry configuration for the service
 	Retry *RetryConfiguration `json:"retry,omitempty"`
@@ -2549,6 +2563,15 @@ func ensureAllFieldsHaveExamples(service *Service) {
 // applyDefaultOverlays applies the standard overlays to a service to ensure
 // resource objects and CRUD endpoints are generated.
 func applyDefaultOverlays(service *Service) *Service {
+	// Process security configuration if present
+	if service.Security != nil {
+		requirements, err := service.ProcessSecurity()
+		if err == nil && requirements != nil {
+			// Convert back to []SecurityRequirement for compatibility
+			service.Security = requirements
+		}
+	}
+
 	// Apply overlay to generate resource objects and standard endpoints
 	overlayedService := ApplyOverlay(service)
 	if overlayedService == nil {
@@ -2572,6 +2595,98 @@ func applyDefaultOverlays(service *Service) *Service {
 // HasRetryConfiguration checks if the service has retry configuration defined.
 func (s Service) HasRetryConfiguration() bool {
 	return s.Retry != nil
+}
+
+// ProcessSecurity converts the new grouped security format to the standard format.
+// It populates SecuritySchemes and returns security requirements.
+func (s *Service) ProcessSecurity() ([]SecurityRequirement, error) {
+	if s.Security == nil {
+		return nil, nil
+	}
+
+	switch sec := s.Security.(type) {
+	case []SecurityRequirement:
+		// Already in the correct format
+		return sec, nil
+
+	case []interface{}:
+		// Old format: array of security requirements
+		var requirements []SecurityRequirement
+		for _, req := range sec {
+			if strReq, ok := req.([]interface{}); ok {
+				var requirement SecurityRequirement
+				for _, scheme := range strReq {
+					if schemeName, ok := scheme.(string); ok {
+						requirement = append(requirement, schemeName)
+					}
+				}
+				requirements = append(requirements, requirement)
+			}
+		}
+		return requirements, nil
+
+	case map[string]interface{}:
+		// New grouped format
+		if s.SecuritySchemes == nil {
+			s.SecuritySchemes = make(map[string]SecurityScheme)
+		}
+
+		var requirements []SecurityRequirement
+		for groupName, schemes := range sec {
+			var requirement SecurityRequirement
+
+			if schemeList, ok := schemes.([]interface{}); ok {
+				for _, schemeData := range schemeList {
+					if schemeMap, ok := schemeData.(map[string]interface{}); ok {
+						// Extract scheme name
+						schemeName, hasName := schemeMap["name"].(string)
+						if !hasName || schemeName == "" {
+							return nil, fmt.Errorf("security scheme in group '%s' must have a 'name' field", groupName)
+						}
+
+						// Create unique scheme name by combining group and scheme name
+						fullSchemeName := groupName + "_" + schemeName
+						requirement = append(requirement, fullSchemeName)
+
+						// Convert to SecurityScheme
+						scheme := SecurityScheme{}
+
+						if schemeType, ok := schemeMap["type"].(string); ok {
+							scheme.Type = schemeType
+						}
+						if desc, ok := schemeMap["description"].(string); ok {
+							scheme.Description = desc
+						}
+						if schemeVal, ok := schemeMap["scheme"].(string); ok {
+							scheme.Scheme = schemeVal
+						}
+						if bearerFormat, ok := schemeMap["bearerFormat"].(string); ok {
+							scheme.BearerFormat = bearerFormat
+						}
+						if in, ok := schemeMap["in"].(string); ok {
+							scheme.In = in
+						}
+
+						// For apiKey type, use the name from the map, otherwise use the header name
+						if scheme.Type == "apiKey" && scheme.In != "" {
+							scheme.Name = schemeName
+						}
+
+						s.SecuritySchemes[fullSchemeName] = scheme
+					}
+				}
+			}
+
+			if len(requirement) > 0 {
+				requirements = append(requirements, requirement)
+			}
+		}
+
+		return requirements, nil
+
+	default:
+		return nil, fmt.Errorf("invalid security format: expected array or map")
+	}
 }
 
 // GetRetryConfigurationWithDefaults returns the retry configuration with default values applied.

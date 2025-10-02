@@ -2248,13 +2248,19 @@ func (g *generator) createSecurityScheme(scheme specification.SecurityScheme) *v
 
 // addSecurityToDocument adds security requirements from the service to the OpenAPI document.
 func (g *generator) addSecurityToDocument(document *v3.Document, service *specification.Service) {
-	if len(service.Security) == 0 {
+	if service.Security == nil {
+		return
+	}
+
+	// Handle Security as interface{} - it should be []SecurityRequirement after processing
+	requirements, ok := service.Security.([]specification.SecurityRequirement)
+	if !ok || len(requirements) == 0 {
 		return
 	}
 
 	// Convert simplified SecurityRequirement to base.SecurityRequirement
-	securityRequirements := make([]*base.SecurityRequirement, len(service.Security))
-	for i, requirement := range service.Security {
+	securityRequirements := make([]*base.SecurityRequirement, len(requirements))
+	for i, requirement := range requirements {
 		securityRequirement := &base.SecurityRequirement{
 			Requirements: orderedmap.New[string, []string](),
 		}
