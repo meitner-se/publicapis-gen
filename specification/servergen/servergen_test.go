@@ -187,6 +187,32 @@ func TestGenerateServer(t *testing.T) {
 			// Note: Double spaces can appear in comments like "// //"
 			assert.Contains(t, generatedCode, "\t", "Generated code should use tabs for indentation")
 		})
+
+		t.Run("rate limiter func in server struct", func(t *testing.T) {
+			// Arrange
+			service := createTestService()
+			buf := &bytes.Buffer{}
+
+			// Act
+			err := GenerateServer(buf, service)
+
+			// Assert
+			assert.Nil(t, err, "Expected no error")
+			generatedCode := buf.String()
+			// Check that RateLimiterFunc is included in Server struct
+			assert.Contains(t, generatedCode, "RateLimiterFunc func(ctx context.Context, session Session) (bool, error)",
+				"Server struct should contain RateLimiterFunc field")
+
+			// Check that rate limiting logic is in serveWithResponse
+			assert.Contains(t, generatedCode, "if server.RateLimiterFunc != nil",
+				"serveWithResponse should check for RateLimiterFunc")
+			assert.Contains(t, generatedCode, "ErrorCodeRateLimited",
+				"serveWithResponse should handle rate limit errors")
+
+			// Check that rate limiting logic is in serveWithoutResponse
+			assert.Contains(t, generatedCode, "// Check rate limit if RateLimiterFunc is provided",
+				"serveWithoutResponse should have rate limit check comment")
+		})
 	})
 }
 
