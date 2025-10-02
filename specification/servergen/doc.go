@@ -91,12 +91,40 @@
 //	type Server[Session any] struct {
 //	    GetSessionFunc    func(ctx context.Context, headers http.Header, requestID string) (Session, error)
 //	    ConvertErrorFunc  func(err error, requestID string) *Error
+//	    RateLimiterFunc   func(ctx context.Context, session Session) (bool, error)
 //	}
+//
+// # Rate Limiting
+//
+// The server supports optional rate limiting through the RateLimiterFunc. When provided,
+// this function is called after request parsing and session retrieval but before the
+// endpoint handler executes:
+//
+//	api.Server.RateLimiterFunc = func(ctx context.Context, session MySession) (bool, error) {
+//	    // Check rate limit based on session (e.g., user ID, API key)
+//	    allowed, err := rateLimiter.CheckLimit(session.UserID)
+//	    if err != nil {
+//	        return false, err // Internal error during rate limit check
+//	    }
+//	    return allowed, nil
+//	}
+//
+// The function returns:
+// - (true, nil): Request is allowed to proceed
+// - (false, nil): Request is rate limited (returns HTTP 429 with ErrorCodeRateLimited)
+// - (false, error): Internal error during rate limit check (returns HTTP 500)
 //
 // # Error Handling
 //
 // Errors are automatically converted to API error responses with appropriate
 // HTTP status codes. The Error type implements both error and HTTPStatusCode interfaces.
+//
+// Special error codes include:
+// - ErrorCodeRateLimited: Returns HTTP 429 Too Many Requests
+// - ErrorCodeUnauthorized: Returns HTTP 401 Unauthorized
+// - ErrorCodeForbidden: Returns HTTP 403 Forbidden
+// - ErrorCodeNotFound: Returns HTTP 404 Not Found
+// - ErrorCodeInternal: Returns HTTP 500 Internal Server Error
 //
 // # Type Safety
 //
