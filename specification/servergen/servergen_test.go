@@ -2,6 +2,7 @@ package servergen
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/meitner-se/publicapis-gen/specification"
@@ -105,6 +106,13 @@ const (
 	// Comment constants
 	expectedFieldComment  = "// Name: User name"
 	expectedObjectComment = "// Address object"
+
+	// Rate limiter constants
+	expectedRateLimiterFunc     = "RateLimiterFunc func(ctx context.Context, session Session) (bool, error)"
+	expectedRateLimiterCheck    = "if server.RateLimiterFunc != nil"
+	expectedRateLimitedError    = "ErrorCodeRateLimited"
+	expectedRateLimitedMessage  = "Rate limit exceeded"
+	expectedRateLimitStatusCode = "http.StatusTooManyRequests"
 )
 
 // ============================================================================
@@ -154,6 +162,9 @@ func TestGenerateServer(t *testing.T) {
 	assert.Contains(t, generatedCode, expectedServeWithoutResponse, "Generated code should contain serveWithoutResponse function")
 	assert.Contains(t, generatedCode, expectedParseRequest, "Generated code should contain parseRequest function")
 
+	// Verify RateLimiterFunc in Server struct
+	assert.Contains(t, generatedCode, expectedRateLimiterFunc, "Server struct should contain RateLimiterFunc")
+
 	t.Run("edge cases", func(t *testing.T) {
 		t.Run("empty service", func(t *testing.T) {
 			// Arrange
@@ -187,6 +198,45 @@ func TestGenerateServer(t *testing.T) {
 			// Note: Double spaces can appear in comments like "// //"
 			assert.Contains(t, generatedCode, "\t", "Generated code should use tabs for indentation")
 		})
+	})
+
+	t.Run("rate limiter functionality", func(t *testing.T) {
+		// Arrange
+		service := createTestServiceWithEndpoints()
+		buf := &bytes.Buffer{}
+
+		// Act
+		err := GenerateServer(buf, service)
+
+		// Assert
+		assert.Nil(t, err, "Expected no error when generating server with rate limiter")
+		generatedCode := buf.String()
+
+		// Check that RateLimiterFunc is defined in Server struct
+		assert.Contains(t, generatedCode, expectedRateLimiterFunc,
+			"Server struct should contain RateLimiterFunc definition")
+
+		// Check that rate limiter check is present in serveWithResponse
+		assert.Contains(t, generatedCode, expectedRateLimiterCheck,
+			"serveWithResponse should check if RateLimiterFunc is not nil")
+
+		// Check that rate limited error response is generated correctly
+		assert.Contains(t, generatedCode, expectedRateLimitedError,
+			"Should use ErrorCodeRateLimited for rate limit errors")
+		assert.Contains(t, generatedCode, expectedRateLimitedMessage,
+			"Should include rate limit exceeded message")
+		assert.Contains(t, generatedCode, expectedRateLimitStatusCode,
+			"Should return HTTP 429 Too Many Requests status")
+
+		// Verify rate limiter integration in both serve functions
+		// Check that the functions contain the rate limiter call
+		assert.Contains(t, generatedCode, "allowed, err := server.RateLimiterFunc(c.Request.Context(), request.Session)",
+			"Generated code should call RateLimiterFunc with correct parameters")
+
+		// Count occurrences to ensure it's in both functions
+		rateLimiterCallCount := strings.Count(generatedCode, "server.RateLimiterFunc(c.Request.Context(), request.Session)")
+		assert.Equal(t, 2, rateLimiterCallCount,
+			"RateLimiterFunc should be called in both serveWithResponse and serveWithoutResponse")
 	})
 }
 
