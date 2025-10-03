@@ -2219,7 +2219,16 @@ func (g *generator) addSecuritySchemesToComponents(components *v3.Components, se
 		return
 	}
 
-	for schemeName, scheme := range service.SecuritySchemes {
+	// Get sorted list of scheme names for deterministic iteration
+	schemeNames := make([]string, 0, len(service.SecuritySchemes))
+	for schemeName := range service.SecuritySchemes {
+		schemeNames = append(schemeNames, schemeName)
+	}
+	sort.Strings(schemeNames)
+
+	// Add security schemes in sorted order
+	for _, schemeName := range schemeNames {
+		scheme := service.SecuritySchemes[schemeName]
 		securityScheme := g.createSecurityScheme(scheme)
 		components.SecuritySchemes.Set(schemeName, securityScheme)
 	}
