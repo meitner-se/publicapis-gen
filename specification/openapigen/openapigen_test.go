@@ -2326,6 +2326,116 @@ func TestRequestBodyReferencesWithComponentSchemas(t *testing.T) {
 	t.Logf("Generated request body with component schema reference:\n%s", jsonString)
 }
 
+// TestRequestBodyAlwaysRequired verifies that request bodies in operations are always marked as required.
+func TestRequestBodyAlwaysRequired(t *testing.T) {
+	generator := newGenerator()
+	service := &specification.Service{
+		Name:    "RequiredRequestBodyAPI",
+		Version: "1.0.0",
+		Resources: []specification.Resource{
+			{
+				Name:        "User",
+				Description: "User resource",
+				Operations:  []string{specification.OperationCreate, specification.OperationUpdate},
+				Endpoints: []specification.Endpoint{
+					{
+						Name:        "Create",
+						Title:       "Create User",
+						Description: "Create a new user",
+						Method:      "POST",
+						Path:        "",
+						Request: specification.EndpointRequest{
+							BodyParams: []specification.Field{
+								{
+									Name:        "email",
+									Type:        specification.FieldTypeString,
+									Description: "User email",
+								},
+								{
+									Name:        "name",
+									Type:        specification.FieldTypeString,
+									Description: "User name",
+								},
+							},
+						},
+						Response: specification.EndpointResponse{
+							StatusCode: 201,
+							BodyFields: []specification.Field{
+								{Name: "id", Type: specification.FieldTypeUUID},
+								{Name: "email", Type: specification.FieldTypeString},
+								{Name: "name", Type: specification.FieldTypeString},
+							},
+						},
+					},
+					{
+						Name:        "Update",
+						Title:       "Update User",
+						Description: "Update user details",
+						Method:      "PATCH",
+						Path:        "/{id}",
+						Request: specification.EndpointRequest{
+							PathParams: []specification.Field{
+								{Name: "id", Type: specification.FieldTypeUUID, Description: "User ID"},
+							},
+							BodyParams: []specification.Field{
+								{
+									Name:        "name",
+									Type:        specification.FieldTypeString,
+									Description: "User name",
+									Modifiers:   []string{specification.ModifierNullable},
+								},
+							},
+						},
+						Response: specification.EndpointResponse{
+							StatusCode: 200,
+							BodyFields: []specification.Field{
+								{Name: "id", Type: specification.FieldTypeUUID},
+								{Name: "email", Type: specification.FieldTypeString},
+								{Name: "name", Type: specification.FieldTypeString},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	document, err := generator.generateFromService(service)
+	assert.NoError(t, err, "Should generate document successfully")
+
+	// Convert to JSON for detailed checking
+	jsonBytes, err := generator.toJSON(document)
+	assert.NoError(t, err, "Should convert to JSON successfully")
+	jsonString := string(jsonBytes)
+
+	// Parse JSON to check structure
+	var openAPIDoc map[string]interface{}
+	err = json.Unmarshal(jsonBytes, &openAPIDoc)
+	assert.NoError(t, err, "Should parse JSON successfully")
+
+	// Check Create endpoint requestBody
+	paths := openAPIDoc["paths"].(map[string]interface{})
+	userPath := paths["/user"].(map[string]interface{})
+	postOp := userPath["post"].(map[string]interface{})
+	createRequestBody := postOp["requestBody"].(map[string]interface{})
+
+	assert.NotNil(t, createRequestBody["required"], "Create operation requestBody should have required field")
+	assert.Equal(t, true, createRequestBody["required"], "Create operation requestBody should be required")
+
+	// Check Update endpoint requestBody
+	userIdPath := paths["/user/{id}"].(map[string]interface{})
+	patchOp := userIdPath["patch"].(map[string]interface{})
+	updateRequestBody := patchOp["requestBody"].(map[string]interface{})
+
+	assert.NotNil(t, updateRequestBody["required"], "Update operation requestBody should have required field")
+	assert.Equal(t, true, updateRequestBody["required"], "Update operation requestBody should be required")
+
+	// Also verify in raw JSON string
+	assert.Contains(t, jsonString, "\"requestBody\": {\n          \"required\": true,", "Request bodies should be marked as required in JSON")
+
+	t.Logf("Generated OpenAPI JSON with required requestBodies:\n%s", jsonString)
+}
+
 // TestRequestBodyDuplicationPrevention verifies that duplicate request bodies are not created.
 func TestRequestBodyDuplicationPrevention(t *testing.T) {
 	generator := newGenerator()

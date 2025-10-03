@@ -2167,8 +2167,12 @@ func (g *generator) createRequestBodyReference(resourceName, endpointName string
 	extensions := orderedmap.New[string, *yaml.Node]()
 	extensions.Set("$ref", &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: refString})
 
+	// RequestBodies are always required when present in operations
+	isRequired := true
+
 	// Return a request body that serializes as a reference
 	return &v3.RequestBody{
+		Required:   &isRequired,
 		Extensions: extensions,
 	}
 }
