@@ -1734,6 +1734,144 @@ func TestGenerator_GenerateFromService_IncludesTags(t *testing.T) {
 // RequestBodies Section Tests
 // ============================================================================
 
+// TestRequestBodiesMarkedAsRequired verifies that request bodies in operations are marked as required.
+func TestRequestBodiesMarkedAsRequired(t *testing.T) {
+	generator := newGenerator()
+	service := &specification.Service{
+		Name:    "RequestBodyRequiredTestAPI",
+		Version: "1.0.0",
+		Resources: []specification.Resource{
+			{
+				Name:        "User",
+				Description: "User resource",
+				Operations:  []string{specification.OperationCreate},
+				Endpoints: []specification.Endpoint{
+					{
+						Name:        "Create",
+						Title:       "Create User",
+						Description: "Create a new user",
+						Method:      "POST",
+						Path:        "",
+						Request: specification.EndpointRequest{
+							BodyParams: []specification.Field{
+								{
+									Name:        "email",
+									Description: "User email address",
+									Type:        specification.FieldTypeString,
+								},
+							},
+						},
+						Response: specification.EndpointResponse{StatusCode: 201, ContentType: "application/json"},
+					},
+				},
+			},
+		},
+	}
+
+	doc, err := generator.generateFromService(service)
+	assert.NoError(t, err)
+	assert.NotNil(t, doc)
+
+	// Get the POST operation
+	pathItem := doc.Paths.PathItems.GetOrZero("/user")
+	postOp := pathItem.Post
+	assert.NotNil(t, postOp, "POST operation should exist")
+	assert.NotNil(t, postOp.RequestBody, "Request body should exist")
+
+	// Verify the request body has required=true
+	assert.NotNil(t, postOp.RequestBody.Required, "Required field should not be nil")
+	assert.True(t, *postOp.RequestBody.Required, "Request body should be marked as required")
+
+	// Verify the request body has a reference
+	assert.NotNil(t, postOp.RequestBody.Extensions, "Extensions should exist for reference")
+	refNode, exists := postOp.RequestBody.Extensions.Get("$ref")
+	assert.True(t, exists, "$ref extension should exist")
+	assert.NotNil(t, refNode, "Reference node should not be nil")
+	assert.Equal(t, "#/components/requestBodies/UserCreate", refNode.Value, "Reference should point to correct component")
+}
+
+// TestRequestBodiesRequiredInJSON verifies that request bodies are marked as required in the JSON output.
+func TestRequestBodiesRequiredInJSON(t *testing.T) {
+	generator := newGenerator()
+	service := &specification.Service{
+		Name:    "TestAPI",
+		Version: "1.0.0",
+		Resources: []specification.Resource{
+			{
+				Name:        "User",
+				Description: "User resource",
+				Operations:  []string{specification.OperationCreate},
+				Endpoints: []specification.Endpoint{
+					{
+						Name:        "Create",
+						Title:       "Create User",
+						Description: "Create a new user",
+						Method:      "POST",
+						Path:        "",
+						Request: specification.EndpointRequest{
+							BodyParams: []specification.Field{
+								{
+									Name:        "email",
+									Description: "User email",
+									Type:        specification.FieldTypeString,
+								},
+							},
+						},
+						Response: specification.EndpointResponse{
+							StatusCode:  201,
+							ContentType: "application/json",
+							BodyFields: []specification.Field{
+								{
+									Name:        "id",
+									Description: "User ID",
+									Type:        specification.FieldTypeUUID,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	doc, err := generator.generateFromService(service)
+	assert.NoError(t, err)
+	assert.NotNil(t, doc)
+
+	// Convert to JSON
+	jsonBytes, err := generator.toJSON(doc)
+	assert.NoError(t, err)
+	assert.NotNil(t, jsonBytes)
+
+	// Parse JSON to verify structure
+	var jsonDoc map[string]interface{}
+	err = json.Unmarshal(jsonBytes, &jsonDoc)
+	assert.NoError(t, err)
+
+	// Navigate to the request body in the POST operation
+	paths, ok := jsonDoc["paths"].(map[string]interface{})
+	assert.True(t, ok, "paths should exist")
+
+	userPath, ok := paths["/user"].(map[string]interface{})
+	assert.True(t, ok, "/user path should exist")
+
+	postOp, ok := userPath["post"].(map[string]interface{})
+	assert.True(t, ok, "POST operation should exist")
+
+	requestBody, ok := postOp["requestBody"].(map[string]interface{})
+	assert.True(t, ok, "requestBody should exist")
+
+	// Verify required field is true
+	required, ok := requestBody["required"].(bool)
+	assert.True(t, ok, "required field should exist and be a boolean")
+	assert.True(t, required, "requestBody.required should be true")
+
+	// Verify the reference exists
+	ref, ok := requestBody["$ref"].(string)
+	assert.True(t, ok, "$ref should exist")
+	assert.Equal(t, "#/components/requestBodies/UserCreate", ref, "Reference should point to correct component")
+}
+
 // TestRequestBodiesComponentsSection verifies that request bodies are extracted to the components section.
 func TestRequestBodiesComponentsSection(t *testing.T) {
 	generator := newGenerator()
