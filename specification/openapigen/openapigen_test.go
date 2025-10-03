@@ -3778,7 +3778,7 @@ func TestGenerator_SecuritySchemesConsistentOrder(t *testing.T) {
 		keys = append(keys, key)
 	}
 	sort.Strings(keys) // Sort for deterministic comparison
-	
+
 	expectedKeys := []string{"Bearer", "ClientCredentials", "ClientSecret"}
 	assert.Equal(t, expectedKeys, keys, "All security schemes should be present")
 }
