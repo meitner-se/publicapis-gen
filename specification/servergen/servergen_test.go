@@ -113,6 +113,10 @@ const (
 	expectedRateLimitedError    = "ErrorCodeRateLimited"
 	expectedRateLimitedMessage  = "Rate limit exceeded"
 	expectedRateLimitStatusCode = "http.StatusTooManyRequests"
+
+	// GetRequestIDFunc constants
+	expectedGetRequestIDFunc     = "GetRequestIDFunc func(ctx context.Context) string"
+	expectedGetRequestIDNilCheck = "if api.Server.GetRequestIDFunc == nil"
 )
 
 // ============================================================================
@@ -237,6 +241,42 @@ func TestGenerateServer(t *testing.T) {
 		rateLimiterCallCount := strings.Count(generatedCode, "server.RateLimiterFunc(c.Request.Context(), request.Session)")
 		assert.Equal(t, 2, rateLimiterCallCount,
 			"RateLimiterFunc should be called in both serveWithResponse and serveWithoutResponse")
+	})
+
+	t.Run("GetRequestIDFunc functionality", func(t *testing.T) {
+		// Arrange
+		service := createTestServiceWithEndpoints()
+		buf := &bytes.Buffer{}
+
+		// Act
+		err := GenerateServer(buf, service)
+
+		// Assert
+		assert.Nil(t, err, "Expected no error when generating server with GetRequestIDFunc")
+		generatedCode := buf.String()
+
+		// Check that GetRequestIDFunc is defined in Server struct
+		assert.Contains(t, generatedCode, expectedGetRequestIDFunc,
+			"Server struct should contain GetRequestIDFunc definition")
+
+		// Check that GetRequestIDFunc nil check is in RegisterAPI function
+		assert.Contains(t, generatedCode, expectedGetRequestIDNilCheck,
+			"RegisterAPI function should check if GetRequestIDFunc is nil")
+
+		// Check default function assignment
+		assert.Contains(t, generatedCode, "api.Server.GetRequestIDFunc = func(_ context.Context) string",
+			"Should assign default GetRequestIDFunc when nil")
+		assert.Contains(t, generatedCode, "return uuid.New().String()",
+			"Default GetRequestIDFunc should generate UUID")
+
+		// Verify GetRequestIDFunc usage in serve functions
+		assert.Contains(t, generatedCode, "requestID := server.GetRequestIDFunc(c.Request.Context())",
+			"Should use GetRequestIDFunc with context in serve functions")
+
+		// Count occurrences to ensure it's in both serve functions
+		getRequestIDUsageCount := strings.Count(generatedCode, "server.GetRequestIDFunc(c.Request.Context())")
+		assert.Equal(t, 2, getRequestIDUsageCount,
+			"GetRequestIDFunc should be called in both serveWithResponse and serveWithoutResponse")
 	})
 }
 
@@ -1096,7 +1136,7 @@ func TestGenerateUtils(t *testing.T) {
 	assert.Contains(t, generatedCode, expectedDecodeQueryParams, "Should generate decodeQueryParams")
 
 	// Check function implementations
-	assert.Contains(t, generatedCode, `requestID := uuid.New().String()`, "Should use test request ID")
+	assert.Contains(t, generatedCode, `requestID := server.GetRequestIDFunc(c.Request.Context())`, "Should use GetRequestIDFunc with context")
 	assert.Contains(t, generatedCode, "parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType]",
 		"Should call parseRequest with generic types")
 	assert.Contains(t, generatedCode, "c.JSON(successStatusCode, response)",
