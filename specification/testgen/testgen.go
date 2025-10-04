@@ -879,8 +879,8 @@ func generateUtilityTests(buf *bytes.Buffer, service *specification.Service, api
 		return err
 	}
 
-	// Test parseRequest
-	err = generateParseRequestTest(buf, apiPackageName)
+	// Test handleRequest
+	err = generateHandleRequestTest(buf, apiPackageName)
 	if err != nil {
 		return err
 	}
@@ -997,9 +997,9 @@ func generateServeWithoutResponseTest(buf *bytes.Buffer, apiPackageName string) 
 	return nil
 }
 
-// generateParseRequestTest generates test for parseRequest function.
-func generateParseRequestTest(buf *bytes.Buffer, apiPackageName string) error {
-	buf.WriteString("func Test_parseRequest(t *testing.T) {\n")
+// generateHandleRequestTest generates test for handleRequest function.
+func generateHandleRequestTest(buf *bytes.Buffer, apiPackageName string) error {
+	buf.WriteString("func Test_handleRequest(t *testing.T) {\n")
 	buf.WriteString("\tgin.SetMode(gin.TestMode)\n\n")
 
 	buf.WriteString("\tt.Run(\"successful request parsing\", func(t *testing.T) {\n")
@@ -1027,9 +1027,9 @@ func generateParseRequestTest(buf *bytes.Buffer, apiPackageName string) error {
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t}\n\n")
 
-	buf.WriteString("\t\t// Test parseRequest\n")
-	buf.WriteString("\t\trequest, apiError := " + apiPackageName + ".ParseRequest[any, struct{}, struct{}, struct{}](c, \"test-123\", server)\n")
-	buf.WriteString("\t\tassert.Nil(t, apiError, \"Expected no error from parseRequest\")\n")
+	buf.WriteString("\t\t// Test handleRequest\n")
+	buf.WriteString("\t\trequest, apiError := " + apiPackageName + ".HandleRequest[any, struct{}, struct{}, struct{}](c, \"test-123\", server)\n")
+	buf.WriteString("\t\tassert.Nil(t, apiError, \"Expected no error from handleRequest\")\n")
 	buf.WriteString("\t\tassert.Equal(t, \"test-session\", request.Session, \"Session should be set\")\n")
 	buf.WriteString("\t\tassert.Equal(t, \"test-123\", request.Context().RequestID, \"RequestID should be set\")\n")
 	buf.WriteString("\t})\n\n")
@@ -1054,8 +1054,8 @@ func generateParseRequestTest(buf *bytes.Buffer, apiPackageName string) error {
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t}\n\n")
 
-	buf.WriteString("\t\t// Test parseRequest with session error\n")
-	buf.WriteString("\t\t_, apiError := " + apiPackageName + ".ParseRequest[any, struct{}, struct{}, struct{}](c, \"test-456\", server)\n")
+	buf.WriteString("\t\t// Test handleRequest with session error\n")
+	buf.WriteString("\t\t_, apiError := " + apiPackageName + ".HandleRequest[any, struct{}, struct{}, struct{}](c, \"test-456\", server)\n")
 	buf.WriteString("\t\tassert.NotNil(t, apiError, \"Expected API error when session function fails\")\n")
 	buf.WriteString("\t\tassert.Equal(t, " + apiPackageName + ".ErrorCodeUnauthorized, apiError.Code, \"Should return Unauthorized error code\")\n")
 	buf.WriteString("\t\tassert.Contains(t, apiError.Message.String(), \"authentication failed\", \"Error message should contain session error\")\n")
@@ -1089,15 +1089,15 @@ func generateParseRequestTest(buf *bytes.Buffer, apiPackageName string) error {
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t}\n\n")
 
-	buf.WriteString("\t\t// Test parseRequest with invalid JSON\n")
-	buf.WriteString("\t\t_, apiError := " + apiPackageName + ".ParseRequest[any, struct{}, struct{}, TestBodyParams](c, \"test-789\", server)\n")
+	buf.WriteString("\t\t// Test handleRequest with invalid JSON\n")
+	buf.WriteString("\t\t_, apiError := " + apiPackageName + ".HandleRequest[any, struct{}, struct{}, TestBodyParams](c, \"test-789\", server)\n")
 	buf.WriteString("\t\tassert.NotNil(t, apiError, \"Expected API error when JSON is invalid\")\n")
 	buf.WriteString("\t\tassert.Equal(t, " + apiPackageName + ".ErrorCodeBadRequest, apiError.Code, \"Should return BadRequest error code\")\n")
 	buf.WriteString("\t\tassert.Contains(t, apiError.Message.String(), \"cannot decode json body params\", \"Error message should mention JSON decoding\")\n")
 	buf.WriteString("\t\tassert.Equal(t, \"test-789\", apiError.RequestID.String(), \"Request ID should be set in error\")\n")
 	buf.WriteString("\t})\n\n")
 
-	buf.WriteString("\tt.Run(\"pre-hooks are executed in parseRequest\", func(t *testing.T) {\n")
+	buf.WriteString("\tt.Run(\"pre-hooks are executed in handleRequest\", func(t *testing.T) {\n")
 	buf.WriteString("\t\tc, _ := gin.CreateTestContext(httptest.NewRecorder())\n")
 	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test\", nil)\n")
 	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create request\")\n")
@@ -1127,15 +1127,15 @@ func generateParseRequestTest(buf *bytes.Buffer, apiPackageName string) error {
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t}\n\n")
 
-	buf.WriteString("\t\t// Test parseRequest with pre-hook\n")
-	buf.WriteString("\t\trequest, apiError := " + apiPackageName + ".ParseRequest[any, struct{}, struct{}, struct{}](c, \"test-prehook\", server)\n")
-	buf.WriteString("\t\tassert.Nil(t, apiError, \"Expected no error from parseRequest\")\n")
+	buf.WriteString("\t\t// Test handleRequest with pre-hook\n")
+	buf.WriteString("\t\trequest, apiError := " + apiPackageName + ".HandleRequest[any, struct{}, struct{}, struct{}](c, \"test-prehook\", server)\n")
+	buf.WriteString("\t\tassert.Nil(t, apiError, \"Expected no error from handleRequest\")\n")
 	buf.WriteString("\t\tassert.True(t, hookExecuted, \"Pre-hook should have been executed\")\n")
 	buf.WriteString("\t\tassert.Equal(t, \"test-prehook\", capturedContext.RequestID, \"Pre-hook should receive correct RequestID\")\n")
 	buf.WriteString("\t\tassert.Equal(t, \"/test\", capturedContext.Path, \"Pre-hook should receive correct Path\")\n")
 	buf.WriteString("\t})\n\n")
 
-	buf.WriteString("\tt.Run(\"pre-hook error aborts parseRequest\", func(t *testing.T) {\n")
+	buf.WriteString("\tt.Run(\"pre-hook error aborts handleRequest\", func(t *testing.T) {\n")
 	buf.WriteString("\t\tc, _ := gin.CreateTestContext(httptest.NewRecorder())\n")
 	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test\", nil)\n")
 	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create request\")\n")
@@ -1160,8 +1160,8 @@ func generateParseRequestTest(buf *bytes.Buffer, apiPackageName string) error {
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t}\n\n")
 
-	buf.WriteString("\t\t// Test parseRequest with pre-hook error\n")
-	buf.WriteString("\t\t_, apiError := " + apiPackageName + ".ParseRequest[any, struct{}, struct{}, struct{}](c, \"test-prehook-error\", server)\n")
+	buf.WriteString("\t\t// Test handleRequest with pre-hook error\n")
+	buf.WriteString("\t\t_, apiError := " + apiPackageName + ".HandleRequest[any, struct{}, struct{}, struct{}](c, \"test-prehook-error\", server)\n")
 	buf.WriteString("\t\tassert.NotNil(t, apiError, \"Expected API error when pre-hook fails\")\n")
 	buf.WriteString("\t\tassert.Equal(t, " + apiPackageName + ".ErrorCodeForbidden, apiError.Code, \"Should return Forbidden error code\")\n")
 	buf.WriteString("\t\tassert.Contains(t, apiError.Message.String(), \"pre-hook validation failed\", \"Error message should contain pre-hook error\")\n")
@@ -1624,8 +1624,8 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("\tassert.Equal(t, 204, w.Code, \"Expected 204 status code\")\n")
 	buf.WriteString("}\n\n")
 
-	// Test parseRequest
-	buf.WriteString("func Test_parseRequest(t *testing.T) {\n")
+	// Test handleRequest
+	buf.WriteString("func Test_handleRequest(t *testing.T) {\n")
 	buf.WriteString("\tgin.SetMode(gin.TestMode)\n\n")
 
 	buf.WriteString("\tt.Run(\"successful request parsing\", func(t *testing.T) {\n")
@@ -1653,9 +1653,9 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t}\n\n")
 
-	buf.WriteString("\t\t// Test parseRequest\n")
-	buf.WriteString("\t\trequest, apiError := parseRequest[any, struct{}, struct{}, struct{}](c, \"test-123\", server)\n")
-	buf.WriteString("\t\tassert.Nil(t, apiError, \"Expected no error from parseRequest\")\n")
+	buf.WriteString("\t\t// Test handleRequest\n")
+	buf.WriteString("\t\trequest, apiError := handleRequest[any, struct{}, struct{}, struct{}](c, \"test-123\", server)\n")
+	buf.WriteString("\t\tassert.Nil(t, apiError, \"Expected no error from handleRequest\")\n")
 	buf.WriteString("\t\tassert.Equal(t, \"test-session\", request.Session, \"Session should be set\")\n")
 	buf.WriteString("\t\tassert.Equal(t, \"test-123\", request.Context().RequestID, \"RequestID should be set\")\n")
 	buf.WriteString("\t})\n\n")
@@ -1680,8 +1680,8 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t}\n\n")
 
-	buf.WriteString("\t\t// Test parseRequest with session error\n")
-	buf.WriteString("\t\t_, apiError := parseRequest[any, struct{}, struct{}, struct{}](c, \"test-456\", server)\n")
+	buf.WriteString("\t\t// Test handleRequest with session error\n")
+	buf.WriteString("\t\t_, apiError := handleRequest[any, struct{}, struct{}, struct{}](c, \"test-456\", server)\n")
 	buf.WriteString("\t\tassert.NotNil(t, apiError, \"Expected API error when session function fails\")\n")
 	buf.WriteString("\t\tassert.Equal(t, ErrorCodeUnauthorized, apiError.Code, \"Should return Unauthorized error code\")\n")
 	buf.WriteString("\t\tassert.Contains(t, apiError.Message.String(), \"authentication failed\", \"Error message should contain session error\")\n")
@@ -1715,15 +1715,15 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t}\n\n")
 
-	buf.WriteString("\t\t// Test parseRequest with invalid JSON\n")
-	buf.WriteString("\t\t_, apiError := parseRequest[any, struct{}, struct{}, TestBodyParams](c, \"test-789\", server)\n")
+	buf.WriteString("\t\t// Test handleRequest with invalid JSON\n")
+	buf.WriteString("\t\t_, apiError := handleRequest[any, struct{}, struct{}, TestBodyParams](c, \"test-789\", server)\n")
 	buf.WriteString("\t\tassert.NotNil(t, apiError, \"Expected API error when JSON is invalid\")\n")
 	buf.WriteString("\t\tassert.Equal(t, ErrorCodeBadRequest, apiError.Code, \"Should return BadRequest error code\")\n")
 	buf.WriteString("\t\tassert.Contains(t, apiError.Message.String(), \"cannot decode json body params\", \"Error message should mention JSON decoding\")\n")
 	buf.WriteString("\t\tassert.Equal(t, \"test-789\", apiError.RequestID.String(), \"Request ID should be set in error\")\n")
 	buf.WriteString("\t})\n\n")
 
-	buf.WriteString("\tt.Run(\"pre-hooks are executed in parseRequest\", func(t *testing.T) {\n")
+	buf.WriteString("\tt.Run(\"pre-hooks are executed in handleRequest\", func(t *testing.T) {\n")
 	buf.WriteString("\t\tc, _ := gin.CreateTestContext(httptest.NewRecorder())\n")
 	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test\", nil)\n")
 	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create request\")\n")
@@ -1753,15 +1753,15 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t}\n\n")
 
-	buf.WriteString("\t\t// Test parseRequest with pre-hook\n")
-	buf.WriteString("\t\trequest, apiError := parseRequest[any, struct{}, struct{}, struct{}](c, \"test-prehook\", server)\n")
-	buf.WriteString("\t\tassert.Nil(t, apiError, \"Expected no error from parseRequest\")\n")
+	buf.WriteString("\t\t// Test handleRequest with pre-hook\n")
+	buf.WriteString("\t\trequest, apiError := handleRequest[any, struct{}, struct{}, struct{}](c, \"test-prehook\", server)\n")
+	buf.WriteString("\t\tassert.Nil(t, apiError, \"Expected no error from handleRequest\")\n")
 	buf.WriteString("\t\tassert.True(t, hookExecuted, \"Pre-hook should have been executed\")\n")
 	buf.WriteString("\t\tassert.Equal(t, \"test-prehook\", capturedContext.RequestID, \"Pre-hook should receive correct RequestID\")\n")
 	buf.WriteString("\t\tassert.Equal(t, \"/test\", capturedContext.Path, \"Pre-hook should receive correct Path\")\n")
 	buf.WriteString("\t})\n\n")
 
-	buf.WriteString("\tt.Run(\"pre-hook error aborts parseRequest\", func(t *testing.T) {\n")
+	buf.WriteString("\tt.Run(\"pre-hook error aborts handleRequest\", func(t *testing.T) {\n")
 	buf.WriteString("\t\tc, _ := gin.CreateTestContext(httptest.NewRecorder())\n")
 	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test\", nil)\n")
 	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create request\")\n")
@@ -1786,8 +1786,8 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t}\n\n")
 
-	buf.WriteString("\t\t// Test parseRequest with pre-hook error\n")
-	buf.WriteString("\t\t_, apiError := parseRequest[any, struct{}, struct{}, struct{}](c, \"test-prehook-error\", server)\n")
+	buf.WriteString("\t\t// Test handleRequest with pre-hook error\n")
+	buf.WriteString("\t\t_, apiError := handleRequest[any, struct{}, struct{}, struct{}](c, \"test-prehook-error\", server)\n")
 	buf.WriteString("\t\tassert.NotNil(t, apiError, \"Expected API error when pre-hook fails\")\n")
 	buf.WriteString("\t\tassert.Equal(t, ErrorCodeForbidden, apiError.Code, \"Should return Forbidden error code\")\n")
 	buf.WriteString("\t\tassert.Contains(t, apiError.Message.String(), \"pre-hook validation failed\", \"Error message should contain pre-hook error\")\n")

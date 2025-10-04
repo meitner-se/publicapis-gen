@@ -463,7 +463,7 @@ func generateUtils(buf *bytes.Buffer) error {
 	return func(c *gin.Context) {
 		requestID := server.GetRequestIDFunc(c.Request.Context())
 
-		request, apiError := parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
+		request, apiError := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
 		if apiError != nil {
 			c.JSON(apiError.HTTPStatusCode(), apiError)
 			return
@@ -513,7 +513,7 @@ func generateUtils(buf *bytes.Buffer) error {
 	return func(c *gin.Context) {
 		requestID := server.GetRequestIDFunc(c.Request.Context())
 
-		request, apiError := parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
+		request, apiError := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
 		if apiError != nil {
 			c.JSON(apiError.HTTPStatusCode(), apiError)
 			return
@@ -550,7 +550,7 @@ func generateUtils(buf *bytes.Buffer) error {
 	}
 }` + "\n\n")
 
-	buf.WriteString(`func parseRequest[
+	buf.WriteString(`func handleRequest[
 	sessionType any,
 	pathParamsType any,
 	queryParamsType any,

@@ -99,7 +99,7 @@ const (
 	// Utility function constants
 	expectedServeWithResponse    = "func serveWithResponse["
 	expectedServeWithoutResponse = "func serveWithoutResponse["
-	expectedParseRequest         = "func parseRequest["
+	expectedHandleRequest        = "func handleRequest["
 	expectedDecodeBodyParams     = "func decodeBodyParams[T any](r *http.Request) (T, error)"
 	expectedDecodePathParams     = "func decodePathParams[T any](c *gin.Context) (T, error)"
 	expectedDecodeQueryParams    = "func decodeQueryParams[T any](c *gin.Context) (T, error)"
@@ -165,7 +165,7 @@ func TestGenerateServer(t *testing.T) {
 	// Verify utility functions
 	assert.Contains(t, generatedCode, expectedServeWithResponse, "Generated code should contain serveWithResponse function")
 	assert.Contains(t, generatedCode, expectedServeWithoutResponse, "Generated code should contain serveWithoutResponse function")
-	assert.Contains(t, generatedCode, expectedParseRequest, "Generated code should contain parseRequest function")
+	assert.Contains(t, generatedCode, expectedHandleRequest, "Generated code should contain handleRequest function")
 
 	// Verify RateLimiterFunc in Server struct
 	assert.Contains(t, generatedCode, expectedRateLimiterFunc, "Server struct should contain RateLimiterFunc")
@@ -1132,21 +1132,21 @@ func TestGenerateUtils(t *testing.T) {
 	// Check all utility functions are generated
 	assert.Contains(t, generatedCode, expectedServeWithResponse, "Should generate serveWithResponse")
 	assert.Contains(t, generatedCode, expectedServeWithoutResponse, "Should generate serveWithoutResponse")
-	assert.Contains(t, generatedCode, expectedParseRequest, "Should generate parseRequest")
+	assert.Contains(t, generatedCode, expectedHandleRequest, "Should generate handleRequest")
 	assert.Contains(t, generatedCode, expectedDecodeBodyParams, "Should generate decodeBodyParams")
 	assert.Contains(t, generatedCode, expectedDecodePathParams, "Should generate decodePathParams")
 	assert.Contains(t, generatedCode, expectedDecodeQueryParams, "Should generate decodeQueryParams")
 
 	// Check function implementations
 	assert.Contains(t, generatedCode, `requestID := server.GetRequestIDFunc(c.Request.Context())`, "Should use GetRequestIDFunc with context")
-	assert.Contains(t, generatedCode, "parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType]",
-		"Should call parseRequest with generic types")
+	assert.Contains(t, generatedCode, "handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType]",
+		"Should call handleRequest with generic types")
 	assert.Contains(t, generatedCode, "c.JSON(successStatusCode, response)",
 		"Should return JSON response with success code")
 	assert.Contains(t, generatedCode, "c.JSON(apiError.HTTPStatusCode(), apiError)",
 		"Should return error with appropriate status code")
 
-	// Check parseRequest implementation
+	// Check handleRequest implementation
 	assert.Contains(t, generatedCode, "if _, ok := any(request.BodyParams).(struct{}); !ok {",
 		"Should check if body params exist")
 	assert.Contains(t, generatedCode, "if _, ok := any(request.PathParams).(struct{}); !ok {",
