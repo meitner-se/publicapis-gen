@@ -282,18 +282,25 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 
 	for _, resource := range service.Resources {
 		for _, endpoint := range resource.Endpoints {
+			routePath := convertOpenAPIPathToGin(endpoint.GetFullPath(resource.Name))
+			fullRoute := fmt.Sprintf("/%s/%s%s", service.PathName(), service.Version, routePath)
+			httpMethod := endpoint.Method
 			if endpoint.HasResponseType() {
-				buf.WriteString(fmt.Sprintf("\trouterGroup.%s(\"%s\", serveWithResponse(%d, api.Server, api.%s.%s))\n",
-					endpoint.Method,
-					convertOpenAPIPathToGin(endpoint.GetFullPath(resource.Name)),
+				buf.WriteString(fmt.Sprintf("\trouterGroup.%s(\"%s\", serveWithResponse(\"%s\", \"%s\", %d, api.Server, api.%s.%s))\n",
+					httpMethod,
+					routePath,
+					fullRoute,
+					httpMethod,
 					endpoint.Response.StatusCode,
 					resource.Name,
 					endpoint.Name,
 				))
 			} else {
-				buf.WriteString(fmt.Sprintf("\trouterGroup.%s(\"%s\", serveWithoutResponse(%d, api.Server, api.%s.%s))\n",
-					endpoint.Method,
-					convertOpenAPIPathToGin(endpoint.GetFullPath(resource.Name)),
+				buf.WriteString(fmt.Sprintf("\trouterGroup.%s(\"%s\", serveWithoutResponse(\"%s\", \"%s\", %d, api.Server, api.%s.%s))\n",
+					httpMethod,
+					routePath,
+					fullRoute,
+					httpMethod,
 					endpoint.Response.StatusCode,
 					resource.Name,
 					endpoint.Name,
@@ -360,16 +367,40 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 }
 
 func generateRequestTypes(buf *bytes.Buffer, service *specification.Service) error {
+	// Generate RequestContext struct first
+	buf.WriteString("// RequestContext contains metadata about the HTTP request\n")
+	buf.WriteString("type RequestContext struct {\n")
+	buf.WriteString("\t// ID of the request, can be used for debugging.\n")
+	buf.WriteString("\tRequestID string\n\n")
+	buf.WriteString("\t// Path of the request. For example, /employee/123/archive\n")
+	buf.WriteString("\tPath string\n\n")
+	buf.WriteString("\t// Route of the request. For example, /employee/:employee_id/archive\n")
+	buf.WriteString("\tRoute string\n\n")
+	buf.WriteString("\t// UserAgent of the request\n")
+	buf.WriteString("\tUserAgent string\n\n")
+	buf.WriteString("\t// HTTPMethod of the request. For example, POST\n")
+	buf.WriteString("\tHTTPMethod string\n\n")
+	buf.WriteString("\t// IPAddress of the request.\n")
+	buf.WriteString("\tIPAddress string\n")
+	buf.WriteString("}\n\n")
+
+	// Generate Request struct
 	buf.WriteString("type Request[sessionType, pathParamsType, queryParamsType, bodyParamsType any] struct {\n")
-	buf.WriteString("\trequestID string `json:\"-\"` // Unexported field since it shouldn't be changed\n")
+	buf.WriteString("\trequestContext RequestContext `json:\"-\"` // Unexported field containing request metadata\n")
 	buf.WriteString("\tSession sessionType `json:\"-\"`\n")
 	buf.WriteString("\tPathParams pathParamsType `json:\"-\"`\n")
 	buf.WriteString("\tQueryParams queryParamsType `json:\"-\"`\n")
 	buf.WriteString("\tBodyParams bodyParamsType `json:\"-\"`\n")
 	buf.WriteString("}\n\n")
 
+	// Add Context() method
+	buf.WriteString("func (r Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) Context() RequestContext {\n")
+	buf.WriteString("\treturn r.requestContext\n")
+	buf.WriteString("}\n\n")
+
+	// Keep RequestID() method for backward compatibility
 	buf.WriteString("func (r Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) RequestID() string {\n")
-	buf.WriteString("\treturn r.requestID\n")
+	buf.WriteString("\treturn r.requestContext.RequestID\n")
 	buf.WriteString("}\n\n")
 
 	for _, resource := range service.Resources {
@@ -429,6 +460,8 @@ func generateUtils(buf *bytes.Buffer) error {
 	bodyParamsType any,
 	responseType any,
 ](
+	route string,
+	httpMethod string,
 	successStatusCode int,
 	server Server[sessionType],
 	function func(ctx context.Context, request Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) (*responseType, error),
@@ -436,7 +469,7 @@ func generateUtils(buf *bytes.Buffer) error {
 	return func(c *gin.Context) {
 		requestID := server.GetRequestIDFunc(c.Request.Context())
 
-		request, apiError := parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server.GetSessionFunc)
+		request, apiError := parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, route, httpMethod, server.GetSessionFunc)
 		if apiError != nil {
 			c.JSON(apiError.HTTPStatusCode(), apiError)
 			return
@@ -479,6 +512,8 @@ func generateUtils(buf *bytes.Buffer) error {
 	queryParamsType any,
 	bodyParamsType any,
 ](
+	route string,
+	httpMethod string,
 	successStatusCode int,
 	server Server[sessionType],
 	function func(ctx context.Context, request Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) error,
@@ -486,7 +521,7 @@ func generateUtils(buf *bytes.Buffer) error {
 	return func(c *gin.Context) {
 		requestID := server.GetRequestIDFunc(c.Request.Context())
 	
-		request, apiError := parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server.GetSessionFunc)
+		request, apiError := parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, route, httpMethod, server.GetSessionFunc)
 		if apiError != nil {
 			c.JSON(apiError.HTTPStatusCode(), apiError)
 			return
@@ -531,6 +566,8 @@ func generateUtils(buf *bytes.Buffer) error {
 ](
 	c *gin.Context,
 	requestID string,
+	route string,
+	httpMethod string,
 	getSession getSessionFunc[sessionType],
 ) (Request[sessionType, pathParamsType, queryParamsType, bodyParamsType], *Error) {
 	var nilRequest Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]
@@ -544,8 +581,18 @@ func generateUtils(buf *bytes.Buffer) error {
 		}
 	}
 
+	// Create RequestContext with HTTP request metadata
+	requestContext := RequestContext{
+		RequestID:  requestID,
+		Path:       c.Request.URL.Path,
+		Route:      route,
+		UserAgent:  c.Request.UserAgent(),
+		HTTPMethod: httpMethod,
+		IPAddress:  c.ClientIP(),
+	}
+
 	request := Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]{
-		requestID: requestID,
+		requestContext: requestContext,
 		Session: session,
 	}
 
