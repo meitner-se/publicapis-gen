@@ -111,14 +111,14 @@ func TestGenerateInternalTests(t *testing.T) {
 	// Check utility function tests (no package prefixes)
 	assert.Contains(t, generatedCode, "func Test_serveWithResponse(t *testing.T) {", "Should generate serveWithResponse test")
 	assert.Contains(t, generatedCode, "func Test_serveWithoutResponse(t *testing.T) {", "Should generate serveWithoutResponse test")
-	assert.Contains(t, generatedCode, "func Test_parseRequest(t *testing.T) {", "Should generate parseRequest test")
+	assert.Contains(t, generatedCode, "func Test_handleRequest(t *testing.T) {", "Should generate handleRequest test")
 	assert.Contains(t, generatedCode, "func Test_decodeBodyParams(t *testing.T) {", "Should generate decodeBodyParams test")
 	assert.Contains(t, generatedCode, "func Test_decodePathParams(t *testing.T) {", "Should generate decodePathParams test")
 	assert.Contains(t, generatedCode, "func Test_decodeQueryParams(t *testing.T) {", "Should generate decodeQueryParams test")
 
 	// Verify no package prefixes are used
 	assert.Contains(t, generatedCode, "handler := serveWithResponse(", "Should call serveWithResponse without prefix")
-	assert.Contains(t, generatedCode, "parseRequest[any, struct{}, struct{}, struct{}](", "Should call parseRequest without prefix")
+	assert.Contains(t, generatedCode, "handleRequest[any, struct{}, struct{}, struct{}](", "Should call handleRequest without prefix")
 	assert.Contains(t, generatedCode, "decodeBodyParams[TestBody](", "Should call decodeBodyParams with struct type")
 	assert.Contains(t, generatedCode, "decodePathParams[TestPathParams](", "Should call decodePathParams with struct type")
 	assert.Contains(t, generatedCode, "decodeQueryParams[TestQueryParams](", "Should call decodeQueryParams with struct type")
