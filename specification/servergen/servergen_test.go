@@ -264,7 +264,7 @@ func TestGenerateServer(t *testing.T) {
 			"RegisterAPI function should check if GetRequestIDFunc is nil")
 
 		// Check default function assignment
-		assert.Contains(t, generatedCode, "api.Server.GetRequestIDFunc = func(ctx context.Context) string",
+		assert.Contains(t, generatedCode, "api.Server.GetRequestIDFunc = func(_ context.Context) string",
 			"Should assign default GetRequestIDFunc when nil")
 		assert.Contains(t, generatedCode, "return uuid.New().String()",
 			"Default GetRequestIDFunc should generate UUID")
