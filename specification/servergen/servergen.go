@@ -334,6 +334,9 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 
 	buf.WriteString("\t// PreHooks are executed before endpoint logic. The first non-nil error aborts request processing.\n")
 	buf.WriteString("\tPreHooks []PreHook\n")
+
+	buf.WriteString("\t// SessionHooks are executed after authentication. The first non-nil error aborts request processing.\n")
+	buf.WriteString("\tSessionHooks []SessionHook[Session]\n")
 	buf.WriteString("}\n\n")
 
 	for _, resource := range service.Resources {
@@ -369,6 +372,13 @@ func generateRequestTypes(buf *bytes.Buffer, service *specification.Service) err
 
 	buf.WriteString("// PreHooks is an optional helper type if you prefer a named slice.\n")
 	buf.WriteString("type PreHooks []PreHook\n\n")
+
+	// Generate SessionHook types
+	buf.WriteString("// SessionHook runs after authentication. Return nil to continue; non-nil to abort.\n")
+	buf.WriteString("type SessionHook[Session any] func(ctx context.Context, requestContext RequestContext, session Session) error\n\n")
+
+	buf.WriteString("// SessionHooks is an optional helper type if you prefer a named slice.\n")
+	buf.WriteString("type SessionHooks[Session any] []SessionHook[Session]\n\n")
 
 	// Generate RequestContext struct
 	buf.WriteString("type RequestContext struct {\n")
@@ -586,6 +596,14 @@ func generateUtils(buf *bytes.Buffer) error {
 			Code:      ErrorCodeUnauthorized,
 			Message:   types.NewString(err.Error()),
 			RequestID: types.NewString(requestID),
+		}
+	}
+
+	// Run session hooks after successful authentication
+	for _, sessionHook := range server.SessionHooks {
+		if err := sessionHook(c.Request.Context(), requestContext, session); err != nil {
+			apiError := server.ConvertErrorFunc(err, requestID)
+			return nilRequest, apiError
 		}
 	}
 
