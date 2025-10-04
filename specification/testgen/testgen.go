@@ -441,7 +441,7 @@ func generateServerSetup(buf *bytes.Buffer, serviceName string, service *specifi
 
 	buf.WriteString(fmt.Sprintf("\t\t%s.Register%sAPI(router, &%s.%sAPI[any]{\n", apiPackageName, serviceName, apiPackageName, serviceName))
 	buf.WriteString(fmt.Sprintf("\t\t\tServer: %s.Server[any]{\n", apiPackageName))
-	buf.WriteString("\t\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header, requestID string) (any, error) {\n")
+	buf.WriteString("\t\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (any, error) {\n")
 	buf.WriteString("\t\t\t\t\treturn testSessionUserID, nil\n")
 	buf.WriteString("\t\t\t\t},\n")
 	buf.WriteString(fmt.Sprintf("\t\t\t\tConvertErrorFunc: func(err error, requestID string) *%s.Error {\n", apiPackageName))
@@ -919,7 +919,7 @@ func generateServeWithResponseTest(buf *bytes.Buffer, apiPackageName string) err
 
 	buf.WriteString("\t// Create server configuration\n")
 	buf.WriteString("\tserver := " + apiPackageName + ".Server[any]{\n")
-	buf.WriteString("\t\tGetSessionFunc: func(ctx context.Context, headers http.Header, requestID string) (any, error) {\n")
+	buf.WriteString("\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (any, error) {\n")
 	buf.WriteString("\t\t\treturn \"test-session\", nil\n")
 	buf.WriteString("\t\t},\n")
 	buf.WriteString("\t\tConvertErrorFunc: func(err error, requestID string) *" + apiPackageName + ".Error {\n")
@@ -962,7 +962,7 @@ func generateServeWithoutResponseTest(buf *bytes.Buffer, apiPackageName string) 
 
 	buf.WriteString("\t// Create server configuration\n")
 	buf.WriteString("\tserver := " + apiPackageName + ".Server[any]{\n")
-	buf.WriteString("\t\tGetSessionFunc: func(ctx context.Context, headers http.Header, requestID string) (any, error) {\n")
+	buf.WriteString("\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (any, error) {\n")
 	buf.WriteString("\t\t\treturn \"test-session\", nil\n")
 	buf.WriteString("\t\t},\n")
 	buf.WriteString("\t\tConvertErrorFunc: func(err error, requestID string) *" + apiPackageName + ".Error {\n")
@@ -1241,7 +1241,7 @@ func generateInternalServerSetup(buf *bytes.Buffer, serviceName string, service 
 
 	buf.WriteString(fmt.Sprintf("\t\tRegister%sAPI(router, &%sAPI[any]{\n", serviceName, serviceName))
 	buf.WriteString("\t\t\tServer: Server[any]{\n")
-	buf.WriteString("\t\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header, requestID string) (any, error) {\n")
+	buf.WriteString("\t\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (any, error) {\n")
 	buf.WriteString("\t\t\t\t\treturn testSessionUserID, nil\n")
 	buf.WriteString("\t\t\t\t},\n")
 	buf.WriteString("\t\t\t\tConvertErrorFunc: func(err error, requestID string) *Error {\n")
@@ -1456,7 +1456,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 
 	buf.WriteString("\t// Create server configuration\n")
 	buf.WriteString("\tserver := Server[any]{\n")
-	buf.WriteString("\t\tGetSessionFunc: func(ctx context.Context, headers http.Header, requestID string) (any, error) {\n")
+	buf.WriteString("\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (any, error) {\n")
 	buf.WriteString("\t\t\treturn \"test-session\", nil\n")
 	buf.WriteString("\t\t},\n")
 	buf.WriteString("\t\tConvertErrorFunc: func(err error, requestID string) *Error {\n")
@@ -1495,7 +1495,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 
 	buf.WriteString("\t// Create server configuration\n")
 	buf.WriteString("\tserver := Server[any]{\n")
-	buf.WriteString("\t\tGetSessionFunc: func(ctx context.Context, headers http.Header, requestID string) (any, error) {\n")
+	buf.WriteString("\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (any, error) {\n")
 	buf.WriteString("\t\t\treturn \"test-session\", nil\n")
 	buf.WriteString("\t\t},\n")
 	buf.WriteString("\t\tConvertErrorFunc: func(err error, requestID string) *Error {\n")
