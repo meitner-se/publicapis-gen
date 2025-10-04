@@ -859,7 +859,7 @@ func TestGenerateServerFunc(t *testing.T) {
 		"Should register DELETE endpoint without response")
 
 	// Check type definitions
-	assert.Contains(t, generatedCode, "type getSessionFunc[T any] func(ctx context.Context, headers http.Header, requestID string) (T, error)",
+	assert.Contains(t, generatedCode, "type getSessionFunc[T any] func(ctx context.Context, headers http.Header) (T, error)",
 		"Should define getSessionFunc type")
 	assert.Contains(t, generatedCode, "type TestServiceAPI[Session any] struct {",
 		"Should define service API struct")

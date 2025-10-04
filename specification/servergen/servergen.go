@@ -305,7 +305,7 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("}\n\n")
 
 	buf.WriteString("// getSessionFunc is a function that is used on each endpoint to set the session to the request\n")
-	buf.WriteString("type getSessionFunc[T any] func(ctx context.Context, headers http.Header, requestID string) (T, error)\n\n")
+	buf.WriteString("type getSessionFunc[T any] func(ctx context.Context, headers http.Header) (T, error)\n\n")
 
 	buf.WriteString(fmt.Sprintf("type %sAPI[Session any] struct {\n", serviceName))
 	buf.WriteString("\t// Server is the server configuration for the API\n")
@@ -535,7 +535,7 @@ func generateUtils(buf *bytes.Buffer) error {
 ) (Request[sessionType, pathParamsType, queryParamsType, bodyParamsType], *Error) {
 	var nilRequest Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]
 
-	session, err := getSession(c.Request.Context(), c.Request.Header, requestID)
+	session, err := getSession(c.Request.Context(), c.Request.Header)
 	if err != nil {
 		return nilRequest, &Error{
 			Code:      ErrorCodeUnauthorized,
