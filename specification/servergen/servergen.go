@@ -336,6 +336,33 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("\tPreHooks []PreHook\n")
 
 	buf.WriteString("\t// SessionHooks are executed after authentication. The first non-nil error aborts request processing.\n")
+	buf.WriteString("\t// Example usages:\n")
+	buf.WriteString("\t//   - Logging: Log authenticated requests with user information from the session\n")
+	buf.WriteString("\t//   - Rate Limiting: Check if the user has exceeded their API rate limit based on session data\n")
+	buf.WriteString("\t//   - Authorization: Verify the user has permission to access the requested resource\n")
+	buf.WriteString("\t// \n")
+	buf.WriteString("\t// Example implementation:\n")
+	buf.WriteString("\t//   SessionHooks: []SessionHook[MySession]{\n")
+	buf.WriteString("\t//     // Logging hook\n")
+	buf.WriteString("\t//     func(ctx context.Context, reqCtx RequestContext, session MySession) error {\n")
+	buf.WriteString("\t//       log.Printf(\"User %s accessed %s %s\", session.UserID, reqCtx.HTTPMethod, reqCtx.Path)\n")
+	buf.WriteString("\t//       return nil\n")
+	buf.WriteString("\t//     },\n")
+	buf.WriteString("\t//     // Rate limiting hook\n")
+	buf.WriteString("\t//     func(ctx context.Context, reqCtx RequestContext, session MySession) error {\n")
+	buf.WriteString("\t//       if rateLimiter.IsExceeded(session.UserID) {\n")
+	buf.WriteString("\t//         return errors.New(\"rate limit exceeded\")\n")
+	buf.WriteString("\t//       }\n")
+	buf.WriteString("\t//       return nil\n")
+	buf.WriteString("\t//     },\n")
+	buf.WriteString("\t//     // Authorization hook\n")
+	buf.WriteString("\t//     func(ctx context.Context, reqCtx RequestContext, session MySession) error {\n")
+	buf.WriteString("\t//       if !session.HasPermission(reqCtx.Route) {\n")
+	buf.WriteString("\t//         return errors.New(\"insufficient permissions\")\n")
+	buf.WriteString("\t//       }\n")
+	buf.WriteString("\t//       return nil\n")
+	buf.WriteString("\t//     },\n")
+	buf.WriteString("\t//   },\n")
 	buf.WriteString("\tSessionHooks []SessionHook[Session]\n")
 	buf.WriteString("}\n\n")
 
@@ -375,6 +402,13 @@ func generateRequestTypes(buf *bytes.Buffer, service *specification.Service) err
 
 	// Generate SessionHook types
 	buf.WriteString("// SessionHook runs after authentication. Return nil to continue; non-nil to abort.\n")
+	buf.WriteString("// SessionHooks have access to both the RequestContext and the authenticated Session,\n")
+	buf.WriteString("// enabling use cases such as:\n")
+	buf.WriteString("//   - Logging authenticated requests with session/user information\n")
+	buf.WriteString("//   - Rate limiting based on user or tenant from the session\n")
+	buf.WriteString("//   - Authorization checks to verify the user can access the requested resource\n")
+	buf.WriteString("//   - Metrics collection for authenticated API usage\n")
+	buf.WriteString("//   - Session validation or enrichment\n")
 	buf.WriteString("type SessionHook[Session any] func(ctx context.Context, requestContext RequestContext, session Session) error\n\n")
 
 	buf.WriteString("// SessionHooks is an optional helper type if you prefer a named slice.\n")
@@ -600,6 +634,8 @@ func generateUtils(buf *bytes.Buffer) error {
 	}
 
 	// Run session hooks after successful authentication
+	// These hooks can perform logging, rate limiting, authorization checks, etc.
+	// The hooks are executed in the order they are defined in the SessionHooks slice
 	for _, sessionHook := range server.SessionHooks {
 		if err := sessionHook(c.Request.Context(), requestContext, session); err != nil {
 			apiError := server.ConvertErrorFunc(err, requestID)
