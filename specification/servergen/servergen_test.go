@@ -113,6 +113,10 @@ const (
 	expectedRateLimitedError    = "ErrorCodeRateLimited"
 	expectedRateLimitedMessage  = "Rate limit exceeded"
 	expectedRateLimitStatusCode = "http.StatusTooManyRequests"
+
+	// Request ID function constants
+	expectedGetRequestIDFunc  = "GetRequestIDFunc func() string"
+	expectedGetRequestIDCheck = "if server.GetRequestIDFunc != nil"
 )
 
 // ============================================================================
@@ -164,6 +168,9 @@ func TestGenerateServer(t *testing.T) {
 
 	// Verify RateLimiterFunc in Server struct
 	assert.Contains(t, generatedCode, expectedRateLimiterFunc, "Server struct should contain RateLimiterFunc")
+
+	// Verify GetRequestIDFunc in Server struct
+	assert.Contains(t, generatedCode, expectedGetRequestIDFunc, "Server struct should contain GetRequestIDFunc")
 
 	t.Run("edge cases", func(t *testing.T) {
 		t.Run("empty service", func(t *testing.T) {
@@ -1096,7 +1103,9 @@ func TestGenerateUtils(t *testing.T) {
 	assert.Contains(t, generatedCode, expectedDecodeQueryParams, "Should generate decodeQueryParams")
 
 	// Check function implementations
-	assert.Contains(t, generatedCode, `requestID := uuid.New().String()`, "Should use test request ID")
+	assert.Contains(t, generatedCode, `if server.GetRequestIDFunc != nil {`, "Should check for custom GetRequestIDFunc")
+	assert.Contains(t, generatedCode, `requestID = server.GetRequestIDFunc()`, "Should use custom GetRequestIDFunc when provided")
+	assert.Contains(t, generatedCode, `requestID = uuid.New().String()`, "Should use default UUID when GetRequestIDFunc is nil")
 	assert.Contains(t, generatedCode, "parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType]",
 		"Should call parseRequest with generic types")
 	assert.Contains(t, generatedCode, "c.JSON(successStatusCode, response)",
