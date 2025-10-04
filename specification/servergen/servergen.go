@@ -318,6 +318,10 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("}\n\n")
 
 	buf.WriteString("type Server[Session any] struct {\n")
+	buf.WriteString("\t// GetRequestIDFunc is a function that generates a request ID for each request\n")
+	buf.WriteString("\t// If nil, a default UUID-based request ID generator will be used\n")
+	buf.WriteString("\tGetRequestIDFunc func(ctx context.Context) string\n")
+
 	buf.WriteString("\t// GetSessionFunc is a function that is used on each endpoint to set the session to the request\n")
 	buf.WriteString("\tGetSessionFunc getSessionFunc[Session]\n")
 
@@ -327,10 +331,6 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("\t// RateLimiterFunc is a function that checks if a request is allowed to proceed based on rate limiting\n")
 	buf.WriteString("\t// It returns true if the request is allowed, false if rate limited, and an error if rate limit check fails\n")
 	buf.WriteString("\tRateLimiterFunc func(ctx context.Context, session Session) (bool, error)\n")
-
-	buf.WriteString("\t// GetRequestIDFunc is a function that generates a request ID for each request\n")
-	buf.WriteString("\t// If nil, a default UUID-based request ID generator will be used\n")
-	buf.WriteString("\tGetRequestIDFunc func(ctx context.Context) string\n")
 	buf.WriteString("}\n\n")
 
 	for _, resource := range service.Resources {
