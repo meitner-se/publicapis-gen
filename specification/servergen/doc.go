@@ -89,6 +89,7 @@
 // a session object extracted by a user-provided GetSessionFunc:
 //
 //	type Server[Session any] struct {
+//	    GetRequestIDFunc  func(ctx context.Context) string
 //	    GetSessionFunc    func(ctx context.Context, headers http.Header) (Session, error)
 //	    ConvertErrorFunc  func(err error, requestID string) *Error
 //	    RateLimiterFunc   func(ctx context.Context, session Session) (bool, error)
