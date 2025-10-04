@@ -909,6 +909,12 @@ func generateUtilityTests(buf *bytes.Buffer, service *specification.Service, api
 		return err
 	}
 
+	// Test SessionHooks functionality
+	err = generateSessionHookTests(buf, apiPackageName)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -1165,6 +1171,79 @@ func generateHandleRequestTest(buf *bytes.Buffer, apiPackageName string) error {
 	buf.WriteString("\t\tassert.NotNil(t, apiError, \"Expected API error when pre-hook fails\")\n")
 	buf.WriteString("\t\tassert.Equal(t, " + apiPackageName + ".ErrorCodeForbidden, apiError.Code, \"Should return Forbidden error code\")\n")
 	buf.WriteString("\t\tassert.Contains(t, apiError.Message.String(), \"pre-hook validation failed\", \"Error message should contain pre-hook error\")\n")
+	buf.WriteString("\t})\n\n")
+
+	buf.WriteString("\tt.Run(\"session-hooks are executed after authentication\", func(t *testing.T) {\n")
+	buf.WriteString("\t\tc, _ := gin.CreateTestContext(httptest.NewRecorder())\n")
+	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test\", nil)\n")
+	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create request\")\n")
+	buf.WriteString("\t\tc.Request = req\n\n")
+
+	buf.WriteString("\t\tvar sessionHookExecuted bool\n")
+	buf.WriteString("\t\tvar capturedSession string\n")
+	buf.WriteString("\t\tvar capturedContext " + apiPackageName + ".RequestContext\n\n")
+
+	buf.WriteString("\t\t// Create test server with session hook\n")
+	buf.WriteString("\t\tserver := " + apiPackageName + ".Server[string]{\n")
+	buf.WriteString("\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (string, error) {\n")
+	buf.WriteString("\t\t\t\treturn \"test-session-123\", nil\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tConvertErrorFunc: func(err error, requestID string) *" + apiPackageName + ".Error {\n")
+	buf.WriteString("\t\t\t\treturn &" + apiPackageName + ".Error{\n")
+	buf.WriteString("\t\t\t\t\tCode:      " + apiPackageName + ".ErrorCodeInternal,\n")
+	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t\t}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tSessionHooks: []" + apiPackageName + ".SessionHook[string]{\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext " + apiPackageName + ".RequestContext, session string) error {\n")
+	buf.WriteString("\t\t\t\t\tsessionHookExecuted = true\n")
+	buf.WriteString("\t\t\t\t\tcapturedSession = session\n")
+	buf.WriteString("\t\t\t\t\tcapturedContext = requestContext\n")
+	buf.WriteString("\t\t\t\t\treturn nil\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Test parseRequest with session hook\n")
+	buf.WriteString("\t\trequest, apiError := " + apiPackageName + ".ParseRequest[string, struct{}, struct{}, struct{}](c, \"test-sessionhook\", server)\n")
+	buf.WriteString("\t\tassert.Nil(t, apiError, \"Expected no error from parseRequest\")\n")
+	buf.WriteString("\t\tassert.True(t, sessionHookExecuted, \"Session hook should have been executed\")\n")
+	buf.WriteString("\t\tassert.Equal(t, \"test-session-123\", capturedSession, \"Session hook should receive correct session\")\n")
+	buf.WriteString("\t\tassert.Equal(t, \"test-sessionhook\", capturedContext.RequestID, \"Session hook should receive correct RequestID\")\n")
+	buf.WriteString("\t\tassert.Equal(t, \"test-session-123\", request.Session, \"Request should contain the session\")\n")
+	buf.WriteString("\t})\n\n")
+
+	buf.WriteString("\tt.Run(\"session-hook error aborts request\", func(t *testing.T) {\n")
+	buf.WriteString("\t\tc, _ := gin.CreateTestContext(httptest.NewRecorder())\n")
+	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test\", nil)\n")
+	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create request\")\n")
+	buf.WriteString("\t\tc.Request = req\n\n")
+
+	buf.WriteString("\t\t// Create test server with session hook that returns error\n")
+	buf.WriteString("\t\tserver := " + apiPackageName + ".Server[string]{\n")
+	buf.WriteString("\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (string, error) {\n")
+	buf.WriteString("\t\t\t\treturn \"test-session\", nil\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tConvertErrorFunc: func(err error, requestID string) *" + apiPackageName + ".Error {\n")
+	buf.WriteString("\t\t\t\treturn &" + apiPackageName + ".Error{\n")
+	buf.WriteString("\t\t\t\t\tCode:      " + apiPackageName + ".ErrorCodeForbidden,\n")
+	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t\t}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tSessionHooks: []" + apiPackageName + ".SessionHook[string]{\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext " + apiPackageName + ".RequestContext, session string) error {\n")
+	buf.WriteString("\t\t\t\t\treturn fmt.Errorf(\"insufficient permissions\")\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Test parseRequest with session hook error\n")
+	buf.WriteString("\t\t_, apiError := " + apiPackageName + ".ParseRequest[string, struct{}, struct{}, struct{}](c, \"test-sessionhook-error\", server)\n")
+	buf.WriteString("\t\tassert.NotNil(t, apiError, \"Expected API error when session hook fails\")\n")
+	buf.WriteString("\t\tassert.Equal(t, " + apiPackageName + ".ErrorCodeForbidden, apiError.Code, \"Should return Forbidden error code\")\n")
+	buf.WriteString("\t\tassert.Contains(t, apiError.Message.String(), \"insufficient permissions\", \"Error message should contain session hook error\")\n")
 	buf.WriteString("\t})\n")
 	buf.WriteString("}\n\n")
 
@@ -1865,6 +1944,12 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 		return err
 	}
 
+	// Test SessionHooks functionality
+	err = generateInternalSessionHookTests(buf)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -2037,6 +2122,211 @@ func generateInternalPreHookTests(buf *bytes.Buffer) error {
 	return nil
 }
 
+// generateInternalSessionHookTests generates internal tests for SessionHook functionality.
+func generateInternalSessionHookTests(buf *bytes.Buffer) error {
+	buf.WriteString("func Test_SessionHooks(t *testing.T) {\n")
+	buf.WriteString("\tgin.SetMode(gin.TestMode)\n\n")
+
+	// Test successful session hook execution
+	buf.WriteString("\tt.Run(\"successful session-hook execution\", func(t *testing.T) {\n")
+	buf.WriteString("\t\trouter := gin.New()\n")
+	buf.WriteString("\t\tvar capturedContext RequestContext\n")
+	buf.WriteString("\t\tvar capturedSession string\n\n")
+
+	buf.WriteString("\t\t// Mock function that returns a response\n")
+	buf.WriteString("\t\tmockFunction := func(ctx context.Context, request Request[string, struct{}, struct{}, struct{}]) (*map[string]interface{}, error) {\n")
+	buf.WriteString("\t\t\treturn &map[string]interface{}{\"message\": \"success\"}, nil\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create server configuration with session hook\n")
+	buf.WriteString("\t\tserver := Server[string]{\n")
+	buf.WriteString("\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (string, error) {\n")
+	buf.WriteString("\t\t\t\treturn \"user-session-456\", nil\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tConvertErrorFunc: func(err error, requestID string) *Error {\n")
+	buf.WriteString("\t\t\t\treturn &Error{\n")
+	buf.WriteString("\t\t\t\t\tCode:      ErrorCodeInternal,\n")
+	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t\t}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tSessionHooks: []SessionHook[string]{\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext RequestContext, session string) error {\n")
+	buf.WriteString("\t\t\t\t\tcapturedContext = requestContext\n")
+	buf.WriteString("\t\t\t\t\tcapturedSession = session\n")
+	buf.WriteString("\t\t\t\t\treturn nil\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create handler\n")
+	buf.WriteString("\t\thandler := serveWithResponse(200, server, mockFunction)\n")
+	buf.WriteString("\t\trouter.POST(\"/test/session/path\", handler)\n\n")
+
+	buf.WriteString("\t\t// Create test request\n")
+	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test/session/path\", nil)\n")
+	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create request\")\n")
+	buf.WriteString("\t\treq.Header.Set(\"User-Agent\", \"Test-Agent\")\n")
+	buf.WriteString("\t\tw := httptest.NewRecorder()\n")
+	buf.WriteString("\t\trouter.ServeHTTP(w, req)\n\n")
+
+	buf.WriteString("\t\t// Assert response\n")
+	buf.WriteString("\t\tassert.Equal(t, 200, w.Code, \"Expected 200 status code\")\n")
+	buf.WriteString("\t\tassert.Equal(t, \"user-session-456\", capturedSession, \"Session hook should receive the authenticated session\")\n")
+	buf.WriteString("\t\tassert.Equal(t, \"/test/session/path\", capturedContext.Path, \"Request context should have correct path\")\n")
+	buf.WriteString("\t\tassert.Equal(t, \"Test-Agent\", capturedContext.UserAgent, \"Request context should have correct user agent\")\n")
+	buf.WriteString("\t\tassert.Equal(t, \"POST\", capturedContext.HTTPMethod, \"Request context should have correct HTTP method\")\n")
+	buf.WriteString("\t})\n\n")
+
+	// Test session hook error
+	buf.WriteString("\tt.Run(\"session-hook error aborts request\", func(t *testing.T) {\n")
+	buf.WriteString("\t\trouter := gin.New()\n")
+	buf.WriteString("\t\tvar functionCalled bool\n\n")
+
+	buf.WriteString("\t\t// Mock function that should not be called\n")
+	buf.WriteString("\t\tmockFunction := func(ctx context.Context, request Request[string, struct{}, struct{}, struct{}]) (*map[string]interface{}, error) {\n")
+	buf.WriteString("\t\t\tfunctionCalled = true\n")
+	buf.WriteString("\t\t\treturn &map[string]interface{}{\"message\": \"success\"}, nil\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create server configuration with session hook that returns error\n")
+	buf.WriteString("\t\tserver := Server[string]{\n")
+	buf.WriteString("\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (string, error) {\n")
+	buf.WriteString("\t\t\t\treturn \"user-session\", nil\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tConvertErrorFunc: func(err error, requestID string) *Error {\n")
+	buf.WriteString("\t\t\t\treturn &Error{\n")
+	buf.WriteString("\t\t\t\t\tCode:      ErrorCodeForbidden,\n")
+	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t\t}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tSessionHooks: []SessionHook[string]{\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext RequestContext, session string) error {\n")
+	buf.WriteString("\t\t\t\t\treturn fmt.Errorf(\"user does not have required permissions\")\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create handler\n")
+	buf.WriteString("\t\thandler := serveWithResponse(200, server, mockFunction)\n")
+	buf.WriteString("\t\trouter.POST(\"/test\", handler)\n\n")
+
+	buf.WriteString("\t\t// Create test request\n")
+	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test\", nil)\n")
+	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create request\")\n")
+	buf.WriteString("\t\tw := httptest.NewRecorder()\n")
+	buf.WriteString("\t\trouter.ServeHTTP(w, req)\n\n")
+
+	buf.WriteString("\t\t// Assert response\n")
+	buf.WriteString("\t\tassert.Equal(t, 403, w.Code, \"Expected 403 status code\")\n")
+	buf.WriteString("\t\tassert.False(t, functionCalled, \"Endpoint function should not be called\")\n")
+	buf.WriteString("\t\tassert.Contains(t, w.Body.String(), \"user does not have required permissions\", \"Error message should be in response\")\n")
+	buf.WriteString("\t})\n\n")
+
+	// Test multiple session hooks
+	buf.WriteString("\tt.Run(\"multiple session-hooks execute in order\", func(t *testing.T) {\n")
+	buf.WriteString("\t\trouter := gin.New()\n")
+	buf.WriteString("\t\tvar executionOrder []string\n\n")
+
+	buf.WriteString("\t\t// Mock function\n")
+	buf.WriteString("\t\tmockFunction := func(ctx context.Context, request Request[string, struct{}, struct{}, struct{}]) (*map[string]interface{}, error) {\n")
+	buf.WriteString("\t\t\treturn &map[string]interface{}{\"message\": \"success\"}, nil\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create server configuration with multiple session hooks\n")
+	buf.WriteString("\t\tserver := Server[string]{\n")
+	buf.WriteString("\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (string, error) {\n")
+	buf.WriteString("\t\t\t\treturn \"test-session\", nil\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tConvertErrorFunc: func(err error, requestID string) *Error {\n")
+	buf.WriteString("\t\t\t\treturn &Error{\n")
+	buf.WriteString("\t\t\t\t\tCode:      ErrorCodeInternal,\n")
+	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t\t}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tSessionHooks: []SessionHook[string]{\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext RequestContext, session string) error {\n")
+	buf.WriteString("\t\t\t\t\texecutionOrder = append(executionOrder, \"logging-hook\")\n")
+	buf.WriteString("\t\t\t\t\treturn nil\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext RequestContext, session string) error {\n")
+	buf.WriteString("\t\t\t\t\texecutionOrder = append(executionOrder, \"rate-limit-hook\")\n")
+	buf.WriteString("\t\t\t\t\treturn nil\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext RequestContext, session string) error {\n")
+	buf.WriteString("\t\t\t\t\texecutionOrder = append(executionOrder, \"authz-hook\")\n")
+	buf.WriteString("\t\t\t\t\treturn nil\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create handler\n")
+	buf.WriteString("\t\thandler := serveWithResponse(200, server, mockFunction)\n")
+	buf.WriteString("\t\trouter.POST(\"/test\", handler)\n\n")
+
+	buf.WriteString("\t\t// Create test request\n")
+	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test\", nil)\n")
+	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create request\")\n")
+	buf.WriteString("\t\tw := httptest.NewRecorder()\n")
+	buf.WriteString("\t\trouter.ServeHTTP(w, req)\n\n")
+
+	buf.WriteString("\t\t// Assert response and execution order\n")
+	buf.WriteString("\t\tassert.Equal(t, 200, w.Code, \"Expected 200 status code\")\n")
+	buf.WriteString("\t\tassert.Equal(t, []string{\"logging-hook\", \"rate-limit-hook\", \"authz-hook\"}, executionOrder, \"Session hooks should execute in order\")\n")
+	buf.WriteString("\t})\n\n")
+
+	// Test session hooks run after authentication
+	buf.WriteString("\tt.Run(\"session-hooks run after authentication\", func(t *testing.T) {\n")
+	buf.WriteString("\t\trouter := gin.New()\n")
+	buf.WriteString("\t\tvar sessionHookCalled bool\n\n")
+
+	buf.WriteString("\t\t// Mock function\n")
+	buf.WriteString("\t\tmockFunction := func(ctx context.Context, request Request[string, struct{}, struct{}, struct{}]) (*map[string]interface{}, error) {\n")
+	buf.WriteString("\t\t\treturn &map[string]interface{}{\"message\": \"success\"}, nil\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create server where authentication fails\n")
+	buf.WriteString("\t\tserver := Server[string]{\n")
+	buf.WriteString("\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (string, error) {\n")
+	buf.WriteString("\t\t\t\treturn \"\", fmt.Errorf(\"authentication failed\")\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tConvertErrorFunc: func(err error, requestID string) *Error {\n")
+	buf.WriteString("\t\t\t\treturn &Error{\n")
+	buf.WriteString("\t\t\t\t\tCode:      ErrorCodeInternal,\n")
+	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t\t}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tSessionHooks: []SessionHook[string]{\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext RequestContext, session string) error {\n")
+	buf.WriteString("\t\t\t\t\tsessionHookCalled = true\n")
+	buf.WriteString("\t\t\t\t\treturn nil\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create handler\n")
+	buf.WriteString("\t\thandler := serveWithResponse(200, server, mockFunction)\n")
+	buf.WriteString("\t\trouter.POST(\"/test\", handler)\n\n")
+
+	buf.WriteString("\t\t// Create test request\n")
+	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test\", nil)\n")
+	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create request\")\n")
+	buf.WriteString("\t\tw := httptest.NewRecorder()\n")
+	buf.WriteString("\t\trouter.ServeHTTP(w, req)\n\n")
+
+	buf.WriteString("\t\t// Assert response\n")
+	buf.WriteString("\t\tassert.Equal(t, 401, w.Code, \"Expected 401 status code\")\n")
+	buf.WriteString("\t\tassert.False(t, sessionHookCalled, \"Session hook should not be called when authentication fails\")\n")
+	buf.WriteString("\t\tassert.Contains(t, w.Body.String(), \"authentication failed\", \"Error message should be in response\")\n")
+	buf.WriteString("\t})\n")
+	buf.WriteString("}\n\n")
+
+	return nil
+}
+
 // generatePreHookTests generates tests for PreHook functionality.
 func generatePreHookTests(buf *bytes.Buffer, apiPackageName string) error {
 	buf.WriteString("func Test_PreHooks(t *testing.T) {\n")
@@ -2190,6 +2480,211 @@ func generatePreHookTests(buf *bytes.Buffer, apiPackageName string) error {
 	buf.WriteString("\t\t// Assert response and execution order\n")
 	buf.WriteString("\t\tassert.Equal(t, 200, w.Code, \"Expected 200 status code\")\n")
 	buf.WriteString("\t\tassert.Equal(t, []string{\"hook1\", \"hook2\", \"hook3\"}, executionOrder, \"Hooks should execute in order\")\n")
+	buf.WriteString("\t})\n")
+	buf.WriteString("}\n\n")
+
+	return nil
+}
+
+// generateSessionHookTests generates tests for SessionHook functionality.
+func generateSessionHookTests(buf *bytes.Buffer, apiPackageName string) error {
+	buf.WriteString("func Test_SessionHooks(t *testing.T) {\n")
+	buf.WriteString("\tgin.SetMode(gin.TestMode)\n\n")
+
+	// Test successful session hook execution
+	buf.WriteString("\tt.Run(\"successful session-hook execution\", func(t *testing.T) {\n")
+	buf.WriteString("\t\trouter := gin.New()\n")
+	buf.WriteString("\t\tvar capturedContext " + apiPackageName + ".RequestContext\n")
+	buf.WriteString("\t\tvar capturedSession string\n\n")
+
+	buf.WriteString("\t\t// Mock function that returns a response\n")
+	buf.WriteString("\t\tmockFunction := func(ctx context.Context, request " + apiPackageName + ".Request[string, struct{}, struct{}, struct{}]) (*map[string]interface{}, error) {\n")
+	buf.WriteString("\t\t\treturn &map[string]interface{}{\"message\": \"success\"}, nil\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create server configuration with session hook\n")
+	buf.WriteString("\t\tserver := " + apiPackageName + ".Server[string]{\n")
+	buf.WriteString("\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (string, error) {\n")
+	buf.WriteString("\t\t\t\treturn \"user-session-456\", nil\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tConvertErrorFunc: func(err error, requestID string) *" + apiPackageName + ".Error {\n")
+	buf.WriteString("\t\t\t\treturn &" + apiPackageName + ".Error{\n")
+	buf.WriteString("\t\t\t\t\tCode:      " + apiPackageName + ".ErrorCodeInternal,\n")
+	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t\t}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tSessionHooks: []" + apiPackageName + ".SessionHook[string]{\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext " + apiPackageName + ".RequestContext, session string) error {\n")
+	buf.WriteString("\t\t\t\t\tcapturedContext = requestContext\n")
+	buf.WriteString("\t\t\t\t\tcapturedSession = session\n")
+	buf.WriteString("\t\t\t\t\treturn nil\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create handler\n")
+	buf.WriteString("\t\thandler := " + apiPackageName + ".ServeWithResponse(200, server, mockFunction)\n")
+	buf.WriteString("\t\trouter.POST(\"/test/session/path\", handler)\n\n")
+
+	buf.WriteString("\t\t// Create test request\n")
+	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test/session/path\", nil)\n")
+	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create request\")\n")
+	buf.WriteString("\t\treq.Header.Set(\"User-Agent\", \"Test-Agent\")\n")
+	buf.WriteString("\t\tw := httptest.NewRecorder()\n")
+	buf.WriteString("\t\trouter.ServeHTTP(w, req)\n\n")
+
+	buf.WriteString("\t\t// Assert response\n")
+	buf.WriteString("\t\tassert.Equal(t, 200, w.Code, \"Expected 200 status code\")\n")
+	buf.WriteString("\t\tassert.Equal(t, \"user-session-456\", capturedSession, \"Session hook should receive the authenticated session\")\n")
+	buf.WriteString("\t\tassert.Equal(t, \"/test/session/path\", capturedContext.Path, \"Request context should have correct path\")\n")
+	buf.WriteString("\t\tassert.Equal(t, \"Test-Agent\", capturedContext.UserAgent, \"Request context should have correct user agent\")\n")
+	buf.WriteString("\t\tassert.Equal(t, \"POST\", capturedContext.HTTPMethod, \"Request context should have correct HTTP method\")\n")
+	buf.WriteString("\t})\n\n")
+
+	// Test session hook error
+	buf.WriteString("\tt.Run(\"session-hook error aborts request\", func(t *testing.T) {\n")
+	buf.WriteString("\t\trouter := gin.New()\n")
+	buf.WriteString("\t\tvar functionCalled bool\n\n")
+
+	buf.WriteString("\t\t// Mock function that should not be called\n")
+	buf.WriteString("\t\tmockFunction := func(ctx context.Context, request " + apiPackageName + ".Request[string, struct{}, struct{}, struct{}]) (*map[string]interface{}, error) {\n")
+	buf.WriteString("\t\t\tfunctionCalled = true\n")
+	buf.WriteString("\t\t\treturn &map[string]interface{}{\"message\": \"success\"}, nil\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create server configuration with session hook that returns error\n")
+	buf.WriteString("\t\tserver := " + apiPackageName + ".Server[string]{\n")
+	buf.WriteString("\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (string, error) {\n")
+	buf.WriteString("\t\t\t\treturn \"user-session\", nil\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tConvertErrorFunc: func(err error, requestID string) *" + apiPackageName + ".Error {\n")
+	buf.WriteString("\t\t\t\treturn &" + apiPackageName + ".Error{\n")
+	buf.WriteString("\t\t\t\t\tCode:      " + apiPackageName + ".ErrorCodeForbidden,\n")
+	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t\t}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tSessionHooks: []" + apiPackageName + ".SessionHook[string]{\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext " + apiPackageName + ".RequestContext, session string) error {\n")
+	buf.WriteString("\t\t\t\t\treturn fmt.Errorf(\"user does not have required permissions\")\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create handler\n")
+	buf.WriteString("\t\thandler := " + apiPackageName + ".ServeWithResponse(200, server, mockFunction)\n")
+	buf.WriteString("\t\trouter.POST(\"/test\", handler)\n\n")
+
+	buf.WriteString("\t\t// Create test request\n")
+	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test\", nil)\n")
+	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create request\")\n")
+	buf.WriteString("\t\tw := httptest.NewRecorder()\n")
+	buf.WriteString("\t\trouter.ServeHTTP(w, req)\n\n")
+
+	buf.WriteString("\t\t// Assert response\n")
+	buf.WriteString("\t\tassert.Equal(t, 403, w.Code, \"Expected 403 status code\")\n")
+	buf.WriteString("\t\tassert.False(t, functionCalled, \"Endpoint function should not be called\")\n")
+	buf.WriteString("\t\tassert.Contains(t, w.Body.String(), \"user does not have required permissions\", \"Error message should be in response\")\n")
+	buf.WriteString("\t})\n\n")
+
+	// Test multiple session hooks
+	buf.WriteString("\tt.Run(\"multiple session-hooks execute in order\", func(t *testing.T) {\n")
+	buf.WriteString("\t\trouter := gin.New()\n")
+	buf.WriteString("\t\tvar executionOrder []string\n\n")
+
+	buf.WriteString("\t\t// Mock function\n")
+	buf.WriteString("\t\tmockFunction := func(ctx context.Context, request " + apiPackageName + ".Request[string, struct{}, struct{}, struct{}]) (*map[string]interface{}, error) {\n")
+	buf.WriteString("\t\t\treturn &map[string]interface{}{\"message\": \"success\"}, nil\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create server configuration with multiple session hooks\n")
+	buf.WriteString("\t\tserver := " + apiPackageName + ".Server[string]{\n")
+	buf.WriteString("\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (string, error) {\n")
+	buf.WriteString("\t\t\t\treturn \"test-session\", nil\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tConvertErrorFunc: func(err error, requestID string) *" + apiPackageName + ".Error {\n")
+	buf.WriteString("\t\t\t\treturn &" + apiPackageName + ".Error{\n")
+	buf.WriteString("\t\t\t\t\tCode:      " + apiPackageName + ".ErrorCodeInternal,\n")
+	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t\t}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tSessionHooks: []" + apiPackageName + ".SessionHook[string]{\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext " + apiPackageName + ".RequestContext, session string) error {\n")
+	buf.WriteString("\t\t\t\t\texecutionOrder = append(executionOrder, \"logging-hook\")\n")
+	buf.WriteString("\t\t\t\t\treturn nil\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext " + apiPackageName + ".RequestContext, session string) error {\n")
+	buf.WriteString("\t\t\t\t\texecutionOrder = append(executionOrder, \"rate-limit-hook\")\n")
+	buf.WriteString("\t\t\t\t\treturn nil\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext " + apiPackageName + ".RequestContext, session string) error {\n")
+	buf.WriteString("\t\t\t\t\texecutionOrder = append(executionOrder, \"authz-hook\")\n")
+	buf.WriteString("\t\t\t\t\treturn nil\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create handler\n")
+	buf.WriteString("\t\thandler := " + apiPackageName + ".ServeWithResponse(200, server, mockFunction)\n")
+	buf.WriteString("\t\trouter.POST(\"/test\", handler)\n\n")
+
+	buf.WriteString("\t\t// Create test request\n")
+	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test\", nil)\n")
+	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create request\")\n")
+	buf.WriteString("\t\tw := httptest.NewRecorder()\n")
+	buf.WriteString("\t\trouter.ServeHTTP(w, req)\n\n")
+
+	buf.WriteString("\t\t// Assert response and execution order\n")
+	buf.WriteString("\t\tassert.Equal(t, 200, w.Code, \"Expected 200 status code\")\n")
+	buf.WriteString("\t\tassert.Equal(t, []string{\"logging-hook\", \"rate-limit-hook\", \"authz-hook\"}, executionOrder, \"Session hooks should execute in order\")\n")
+	buf.WriteString("\t})\n\n")
+
+	// Test session hooks run after authentication
+	buf.WriteString("\tt.Run(\"session-hooks run after authentication\", func(t *testing.T) {\n")
+	buf.WriteString("\t\trouter := gin.New()\n")
+	buf.WriteString("\t\tvar sessionHookCalled bool\n\n")
+
+	buf.WriteString("\t\t// Mock function\n")
+	buf.WriteString("\t\tmockFunction := func(ctx context.Context, request " + apiPackageName + ".Request[string, struct{}, struct{}, struct{}]) (*map[string]interface{}, error) {\n")
+	buf.WriteString("\t\t\treturn &map[string]interface{}{\"message\": \"success\"}, nil\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create server where authentication fails\n")
+	buf.WriteString("\t\tserver := " + apiPackageName + ".Server[string]{\n")
+	buf.WriteString("\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (string, error) {\n")
+	buf.WriteString("\t\t\t\treturn \"\", fmt.Errorf(\"authentication failed\")\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tConvertErrorFunc: func(err error, requestID string) *" + apiPackageName + ".Error {\n")
+	buf.WriteString("\t\t\t\treturn &" + apiPackageName + ".Error{\n")
+	buf.WriteString("\t\t\t\t\tCode:      " + apiPackageName + ".ErrorCodeInternal,\n")
+	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t\t}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tSessionHooks: []" + apiPackageName + ".SessionHook[string]{\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext " + apiPackageName + ".RequestContext, session string) error {\n")
+	buf.WriteString("\t\t\t\t\tsessionHookCalled = true\n")
+	buf.WriteString("\t\t\t\t\treturn nil\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create handler\n")
+	buf.WriteString("\t\thandler := " + apiPackageName + ".ServeWithResponse(200, server, mockFunction)\n")
+	buf.WriteString("\t\trouter.POST(\"/test\", handler)\n\n")
+
+	buf.WriteString("\t\t// Create test request\n")
+	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test\", nil)\n")
+	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create request\")\n")
+	buf.WriteString("\t\tw := httptest.NewRecorder()\n")
+	buf.WriteString("\t\trouter.ServeHTTP(w, req)\n\n")
+
+	buf.WriteString("\t\t// Assert response\n")
+	buf.WriteString("\t\tassert.Equal(t, 401, w.Code, \"Expected 401 status code\")\n")
+	buf.WriteString("\t\tassert.False(t, sessionHookCalled, \"Session hook should not be called when authentication fails\")\n")
+	buf.WriteString("\t\tassert.Contains(t, w.Body.String(), \"authentication failed\", \"Error message should be in response\")\n")
 	buf.WriteString("\t})\n")
 	buf.WriteString("}\n\n")
 
