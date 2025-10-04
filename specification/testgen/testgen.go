@@ -1016,7 +1016,7 @@ func generateParseRequestTest(buf *bytes.Buffer, apiPackageName string) error {
 	buf.WriteString("\t\trequest, apiError := " + apiPackageName + ".ParseRequest[any, struct{}, struct{}, struct{}](c, \"test-123\", getSession)\n")
 	buf.WriteString("\t\tassert.Nil(t, apiError, \"Expected no error from parseRequest\")\n")
 	buf.WriteString("\t\tassert.Equal(t, \"test-session\", request.Session, \"Session should be set\")\n")
-	buf.WriteString("\t\tassert.Equal(t, \"test-123\", request.RequestID(), \"RequestID should be set\")\n")
+	buf.WriteString("\t\tassert.Equal(t, \"test-123\", request.Context().RequestID, \"RequestID should be set\")\n")
 	buf.WriteString("\t})\n\n")
 
 	buf.WriteString("\tt.Run(\"session function error returns API error\", func(t *testing.T) {\n")
@@ -1545,7 +1545,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("\t\trequest, apiError := parseRequest[any, struct{}, struct{}, struct{}](c, \"test-123\", getSession)\n")
 	buf.WriteString("\t\tassert.Nil(t, apiError, \"Expected no error from parseRequest\")\n")
 	buf.WriteString("\t\tassert.Equal(t, \"test-session\", request.Session, \"Session should be set\")\n")
-	buf.WriteString("\t\tassert.Equal(t, \"test-123\", request.RequestID(), \"RequestID should be set\")\n")
+	buf.WriteString("\t\tassert.Equal(t, \"test-123\", request.Context().RequestID, \"RequestID should be set\")\n")
 	buf.WriteString("\t})\n\n")
 
 	buf.WriteString("\tt.Run(\"session function error returns API error\", func(t *testing.T) {\n")

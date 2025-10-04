@@ -363,17 +363,17 @@ func generateRequestTypes(buf *bytes.Buffer, service *specification.Service) err
 	// Generate RequestContext struct first
 	buf.WriteString("type RequestContext struct {\n")
 	buf.WriteString("\t// ID of the request, can be used for debugging.\n")
-	buf.WriteString("\tRequestID string\n\n")
+	buf.WriteString("\tRequestID string `json:\"requestId\"`\n\n")
 	buf.WriteString("\t// Path of the request. For example, /employee/123/archive\n")
-	buf.WriteString("\tPath string\n\n")
+	buf.WriteString("\tPath string `json:\"path\"`\n\n")
 	buf.WriteString("\t// Route of the request. For example, /employee/:employee_id/archive\n")
-	buf.WriteString("\tRoute string\n\n")
+	buf.WriteString("\tRoute string `json:\"route\"`\n\n")
 	buf.WriteString("\t// UserAgent of the request\n")
-	buf.WriteString("\tUserAgent string\n\n")
+	buf.WriteString("\tUserAgent string `json:\"userAgent\"`\n\n")
 	buf.WriteString("\t// HTTPMethod of the request. For example, POST\n")
-	buf.WriteString("\tHTTPMethod string\n\n")
+	buf.WriteString("\tHTTPMethod string `json:\"httpMethod\"`\n\n")
 	buf.WriteString("\t// IPAddress of the request.\n")
-	buf.WriteString("\tIPAddress string\n")
+	buf.WriteString("\tIPAddress string `json:\"ipAddress\"`\n")
 	buf.WriteString("}\n\n")
 
 	// Generate Request struct

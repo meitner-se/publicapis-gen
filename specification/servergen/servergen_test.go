@@ -88,12 +88,13 @@ const (
 	expectedFieldDecl  = "Name types.String `json:\"name\"`"
 
 	// Request/Response type constants
-	expectedRequestType     = "type Request[sessionType, pathParamsType, queryParamsType, bodyParamsType any] struct {"
-	expectedRequestIDMethod = "func (r Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) RequestID() string"
-	expectedPathParamsType  = "type UserCreateUserPathParams struct {"
-	expectedQueryParamsType = "type UserCreateUserQueryParams struct {"
-	expectedBodyParamsType  = "type UserCreateUserBodyParams struct {"
-	expectedResponseType    = "type UserCreateUserResponse struct {"
+	expectedRequestContextType = "type RequestContext struct {"
+	expectedRequestType        = "type Request[sessionType, pathParamsType, queryParamsType, bodyParamsType any] struct {"
+	expectedContextMethod      = "func (r Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) Context() RequestContext"
+	expectedPathParamsType     = "type UserCreateUserPathParams struct {"
+	expectedQueryParamsType    = "type UserCreateUserQueryParams struct {"
+	expectedBodyParamsType     = "type UserCreateUserBodyParams struct {"
+	expectedResponseType       = "type UserCreateUserResponse struct {"
 
 	// Utility function constants
 	expectedServeWithResponse    = "func serveWithResponse["
@@ -921,9 +922,10 @@ func TestGenerateRequestTypes(t *testing.T) {
 	assert.Nil(t, err, "Expected no error when generating request types")
 
 	generatedCode := buf.String()
+	assert.Contains(t, generatedCode, expectedRequestContextType, "Should generate RequestContext struct")
 	assert.Contains(t, generatedCode, expectedRequestType, "Should generate Request generic type")
-	assert.Contains(t, generatedCode, expectedRequestIDMethod, "Should generate RequestID() method")
-	assert.Contains(t, generatedCode, "return r.requestID", "RequestID method should return requestID field")
+	assert.Contains(t, generatedCode, expectedContextMethod, "Should generate Context() method")
+	assert.Contains(t, generatedCode, "return r.requestContext", "Context method should return requestContext field")
 
 	// Check path params type generation
 	assert.Contains(t, generatedCode, "type UserDeleteUserPathParams struct {", "Should generate path params type")
