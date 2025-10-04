@@ -331,6 +331,9 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("\t// RateLimiterFunc is a function that checks if a request is allowed to proceed based on rate limiting\n")
 	buf.WriteString("\t// It returns true if the request is allowed, false if rate limited, and an error if rate limit check fails\n")
 	buf.WriteString("\tRateLimiterFunc func(ctx context.Context, session Session) (bool, error)\n")
+
+	buf.WriteString("\t// PreHooks are executed before endpoint logic. The first non-nil error aborts request processing.\n")
+	buf.WriteString("\tPreHooks []PreHook\n")
 	buf.WriteString("}\n\n")
 
 	for _, resource := range service.Resources {
@@ -360,7 +363,14 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 }
 
 func generateRequestTypes(buf *bytes.Buffer, service *specification.Service) error {
-	// Generate RequestContext struct first
+	// Generate PreHook types first
+	buf.WriteString("// PreHook runs before endpoint logic. Return nil to continue; non-nil to abort.\n")
+	buf.WriteString("type PreHook func(ctx context.Context, requestContext RequestContext) error\n\n")
+
+	buf.WriteString("// PreHooks is an optional helper type if you prefer a named slice.\n")
+	buf.WriteString("type PreHooks []PreHook\n\n")
+
+	// Generate RequestContext struct
 	buf.WriteString("type RequestContext struct {\n")
 	buf.WriteString("\t// ID of the request, can be used for debugging.\n")
 	buf.WriteString("\tRequestID string `json:\"requestId\"`\n\n")
@@ -453,6 +463,25 @@ func generateUtils(buf *bytes.Buffer) error {
 	return func(c *gin.Context) {
 		requestID := server.GetRequestIDFunc(c.Request.Context())
 
+		// Build RequestContext first for pre-hooks
+		requestContext := RequestContext{
+			RequestID:  requestID,
+			Path:       c.Request.URL.Path,
+			Route:      c.FullPath(),
+			UserAgent:  c.Request.UserAgent(),
+			HTTPMethod: c.Request.Method,
+			IPAddress:  c.ClientIP(),
+		}
+
+		// Run pre-hooks before parsing request
+		for _, preHook := range server.PreHooks {
+			if err := preHook(c.Request.Context(), requestContext); err != nil {
+				apiError := server.ConvertErrorFunc(err, requestID)
+				c.JSON(apiError.HTTPStatusCode(), apiError)
+				return
+			}
+		}
+
 		request, apiError := parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server.GetSessionFunc)
 		if apiError != nil {
 			c.JSON(apiError.HTTPStatusCode(), apiError)
@@ -502,6 +531,25 @@ func generateUtils(buf *bytes.Buffer) error {
 ) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		requestID := server.GetRequestIDFunc(c.Request.Context())
+
+		// Build RequestContext first for pre-hooks
+		requestContext := RequestContext{
+			RequestID:  requestID,
+			Path:       c.Request.URL.Path,
+			Route:      c.FullPath(),
+			UserAgent:  c.Request.UserAgent(),
+			HTTPMethod: c.Request.Method,
+			IPAddress:  c.ClientIP(),
+		}
+
+		// Run pre-hooks before parsing request
+		for _, preHook := range server.PreHooks {
+			if err := preHook(c.Request.Context(), requestContext); err != nil {
+				apiError := server.ConvertErrorFunc(err, requestID)
+				c.JSON(apiError.HTTPStatusCode(), apiError)
+				return
+			}
+		}
 	
 		request, apiError := parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server.GetSessionFunc)
 		if apiError != nil {

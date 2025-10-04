@@ -903,6 +903,12 @@ func generateUtilityTests(buf *bytes.Buffer, service *specification.Service, api
 		return err
 	}
 
+	// Test PreHooks functionality
+	err = generatePreHookTests(buf, apiPackageName)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -1659,6 +1665,12 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("\tassert.Equal(t, true, result.Active, \"Active should be decoded\")\n")
 	buf.WriteString("}\n\n")
 
+	// Test PreHooks functionality
+	err := generateInternalPreHookTests(buf)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -1670,4 +1682,322 @@ func getInternalTypeReference(typeName string) string {
 // getJSONKey converts a field name to its JSON key (camelCase).
 func getJSONKey(fieldName string) string {
 	return specification.CamelCase(fieldName)
+}
+
+// generateInternalPreHookTests generates internal tests for PreHook functionality.
+func generateInternalPreHookTests(buf *bytes.Buffer) error {
+	buf.WriteString("func Test_PreHooks(t *testing.T) {\n")
+	buf.WriteString("\tgin.SetMode(gin.TestMode)\n\n")
+
+	// Test successful pre-hook execution
+	buf.WriteString("\tt.Run(\"successful pre-hook execution\", func(t *testing.T) {\n")
+	buf.WriteString("\t\trouter := gin.New()\n")
+	buf.WriteString("\t\tvar capturedContext RequestContext\n\n")
+
+	buf.WriteString("\t\t// Mock function that returns a response\n")
+	buf.WriteString("\t\tmockFunction := func(ctx context.Context, request Request[any, struct{}, struct{}, struct{}]) (*map[string]interface{}, error) {\n")
+	buf.WriteString("\t\t\treturn &map[string]interface{}{\"message\": \"success\"}, nil\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create server configuration with pre-hook\n")
+	buf.WriteString("\t\tserver := Server[any]{\n")
+	buf.WriteString("\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (any, error) {\n")
+	buf.WriteString("\t\t\t\treturn \"test-session\", nil\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tConvertErrorFunc: func(err error, requestID string) *Error {\n")
+	buf.WriteString("\t\t\t\treturn &Error{\n")
+	buf.WriteString("\t\t\t\t\tCode:      ErrorCodeInternal,\n")
+	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t\t}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tPreHooks: []PreHook{\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext RequestContext) error {\n")
+	buf.WriteString("\t\t\t\t\tcapturedContext = requestContext\n")
+	buf.WriteString("\t\t\t\t\treturn nil\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create handler\n")
+	buf.WriteString("\t\thandler := serveWithResponse(200, server, mockFunction)\n")
+	buf.WriteString("\t\trouter.POST(\"/test/path\", handler)\n\n")
+
+	buf.WriteString("\t\t// Create test request\n")
+	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test/path\", nil)\n")
+	buf.WriteString("\t\treq.Header.Set(\"User-Agent\", \"test-agent\")\n")
+	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create request\")\n")
+	buf.WriteString("\t\tw := httptest.NewRecorder()\n")
+	buf.WriteString("\t\trouter.ServeHTTP(w, req)\n\n")
+
+	buf.WriteString("\t\t// Assert response\n")
+	buf.WriteString("\t\tassert.Equal(t, 200, w.Code, \"Expected 200 status code\")\n")
+	buf.WriteString("\t\tassert.NotEmpty(t, capturedContext.RequestID, \"RequestID should be set\")\n")
+	buf.WriteString("\t\tassert.Equal(t, \"/test/path\", capturedContext.Path, \"Path should match\")\n")
+	buf.WriteString("\t\tassert.Equal(t, \"/test/path\", capturedContext.Route, \"Route should match\")\n")
+	buf.WriteString("\t\tassert.Equal(t, \"test-agent\", capturedContext.UserAgent, \"UserAgent should match\")\n")
+	buf.WriteString("\t\tassert.Equal(t, \"POST\", capturedContext.HTTPMethod, \"HTTPMethod should match\")\n")
+	buf.WriteString("\t\tassert.NotEmpty(t, capturedContext.IPAddress, \"IPAddress should be set\")\n")
+	buf.WriteString("\t})\n\n")
+
+	// Test pre-hook aborting request
+	buf.WriteString("\tt.Run(\"pre-hook aborts request\", func(t *testing.T) {\n")
+	buf.WriteString("\t\trouter := gin.New()\n\n")
+
+	buf.WriteString("\t\t// Mock function that should not be called\n")
+	buf.WriteString("\t\tvar functionCalled bool\n")
+	buf.WriteString("\t\tmockFunction := func(ctx context.Context, request Request[any, struct{}, struct{}, struct{}]) (*map[string]interface{}, error) {\n")
+	buf.WriteString("\t\t\tfunctionCalled = true\n")
+	buf.WriteString("\t\t\treturn &map[string]interface{}{\"message\": \"success\"}, nil\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create server configuration with pre-hook that returns error\n")
+	buf.WriteString("\t\tserver := Server[any]{\n")
+	buf.WriteString("\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (any, error) {\n")
+	buf.WriteString("\t\t\t\treturn \"test-session\", nil\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tConvertErrorFunc: func(err error, requestID string) *Error {\n")
+	buf.WriteString("\t\t\t\treturn &Error{\n")
+	buf.WriteString("\t\t\t\t\tCode:      ErrorCodeForbidden,\n")
+	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t\t}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tPreHooks: []PreHook{\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext RequestContext) error {\n")
+	buf.WriteString("\t\t\t\t\treturn fmt.Errorf(\"not allowed to request server atm\")\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create handler\n")
+	buf.WriteString("\t\thandler := serveWithResponse(200, server, mockFunction)\n")
+	buf.WriteString("\t\trouter.POST(\"/test\", handler)\n\n")
+
+	buf.WriteString("\t\t// Create test request\n")
+	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test\", nil)\n")
+	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create request\")\n")
+	buf.WriteString("\t\tw := httptest.NewRecorder()\n")
+	buf.WriteString("\t\trouter.ServeHTTP(w, req)\n\n")
+
+	buf.WriteString("\t\t// Assert response\n")
+	buf.WriteString("\t\tassert.Equal(t, 403, w.Code, \"Expected 403 status code\")\n")
+	buf.WriteString("\t\tassert.False(t, functionCalled, \"Endpoint function should not be called\")\n")
+	buf.WriteString("\t\tassert.Contains(t, w.Body.String(), \"not allowed to request server atm\", \"Error message should be in response\")\n")
+	buf.WriteString("\t})\n\n")
+
+	// Test multiple pre-hooks
+	buf.WriteString("\tt.Run(\"multiple pre-hooks execute in order\", func(t *testing.T) {\n")
+	buf.WriteString("\t\trouter := gin.New()\n")
+	buf.WriteString("\t\tvar executionOrder []string\n\n")
+
+	buf.WriteString("\t\t// Mock function\n")
+	buf.WriteString("\t\tmockFunction := func(ctx context.Context, request Request[any, struct{}, struct{}, struct{}]) (*map[string]interface{}, error) {\n")
+	buf.WriteString("\t\t\treturn &map[string]interface{}{\"message\": \"success\"}, nil\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create server configuration with multiple pre-hooks\n")
+	buf.WriteString("\t\tserver := Server[any]{\n")
+	buf.WriteString("\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (any, error) {\n")
+	buf.WriteString("\t\t\t\treturn \"test-session\", nil\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tConvertErrorFunc: func(err error, requestID string) *Error {\n")
+	buf.WriteString("\t\t\t\treturn &Error{\n")
+	buf.WriteString("\t\t\t\t\tCode:      ErrorCodeInternal,\n")
+	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t\t}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tPreHooks: []PreHook{\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext RequestContext) error {\n")
+	buf.WriteString("\t\t\t\t\texecutionOrder = append(executionOrder, \"hook1\")\n")
+	buf.WriteString("\t\t\t\t\treturn nil\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext RequestContext) error {\n")
+	buf.WriteString("\t\t\t\t\texecutionOrder = append(executionOrder, \"hook2\")\n")
+	buf.WriteString("\t\t\t\t\treturn nil\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext RequestContext) error {\n")
+	buf.WriteString("\t\t\t\t\texecutionOrder = append(executionOrder, \"hook3\")\n")
+	buf.WriteString("\t\t\t\t\treturn nil\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create handler\n")
+	buf.WriteString("\t\thandler := serveWithResponse(200, server, mockFunction)\n")
+	buf.WriteString("\t\trouter.POST(\"/test\", handler)\n\n")
+
+	buf.WriteString("\t\t// Create test request\n")
+	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test\", nil)\n")
+	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create request\")\n")
+	buf.WriteString("\t\tw := httptest.NewRecorder()\n")
+	buf.WriteString("\t\trouter.ServeHTTP(w, req)\n\n")
+
+	buf.WriteString("\t\t// Assert response and execution order\n")
+	buf.WriteString("\t\tassert.Equal(t, 200, w.Code, \"Expected 200 status code\")\n")
+	buf.WriteString("\t\tassert.Equal(t, []string{\"hook1\", \"hook2\", \"hook3\"}, executionOrder, \"Hooks should execute in order\")\n")
+	buf.WriteString("\t})\n")
+	buf.WriteString("}\n\n")
+
+	return nil
+}
+
+// generatePreHookTests generates tests for PreHook functionality.
+func generatePreHookTests(buf *bytes.Buffer, apiPackageName string) error {
+	buf.WriteString("func Test_PreHooks(t *testing.T) {\n")
+	buf.WriteString("\tgin.SetMode(gin.TestMode)\n\n")
+
+	// Test successful pre-hook execution
+	buf.WriteString("\tt.Run(\"successful pre-hook execution\", func(t *testing.T) {\n")
+	buf.WriteString("\t\trouter := gin.New()\n")
+	buf.WriteString("\t\tvar capturedContext " + apiPackageName + ".RequestContext\n\n")
+
+	buf.WriteString("\t\t// Mock function that returns a response\n")
+	buf.WriteString("\t\tmockFunction := func(ctx context.Context, request " + apiPackageName + ".Request[any, struct{}, struct{}, struct{}]) (*map[string]interface{}, error) {\n")
+	buf.WriteString("\t\t\treturn &map[string]interface{}{\"message\": \"success\"}, nil\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create server configuration with pre-hook\n")
+	buf.WriteString("\t\tserver := " + apiPackageName + ".Server[any]{\n")
+	buf.WriteString("\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (any, error) {\n")
+	buf.WriteString("\t\t\t\treturn \"test-session\", nil\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tConvertErrorFunc: func(err error, requestID string) *" + apiPackageName + ".Error {\n")
+	buf.WriteString("\t\t\t\treturn &" + apiPackageName + ".Error{\n")
+	buf.WriteString("\t\t\t\t\tCode:      " + apiPackageName + ".ErrorCodeInternal,\n")
+	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t\t}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tPreHooks: []" + apiPackageName + ".PreHook{\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext " + apiPackageName + ".RequestContext) error {\n")
+	buf.WriteString("\t\t\t\t\tcapturedContext = requestContext\n")
+	buf.WriteString("\t\t\t\t\treturn nil\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create handler\n")
+	buf.WriteString("\t\thandler := " + apiPackageName + ".ServeWithResponse(200, server, mockFunction)\n")
+	buf.WriteString("\t\trouter.POST(\"/test/path\", handler)\n\n")
+
+	buf.WriteString("\t\t// Create test request\n")
+	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test/path\", nil)\n")
+	buf.WriteString("\t\treq.Header.Set(\"User-Agent\", \"test-agent\")\n")
+	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create request\")\n")
+	buf.WriteString("\t\tw := httptest.NewRecorder()\n")
+	buf.WriteString("\t\trouter.ServeHTTP(w, req)\n\n")
+
+	buf.WriteString("\t\t// Assert response\n")
+	buf.WriteString("\t\tassert.Equal(t, 200, w.Code, \"Expected 200 status code\")\n")
+	buf.WriteString("\t\tassert.NotEmpty(t, capturedContext.RequestID, \"RequestID should be set\")\n")
+	buf.WriteString("\t\tassert.Equal(t, \"/test/path\", capturedContext.Path, \"Path should match\")\n")
+	buf.WriteString("\t\tassert.Equal(t, \"/test/path\", capturedContext.Route, \"Route should match\")\n")
+	buf.WriteString("\t\tassert.Equal(t, \"test-agent\", capturedContext.UserAgent, \"UserAgent should match\")\n")
+	buf.WriteString("\t\tassert.Equal(t, \"POST\", capturedContext.HTTPMethod, \"HTTPMethod should match\")\n")
+	buf.WriteString("\t\tassert.NotEmpty(t, capturedContext.IPAddress, \"IPAddress should be set\")\n")
+	buf.WriteString("\t})\n\n")
+
+	// Test pre-hook aborting request
+	buf.WriteString("\tt.Run(\"pre-hook aborts request\", func(t *testing.T) {\n")
+	buf.WriteString("\t\trouter := gin.New()\n\n")
+
+	buf.WriteString("\t\t// Mock function that should not be called\n")
+	buf.WriteString("\t\tvar functionCalled bool\n")
+	buf.WriteString("\t\tmockFunction := func(ctx context.Context, request " + apiPackageName + ".Request[any, struct{}, struct{}, struct{}]) (*map[string]interface{}, error) {\n")
+	buf.WriteString("\t\t\tfunctionCalled = true\n")
+	buf.WriteString("\t\t\treturn &map[string]interface{}{\"message\": \"success\"}, nil\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create server configuration with pre-hook that returns error\n")
+	buf.WriteString("\t\tserver := " + apiPackageName + ".Server[any]{\n")
+	buf.WriteString("\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (any, error) {\n")
+	buf.WriteString("\t\t\t\treturn \"test-session\", nil\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tConvertErrorFunc: func(err error, requestID string) *" + apiPackageName + ".Error {\n")
+	buf.WriteString("\t\t\t\treturn &" + apiPackageName + ".Error{\n")
+	buf.WriteString("\t\t\t\t\tCode:      " + apiPackageName + ".ErrorCodeForbidden,\n")
+	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t\t}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tPreHooks: []" + apiPackageName + ".PreHook{\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext " + apiPackageName + ".RequestContext) error {\n")
+	buf.WriteString("\t\t\t\t\treturn fmt.Errorf(\"not allowed to request server atm\")\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create handler\n")
+	buf.WriteString("\t\thandler := " + apiPackageName + ".ServeWithResponse(200, server, mockFunction)\n")
+	buf.WriteString("\t\trouter.POST(\"/test\", handler)\n\n")
+
+	buf.WriteString("\t\t// Create test request\n")
+	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test\", nil)\n")
+	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create request\")\n")
+	buf.WriteString("\t\tw := httptest.NewRecorder()\n")
+	buf.WriteString("\t\trouter.ServeHTTP(w, req)\n\n")
+
+	buf.WriteString("\t\t// Assert response\n")
+	buf.WriteString("\t\tassert.Equal(t, 403, w.Code, \"Expected 403 status code\")\n")
+	buf.WriteString("\t\tassert.False(t, functionCalled, \"Endpoint function should not be called\")\n")
+	buf.WriteString("\t\tassert.Contains(t, w.Body.String(), \"not allowed to request server atm\", \"Error message should be in response\")\n")
+	buf.WriteString("\t})\n\n")
+
+	// Test multiple pre-hooks
+	buf.WriteString("\tt.Run(\"multiple pre-hooks execute in order\", func(t *testing.T) {\n")
+	buf.WriteString("\t\trouter := gin.New()\n")
+	buf.WriteString("\t\tvar executionOrder []string\n\n")
+
+	buf.WriteString("\t\t// Mock function\n")
+	buf.WriteString("\t\tmockFunction := func(ctx context.Context, request " + apiPackageName + ".Request[any, struct{}, struct{}, struct{}]) (*map[string]interface{}, error) {\n")
+	buf.WriteString("\t\t\treturn &map[string]interface{}{\"message\": \"success\"}, nil\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create server configuration with multiple pre-hooks\n")
+	buf.WriteString("\t\tserver := " + apiPackageName + ".Server[any]{\n")
+	buf.WriteString("\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (any, error) {\n")
+	buf.WriteString("\t\t\t\treturn \"test-session\", nil\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tConvertErrorFunc: func(err error, requestID string) *" + apiPackageName + ".Error {\n")
+	buf.WriteString("\t\t\t\treturn &" + apiPackageName + ".Error{\n")
+	buf.WriteString("\t\t\t\t\tCode:      " + apiPackageName + ".ErrorCodeInternal,\n")
+	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t\t}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tPreHooks: []" + apiPackageName + ".PreHook{\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext " + apiPackageName + ".RequestContext) error {\n")
+	buf.WriteString("\t\t\t\t\texecutionOrder = append(executionOrder, \"hook1\")\n")
+	buf.WriteString("\t\t\t\t\treturn nil\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext " + apiPackageName + ".RequestContext) error {\n")
+	buf.WriteString("\t\t\t\t\texecutionOrder = append(executionOrder, \"hook2\")\n")
+	buf.WriteString("\t\t\t\t\treturn nil\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t\tfunc(ctx context.Context, requestContext " + apiPackageName + ".RequestContext) error {\n")
+	buf.WriteString("\t\t\t\t\texecutionOrder = append(executionOrder, \"hook3\")\n")
+	buf.WriteString("\t\t\t\t\treturn nil\n")
+	buf.WriteString("\t\t\t\t},\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create handler\n")
+	buf.WriteString("\t\thandler := " + apiPackageName + ".ServeWithResponse(200, server, mockFunction)\n")
+	buf.WriteString("\t\trouter.POST(\"/test\", handler)\n\n")
+
+	buf.WriteString("\t\t// Create test request\n")
+	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test\", nil)\n")
+	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create request\")\n")
+	buf.WriteString("\t\tw := httptest.NewRecorder()\n")
+	buf.WriteString("\t\trouter.ServeHTTP(w, req)\n\n")
+
+	buf.WriteString("\t\t// Assert response and execution order\n")
+	buf.WriteString("\t\tassert.Equal(t, 200, w.Code, \"Expected 200 status code\")\n")
+	buf.WriteString("\t\tassert.Equal(t, []string{\"hook1\", \"hook2\", \"hook3\"}, executionOrder, \"Hooks should execute in order\")\n")
+	buf.WriteString("\t})\n")
+	buf.WriteString("}\n\n")
+
+	return nil
 }
