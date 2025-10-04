@@ -360,16 +360,33 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 }
 
 func generateRequestTypes(buf *bytes.Buffer, service *specification.Service) error {
+	// Generate RequestContext struct first
+	buf.WriteString("type RequestContext struct {\n")
+	buf.WriteString("\t// ID of the request, can be used for debugging.\n")
+	buf.WriteString("\tRequestID string\n\n")
+	buf.WriteString("\t// Path of the request. For example, /employee/123/archive\n")
+	buf.WriteString("\tPath string\n\n")
+	buf.WriteString("\t// Route of the request. For example, /employee/:employee_id/archive\n")
+	buf.WriteString("\tRoute string\n\n")
+	buf.WriteString("\t// UserAgent of the request\n")
+	buf.WriteString("\tUserAgent string\n\n")
+	buf.WriteString("\t// HTTPMethod of the request. For example, POST\n")
+	buf.WriteString("\tHTTPMethod string\n\n")
+	buf.WriteString("\t// IPAddress of the request.\n")
+	buf.WriteString("\tIPAddress string\n")
+	buf.WriteString("}\n\n")
+
+	// Generate Request struct
 	buf.WriteString("type Request[sessionType, pathParamsType, queryParamsType, bodyParamsType any] struct {\n")
-	buf.WriteString("\trequestID string `json:\"-\"` // Unexported field since it shouldn't be changed\n")
+	buf.WriteString("\trequestContext RequestContext `json:\"-\"` // Unexported field\n")
 	buf.WriteString("\tSession sessionType `json:\"-\"`\n")
 	buf.WriteString("\tPathParams pathParamsType `json:\"-\"`\n")
 	buf.WriteString("\tQueryParams queryParamsType `json:\"-\"`\n")
 	buf.WriteString("\tBodyParams bodyParamsType `json:\"-\"`\n")
 	buf.WriteString("}\n\n")
 
-	buf.WriteString("func (r Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) RequestID() string {\n")
-	buf.WriteString("\treturn r.requestID\n")
+	buf.WriteString("func (r Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) Context() RequestContext {\n")
+	buf.WriteString("\treturn r.requestContext\n")
 	buf.WriteString("}\n\n")
 
 	for _, resource := range service.Resources {
@@ -545,7 +562,14 @@ func generateUtils(buf *bytes.Buffer) error {
 	}
 
 	request := Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]{
-		requestID: requestID,
+		requestContext: RequestContext{
+			RequestID:  requestID,
+			Path:       c.Request.URL.Path,
+			Route:      c.FullPath(),
+			UserAgent:  c.Request.UserAgent(),
+			HTTPMethod: c.Request.Method,
+			IPAddress:  c.ClientIP(),
+		},
 		Session: session,
 	}
 
