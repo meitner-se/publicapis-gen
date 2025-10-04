@@ -1008,7 +1008,7 @@ func generateParseRequestTest(buf *bytes.Buffer, apiPackageName string) error {
 	buf.WriteString("\t\tc.Params = []gin.Param{{Key: \"id\", Value: \"123\"}}\n\n")
 
 	buf.WriteString("\t\t// Mock session function\n")
-	buf.WriteString("\t\tgetSession := func(ctx context.Context, headers http.Header, requestID string) (any, error) {\n")
+	buf.WriteString("\t\tgetSession := func(ctx context.Context, headers http.Header) (any, error) {\n")
 	buf.WriteString("\t\t\treturn \"test-session\", nil\n")
 	buf.WriteString("\t\t}\n\n")
 
@@ -1026,7 +1026,7 @@ func generateParseRequestTest(buf *bytes.Buffer, apiPackageName string) error {
 	buf.WriteString("\t\tc.Request = req\n\n")
 
 	buf.WriteString("\t\t// Mock session function that returns error\n")
-	buf.WriteString("\t\tgetSessionWithError := func(ctx context.Context, headers http.Header, requestID string) (any, error) {\n")
+	buf.WriteString("\t\tgetSessionWithError := func(ctx context.Context, headers http.Header) (any, error) {\n")
 	buf.WriteString("\t\t\treturn nil, fmt.Errorf(\"authentication failed\")\n")
 	buf.WriteString("\t\t}\n\n")
 
@@ -1052,7 +1052,7 @@ func generateParseRequestTest(buf *bytes.Buffer, apiPackageName string) error {
 	buf.WriteString("\t\tc.Request = req\n\n")
 
 	buf.WriteString("\t\t// Mock session function\n")
-	buf.WriteString("\t\tgetSession := func(ctx context.Context, headers http.Header, requestID string) (any, error) {\n")
+	buf.WriteString("\t\tgetSession := func(ctx context.Context, headers http.Header) (any, error) {\n")
 	buf.WriteString("\t\t\treturn \"test-session\", nil\n")
 	buf.WriteString("\t\t}\n\n")
 
@@ -1537,7 +1537,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("\t\tc.Params = []gin.Param{{Key: \"id\", Value: \"123\"}}\n\n")
 
 	buf.WriteString("\t\t// Mock session function\n")
-	buf.WriteString("\t\tgetSession := func(ctx context.Context, headers http.Header, requestID string) (any, error) {\n")
+	buf.WriteString("\t\tgetSession := func(ctx context.Context, headers http.Header) (any, error) {\n")
 	buf.WriteString("\t\t\treturn \"test-session\", nil\n")
 	buf.WriteString("\t\t}\n\n")
 
@@ -1555,7 +1555,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("\t\tc.Request = req\n\n")
 
 	buf.WriteString("\t\t// Mock session function that returns error\n")
-	buf.WriteString("\t\tgetSessionWithError := func(ctx context.Context, headers http.Header, requestID string) (any, error) {\n")
+	buf.WriteString("\t\tgetSessionWithError := func(ctx context.Context, headers http.Header) (any, error) {\n")
 	buf.WriteString("\t\t\treturn nil, fmt.Errorf(\"authentication failed\")\n")
 	buf.WriteString("\t\t}\n\n")
 
@@ -1581,7 +1581,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("\t\tc.Request = req\n\n")
 
 	buf.WriteString("\t\t// Mock session function\n")
-	buf.WriteString("\t\tgetSession := func(ctx context.Context, headers http.Header, requestID string) (any, error) {\n")
+	buf.WriteString("\t\tgetSession := func(ctx context.Context, headers http.Header) (any, error) {\n")
 	buf.WriteString("\t\t\treturn \"test-session\", nil\n")
 	buf.WriteString("\t\t}\n\n")
 
