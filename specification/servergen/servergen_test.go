@@ -113,6 +113,10 @@ const (
 	expectedRateLimitedError    = "ErrorCodeRateLimited"
 	expectedRateLimitedMessage  = "Rate limit exceeded"
 	expectedRateLimitStatusCode = "http.StatusTooManyRequests"
+
+	// GetRequestIDFunc constants
+	expectedGetRequestIDFunc  = "GetRequestIDFunc func() string"
+	expectedGetRequestIDCheck = "if server.GetRequestIDFunc != nil"
 )
 
 // ============================================================================
@@ -237,6 +241,38 @@ func TestGenerateServer(t *testing.T) {
 		rateLimiterCallCount := strings.Count(generatedCode, "server.RateLimiterFunc(c.Request.Context(), request.Session)")
 		assert.Equal(t, 2, rateLimiterCallCount,
 			"RateLimiterFunc should be called in both serveWithResponse and serveWithoutResponse")
+	})
+
+	t.Run("GetRequestIDFunc functionality", func(t *testing.T) {
+		// Arrange
+		service := createTestServiceWithEndpoints()
+		buf := &bytes.Buffer{}
+
+		// Act
+		err := GenerateServer(buf, service)
+
+		// Assert
+		assert.Nil(t, err, "Expected no error when generating server with GetRequestIDFunc")
+		generatedCode := buf.String()
+
+		// Check that GetRequestIDFunc is defined in Server struct
+		assert.Contains(t, generatedCode, expectedGetRequestIDFunc,
+			"Server struct should contain GetRequestIDFunc definition")
+
+		// Check that GetRequestIDFunc check is present in both serve functions
+		assert.Contains(t, generatedCode, expectedGetRequestIDCheck,
+			"serve functions should check if GetRequestIDFunc is not nil")
+
+		// Verify GetRequestIDFunc usage
+		assert.Contains(t, generatedCode, "requestID = server.GetRequestIDFunc()",
+			"Should use custom GetRequestIDFunc when provided")
+		assert.Contains(t, generatedCode, "requestID = uuid.New().String()",
+			"Should fall back to UUID when GetRequestIDFunc is nil")
+
+		// Count occurrences to ensure it's in both functions
+		getRequestIDCheckCount := strings.Count(generatedCode, "if server.GetRequestIDFunc != nil")
+		assert.Equal(t, 2, getRequestIDCheckCount,
+			"GetRequestIDFunc check should be in both serveWithResponse and serveWithoutResponse")
 	})
 }
 
@@ -1096,7 +1132,10 @@ func TestGenerateUtils(t *testing.T) {
 	assert.Contains(t, generatedCode, expectedDecodeQueryParams, "Should generate decodeQueryParams")
 
 	// Check function implementations
-	assert.Contains(t, generatedCode, `requestID := uuid.New().String()`, "Should use test request ID")
+	assert.Contains(t, generatedCode, `var requestID string`, "Should declare requestID variable")
+	assert.Contains(t, generatedCode, `if server.GetRequestIDFunc != nil`, "Should check if GetRequestIDFunc is provided")
+	assert.Contains(t, generatedCode, `requestID = server.GetRequestIDFunc()`, "Should use custom GetRequestIDFunc if provided")
+	assert.Contains(t, generatedCode, `requestID = uuid.New().String()`, "Should fall back to UUID if GetRequestIDFunc is nil")
 	assert.Contains(t, generatedCode, "parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType]",
 		"Should call parseRequest with generic types")
 	assert.Contains(t, generatedCode, "c.JSON(successStatusCode, response)",

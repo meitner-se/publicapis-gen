@@ -321,6 +321,10 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("\t// RateLimiterFunc is a function that checks if a request is allowed to proceed based on rate limiting\n")
 	buf.WriteString("\t// It returns true if the request is allowed, false if rate limited, and an error if rate limit check fails\n")
 	buf.WriteString("\tRateLimiterFunc func(ctx context.Context, session Session) (bool, error)\n")
+
+	buf.WriteString("\t// GetRequestIDFunc is a function that generates a request ID for each request\n")
+	buf.WriteString("\t// If nil, a default UUID-based request ID generator will be used\n")
+	buf.WriteString("\tGetRequestIDFunc func() string\n")
 	buf.WriteString("}\n\n")
 
 	for _, resource := range service.Resources {
@@ -424,7 +428,12 @@ func generateUtils(buf *bytes.Buffer) error {
 	function func(ctx context.Context, request Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) (*responseType, error),
 ) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		requestID := uuid.New().String()
+		var requestID string
+		if server.GetRequestIDFunc != nil {
+			requestID = server.GetRequestIDFunc()
+		} else {
+			requestID = uuid.New().String()
+		}
 
 		request, apiError := parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server.GetSessionFunc)
 		if apiError != nil {
@@ -474,7 +483,12 @@ func generateUtils(buf *bytes.Buffer) error {
 	function func(ctx context.Context, request Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) error,
 ) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		requestID := uuid.New().String()
+		var requestID string
+		if server.GetRequestIDFunc != nil {
+			requestID = server.GetRequestIDFunc()
+		} else {
+			requestID = uuid.New().String()
+		}
 	
 		request, apiError := parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server.GetSessionFunc)
 		if apiError != nil {
