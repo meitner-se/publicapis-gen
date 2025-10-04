@@ -463,26 +463,7 @@ func generateUtils(buf *bytes.Buffer) error {
 	return func(c *gin.Context) {
 		requestID := server.GetRequestIDFunc(c.Request.Context())
 
-		// Build RequestContext first for pre-hooks
-		requestContext := RequestContext{
-			RequestID:  requestID,
-			Path:       c.Request.URL.Path,
-			Route:      c.FullPath(),
-			UserAgent:  c.Request.UserAgent(),
-			HTTPMethod: c.Request.Method,
-			IPAddress:  c.ClientIP(),
-		}
-
-		// Run pre-hooks before parsing request
-		for _, preHook := range server.PreHooks {
-			if err := preHook(c.Request.Context(), requestContext); err != nil {
-				apiError := server.ConvertErrorFunc(err, requestID)
-				c.JSON(apiError.HTTPStatusCode(), apiError)
-				return
-			}
-		}
-
-		request, apiError := parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server.GetSessionFunc)
+		request, apiError := parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
 		if apiError != nil {
 			c.JSON(apiError.HTTPStatusCode(), apiError)
 			return
@@ -532,26 +513,7 @@ func generateUtils(buf *bytes.Buffer) error {
 	return func(c *gin.Context) {
 		requestID := server.GetRequestIDFunc(c.Request.Context())
 
-		// Build RequestContext first for pre-hooks
-		requestContext := RequestContext{
-			RequestID:  requestID,
-			Path:       c.Request.URL.Path,
-			Route:      c.FullPath(),
-			UserAgent:  c.Request.UserAgent(),
-			HTTPMethod: c.Request.Method,
-			IPAddress:  c.ClientIP(),
-		}
-
-		// Run pre-hooks before parsing request
-		for _, preHook := range server.PreHooks {
-			if err := preHook(c.Request.Context(), requestContext); err != nil {
-				apiError := server.ConvertErrorFunc(err, requestID)
-				c.JSON(apiError.HTTPStatusCode(), apiError)
-				return
-			}
-		}
-	
-		request, apiError := parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server.GetSessionFunc)
+		request, apiError := parseRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
 		if apiError != nil {
 			c.JSON(apiError.HTTPStatusCode(), apiError)
 			return
@@ -596,11 +558,29 @@ func generateUtils(buf *bytes.Buffer) error {
 ](
 	c *gin.Context,
 	requestID string,
-	getSession getSessionFunc[sessionType],
+	server Server[sessionType],
 ) (Request[sessionType, pathParamsType, queryParamsType, bodyParamsType], *Error) {
 	var nilRequest Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]
 
-	session, err := getSession(c.Request.Context(), c.Request.Header)
+	// Build RequestContext first for pre-hooks
+	requestContext := RequestContext{
+		RequestID:  requestID,
+		Path:       c.Request.URL.Path,
+		Route:      c.FullPath(),
+		UserAgent:  c.Request.UserAgent(),
+		HTTPMethod: c.Request.Method,
+		IPAddress:  c.ClientIP(),
+	}
+
+	// Run pre-hooks before parsing request
+	for _, preHook := range server.PreHooks {
+		if err := preHook(c.Request.Context(), requestContext); err != nil {
+			apiError := server.ConvertErrorFunc(err, requestID)
+			return nilRequest, apiError
+		}
+	}
+
+	session, err := server.GetSessionFunc(c.Request.Context(), c.Request.Header)
 	if err != nil {
 		return nilRequest, &Error{
 			Code:      ErrorCodeUnauthorized,
@@ -610,14 +590,7 @@ func generateUtils(buf *bytes.Buffer) error {
 	}
 
 	request := Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]{
-		requestContext: RequestContext{
-			RequestID:  requestID,
-			Path:       c.Request.URL.Path,
-			Route:      c.FullPath(),
-			UserAgent:  c.Request.UserAgent(),
-			HTTPMethod: c.Request.Method,
-			IPAddress:  c.ClientIP(),
-		},
+		requestContext: requestContext,
 		Session: session,
 	}
 
