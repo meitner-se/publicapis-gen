@@ -328,10 +328,6 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("\t// ConvertErrorFunc is a function that is used on each endpoint to convert an error to an Error object\n")
 	buf.WriteString("\tConvertErrorFunc func(err error, requestID string) *Error\n")
 
-	buf.WriteString("\t// RateLimiterFunc is a function that checks if a request is allowed to proceed based on rate limiting\n")
-	buf.WriteString("\t// It returns true if the request is allowed, false if rate limited, and an error if rate limit check fails\n")
-	buf.WriteString("\tRateLimiterFunc func(ctx context.Context, session Session) (bool, error)\n")
-
 	buf.WriteString("\t// PreHooks are executed before endpoint logic. The first non-nil error aborts request processing.\n")
 	buf.WriteString("\tPreHooks []PreHook\n")
 
@@ -513,26 +509,6 @@ func generateUtils(buf *bytes.Buffer) error {
 			return
 		}
 
-		// Check rate limit if RateLimiterFunc is provided
-		if server.RateLimiterFunc != nil {
-			allowed, err := server.RateLimiterFunc(c.Request.Context(), request.Session)
-			if err != nil {
-				// Internal error during rate limit check
-				apiError := server.ConvertErrorFunc(err, requestID)
-				c.JSON(apiError.HTTPStatusCode(), apiError)
-				return
-			}
-			if !allowed {
-				// Rate limit exceeded
-				c.JSON(http.StatusTooManyRequests, &Error{
-					Code:      ErrorCodeRateLimited,
-					Message:   types.NewString("Rate limit exceeded"),
-					RequestID: types.NewString(requestID),
-				})
-				return
-			}
-		}
-
 		response, err := function(c.Request.Context(), request)
 		if err != nil {
 			apiError := server.ConvertErrorFunc(err, requestID)
@@ -561,26 +537,6 @@ func generateUtils(buf *bytes.Buffer) error {
 		if apiError != nil {
 			c.JSON(apiError.HTTPStatusCode(), apiError)
 			return
-		}
-
-		// Check rate limit if RateLimiterFunc is provided
-		if server.RateLimiterFunc != nil {
-			allowed, err := server.RateLimiterFunc(c.Request.Context(), request.Session)
-			if err != nil {
-				// Internal error during rate limit check
-				apiError := server.ConvertErrorFunc(err, requestID)
-				c.JSON(apiError.HTTPStatusCode(), apiError)
-				return
-			}
-			if !allowed {
-				// Rate limit exceeded
-				c.JSON(http.StatusTooManyRequests, &Error{
-					Code:      ErrorCodeRateLimited,
-					Message:   types.NewString("Rate limit exceeded"),
-					RequestID: types.NewString(requestID),
-				})
-				return
-			}
 		}
 
 		err := function(c.Request.Context(), request)
