@@ -256,8 +256,8 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	serviceName := strmangle.TitleCase(service.Name)
 	buf.WriteString(fmt.Sprintf("func Register%sAPI[Session any](router *gin.Engine, api *%sAPI[Session]) {\n", serviceName, serviceName))
 	buf.WriteString("\tif api.Server.ErrorHook == nil {\n")
-	buf.WriteString("\t\tapi.Server.ErrorHook = func(ctx context.Context, requestContext RequestContext, session *Session, err error) *Error {\n")
-	buf.WriteString("\t\t\treturn &Error{\n")
+	buf.WriteString("\t\tapi.Server.ErrorHook = func(ctx context.Context, requestContext RequestContext, err error) (int, *Error) {\n")
+	buf.WriteString("\t\t\treturn http.StatusInternalServerError, &Error{\n")
 	buf.WriteString("\t\t\t\tCode:    ErrorCodeInternal,\n")
 	buf.WriteString("\t\t\t\tMessage: types.NewString(err.Error()),\n")
 	buf.WriteString("\t\t\t\tRequestID: types.NewString(requestContext.RequestID),\n")
@@ -327,7 +327,7 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 
 	buf.WriteString("\t// ErrorHook is a function that is used on each endpoint to convert an error to an Error object\n")
 	buf.WriteString("\t// The session parameter may be nil if the error occurred before session retrieval\n")
-	buf.WriteString("\tErrorHook func(ctx context.Context, requestContext RequestContext, session *Session, err error) *Error\n")
+	buf.WriteString("\tErrorHook func(ctx context.Context, requestContext RequestContext, err error) (int, *Error)\n")
 
 	buf.WriteString("\t// PreHooks are executed before endpoint logic. The first non-nil error aborts request processing.\n")
 	buf.WriteString("\tPreHooks []PreHook\n")
@@ -503,34 +503,17 @@ func generateUtils(buf *bytes.Buffer) error {
 ) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		requestID := server.GetRequestIDFunc(c.Request.Context())
+		requestContext := getRequestContext(c, requestID)
 
-		request, apiError := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
-		if apiError != nil {
-			// Build a minimal RequestContext for errors that occur before request is fully parsed
-			errorRequestContext := RequestContext{
-				RequestID:  requestID,
-				Path:       c.Request.URL.Path,
-				Route:      c.FullPath(),
-				UserAgent:  c.Request.UserAgent(),
-				HTTPMethod: c.Request.Method,
-				IPAddress:  c.ClientIP(),
-			}
-			// Convert *Error to error for ErrorHook
-			var err error
-			if apiError.Message != nil {
-				err = fmt.Errorf("%s", *apiError.Message)
-			} else {
-				err = fmt.Errorf("request error")
-			}
-			apiError = server.ErrorHook(c.Request.Context(), errorRequestContext, nil, err)
-			c.JSON(apiError.HTTPStatusCode(), apiError)
+		request, err := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)
+		if err != nil {
+			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err))
 			return
 		}
 
 		response, err := function(c.Request.Context(), request)
 		if err != nil {
-			apiError := server.ErrorHook(c.Request.Context(), request.requestContext, &request.Session, err)
-			c.JSON(apiError.HTTPStatusCode(), apiError)
+			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err))
 			return
 		}
 
@@ -550,37 +533,19 @@ func generateUtils(buf *bytes.Buffer) error {
 ) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		requestID := server.GetRequestIDFunc(c.Request.Context())
+		requestContext := getRequestContext(c, requestID)
 
-		request, apiError := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
-		if apiError != nil {
-			// Build a minimal RequestContext for errors that occur before request is fully parsed
-			errorRequestContext := RequestContext{
-				RequestID:  requestID,
-				Path:       c.Request.URL.Path,
-				Route:      c.FullPath(),
-				UserAgent:  c.Request.UserAgent(),
-				HTTPMethod: c.Request.Method,
-				IPAddress:  c.ClientIP(),
-			}
-			// Convert *Error to error for ErrorHook
-			var err error
-			if apiError.Message != nil {
-				err = fmt.Errorf("%s", *apiError.Message)
-			} else {
-				err = fmt.Errorf("request error")
-			}
-			apiError = server.ErrorHook(c.Request.Context(), errorRequestContext, nil, err)
-			c.JSON(apiError.HTTPStatusCode(), apiError)
-			return
-		}
-
-		err := function(c.Request.Context(), request)
+		request, err := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)
 		if err != nil {
-			apiError := server.ErrorHook(c.Request.Context(), request.requestContext, &request.Session, err)
-			c.JSON(apiError.HTTPStatusCode(), apiError)
+			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err))
 			return
 		}
-		
+
+		if err := function(c.Request.Context(), request); err != nil {
+			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err))
+			return
+		}
+
 		c.JSON(successStatusCode, nil)
 	}
 }` + "\n\n")
@@ -592,26 +557,15 @@ func generateUtils(buf *bytes.Buffer) error {
 	bodyParamsType any,
 ](
 	c *gin.Context,
-	requestID string,
+	requestContext RequestContext,
 	server Server[sessionType],
-) (Request[sessionType, pathParamsType, queryParamsType, bodyParamsType], *Error) {
+) (Request[sessionType, pathParamsType, queryParamsType, bodyParamsType], error) {
 	var nilRequest Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]
-
-	// Build RequestContext first for pre-hooks
-	requestContext := RequestContext{
-		RequestID:  requestID,
-		Path:       c.Request.URL.Path,
-		Route:      c.FullPath(),
-		UserAgent:  c.Request.UserAgent(),
-		HTTPMethod: c.Request.Method,
-		IPAddress:  c.ClientIP(),
-	}
 
 	// Run pre-hooks before parsing request
 	for _, preHook := range server.PreHooks {
 		if err := preHook(c.Request.Context(), requestContext); err != nil {
-			apiError := server.ErrorHook(c.Request.Context(), requestContext, nil, err)
-			return nilRequest, apiError
+			return nilRequest, err
 		}
 	}
 
@@ -620,7 +574,7 @@ func generateUtils(buf *bytes.Buffer) error {
 		return nilRequest, &Error{
 			Code:      ErrorCodeUnauthorized,
 			Message:   types.NewString(err.Error()),
-			RequestID: types.NewString(requestID),
+			RequestID: types.NewString(requestContext.RequestID),
 		}
 	}
 
@@ -629,8 +583,7 @@ func generateUtils(buf *bytes.Buffer) error {
 	// The hooks are executed in the order they are defined in the SessionHooks slice
 	for _, sessionHook := range server.SessionHooks {
 		if err := sessionHook(c.Request.Context(), requestContext, session); err != nil {
-			apiError := server.ErrorHook(c.Request.Context(), requestContext, &session, err)
-			return nilRequest, apiError
+			return nilRequest, err
 		}
 	}
 
@@ -645,7 +598,7 @@ func generateUtils(buf *bytes.Buffer) error {
 			return nilRequest, &Error{
 				Code:      ErrorCodeBadRequest,
 				Message:   types.NewString("cannot decode json body params: " + err.Error()),
-				RequestID: types.NewString(requestID),
+				RequestID: types.NewString(requestContext.RequestID),
 			}
 		}
 
@@ -658,7 +611,7 @@ func generateUtils(buf *bytes.Buffer) error {
 			return nilRequest, &Error{
 				Code:      ErrorCodeBadRequest,
 				Message:   types.NewString("cannot decode path params: " + err.Error()),
-				RequestID: types.NewString(requestID),
+				RequestID: types.NewString(requestContext.RequestID),
 			}
 		}
 
@@ -671,7 +624,7 @@ func generateUtils(buf *bytes.Buffer) error {
 			return nilRequest, &Error{
 				Code:      ErrorCodeBadRequest,
 				Message:   types.NewString("cannot decode query params: " + err.Error()),
-				RequestID: types.NewString(requestID),
+				RequestID: types.NewString(requestContext.RequestID),
 			}
 		}
 
@@ -679,6 +632,17 @@ func generateUtils(buf *bytes.Buffer) error {
 	}
 
 	return request, nil
+}` + "\n\n")
+
+	buf.WriteString(`func getRequestContext(c *gin.Context, requestID string) RequestContext {
+	return RequestContext{
+		RequestID:  requestID,
+		Path:       c.Request.URL.Path,
+		Route:      c.FullPath(),
+		UserAgent:  c.Request.UserAgent(),
+		HTTPMethod: c.Request.Method,
+		IPAddress:  c.ClientIP(),
+	}
 }` + "\n\n")
 
 	buf.WriteString(`func decodeBodyParams[T any](r *http.Request) (T, error) {
