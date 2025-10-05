@@ -256,11 +256,11 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	serviceName := strmangle.TitleCase(service.Name)
 	buf.WriteString(fmt.Sprintf("func Register%sAPI[Session any](router *gin.Engine, api *%sAPI[Session]) {\n", serviceName, serviceName))
 	buf.WriteString("\tif api.Server.ErrorHook == nil {\n")
-	buf.WriteString("\t\tapi.Server.ErrorHook = func(err error, requestID string) *Error {\n")
+	buf.WriteString("\t\tapi.Server.ErrorHook = func(ctx context.Context, err error, requestContext RequestContext, session *Session) *Error {\n")
 	buf.WriteString("\t\t\treturn &Error{\n")
 	buf.WriteString("\t\t\t\tCode:    ErrorCodeInternal,\n")
 	buf.WriteString("\t\t\t\tMessage: types.NewString(err.Error()),\n")
-	buf.WriteString("\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t\tRequestID: types.NewString(requestContext.RequestID),\n")
 	buf.WriteString("\t\t\t}\n")
 	buf.WriteString("\t\t}\n")
 	buf.WriteString("\t}\n\n")
@@ -326,7 +326,8 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("\tGetSessionFunc getSessionFunc[Session]\n")
 
 	buf.WriteString("\t// ErrorHook is a function that is used on each endpoint to convert an error to an Error object\n")
-	buf.WriteString("\tErrorHook func(err error, requestID string) *Error\n")
+	buf.WriteString("\t// The session parameter may be nil if the error occurred before session retrieval\n")
+	buf.WriteString("\tErrorHook func(ctx context.Context, err error, requestContext RequestContext, session *Session) *Error\n")
 
 	buf.WriteString("\t// PreHooks are executed before endpoint logic. The first non-nil error aborts request processing.\n")
 	buf.WriteString("\tPreHooks []PreHook\n")
