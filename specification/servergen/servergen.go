@@ -505,6 +505,7 @@ func generateUtils(buf *bytes.Buffer) error {
 
 		request, apiError := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
 		if apiError != nil {
+			apiError = server.ErrorHook(apiError, requestID)
 			c.JSON(apiError.HTTPStatusCode(), apiError)
 			return
 		}
@@ -535,6 +536,7 @@ func generateUtils(buf *bytes.Buffer) error {
 
 		request, apiError := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
 		if apiError != nil {
+			apiError = server.ErrorHook(apiError, requestID)
 			c.JSON(apiError.HTTPStatusCode(), apiError)
 			return
 		}
