@@ -506,6 +506,23 @@ func generateUtils(buf *bytes.Buffer) error {
 
 		request, apiError := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
 		if apiError != nil {
+			// Build a minimal RequestContext for errors that occur before request is fully parsed
+			errorRequestContext := RequestContext{
+				RequestID:  requestID,
+				Path:       c.Request.URL.Path,
+				Route:      c.FullPath(),
+				UserAgent:  c.Request.UserAgent(),
+				HTTPMethod: c.Request.Method,
+				IPAddress:  c.ClientIP(),
+			}
+			// Convert *Error to error for ErrorHook
+			var err error
+			if apiError.Message != nil {
+				err = fmt.Errorf("%s", *apiError.Message)
+			} else {
+				err = fmt.Errorf("request error")
+			}
+			apiError = server.ErrorHook(c.Request.Context(), errorRequestContext, nil, err)
 			c.JSON(apiError.HTTPStatusCode(), apiError)
 			return
 		}
@@ -536,6 +553,23 @@ func generateUtils(buf *bytes.Buffer) error {
 
 		request, apiError := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
 		if apiError != nil {
+			// Build a minimal RequestContext for errors that occur before request is fully parsed
+			errorRequestContext := RequestContext{
+				RequestID:  requestID,
+				Path:       c.Request.URL.Path,
+				Route:      c.FullPath(),
+				UserAgent:  c.Request.UserAgent(),
+				HTTPMethod: c.Request.Method,
+				IPAddress:  c.ClientIP(),
+			}
+			// Convert *Error to error for ErrorHook
+			var err error
+			if apiError.Message != nil {
+				err = fmt.Errorf("%s", *apiError.Message)
+			} else {
+				err = fmt.Errorf("request error")
+			}
+			apiError = server.ErrorHook(c.Request.Context(), errorRequestContext, nil, err)
 			c.JSON(apiError.HTTPStatusCode(), apiError)
 			return
 		}
@@ -576,7 +610,6 @@ func generateUtils(buf *bytes.Buffer) error {
 	// Run pre-hooks before parsing request
 	for _, preHook := range server.PreHooks {
 		if err := preHook(c.Request.Context(), requestContext); err != nil {
-			// No session available yet when pre-hooks fail
 			apiError := server.ErrorHook(c.Request.Context(), requestContext, nil, err)
 			return nilRequest, apiError
 		}
@@ -584,9 +617,11 @@ func generateUtils(buf *bytes.Buffer) error {
 
 	session, err := server.GetSessionFunc(c.Request.Context(), c.Request.Header)
 	if err != nil {
-		// No session available when authentication fails
-		apiError := server.ErrorHook(c.Request.Context(), requestContext, nil, err)
-		return nilRequest, apiError
+		return nilRequest, &Error{
+			Code:      ErrorCodeUnauthorized,
+			Message:   types.NewString(err.Error()),
+			RequestID: types.NewString(requestID),
+		}
 	}
 
 	// Run session hooks after successful authentication
@@ -594,7 +629,6 @@ func generateUtils(buf *bytes.Buffer) error {
 	// The hooks are executed in the order they are defined in the SessionHooks slice
 	for _, sessionHook := range server.SessionHooks {
 		if err := sessionHook(c.Request.Context(), requestContext, session); err != nil {
-			// Session is available when session hooks fail
 			apiError := server.ErrorHook(c.Request.Context(), requestContext, &session, err)
 			return nilRequest, apiError
 		}
@@ -608,9 +642,11 @@ func generateUtils(buf *bytes.Buffer) error {
 	if _, ok := any(request.BodyParams).(struct{}); !ok {
 		bodyParams, err := decodeBodyParams[bodyParamsType](c.Request)
 		if err != nil {
-			// Session is available when body decoding fails
-			apiError := server.ErrorHook(c.Request.Context(), requestContext, &session, fmt.Errorf("cannot decode json body params: %w", err))
-			return nilRequest, apiError
+			return nilRequest, &Error{
+				Code:      ErrorCodeBadRequest,
+				Message:   types.NewString("cannot decode json body params: " + err.Error()),
+				RequestID: types.NewString(requestID),
+			}
 		}
 
 		request.BodyParams = bodyParams
@@ -619,9 +655,11 @@ func generateUtils(buf *bytes.Buffer) error {
 	if _, ok := any(request.PathParams).(struct{}); !ok {
 		pathParams, err := decodePathParams[pathParamsType](c)
 		if err != nil {
-			// Session is available when path decoding fails
-			apiError := server.ErrorHook(c.Request.Context(), requestContext, &session, fmt.Errorf("cannot decode path params: %w", err))
-			return nilRequest, apiError
+			return nilRequest, &Error{
+				Code:      ErrorCodeBadRequest,
+				Message:   types.NewString("cannot decode path params: " + err.Error()),
+				RequestID: types.NewString(requestID),
+			}
 		}
 
 		request.PathParams = pathParams
@@ -630,9 +668,11 @@ func generateUtils(buf *bytes.Buffer) error {
 	if _, ok := any(request.QueryParams).(struct{}); !ok {
 		queryParams, err := decodeQueryParams[queryParamsType](c)
 		if err != nil {
-			// Session is available when query decoding fails
-			apiError := server.ErrorHook(c.Request.Context(), requestContext, &session, fmt.Errorf("cannot decode query params: %w", err))
-			return nilRequest, apiError
+			return nilRequest, &Error{
+				Code:      ErrorCodeBadRequest,
+				Message:   types.NewString("cannot decode query params: " + err.Error()),
+				RequestID: types.NewString(requestID),
+			}
 		}
 
 		request.QueryParams = queryParams
