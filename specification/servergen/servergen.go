@@ -326,7 +326,7 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("\tGetSessionFunc getSessionFunc[Session]\n")
 
 	buf.WriteString("\t// ErrorHook is a function that is used on each endpoint to convert an error to an Error object\n")
-	buf.WriteString("\t// The session parameter may be nil if the error occurred before session retrieval\n")
+	buf.WriteString("\t// It returns both an HTTP status code and the Error object\n")
 	buf.WriteString("\tErrorHook func(ctx context.Context, requestContext RequestContext, err error) (int, *Error)\n")
 
 	buf.WriteString("\t// PreHooks are executed before endpoint logic. The first non-nil error aborts request processing.\n")
