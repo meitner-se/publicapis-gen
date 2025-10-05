@@ -92,28 +92,7 @@
 //	    GetRequestIDFunc  func(ctx context.Context) string
 //	    GetSessionFunc    func(ctx context.Context, headers http.Header) (Session, error)
 //	    ConvertErrorFunc  func(err error, requestID string) *Error
-//	    RateLimiterFunc   func(ctx context.Context, session Session) (bool, error)
 //	}
-//
-// # Rate Limiting
-//
-// The server supports optional rate limiting through the RateLimiterFunc. When provided,
-// this function is called after request parsing and session retrieval but before the
-// endpoint handler executes:
-//
-//	api.Server.RateLimiterFunc = func(ctx context.Context, session MySession) (bool, error) {
-//	    // Check rate limit based on session (e.g., user ID, API key)
-//	    allowed, err := rateLimiter.CheckLimit(session.UserID)
-//	    if err != nil {
-//	        return false, err // Internal error during rate limit check
-//	    }
-//	    return allowed, nil
-//	}
-//
-// The function returns:
-// - (true, nil): Request is allowed to proceed
-// - (false, nil): Request is rate limited (returns HTTP 429 with ErrorCodeRateLimited)
-// - (false, error): Internal error during rate limit check (returns HTTP 500)
 //
 // # Error Handling
 //
