@@ -255,8 +255,8 @@ func generateObjects(buf *bytes.Buffer, service *specification.Service) error {
 func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	serviceName := strmangle.TitleCase(service.Name)
 	buf.WriteString(fmt.Sprintf("func Register%sAPI[Session any](router *gin.Engine, api *%sAPI[Session]) {\n", serviceName, serviceName))
-	buf.WriteString("\tif api.Server.ConvertErrorFunc == nil {\n")
-	buf.WriteString("\t\tapi.Server.ConvertErrorFunc = func(err error, requestID string) *Error {\n")
+	buf.WriteString("\tif api.Server.ErrorHook == nil {\n")
+	buf.WriteString("\t\tapi.Server.ErrorHook = func(err error, requestID string) *Error {\n")
 	buf.WriteString("\t\t\treturn &Error{\n")
 	buf.WriteString("\t\t\t\tCode:    ErrorCodeInternal,\n")
 	buf.WriteString("\t\t\t\tMessage: types.NewString(err.Error()),\n")
@@ -325,8 +325,8 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("\t// GetSessionFunc is a function that is used on each endpoint to set the session to the request\n")
 	buf.WriteString("\tGetSessionFunc getSessionFunc[Session]\n")
 
-	buf.WriteString("\t// ConvertErrorFunc is a function that is used on each endpoint to convert an error to an Error object\n")
-	buf.WriteString("\tConvertErrorFunc func(err error, requestID string) *Error\n")
+	buf.WriteString("\t// ErrorHook is a function that is used on each endpoint to convert an error to an Error object\n")
+	buf.WriteString("\tErrorHook func(err error, requestID string) *Error\n")
 
 	buf.WriteString("\t// PreHooks are executed before endpoint logic. The first non-nil error aborts request processing.\n")
 	buf.WriteString("\tPreHooks []PreHook\n")
@@ -511,7 +511,7 @@ func generateUtils(buf *bytes.Buffer) error {
 
 		response, err := function(c.Request.Context(), request)
 		if err != nil {
-			apiError := server.ConvertErrorFunc(err, requestID)
+			apiError := server.ErrorHook(err, requestID)
 			c.JSON(apiError.HTTPStatusCode(), apiError)
 			return
 		}
@@ -541,7 +541,7 @@ func generateUtils(buf *bytes.Buffer) error {
 
 		err := function(c.Request.Context(), request)
 		if err != nil {
-			apiError := server.ConvertErrorFunc(err, requestID)
+			apiError := server.ErrorHook(err, requestID)
 			c.JSON(apiError.HTTPStatusCode(), apiError)
 			return
 		}
@@ -575,7 +575,7 @@ func generateUtils(buf *bytes.Buffer) error {
 	// Run pre-hooks before parsing request
 	for _, preHook := range server.PreHooks {
 		if err := preHook(c.Request.Context(), requestContext); err != nil {
-			apiError := server.ConvertErrorFunc(err, requestID)
+			apiError := server.ErrorHook(err, requestID)
 			return nilRequest, apiError
 		}
 	}
@@ -594,7 +594,7 @@ func generateUtils(buf *bytes.Buffer) error {
 	// The hooks are executed in the order they are defined in the SessionHooks slice
 	for _, sessionHook := range server.SessionHooks {
 		if err := sessionHook(c.Request.Context(), requestContext, session); err != nil {
-			apiError := server.ConvertErrorFunc(err, requestID)
+			apiError := server.ErrorHook(err, requestID)
 			return nilRequest, apiError
 		}
 	}

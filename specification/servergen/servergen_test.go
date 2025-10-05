@@ -75,7 +75,7 @@ const (
 
 	// Server registration constants
 	expectedRegisterFunc      = "func RegisterTestServiceAPI[Session any]"
-	expectedConvertErrorCheck = "if api.Server.ConvertErrorFunc == nil"
+	expectedConvertErrorCheck = "if api.Server.ErrorHook == nil"
 	expectedGetSessionCheck   = "if api.Server.GetSessionFunc == nil"
 	expectedPanicGetSession   = `panic("GetSessionFunc is nil")`
 	expectedRouterGroup       = `routerGroup := router.Group("/test-service/v1")`
@@ -798,7 +798,7 @@ func TestGenerateServerFunc(t *testing.T) {
 
 	generatedCode := buf.String()
 	assert.Contains(t, generatedCode, expectedRegisterFunc, "Should generate RegisterAPI function")
-	assert.Contains(t, generatedCode, expectedConvertErrorCheck, "Should check ConvertErrorFunc")
+	assert.Contains(t, generatedCode, expectedConvertErrorCheck, "Should check ErrorHook")
 	assert.Contains(t, generatedCode, expectedGetSessionCheck, "Should check GetSessionFunc")
 	assert.Contains(t, generatedCode, expectedPanicGetSession, "Should panic if GetSessionFunc is nil")
 	assert.Contains(t, generatedCode, expectedRouterGroup, "Should create router group with correct path")

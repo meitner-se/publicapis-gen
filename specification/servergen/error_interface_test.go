@@ -304,16 +304,16 @@ func TestErrorInterfaceIntegration(t *testing.T) {
 
 	generatedCode := buf.String()
 
-	// Verify Error is used in ConvertErrorFunc
-	assert.Contains(t, generatedCode, "ConvertErrorFunc func(err error, requestID string) *Error",
-		"ConvertErrorFunc should return *Error")
+	// Verify Error is used in ErrorHook
+	assert.Contains(t, generatedCode, "ErrorHook func(err error, requestID string) *Error",
+		"ErrorHook should return *Error")
 
 	// Verify Error is used in error handling
 	assert.Contains(t, generatedCode, "return &Error{",
 		"Error handling should create Error instances")
 
 	// Verify the Error type can be used as an error
-	assert.Contains(t, generatedCode, "apiError := server.ConvertErrorFunc(err, requestID)",
+	assert.Contains(t, generatedCode, "apiError := server.ErrorHook(err, requestID)",
 		"Should be able to assign Error to error variables")
 
 	// Verify HTTPStatusCode is used
