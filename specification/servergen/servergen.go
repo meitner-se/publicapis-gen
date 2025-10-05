@@ -256,7 +256,7 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	serviceName := strmangle.TitleCase(service.Name)
 	buf.WriteString(fmt.Sprintf("func Register%sAPI[Session any](router *gin.Engine, api *%sAPI[Session]) {\n", serviceName, serviceName))
 	buf.WriteString("\tif api.Server.ErrorHook == nil {\n")
-	buf.WriteString("\t\tapi.Server.ErrorHook = func(ctx context.Context, err error, requestContext RequestContext, session *Session) *Error {\n")
+	buf.WriteString("\t\tapi.Server.ErrorHook = func(ctx context.Context, requestContext RequestContext, session *Session, err error) *Error {\n")
 	buf.WriteString("\t\t\treturn &Error{\n")
 	buf.WriteString("\t\t\t\tCode:    ErrorCodeInternal,\n")
 	buf.WriteString("\t\t\t\tMessage: types.NewString(err.Error()),\n")
@@ -327,7 +327,7 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 
 	buf.WriteString("\t// ErrorHook is a function that is used on each endpoint to convert an error to an Error object\n")
 	buf.WriteString("\t// The session parameter may be nil if the error occurred before session retrieval\n")
-	buf.WriteString("\tErrorHook func(ctx context.Context, err error, requestContext RequestContext, session *Session) *Error\n")
+	buf.WriteString("\tErrorHook func(ctx context.Context, requestContext RequestContext, session *Session, err error) *Error\n")
 
 	buf.WriteString("\t// PreHooks are executed before endpoint logic. The first non-nil error aborts request processing.\n")
 	buf.WriteString("\tPreHooks []PreHook\n")
@@ -506,14 +506,14 @@ func generateUtils(buf *bytes.Buffer) error {
 
 		request, apiError := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
 		if apiError != nil {
-			apiError = server.ErrorHook(apiError, requestID)
+			// Note: apiError from handleRequest already has been processed by ErrorHook if needed
 			c.JSON(apiError.HTTPStatusCode(), apiError)
 			return
 		}
 
 		response, err := function(c.Request.Context(), request)
 		if err != nil {
-			apiError := server.ErrorHook(err, requestID)
+			apiError := server.ErrorHook(c.Request.Context(), request.requestContext, &request.Session, err)
 			c.JSON(apiError.HTTPStatusCode(), apiError)
 			return
 		}
@@ -537,14 +537,14 @@ func generateUtils(buf *bytes.Buffer) error {
 
 		request, apiError := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
 		if apiError != nil {
-			apiError = server.ErrorHook(apiError, requestID)
+			// Note: apiError from handleRequest already has been processed by ErrorHook if needed
 			c.JSON(apiError.HTTPStatusCode(), apiError)
 			return
 		}
 
 		err := function(c.Request.Context(), request)
 		if err != nil {
-			apiError := server.ErrorHook(err, requestID)
+			apiError := server.ErrorHook(c.Request.Context(), request.requestContext, &request.Session, err)
 			c.JSON(apiError.HTTPStatusCode(), apiError)
 			return
 		}
@@ -578,7 +578,8 @@ func generateUtils(buf *bytes.Buffer) error {
 	// Run pre-hooks before parsing request
 	for _, preHook := range server.PreHooks {
 		if err := preHook(c.Request.Context(), requestContext); err != nil {
-			apiError := server.ErrorHook(err, requestID)
+			// No session available yet when pre-hooks fail
+			apiError := server.ErrorHook(c.Request.Context(), requestContext, nil, err)
 			return nilRequest, apiError
 		}
 	}
@@ -597,7 +598,8 @@ func generateUtils(buf *bytes.Buffer) error {
 	// The hooks are executed in the order they are defined in the SessionHooks slice
 	for _, sessionHook := range server.SessionHooks {
 		if err := sessionHook(c.Request.Context(), requestContext, session); err != nil {
-			apiError := server.ErrorHook(err, requestID)
+			// Session is available when session hooks fail
+			apiError := server.ErrorHook(c.Request.Context(), requestContext, &session, err)
 			return nilRequest, apiError
 		}
 	}

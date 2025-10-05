@@ -305,7 +305,7 @@ func TestErrorInterfaceIntegration(t *testing.T) {
 	generatedCode := buf.String()
 
 	// Verify Error is used in ErrorHook
-	assert.Contains(t, generatedCode, "ErrorHook func(err error, requestID string) *Error",
+	assert.Contains(t, generatedCode, "ErrorHook func(ctx context.Context, requestContext RequestContext, session *Session, err error) *Error",
 		"ErrorHook should return *Error")
 
 	// Verify Error is used in error handling
@@ -313,7 +313,7 @@ func TestErrorInterfaceIntegration(t *testing.T) {
 		"Error handling should create Error instances")
 
 	// Verify the Error type can be used as an error
-	assert.Contains(t, generatedCode, "apiError := server.ErrorHook(err, requestID)",
+	assert.Contains(t, generatedCode, "apiError := server.ErrorHook(c.Request.Context(), request.requestContext, &request.Session, err)",
 		"Should be able to assign Error to error variables")
 
 	// Verify HTTPStatusCode is used
