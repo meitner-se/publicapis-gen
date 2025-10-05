@@ -305,18 +305,18 @@ func TestErrorInterfaceIntegration(t *testing.T) {
 	generatedCode := buf.String()
 
 	// Verify Error is used in ErrorHook
-	assert.Contains(t, generatedCode, "ErrorHook func(err error, requestID string) *Error",
-		"ErrorHook should return *Error")
+	assert.Contains(t, generatedCode, "ErrorHook func(ctx context.Context, requestContext RequestContext, err error) (int, *Error)",
+		"ErrorHook should return (int, *Error)")
 
 	// Verify Error is used in error handling
-	assert.Contains(t, generatedCode, "return &Error{",
-		"Error handling should create Error instances")
+	assert.Contains(t, generatedCode, "return http.StatusInternalServerError, &Error{",
+		"Error handling should create Error instances with status code")
 
 	// Verify the Error type can be used as an error
-	assert.Contains(t, generatedCode, "apiError := server.ErrorHook(err, requestID)",
-		"Should be able to assign Error to error variables")
+	assert.Contains(t, generatedCode, "server.ErrorHook(c.Request.Context(), requestContext, err)",
+		"Should use ErrorHook for error handling")
 
-	// Verify HTTPStatusCode is used
-	assert.Contains(t, generatedCode, "apiError.HTTPStatusCode()",
-		"Should use HTTPStatusCode() method for error responses")
+	// Verify getRequestContext function is generated
+	assert.Contains(t, generatedCode, "func getRequestContext(c *gin.Context, requestID string) RequestContext",
+		"Should generate getRequestContext helper function")
 }
