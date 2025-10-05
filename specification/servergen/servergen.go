@@ -46,9 +46,7 @@ func GenerateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("\t\"context\"\n")
 	buf.WriteString("\t\"embed\"\n")
 	buf.WriteString("\t\"encoding/json\"\n")
-	buf.WriteString("\t\"fmt\"\n")
-	buf.WriteString("\t\"net/http\"\n")
-	buf.WriteString("\t\"strings\"\n\n")
+	buf.WriteString("\t\"net/http\"\n\n")
 	buf.WriteString(fmt.Sprintf("\t\"%s\"\n", "github.com/google/uuid"))
 	buf.WriteString(fmt.Sprintf("\t\"%s\"\n", "github.com/gin-gonic/gin"))
 	buf.WriteString(fmt.Sprintf("\t\"%s\"\n", "github.com/meitner-se/go-types"))
@@ -258,7 +256,13 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	serviceName := strmangle.TitleCase(service.Name)
 	buf.WriteString(fmt.Sprintf("func Register%sAPI[Session any](router *gin.Engine, api *%sAPI[Session]) {\n", serviceName, serviceName))
 	buf.WriteString("\tif api.Server.ErrorHook == nil {\n")
-	buf.WriteString("\t\tapi.Server.ErrorHook = defaultErrorHook\n")
+	buf.WriteString("\t\tapi.Server.ErrorHook = func(err error, requestID string) *Error {\n")
+	buf.WriteString("\t\t\treturn &Error{\n")
+	buf.WriteString("\t\t\t\tCode:    ErrorCodeInternal,\n")
+	buf.WriteString("\t\t\t\tMessage: types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t}\n")
+	buf.WriteString("\t\t}\n")
 	buf.WriteString("\t}\n\n")
 
 	buf.WriteString("\tif api.Server.GetSessionFunc == nil {\n")
@@ -485,77 +489,6 @@ func generateResponseTypes(buf *bytes.Buffer, service *specification.Service) er
 }
 
 func generateUtils(buf *bytes.Buffer) error {
-	// Generate error types for classification
-	buf.WriteString(`// Common error types that can be used with ErrorHook
-type (
-	// AuthenticationError indicates authentication failure
-	AuthenticationError struct {
-		error
-	}
-
-	// ValidationError indicates input validation failure
-	ValidationError struct {
-		error
-	}
-
-	// DecodingError indicates parameter decoding failure
-	DecodingError struct {
-		error
-	}
-)
-
-// WrapAuthenticationError wraps an error as an authentication error
-func WrapAuthenticationError(err error) error {
-	return AuthenticationError{err}
-}
-
-// WrapValidationError wraps an error as a validation error
-func WrapValidationError(err error) error {
-	return ValidationError{err}
-}
-
-// WrapDecodingError wraps an error as a decoding error
-func WrapDecodingError(err error) error {
-	return DecodingError{err}
-}
-
-// defaultErrorHook is the default error conversion function
-func defaultErrorHook(err error, requestID string) *Error {
-	// Check for wrapped error types
-	switch err.(type) {
-	case AuthenticationError:
-		return &Error{
-			Code:      ErrorCodeUnauthorized,
-			Message:   types.NewString(err.Error()),
-			RequestID: types.NewString(requestID),
-		}
-	case ValidationError, DecodingError:
-		return &Error{
-			Code:      ErrorCodeBadRequest,
-			Message:   types.NewString(err.Error()),
-			RequestID: types.NewString(requestID),
-		}
-	default:
-		// Check for common error patterns in error messages
-		errMsg := err.Error()
-		if strings.Contains(errMsg, "cannot decode") || strings.Contains(errMsg, "json:") || strings.Contains(errMsg, "invalid") {
-			return &Error{
-				Code:      ErrorCodeBadRequest,
-				Message:   types.NewString(errMsg),
-				RequestID: types.NewString(requestID),
-			}
-		}
-		
-		// Default to internal error
-		return &Error{
-			Code:      ErrorCodeInternal,
-			Message:   types.NewString(errMsg),
-			RequestID: types.NewString(requestID),
-		}
-	}
-}
-` + "\n")
-
 	buf.WriteString(`func serveWithResponse[
 	sessionType any,
 	pathParamsType any,
@@ -649,8 +582,11 @@ func defaultErrorHook(err error, requestID string) *Error {
 
 	session, err := server.GetSessionFunc(c.Request.Context(), c.Request.Header)
 	if err != nil {
-		apiError := server.ErrorHook(WrapAuthenticationError(err), requestID)
-		return nilRequest, apiError
+		return nilRequest, &Error{
+			Code:      ErrorCodeUnauthorized,
+			Message:   types.NewString(err.Error()),
+			RequestID: types.NewString(requestID),
+		}
 	}
 
 	// Run session hooks after successful authentication
@@ -671,8 +607,11 @@ func defaultErrorHook(err error, requestID string) *Error {
 	if _, ok := any(request.BodyParams).(struct{}); !ok {
 		bodyParams, err := decodeBodyParams[bodyParamsType](c.Request)
 		if err != nil {
-			apiError := server.ErrorHook(WrapDecodingError(fmt.Errorf("cannot decode json body params: %w", err)), requestID)
-			return nilRequest, apiError
+			return nilRequest, &Error{
+				Code:      ErrorCodeBadRequest,
+				Message:   types.NewString("cannot decode json body params: " + err.Error()),
+				RequestID: types.NewString(requestID),
+			}
 		}
 
 		request.BodyParams = bodyParams
@@ -681,8 +620,11 @@ func defaultErrorHook(err error, requestID string) *Error {
 	if _, ok := any(request.PathParams).(struct{}); !ok {
 		pathParams, err := decodePathParams[pathParamsType](c)
 		if err != nil {
-			apiError := server.ErrorHook(WrapDecodingError(fmt.Errorf("cannot decode path params: %w", err)), requestID)
-			return nilRequest, apiError
+			return nilRequest, &Error{
+				Code:      ErrorCodeBadRequest,
+				Message:   types.NewString("cannot decode path params: " + err.Error()),
+				RequestID: types.NewString(requestID),
+			}
 		}
 
 		request.PathParams = pathParams
@@ -691,8 +633,11 @@ func defaultErrorHook(err error, requestID string) *Error {
 	if _, ok := any(request.QueryParams).(struct{}); !ok {
 		queryParams, err := decodeQueryParams[queryParamsType](c)
 		if err != nil {
-			apiError := server.ErrorHook(WrapDecodingError(fmt.Errorf("cannot decode query params: %w", err)), requestID)
-			return nilRequest, apiError
+			return nilRequest, &Error{
+				Code:      ErrorCodeBadRequest,
+				Message:   types.NewString("cannot decode query params: " + err.Error()),
+				RequestID: types.NewString(requestID),
+			}
 		}
 
 		request.QueryParams = queryParams
