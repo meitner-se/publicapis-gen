@@ -506,7 +506,6 @@ func generateUtils(buf *bytes.Buffer) error {
 
 		request, apiError := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
 		if apiError != nil {
-			// Note: apiError from handleRequest already has been processed by ErrorHook if needed
 			c.JSON(apiError.HTTPStatusCode(), apiError)
 			return
 		}
@@ -537,7 +536,6 @@ func generateUtils(buf *bytes.Buffer) error {
 
 		request, apiError := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
 		if apiError != nil {
-			// Note: apiError from handleRequest already has been processed by ErrorHook if needed
 			c.JSON(apiError.HTTPStatusCode(), apiError)
 			return
 		}
@@ -586,11 +584,9 @@ func generateUtils(buf *bytes.Buffer) error {
 
 	session, err := server.GetSessionFunc(c.Request.Context(), c.Request.Header)
 	if err != nil {
-		return nilRequest, &Error{
-			Code:      ErrorCodeUnauthorized,
-			Message:   types.NewString(err.Error()),
-			RequestID: types.NewString(requestID),
-		}
+		// No session available when authentication fails
+		apiError := server.ErrorHook(c.Request.Context(), requestContext, nil, err)
+		return nilRequest, apiError
 	}
 
 	// Run session hooks after successful authentication
@@ -612,11 +608,9 @@ func generateUtils(buf *bytes.Buffer) error {
 	if _, ok := any(request.BodyParams).(struct{}); !ok {
 		bodyParams, err := decodeBodyParams[bodyParamsType](c.Request)
 		if err != nil {
-			return nilRequest, &Error{
-				Code:      ErrorCodeBadRequest,
-				Message:   types.NewString("cannot decode json body params: " + err.Error()),
-				RequestID: types.NewString(requestID),
-			}
+			// Session is available when body decoding fails
+			apiError := server.ErrorHook(c.Request.Context(), requestContext, &session, fmt.Errorf("cannot decode json body params: %w", err))
+			return nilRequest, apiError
 		}
 
 		request.BodyParams = bodyParams
@@ -625,11 +619,9 @@ func generateUtils(buf *bytes.Buffer) error {
 	if _, ok := any(request.PathParams).(struct{}); !ok {
 		pathParams, err := decodePathParams[pathParamsType](c)
 		if err != nil {
-			return nilRequest, &Error{
-				Code:      ErrorCodeBadRequest,
-				Message:   types.NewString("cannot decode path params: " + err.Error()),
-				RequestID: types.NewString(requestID),
-			}
+			// Session is available when path decoding fails
+			apiError := server.ErrorHook(c.Request.Context(), requestContext, &session, fmt.Errorf("cannot decode path params: %w", err))
+			return nilRequest, apiError
 		}
 
 		request.PathParams = pathParams
@@ -638,11 +630,9 @@ func generateUtils(buf *bytes.Buffer) error {
 	if _, ok := any(request.QueryParams).(struct{}); !ok {
 		queryParams, err := decodeQueryParams[queryParamsType](c)
 		if err != nil {
-			return nilRequest, &Error{
-				Code:      ErrorCodeBadRequest,
-				Message:   types.NewString("cannot decode query params: " + err.Error()),
-				RequestID: types.NewString(requestID),
-			}
+			// Session is available when query decoding fails
+			apiError := server.ErrorHook(c.Request.Context(), requestContext, &session, fmt.Errorf("cannot decode query params: %w", err))
+			return nilRequest, apiError
 		}
 
 		request.QueryParams = queryParams
