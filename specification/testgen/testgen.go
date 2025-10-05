@@ -1134,7 +1134,7 @@ func generateHandleRequestTest(buf *bytes.Buffer, apiPackageName string) error {
 	buf.WriteString("\t\t}\n\n")
 
 	buf.WriteString("\t\t// Test handleRequest with pre-hook\n")
-	buf.WriteString("\t\trequest, apiError := " + apiPackageName + ".HandleRequest[any, struct{}, struct{}, struct{}](c, \"test-prehook\", server)\n")
+	buf.WriteString("\t\t_, apiError := " + apiPackageName + ".HandleRequest[any, struct{}, struct{}, struct{}](c, \"test-prehook\", server)\n")
 	buf.WriteString("\t\tassert.Nil(t, apiError, \"Expected no error from handleRequest\")\n")
 	buf.WriteString("\t\tassert.True(t, hookExecuted, \"Pre-hook should have been executed\")\n")
 	buf.WriteString("\t\tassert.Equal(t, \"test-prehook\", capturedContext.RequestID, \"Pre-hook should receive correct RequestID\")\n")
@@ -1833,7 +1833,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("\t\t}\n\n")
 
 	buf.WriteString("\t\t// Test handleRequest with pre-hook\n")
-	buf.WriteString("\t\trequest, apiError := handleRequest[any, struct{}, struct{}, struct{}](c, \"test-prehook\", server)\n")
+	buf.WriteString("\t\t_, apiError := handleRequest[any, struct{}, struct{}, struct{}](c, \"test-prehook\", server)\n")
 	buf.WriteString("\t\tassert.Nil(t, apiError, \"Expected no error from handleRequest\")\n")
 	buf.WriteString("\t\tassert.True(t, hookExecuted, \"Pre-hook should have been executed\")\n")
 	buf.WriteString("\t\tassert.Equal(t, \"test-prehook\", capturedContext.RequestID, \"Pre-hook should receive correct RequestID\")\n")
