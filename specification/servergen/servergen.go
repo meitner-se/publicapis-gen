@@ -593,7 +593,11 @@ func defaultGetRequestID(ctx context.Context) string {
 
 	session, err := server.GetSessionFunc(c.Request.Context(), c.Request.Header)
 	if err != nil {
-		return nilRequest, err
+		return nilRequest, &Error{
+			Code:      ErrorCodeUnauthorized,
+			Message:   types.NewString(err.Error()),
+			RequestID: types.NewString(requestID),
+		}
 	}
 
 	// Run session hooks after successful authentication
@@ -613,7 +617,11 @@ func defaultGetRequestID(ctx context.Context) string {
 	if _, ok := any(request.BodyParams).(struct{}); !ok {
 		bodyParams, err := decodeBodyParams[bodyParamsType](c.Request)
 		if err != nil {
-			return nilRequest, fmt.Errorf("cannot decode json body params: %w", err)
+			return nilRequest, &Error{
+				Code:      ErrorCodeBadRequest,
+				Message:   types.NewString("cannot decode json body params: " + err.Error()),
+				RequestID: types.NewString(requestID),
+			}
 		}
 
 		request.BodyParams = bodyParams
@@ -622,7 +630,11 @@ func defaultGetRequestID(ctx context.Context) string {
 	if _, ok := any(request.PathParams).(struct{}); !ok {
 		pathParams, err := decodePathParams[pathParamsType](c)
 		if err != nil {
-			return nilRequest, fmt.Errorf("cannot decode path params: %w", err)
+			return nilRequest, &Error{
+				Code:      ErrorCodeBadRequest,
+				Message:   types.NewString("cannot decode path params: " + err.Error()),
+				RequestID: types.NewString(requestID),
+			}
 		}
 
 		request.PathParams = pathParams
@@ -631,7 +643,11 @@ func defaultGetRequestID(ctx context.Context) string {
 	if _, ok := any(request.QueryParams).(struct{}); !ok {
 		queryParams, err := decodeQueryParams[queryParamsType](c)
 		if err != nil {
-			return nilRequest, fmt.Errorf("cannot decode query params: %w", err)
+			return nilRequest, &Error{
+				Code:      ErrorCodeBadRequest,
+				Message:   types.NewString("cannot decode query params: " + err.Error()),
+				RequestID: types.NewString(requestID),
+			}
 		}
 
 		request.QueryParams = queryParams
