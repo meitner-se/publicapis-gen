@@ -1016,7 +1016,7 @@ func (g *generator) addRequestBodiesToComponents(components *v3.Components, serv
 
 				// Only add if we haven't seen this request body before
 				if _, exists := requestBodyMap[requestBodyName]; !exists {
-					requestBody := g.createComponentRequestBody(endpoint.Request.BodyParams, service)
+					requestBody := g.createComponentRequestBody(endpoint.Request.BodyParams, endpoint.Name, service)
 					requestBodyMap[requestBodyName] = requestBody
 					components.RequestBodies.Set(requestBodyName, requestBody)
 				}
@@ -1231,7 +1231,7 @@ func (g *generator) generateResponseBodyExample(response specification.EndpointR
 }
 
 // createComponentRequestBody creates a v3.RequestBody for the components section.
-func (g *generator) createComponentRequestBody(bodyParams []specification.Field, service *specification.Service) *v3.RequestBody {
+func (g *generator) createComponentRequestBody(bodyParams []specification.Field, endpointName string, service *specification.Service) *v3.RequestBody {
 	var schema *base.Schema
 	var isRequired bool
 
@@ -1247,7 +1247,12 @@ func (g *generator) createComponentRequestBody(bodyParams []specification.Field,
 				AllOf:       []*base.SchemaProxy{refProxy},
 				Description: field.Description,
 			}
-			isRequired = field.IsRequired(service)
+			// For Search endpoints, content is always required
+			if endpointName == searchEndpointNameValue {
+				isRequired = true
+			} else {
+				isRequired = field.IsRequired(service)
+			}
 		}
 	}
 
@@ -1273,7 +1278,12 @@ func (g *generator) createComponentRequestBody(bodyParams []specification.Field,
 			schema.Required = requiredFields
 		}
 
-		isRequired = len(requiredFields) > 0
+		// For Search endpoints, content is always required
+		if endpointName == searchEndpointNameValue {
+			isRequired = true
+		} else {
+			isRequired = len(requiredFields) > 0
+		}
 	}
 
 	// Create media type
