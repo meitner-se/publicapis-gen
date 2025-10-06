@@ -489,6 +489,14 @@ func generateResponseTypes(buf *bytes.Buffer, service *specification.Service) er
 }
 
 func generateUtils(buf *bytes.Buffer) error {
+	buf.WriteString(`// defaultGetRequestID is the default request ID generator function
+// It generates a new UUID for each request
+func defaultGetRequestID(ctx context.Context) string {
+	return uuid.New().String()
+}
+
+`)
+
 	buf.WriteString(`func serveWithResponse[
 	sessionType any,
 	pathParamsType any,
@@ -501,7 +509,11 @@ func generateUtils(buf *bytes.Buffer) error {
 	function func(ctx context.Context, request Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) (*responseType, error),
 ) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		requestID := server.GetRequestIDFunc(c.Request.Context())
+		getRequestID := server.GetRequestIDFunc
+		if getRequestID == nil {
+			getRequestID = defaultGetRequestID
+		}
+		requestID := getRequestID(c.Request.Context())
 
 		request, apiError := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
 		if apiError != nil {
@@ -532,7 +544,11 @@ func generateUtils(buf *bytes.Buffer) error {
 	function func(ctx context.Context, request Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) error,
 ) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		requestID := server.GetRequestIDFunc(c.Request.Context())
+		getRequestID := server.GetRequestIDFunc
+		if getRequestID == nil {
+			getRequestID = defaultGetRequestID
+		}
+		requestID := getRequestID(c.Request.Context())
 
 		request, apiError := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
 		if apiError != nil {
