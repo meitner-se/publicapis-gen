@@ -1273,7 +1273,7 @@ func generateDecodeBodyParamsTest(buf *bytes.Buffer, apiPackageName string) erro
 	buf.WriteString("\tassert.NoError(t, err, \"Failed to create request\")\n\n")
 
 	buf.WriteString("\t// Test decodeBodyParams\n")
-	buf.WriteString("\tresult, err = " + apiPackageName + ".DecodeBodyParams[TestBody](req)\n")
+	buf.WriteString("\tresult, err := " + apiPackageName + ".DecodeBodyParams[TestBody](req)\n")
 	buf.WriteString("\tassert.NoError(t, err, \"Expected no error from decodeBodyParams\")\n")
 	buf.WriteString("\tassert.Equal(t, \"test\", result.Name, \"Name should be decoded\")\n")
 	buf.WriteString("\tassert.Equal(t, 25, result.Age, \"Age should be decoded as int\")\n")
@@ -1325,7 +1325,7 @@ func generateDecodeQueryParamsTest(buf *bytes.Buffer, apiPackageName string) err
 	buf.WriteString("\tc.Request = req\n\n")
 
 	buf.WriteString("\t// Test decodeQueryParams\n")
-	buf.WriteString("\tresult, err = " + apiPackageName + ".DecodeQueryParams[TestQueryParams](c)\n")
+	buf.WriteString("\tresult, err := " + apiPackageName + ".DecodeQueryParams[TestQueryParams](c)\n")
 	buf.WriteString("\tassert.NoError(t, err, \"Expected no error from decodeQueryParams\")\n")
 	buf.WriteString("\tassert.Equal(t, 10, result.Limit, \"Limit should be decoded\")\n")
 	buf.WriteString("\tassert.Equal(t, 0, result.Offset, \"Offset should be decoded\")\n")
@@ -1903,7 +1903,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("\tassert.NoError(t, err, \"Failed to create request\")\n\n")
 
 	buf.WriteString("\t// Test decodeBodyParams\n")
-	buf.WriteString("\tresult, err = decodeBodyParams[TestBody](req)\n")
+	buf.WriteString("\tresult, err := decodeBodyParams[TestBody](req)\n")
 	buf.WriteString("\tassert.NoError(t, err, \"Expected no error from decodeBodyParams\")\n")
 	buf.WriteString("\tassert.Equal(t, \"test\", result.Name, \"Name should be decoded\")\n")
 	buf.WriteString("\tassert.Equal(t, 25, result.Age, \"Age should be decoded as int\")\n")
@@ -1947,7 +1947,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("\tc.Request = req\n\n")
 
 	buf.WriteString("\t// Test decodeQueryParams\n")
-	buf.WriteString("\tresult, err = decodeQueryParams[TestQueryParams](c)\n")
+	buf.WriteString("\tresult, err := decodeQueryParams[TestQueryParams](c)\n")
 	buf.WriteString("\tassert.NoError(t, err, \"Expected no error from decodeQueryParams\")\n")
 	buf.WriteString("\tassert.Equal(t, 10, result.Limit, \"Limit should be decoded\")\n")
 	buf.WriteString("\tassert.Equal(t, 0, result.Offset, \"Offset should be decoded\")\n")
