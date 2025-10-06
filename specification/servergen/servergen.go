@@ -513,9 +513,9 @@ func defaultGetRequestID(ctx context.Context) string {
 		}
 		requestID := getRequestID(c.Request.Context())
 
-		request, apiError := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
-		if apiError != nil {
-			c.JSON(server.ErrorHook(apiError, requestID).Response())
+		request, err := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
+		if err != nil {
+			c.JSON(server.ErrorHook(err, requestID).Response())
 			return
 		}
 
@@ -546,13 +546,13 @@ func defaultGetRequestID(ctx context.Context) string {
 		}
 		requestID := getRequestID(c.Request.Context())
 
-		request, apiError := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
-		if apiError != nil {
-			c.JSON(server.ErrorHook(apiError, requestID).Response())
+		request, err := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
+		if err != nil {
+			c.JSON(server.ErrorHook(err, requestID).Response())
 			return
 		}
 
-		err := function(c.Request.Context(), request)
+		err = function(c.Request.Context(), request)
 		if err != nil {
 			c.JSON(server.ErrorHook(err, requestID).Response())
 			return
@@ -571,7 +571,7 @@ func defaultGetRequestID(ctx context.Context) string {
 	c *gin.Context,
 	requestID string,
 	server Server[sessionType],
-) (Request[sessionType, pathParamsType, queryParamsType, bodyParamsType], *Error) {
+) (Request[sessionType, pathParamsType, queryParamsType, bodyParamsType], error) {
 	var nilRequest Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]
 
 	// Build RequestContext first for pre-hooks
@@ -587,18 +587,13 @@ func defaultGetRequestID(ctx context.Context) string {
 	// Run pre-hooks before parsing request
 	for _, preHook := range server.PreHooks {
 		if err := preHook(c.Request.Context(), requestContext); err != nil {
-			apiError := server.ErrorHook(err, requestID)
-			return nilRequest, apiError
+			return nilRequest, err
 		}
 	}
 
 	session, err := server.GetSessionFunc(c.Request.Context(), c.Request.Header)
 	if err != nil {
-		return nilRequest, &Error{
-			Code:      ErrorCodeUnauthorized,
-			Message:   types.NewString(err.Error()),
-			RequestID: types.NewString(requestID),
-		}
+		return nilRequest, err
 	}
 
 	// Run session hooks after successful authentication
@@ -606,8 +601,7 @@ func defaultGetRequestID(ctx context.Context) string {
 	// The hooks are executed in the order they are defined in the SessionHooks slice
 	for _, sessionHook := range server.SessionHooks {
 		if err := sessionHook(c.Request.Context(), requestContext, session); err != nil {
-			apiError := server.ErrorHook(err, requestID)
-			return nilRequest, apiError
+			return nilRequest, err
 		}
 	}
 
@@ -619,11 +613,7 @@ func defaultGetRequestID(ctx context.Context) string {
 	if _, ok := any(request.BodyParams).(struct{}); !ok {
 		bodyParams, err := decodeBodyParams[bodyParamsType](c.Request)
 		if err != nil {
-			return nilRequest, &Error{
-				Code:      ErrorCodeBadRequest,
-				Message:   types.NewString("cannot decode json body params: " + err.Error()),
-				RequestID: types.NewString(requestID),
-			}
+			return nilRequest, fmt.Errorf("cannot decode json body params: %w", err)
 		}
 
 		request.BodyParams = bodyParams
@@ -632,11 +622,7 @@ func defaultGetRequestID(ctx context.Context) string {
 	if _, ok := any(request.PathParams).(struct{}); !ok {
 		pathParams, err := decodePathParams[pathParamsType](c)
 		if err != nil {
-			return nilRequest, &Error{
-				Code:      ErrorCodeBadRequest,
-				Message:   types.NewString("cannot decode path params: " + err.Error()),
-				RequestID: types.NewString(requestID),
-			}
+			return nilRequest, fmt.Errorf("cannot decode path params: %w", err)
 		}
 
 		request.PathParams = pathParams
@@ -645,11 +631,7 @@ func defaultGetRequestID(ctx context.Context) string {
 	if _, ok := any(request.QueryParams).(struct{}); !ok {
 		queryParams, err := decodeQueryParams[queryParamsType](c)
 		if err != nil {
-			return nilRequest, &Error{
-				Code:      ErrorCodeBadRequest,
-				Message:   types.NewString("cannot decode query params: " + err.Error()),
-				RequestID: types.NewString(requestID),
-			}
+			return nilRequest, fmt.Errorf("cannot decode query params: %w", err)
 		}
 
 		request.QueryParams = queryParams

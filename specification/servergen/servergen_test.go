@@ -1100,8 +1100,6 @@ func TestGenerateUtils(t *testing.T) {
 		"Should return JSON response with success code")
 	assert.Contains(t, generatedCode, "c.JSON(server.ErrorHook(err, requestID).Response())",
 		"Should return error using Response() method")
-	assert.Contains(t, generatedCode, "c.JSON(server.ErrorHook(apiError, requestID).Response())",
-		"Should return apiError using Response() method")
 
 	// Check handleRequest implementation
 	assert.Contains(t, generatedCode, "if _, ok := any(request.BodyParams).(struct{}); !ok {",
