@@ -1176,7 +1176,7 @@ func generateHandleRequestTest(buf *bytes.Buffer, apiPackageName string) error {
 
 	buf.WriteString("\t\t// Test handleRequest with pre-hook error\n")
 	buf.WriteString("\t\trequestContext := " + apiPackageName + ".GetRequestContext(c, \"test-prehook-error\")\n")
-	buf.WriteString("\t\t_, err := " + apiPackageName + ".HandleRequest[any, struct{}, struct{}, struct{}](c, requestContext, server)\n")
+	buf.WriteString("\t\t_, err = " + apiPackageName + ".HandleRequest[any, struct{}, struct{}, struct{}](c, requestContext, server)\n")
 	buf.WriteString("\t\tassert.NotNil(t, err, \"Expected API error when pre-hook fails\")\n")
 	buf.WriteString("\t\tassert.Contains(t, err.Error(), \"pre-hook validation failed\", \"Error message should contain pre-hook error\")\n")
 	buf.WriteString("\t})\n\n")
@@ -1883,7 +1883,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 
 	buf.WriteString("\t\t// Test handleRequest with pre-hook error\n")
 	buf.WriteString("\t\trequestContext := GetRequestContext(c, \"test-prehook-error\")\n")
-	buf.WriteString("\t\t_, err := HandleRequest[any, struct{}, struct{}, struct{}](c, requestContext, server)\n")
+	buf.WriteString("\t\t_, err = HandleRequest[any, struct{}, struct{}, struct{}](c, requestContext, server)\n")
 	buf.WriteString("\t\tassert.NotNil(t, err, \"Expected API error when pre-hook fails\")\n")
 	buf.WriteString("\t\tassert.Contains(t, err.Error(), \"pre-hook validation failed\", \"Error message should contain pre-hook error\")\n")
 	buf.WriteString("\t})\n")
