@@ -512,9 +512,9 @@ func defaultGetRequestID(ctx context.Context) string {
 			getRequestID = defaultGetRequestID
 		}
 		requestID := getRequestID(c.Request.Context())
-		requestContext := GetRequestContext(c, requestID)
+		requestContext := getRequestContext(c, requestID)
 
-		request, err := HandleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)
+		request, err := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)
 		if err != nil {
 			c.JSON(server.ErrorHook(err, requestContext.RequestID).Response())
 			return
@@ -546,9 +546,9 @@ func defaultGetRequestID(ctx context.Context) string {
 			getRequestID = defaultGetRequestID
 		}
 		requestID := getRequestID(c.Request.Context())
-		requestContext := GetRequestContext(c, requestID)
+		requestContext := getRequestContext(c, requestID)
 
-		request, err := HandleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)
+		request, err := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)
 		if err != nil {
 			c.JSON(server.ErrorHook(err, requestContext.RequestID).Response())
 			return
@@ -564,7 +564,7 @@ func defaultGetRequestID(ctx context.Context) string {
 	}
 }` + "\n\n")
 
-	buf.WriteString(`func GetRequestContext(c *gin.Context, requestID string) RequestContext {
+	buf.WriteString(`func getRequestContext(c *gin.Context, requestID string) RequestContext {
 	return RequestContext{
 		RequestID:  requestID,
 		Path:       c.Request.URL.Path,
@@ -575,7 +575,7 @@ func defaultGetRequestID(ctx context.Context) string {
 	}
 }` + "\n\n")
 
-	buf.WriteString(`func HandleRequest[
+	buf.WriteString(`func handleRequest[
 	sessionType any,
 	pathParamsType any,
 	queryParamsType any,
