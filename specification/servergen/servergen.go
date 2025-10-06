@@ -246,6 +246,10 @@ func generateObjects(buf *bytes.Buffer, service *specification.Service) error {
 			buf.WriteString("\t\treturn http.StatusInternalServerError\n")
 			buf.WriteString("\t}\n")
 			buf.WriteString("}\n\n")
+
+			buf.WriteString("func (e *Error) Response() (int, *Error) {\n")
+			buf.WriteString("\treturn e.HTTPStatusCode(), e\n")
+			buf.WriteString("}\n\n")
 		}
 	}
 
