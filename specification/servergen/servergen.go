@@ -260,11 +260,11 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	serviceName := strmangle.TitleCase(service.Name)
 	buf.WriteString(fmt.Sprintf("func Register%sAPI[Session any](router *gin.Engine, api *%sAPI[Session]) {\n", serviceName, serviceName))
 	buf.WriteString("\tif api.Server.ErrorHook == nil {\n")
-	buf.WriteString("\t\tapi.Server.ErrorHook = func(err error, requestID string) *Error {\n")
+	buf.WriteString("\t\tapi.Server.ErrorHook = func(ctx context.Context, requestContext RequestContext, err error) *Error {\n")
 	buf.WriteString("\t\t\treturn &Error{\n")
 	buf.WriteString("\t\t\t\tCode:    ErrorCodeInternal,\n")
 	buf.WriteString("\t\t\t\tMessage: types.NewString(err.Error()),\n")
-	buf.WriteString("\t\t\t\tRequestID: types.NewString(requestID),\n")
+	buf.WriteString("\t\t\t\tRequestID: types.NewString(requestContext.RequestID),\n")
 	buf.WriteString("\t\t\t}\n")
 	buf.WriteString("\t\t}\n")
 	buf.WriteString("\t}\n\n")
@@ -324,7 +324,7 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("\tGetSessionFunc getSessionFunc[Session]\n")
 
 	buf.WriteString("\t// ErrorHook is a function that is used on each endpoint to convert an error to an Error object\n")
-	buf.WriteString("\tErrorHook func(err error, requestID string) *Error\n")
+	buf.WriteString("\tErrorHook func(ctx context.Context, requestContext RequestContext, err error) *Error\n")
 
 	buf.WriteString("\t// PreHooks are executed before endpoint logic. The first non-nil error aborts request processing.\n")
 	buf.WriteString("\tPreHooks []PreHook\n")
@@ -516,13 +516,13 @@ func defaultGetRequestID(ctx context.Context) string {
 
 		request, err := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)
 		if err != nil {
-			c.JSON(server.ErrorHook(err, requestContext.RequestID).Response())
+			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err).Response())
 			return
 		}
 
 		response, err := function(c.Request.Context(), request)
 		if err != nil {
-			c.JSON(server.ErrorHook(err, requestContext.RequestID).Response())
+			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err).Response())
 			return
 		}
 
@@ -550,13 +550,13 @@ func defaultGetRequestID(ctx context.Context) string {
 
 		request, err := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)
 		if err != nil {
-			c.JSON(server.ErrorHook(err, requestContext.RequestID).Response())
+			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err).Response())
 			return
 		}
 
 		err = function(c.Request.Context(), request)
 		if err != nil {
-			c.JSON(server.ErrorHook(err, requestContext.RequestID).Response())
+			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err).Response())
 			return
 		}
 		

@@ -1100,7 +1100,7 @@ func TestGenerateUtils(t *testing.T) {
 		"Should call handleRequest with generic types")
 	assert.Contains(t, generatedCode, "c.JSON(successStatusCode, response)",
 		"Should return JSON response with success code")
-	assert.Contains(t, generatedCode, "c.JSON(server.ErrorHook(err, requestContext.RequestID).Response())",
+	assert.Contains(t, generatedCode, "c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err).Response())",
 		"Should return error using Response() method")
 
 	// Check that requestContext is built in serve functions

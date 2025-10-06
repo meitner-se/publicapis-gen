@@ -404,7 +404,7 @@ func TestErrorInterfaceIntegration(t *testing.T) {
 	generatedCode := buf.String()
 
 	// Verify Error is used in ErrorHook
-	assert.Contains(t, generatedCode, "ErrorHook func(err error, requestID string) *Error",
+	assert.Contains(t, generatedCode, "ErrorHook func(ctx context.Context, requestContext RequestContext, err error) *Error",
 		"ErrorHook should return *Error")
 
 	// Verify Error is used in error handling
@@ -412,6 +412,6 @@ func TestErrorInterfaceIntegration(t *testing.T) {
 		"Error handling should create Error instances")
 
 	// Verify the Response method is used in error handling
-	assert.Contains(t, generatedCode, "c.JSON(server.ErrorHook(err, requestContext.RequestID).Response())",
+	assert.Contains(t, generatedCode, "c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err).Response())",
 		"Should use Response() method for error responses")
 }
