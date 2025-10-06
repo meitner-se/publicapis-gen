@@ -324,7 +324,7 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("\tGetSessionFunc getSessionFunc[Session]\n")
 
 	buf.WriteString("\t// ErrorHook is a function that is used on each endpoint to convert an error to an Error object\n")
-	buf.WriteString("\tErrorHook func(ctx context.Context, requestContext RequestContext, err error) *Error\n")
+	buf.WriteString("\tErrorHook ErrorHook\n")
 
 	buf.WriteString("\t// PreHooks are executed before endpoint logic. The first non-nil error aborts request processing.\n")
 	buf.WriteString("\tPreHooks []PreHook\n")
@@ -407,6 +407,12 @@ func generateRequestTypes(buf *bytes.Buffer, service *specification.Service) err
 
 	buf.WriteString("// SessionHooks is an optional helper type if you prefer a named slice.\n")
 	buf.WriteString("type SessionHooks[Session any] []SessionHook[Session]\n\n")
+
+	// Generate ErrorHook type
+	buf.WriteString("// ErrorHook converts an error to an Error response object.\n")
+	buf.WriteString("// This hook is called whenever an error occurs during request processing,\n")
+	buf.WriteString("// allowing you to customize error responses based on the error type and request context.\n")
+	buf.WriteString("type ErrorHook func(ctx context.Context, requestContext RequestContext, err error) *Error\n\n")
 
 	// Generate RequestContext struct
 	buf.WriteString("type RequestContext struct {\n")
