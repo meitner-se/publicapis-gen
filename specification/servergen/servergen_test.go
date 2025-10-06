@@ -97,10 +97,10 @@ const (
 	expectedResponseType       = "type UserCreateUserResponse struct {"
 
 	// Utility function constants
-	expectedGetRequestContext    = "func getRequestContext(c *gin.Context, requestID string) RequestContext"
+	expectedGetRequestContext    = "func GetRequestContext(c *gin.Context, requestID string) RequestContext"
 	expectedServeWithResponse    = "func serveWithResponse["
 	expectedServeWithoutResponse = "func serveWithoutResponse["
-	expectedHandleRequest        = "func handleRequest["
+	expectedHandleRequest        = "func HandleRequest["
 	expectedDecodeBodyParams     = "func decodeBodyParams[T any](r *http.Request) (T, error)"
 	expectedDecodePathParams     = "func decodePathParams[T any](c *gin.Context) (T, error)"
 	expectedDecodeQueryParams    = "func decodeQueryParams[T any](c *gin.Context) (T, error)"
@@ -1096,20 +1096,20 @@ func TestGenerateUtils(t *testing.T) {
 	assert.Contains(t, generatedCode, `if getRequestID == nil {`, "Should check if GetRequestIDFunc is nil")
 	assert.Contains(t, generatedCode, `getRequestID = defaultGetRequestID`, "Should use defaultGetRequestID when nil")
 	assert.Contains(t, generatedCode, `requestID := getRequestID(c.Request.Context())`, "Should call getRequestID with context")
-	assert.Contains(t, generatedCode, "handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType]",
-		"Should call handleRequest with generic types")
+	assert.Contains(t, generatedCode, "HandleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType]",
+		"Should call HandleRequest with generic types")
 	assert.Contains(t, generatedCode, "c.JSON(successStatusCode, response)",
 		"Should return JSON response with success code")
 	assert.Contains(t, generatedCode, "c.JSON(server.ErrorHook(err, requestContext.RequestID).Response())",
 		"Should return error using Response() method")
 
 	// Check that requestContext is built in serve functions
-	assert.Contains(t, generatedCode, "requestContext := getRequestContext(c, requestID)",
-		"Should call getRequestContext to build RequestContext in serve functions")
+	assert.Contains(t, generatedCode, "requestContext := GetRequestContext(c, requestID)",
+		"Should call GetRequestContext to build RequestContext in serve functions")
 
 	// Check handleRequest implementation
-	assert.Contains(t, generatedCode, "handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)",
-		"Should call handleRequest with requestContext parameter")
+	assert.Contains(t, generatedCode, "HandleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)",
+		"Should call HandleRequest with requestContext parameter")
 	assert.Contains(t, generatedCode, "if _, ok := any(request.BodyParams).(struct{}); !ok {",
 		"Should check if body params exist")
 	assert.Contains(t, generatedCode, "if _, ok := any(request.PathParams).(struct{}); !ok {",
