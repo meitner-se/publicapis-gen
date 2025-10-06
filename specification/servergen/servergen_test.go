@@ -1100,12 +1100,16 @@ func TestGenerateUtils(t *testing.T) {
 		"Should call handleRequest with generic types")
 	assert.Contains(t, generatedCode, "c.JSON(successStatusCode, response)",
 		"Should return JSON response with success code")
-	assert.Contains(t, generatedCode, "c.JSON(server.ErrorHook(err, requestID).Response())",
+	assert.Contains(t, generatedCode, "c.JSON(server.ErrorHook(err, requestContext.RequestID).Response())",
 		"Should return error using Response() method")
 
-	// Check handleRequest implementation
+	// Check that requestContext is built in serve functions
 	assert.Contains(t, generatedCode, "requestContext := getRequestContext(c, requestID)",
-		"Should call getRequestContext to build RequestContext")
+		"Should call getRequestContext to build RequestContext in serve functions")
+
+	// Check handleRequest implementation
+	assert.Contains(t, generatedCode, "handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)",
+		"Should call handleRequest with requestContext parameter")
 	assert.Contains(t, generatedCode, "if _, ok := any(request.BodyParams).(struct{}); !ok {",
 		"Should check if body params exist")
 	assert.Contains(t, generatedCode, "if _, ok := any(request.PathParams).(struct{}); !ok {",

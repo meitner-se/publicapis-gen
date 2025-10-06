@@ -512,16 +512,17 @@ func defaultGetRequestID(ctx context.Context) string {
 			getRequestID = defaultGetRequestID
 		}
 		requestID := getRequestID(c.Request.Context())
+		requestContext := getRequestContext(c, requestID)
 
-		request, err := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
+		request, err := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)
 		if err != nil {
-			c.JSON(server.ErrorHook(err, requestID).Response())
+			c.JSON(server.ErrorHook(err, requestContext.RequestID).Response())
 			return
 		}
 
 		response, err := function(c.Request.Context(), request)
 		if err != nil {
-			c.JSON(server.ErrorHook(err, requestID).Response())
+			c.JSON(server.ErrorHook(err, requestContext.RequestID).Response())
 			return
 		}
 
@@ -545,16 +546,17 @@ func defaultGetRequestID(ctx context.Context) string {
 			getRequestID = defaultGetRequestID
 		}
 		requestID := getRequestID(c.Request.Context())
+		requestContext := getRequestContext(c, requestID)
 
-		request, err := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
+		request, err := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)
 		if err != nil {
-			c.JSON(server.ErrorHook(err, requestID).Response())
+			c.JSON(server.ErrorHook(err, requestContext.RequestID).Response())
 			return
 		}
 
 		err = function(c.Request.Context(), request)
 		if err != nil {
-			c.JSON(server.ErrorHook(err, requestID).Response())
+			c.JSON(server.ErrorHook(err, requestContext.RequestID).Response())
 			return
 		}
 		
@@ -580,13 +582,10 @@ func defaultGetRequestID(ctx context.Context) string {
 	bodyParamsType any,
 ](
 	c *gin.Context,
-	requestID string,
+	requestContext RequestContext,
 	server Server[sessionType],
 ) (Request[sessionType, pathParamsType, queryParamsType, bodyParamsType], error) {
 	var nilRequest Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]
-
-	// Build RequestContext first for pre-hooks
-	requestContext := getRequestContext(c, requestID)
 
 	// Run pre-hooks before parsing request
 	for _, preHook := range server.PreHooks {
@@ -600,7 +599,7 @@ func defaultGetRequestID(ctx context.Context) string {
 		return nilRequest, &Error{
 			Code:      ErrorCodeUnauthorized,
 			Message:   types.NewString(err.Error()),
-			RequestID: types.NewString(requestID),
+			RequestID: types.NewString(requestContext.RequestID),
 		}
 	}
 
@@ -624,7 +623,7 @@ func defaultGetRequestID(ctx context.Context) string {
 			return nilRequest, &Error{
 				Code:      ErrorCodeBadRequest,
 				Message:   types.NewString("cannot decode json body params: " + err.Error()),
-				RequestID: types.NewString(requestID),
+				RequestID: types.NewString(requestContext.RequestID),
 			}
 		}
 
@@ -637,7 +636,7 @@ func defaultGetRequestID(ctx context.Context) string {
 			return nilRequest, &Error{
 				Code:      ErrorCodeBadRequest,
 				Message:   types.NewString("cannot decode path params: " + err.Error()),
-				RequestID: types.NewString(requestID),
+				RequestID: types.NewString(requestContext.RequestID),
 			}
 		}
 
@@ -650,7 +649,7 @@ func defaultGetRequestID(ctx context.Context) string {
 			return nilRequest, &Error{
 				Code:      ErrorCodeBadRequest,
 				Message:   types.NewString("cannot decode query params: " + err.Error()),
-				RequestID: types.NewString(requestID),
+				RequestID: types.NewString(requestContext.RequestID),
 			}
 		}
 

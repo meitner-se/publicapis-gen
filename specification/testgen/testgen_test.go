@@ -118,7 +118,7 @@ func TestGenerateInternalTests(t *testing.T) {
 
 	// Verify no package prefixes are used
 	assert.Contains(t, generatedCode, "handler := serveWithResponse(", "Should call serveWithResponse without prefix")
-	assert.Contains(t, generatedCode, "handleRequest[any, struct{}, struct{}, struct{}](", "Should call handleRequest without prefix")
+	assert.Contains(t, generatedCode, "handleRequest[any, struct{}, struct{}, struct{}](", "Should call handleRequest")
 	assert.Contains(t, generatedCode, "decodeBodyParams[TestBody](", "Should call decodeBodyParams with struct type")
 	assert.Contains(t, generatedCode, "decodePathParams[TestPathParams](", "Should call decodePathParams with struct type")
 	assert.Contains(t, generatedCode, "decodeQueryParams[TestQueryParams](", "Should call decodeQueryParams with struct type")
