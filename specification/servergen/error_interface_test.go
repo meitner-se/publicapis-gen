@@ -403,9 +403,13 @@ func TestErrorInterfaceIntegration(t *testing.T) {
 
 	generatedCode := buf.String()
 
-	// Verify Error is used in ErrorHook
-	assert.Contains(t, generatedCode, "ErrorHook func(ctx context.Context, requestContext RequestContext, err error) *Error",
-		"ErrorHook should return *Error")
+	// Verify ErrorHook type is defined
+	assert.Contains(t, generatedCode, "type ErrorHook func(ctx context.Context, requestContext RequestContext, err error) *Error",
+		"ErrorHook should be defined as a type")
+
+	// Verify ErrorHook is used in Server struct
+	assert.Contains(t, generatedCode, "ErrorHook ErrorHook",
+		"Server struct should use ErrorHook type")
 
 	// Verify Error is used in error handling
 	assert.Contains(t, generatedCode, "return &Error{",
