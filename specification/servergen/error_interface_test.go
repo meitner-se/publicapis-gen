@@ -411,11 +411,9 @@ func TestErrorInterfaceIntegration(t *testing.T) {
 	assert.Contains(t, generatedCode, "return &Error{",
 		"Error handling should create Error instances")
 
-	// Verify the Error type can be used as an error
-	assert.Contains(t, generatedCode, "apiError := server.ErrorHook(err, requestID)",
-		"Should be able to assign Error to error variables")
-
-	// Verify HTTPStatusCode is used
-	assert.Contains(t, generatedCode, "apiError.HTTPStatusCode()",
-		"Should use HTTPStatusCode() method for error responses")
+	// Verify the Response method is used in error handling
+	assert.Contains(t, generatedCode, "c.JSON(server.ErrorHook(err, requestID).Response())",
+		"Should use Response() method for error responses")
+	assert.Contains(t, generatedCode, "c.JSON(server.ErrorHook(apiError, requestID).Response())",
+		"Should use Response() method for apiError responses")
 }

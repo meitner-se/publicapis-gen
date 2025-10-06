@@ -515,15 +515,13 @@ func defaultGetRequestID(ctx context.Context) string {
 
 		request, apiError := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
 		if apiError != nil {
-			apiError = server.ErrorHook(apiError, requestID)
-			c.JSON(apiError.HTTPStatusCode(), apiError)
+			c.JSON(server.ErrorHook(apiError, requestID).Response())
 			return
 		}
 
 		response, err := function(c.Request.Context(), request)
 		if err != nil {
-			apiError := server.ErrorHook(err, requestID)
-			c.JSON(apiError.HTTPStatusCode(), apiError)
+			c.JSON(server.ErrorHook(err, requestID).Response())
 			return
 		}
 
@@ -550,15 +548,13 @@ func defaultGetRequestID(ctx context.Context) string {
 
 		request, apiError := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
 		if apiError != nil {
-			apiError = server.ErrorHook(apiError, requestID)
-			c.JSON(apiError.HTTPStatusCode(), apiError)
+			c.JSON(server.ErrorHook(apiError, requestID).Response())
 			return
 		}
 
 		err := function(c.Request.Context(), request)
 		if err != nil {
-			apiError := server.ErrorHook(err, requestID)
-			c.JSON(apiError.HTTPStatusCode(), apiError)
+			c.JSON(server.ErrorHook(err, requestID).Response())
 			return
 		}
 		
