@@ -19,6 +19,8 @@ const (
 	testErrorMethodSignature = "func (e *Error) Error() string"
 	testErrorMethodBody      = "return e.Message.String()"
 	testHTTPStatusCodeMethod = "func (e *Error) HTTPStatusCode() int"
+	testResponseMethod       = "func (e *Error) Response() (int, map[string]*Error)"
+	testResponseMethodBody   = "return e.HTTPStatusCode(), map[string]*Error{\"error\": e}"
 )
 
 // ============================================================================
@@ -83,6 +85,12 @@ func TestErrorInterfaceImplementation(t *testing.T) {
 	assert.Contains(t, generatedCode, testHTTPStatusCodeMethod,
 		"Generated code should contain HTTPStatusCode() method")
 
+	// Verify Response method is also generated
+	assert.Contains(t, generatedCode, testResponseMethod,
+		"Generated code should contain Response() method")
+	assert.Contains(t, generatedCode, testResponseMethodBody,
+		"Response() method should return HTTPStatusCode and self")
+
 	// Verify all error code cases are handled
 	errorCodes := []string{
 		"BadRequest", "Unauthorized", "Forbidden", "NotFound",
@@ -105,11 +113,14 @@ func TestErrorInterfaceImplementation(t *testing.T) {
 		errorStructIndex := strings.Index(generatedCode, "type Error struct {")
 		errorMethodIndex := strings.Index(generatedCode, testErrorMethodSignature)
 		httpStatusMethodIndex := strings.Index(generatedCode, testHTTPStatusCodeMethod)
+		responseMethodIndex := strings.Index(generatedCode, testResponseMethod)
 
 		assert.Greater(t, errorMethodIndex, errorStructIndex,
 			"Error() method should appear after Error struct definition")
 		assert.Greater(t, httpStatusMethodIndex, errorMethodIndex,
 			"HTTPStatusCode() method should appear after Error() method")
+		assert.Greater(t, responseMethodIndex, httpStatusMethodIndex,
+			"Response() method should appear after HTTPStatusCode() method")
 	})
 
 	t.Run("no Error object", func(t *testing.T) {
@@ -141,6 +152,8 @@ func TestErrorInterfaceImplementation(t *testing.T) {
 			"Should not generate Error() method when there's no Error object")
 		assert.NotContains(t, generatedCode, testHTTPStatusCodeMethod,
 			"Should not generate HTTPStatusCode() method when there's no Error object")
+		assert.NotContains(t, generatedCode, testResponseMethod,
+			"Should not generate Response() method when there's no Error object")
 	})
 
 	t.Run("Error object with minimal fields", func(t *testing.T) {
@@ -171,6 +184,8 @@ func TestErrorInterfaceImplementation(t *testing.T) {
 			"Should still generate Error() method for minimal Error object")
 		assert.Contains(t, generatedCode, testErrorMethodBody,
 			"Error() method should still return e.Message.String()")
+		assert.Contains(t, generatedCode, testResponseMethod,
+			"Should generate Response() method for minimal Error object")
 	})
 }
 
@@ -237,6 +252,90 @@ func TestErrorMethodCorrectness(t *testing.T) {
 			"Error() method should use pointer receiver")
 		assert.NotContains(t, generatedCode, "func (e Error)",
 			"Error() method should not use value receiver")
+	})
+}
+
+// ============================================================================
+// Response Method Tests
+// ============================================================================
+
+func TestResponseMethod(t *testing.T) {
+	// Arrange
+	service := &specification.Service{
+		Name:    "TestService",
+		Version: "v1",
+		Objects: []specification.Object{
+			{
+				Name:        testErrorStructName,
+				Description: "Error response object",
+				Fields: []specification.Field{
+					{Name: testErrorCodeField, Type: testErrorCodeEnumName},
+					{Name: testErrorMessageField, Type: "String"},
+					{Name: testErrorRequestIDField, Type: "String"},
+				},
+			},
+		},
+		Enums: []specification.Enum{
+			{
+				Name: testErrorCodeEnumName,
+				Values: []specification.EnumValue{
+					{Name: "BadRequest", Description: "Bad request"},
+					{Name: "Internal", Description: "Internal server error"},
+				},
+			},
+		},
+	}
+
+	// Act
+	var buf bytes.Buffer
+	err := generateObjects(&buf, service)
+
+	// Assert
+	assert.Nil(t, err, "Expected no error when generating objects")
+
+	generatedCode := buf.String()
+
+	// Verify Response method exists
+	assert.Contains(t, generatedCode, testResponseMethod,
+		"Should generate Response() method")
+
+	// Verify Response method implementation
+	assert.Contains(t, generatedCode, testResponseMethodBody,
+		"Response() method should return HTTPStatusCode and error map")
+
+	t.Run("method signature", func(t *testing.T) {
+		// Verify the complete method signature
+		assert.Contains(t, generatedCode, "func (e *Error) Response() (int, map[string]*Error)",
+			"Response() method should return int and map[string]*Error")
+	})
+
+	t.Run("method implementation", func(t *testing.T) {
+		// Verify the method returns both status code and error map
+		responseMethodStart := strings.Index(generatedCode, "func (e *Error) Response() (int, map[string]*Error) {")
+		assert.NotEqual(t, -1, responseMethodStart, "Should find Response() method")
+
+		responseMethodEnd := strings.Index(generatedCode[responseMethodStart:], "}")
+		assert.NotEqual(t, -1, responseMethodEnd, "Should find end of Response() method")
+
+		responseMethod := generatedCode[responseMethodStart : responseMethodStart+responseMethodEnd+1]
+
+		// Verify the method calls HTTPStatusCode()
+		assert.Contains(t, responseMethod, "e.HTTPStatusCode()",
+			"Response() method should call HTTPStatusCode()")
+
+		// Verify the method returns status code and error map
+		assert.Contains(t, responseMethod, "map[string]*Error{\"error\": e}",
+			"Response() method should return error in a map with key \"error\"")
+
+		// Verify exactly one return statement
+		assert.Equal(t, 1, strings.Count(responseMethod, "return"),
+			"Response() method should have exactly one return statement")
+	})
+
+	t.Run("pointer receiver", func(t *testing.T) {
+		// Verify that the method uses a pointer receiver
+		assert.Contains(t, generatedCode, "func (e *Error) Response()",
+			"Response() method should use pointer receiver *Error")
 	})
 }
 
