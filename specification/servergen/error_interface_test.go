@@ -19,8 +19,8 @@ const (
 	testErrorMethodSignature = "func (e *Error) Error() string"
 	testErrorMethodBody      = "return e.Message.String()"
 	testHTTPStatusCodeMethod = "func (e *Error) HTTPStatusCode() int"
-	testResponseMethod       = "func (e *Error) Response() (int, *Error)"
-	testResponseMethodBody   = "return e.HTTPStatusCode(), e"
+	testResponseMethod       = "func (e *Error) Response() (int, map[string]*Error)"
+	testResponseMethodBody   = "return e.HTTPStatusCode(), map[string]*Error{\"error\": e}"
 )
 
 // ============================================================================
@@ -301,17 +301,17 @@ func TestResponseMethod(t *testing.T) {
 
 	// Verify Response method implementation
 	assert.Contains(t, generatedCode, testResponseMethodBody,
-		"Response() method should call HTTPStatusCode() and return self")
+		"Response() method should return HTTPStatusCode and error map")
 
 	t.Run("method signature", func(t *testing.T) {
 		// Verify the complete method signature
-		assert.Contains(t, generatedCode, "func (e *Error) Response() (int, *Error)",
-			"Response() method should have correct signature with two return values")
+		assert.Contains(t, generatedCode, "func (e *Error) Response() (int, map[string]*Error)",
+			"Response() method should return int and map[string]*Error")
 	})
 
 	t.Run("method implementation", func(t *testing.T) {
-		// Verify the method returns both status code and error pointer
-		responseMethodStart := strings.Index(generatedCode, "func (e *Error) Response() (int, *Error) {")
+		// Verify the method returns both status code and error map
+		responseMethodStart := strings.Index(generatedCode, "func (e *Error) Response() (int, map[string]*Error) {")
 		assert.NotEqual(t, -1, responseMethodStart, "Should find Response() method")
 
 		responseMethodEnd := strings.Index(generatedCode[responseMethodStart:], "}")
@@ -323,9 +323,9 @@ func TestResponseMethod(t *testing.T) {
 		assert.Contains(t, responseMethod, "e.HTTPStatusCode()",
 			"Response() method should call HTTPStatusCode()")
 
-		// Verify the method returns both values
-		assert.Contains(t, responseMethod, "return e.HTTPStatusCode(), e",
-			"Response() method should return status code and error pointer")
+		// Verify the method returns status code and error map
+		assert.Contains(t, responseMethod, "map[string]*Error{\"error\": e}",
+			"Response() method should return error in a map with key \"error\"")
 
 		// Verify exactly one return statement
 		assert.Equal(t, 1, strings.Count(responseMethod, "return"),

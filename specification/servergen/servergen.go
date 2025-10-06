@@ -247,8 +247,8 @@ func generateObjects(buf *bytes.Buffer, service *specification.Service) error {
 			buf.WriteString("\t}\n")
 			buf.WriteString("}\n\n")
 
-			buf.WriteString("func (e *Error) Response() (int, *Error) {\n")
-			buf.WriteString("\treturn e.HTTPStatusCode(), e\n")
+			buf.WriteString("func (e *Error) Response() (int, map[string]*Error) {\n")
+			buf.WriteString("\treturn e.HTTPStatusCode(), map[string]*Error{\"error\": e}\n")
 			buf.WriteString("}\n\n")
 		}
 	}
