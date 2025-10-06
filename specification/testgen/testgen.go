@@ -1063,7 +1063,7 @@ func generateHandleRequestTest(buf *bytes.Buffer, apiPackageName string) error {
 
 	buf.WriteString("\t\t// Test handleRequest with session error\n")
 	buf.WriteString("\t\trequestContext := " + apiPackageName + ".getRequestContext(c, \"test-456\")\n")
-	buf.WriteString("\t\t_, err := " + apiPackageName + ".handleRequest[any, struct{}, struct{}, struct{}](c, requestContext, server)\n")
+	buf.WriteString("\t\t_, err = " + apiPackageName + ".handleRequest[any, struct{}, struct{}, struct{}](c, requestContext, server)\n")
 	buf.WriteString("\t\tassert.NotNil(t, err, \"Expected API error when session function fails\")\n")
 	buf.WriteString("\t\tapiError, ok := err.(*" + apiPackageName + ".Error)\n")
 	buf.WriteString("\t\tassert.True(t, ok, \"Error should be of type *Error\")\n")
@@ -1101,7 +1101,7 @@ func generateHandleRequestTest(buf *bytes.Buffer, apiPackageName string) error {
 
 	buf.WriteString("\t\t// Test handleRequest with invalid JSON\n")
 	buf.WriteString("\t\trequestContext := " + apiPackageName + ".getRequestContext(c, \"test-789\")\n")
-	buf.WriteString("\t\t_, err := " + apiPackageName + ".handleRequest[any, struct{}, struct{}, TestBodyParams](c, requestContext, server)\n")
+	buf.WriteString("\t\t_, err = " + apiPackageName + ".handleRequest[any, struct{}, struct{}, TestBodyParams](c, requestContext, server)\n")
 	buf.WriteString("\t\tassert.NotNil(t, err, \"Expected API error when JSON is invalid\")\n")
 	buf.WriteString("\t\tapiError, ok := err.(*" + apiPackageName + ".Error)\n")
 	buf.WriteString("\t\tassert.True(t, ok, \"Error should be of type *Error\")\n")
@@ -1249,7 +1249,7 @@ func generateHandleRequestTest(buf *bytes.Buffer, apiPackageName string) error {
 
 	buf.WriteString("\t\t// Test handleRequest with session hook error\n")
 	buf.WriteString("\t\trequestContext := " + apiPackageName + ".getRequestContext(c, \"test-sessionhook-error\")\n")
-	buf.WriteString("\t\t_, err := " + apiPackageName + ".handleRequest[string, struct{}, struct{}, struct{}](c, requestContext, server)\n")
+	buf.WriteString("\t\t_, err = " + apiPackageName + ".handleRequest[string, struct{}, struct{}, struct{}](c, requestContext, server)\n")
 	buf.WriteString("\t\tassert.NotNil(t, err, \"Expected API error when session hook fails\")\n")
 	buf.WriteString("\t\tassert.Contains(t, err.Error(), \"insufficient permissions\", \"Error message should contain session hook error\")\n")
 	buf.WriteString("\t})\n")
@@ -1273,7 +1273,7 @@ func generateDecodeBodyParamsTest(buf *bytes.Buffer, apiPackageName string) erro
 	buf.WriteString("\tassert.NoError(t, err, \"Failed to create request\")\n\n")
 
 	buf.WriteString("\t// Test decodeBodyParams\n")
-	buf.WriteString("\tresult, err := " + apiPackageName + ".DecodeBodyParams[TestBody](req)\n")
+	buf.WriteString("\tresult, err = " + apiPackageName + ".DecodeBodyParams[TestBody](req)\n")
 	buf.WriteString("\tassert.NoError(t, err, \"Expected no error from decodeBodyParams\")\n")
 	buf.WriteString("\tassert.Equal(t, \"test\", result.Name, \"Name should be decoded\")\n")
 	buf.WriteString("\tassert.Equal(t, 25, result.Age, \"Age should be decoded as int\")\n")
@@ -1325,7 +1325,7 @@ func generateDecodeQueryParamsTest(buf *bytes.Buffer, apiPackageName string) err
 	buf.WriteString("\tc.Request = req\n\n")
 
 	buf.WriteString("\t// Test decodeQueryParams\n")
-	buf.WriteString("\tresult, err := " + apiPackageName + ".DecodeQueryParams[TestQueryParams](c)\n")
+	buf.WriteString("\tresult, err = " + apiPackageName + ".DecodeQueryParams[TestQueryParams](c)\n")
 	buf.WriteString("\tassert.NoError(t, err, \"Expected no error from decodeQueryParams\")\n")
 	buf.WriteString("\tassert.Equal(t, 10, result.Limit, \"Limit should be decoded\")\n")
 	buf.WriteString("\tassert.Equal(t, 0, result.Offset, \"Offset should be decoded\")\n")
@@ -1770,7 +1770,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 
 	buf.WriteString("\t\t// Test handleRequest with session error\n")
 	buf.WriteString("\t\trequestContext := getRequestContext(c, \"test-456\")\n")
-	buf.WriteString("\t\t_, err := handleRequest[any, struct{}, struct{}, struct{}](c, requestContext, server)\n")
+	buf.WriteString("\t\t_, err = handleRequest[any, struct{}, struct{}, struct{}](c, requestContext, server)\n")
 	buf.WriteString("\t\tassert.NotNil(t, err, \"Expected API error when session function fails\")\n")
 	buf.WriteString("\t\tapiError, ok := err.(*Error)\n")
 	buf.WriteString("\t\tassert.True(t, ok, \"Error should be of type *Error\")\n")
@@ -1808,7 +1808,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 
 	buf.WriteString("\t\t// Test handleRequest with invalid JSON\n")
 	buf.WriteString("\t\trequestContext := getRequestContext(c, \"test-789\")\n")
-	buf.WriteString("\t\t_, err := handleRequest[any, struct{}, struct{}, TestBodyParams](c, requestContext, server)\n")
+	buf.WriteString("\t\t_, err = handleRequest[any, struct{}, struct{}, TestBodyParams](c, requestContext, server)\n")
 	buf.WriteString("\t\tassert.NotNil(t, err, \"Expected API error when JSON is invalid\")\n")
 	buf.WriteString("\t\tapiError, ok := err.(*Error)\n")
 	buf.WriteString("\t\tassert.True(t, ok, \"Error should be of type *Error\")\n")
@@ -1903,7 +1903,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("\tassert.NoError(t, err, \"Failed to create request\")\n\n")
 
 	buf.WriteString("\t// Test decodeBodyParams\n")
-	buf.WriteString("\tresult, err := decodeBodyParams[TestBody](req)\n")
+	buf.WriteString("\tresult, err = decodeBodyParams[TestBody](req)\n")
 	buf.WriteString("\tassert.NoError(t, err, \"Expected no error from decodeBodyParams\")\n")
 	buf.WriteString("\tassert.Equal(t, \"test\", result.Name, \"Name should be decoded\")\n")
 	buf.WriteString("\tassert.Equal(t, 25, result.Age, \"Age should be decoded as int\")\n")
@@ -1947,7 +1947,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	buf.WriteString("\tc.Request = req\n\n")
 
 	buf.WriteString("\t// Test decodeQueryParams\n")
-	buf.WriteString("\tresult, err := decodeQueryParams[TestQueryParams](c)\n")
+	buf.WriteString("\tresult, err = decodeQueryParams[TestQueryParams](c)\n")
 	buf.WriteString("\tassert.NoError(t, err, \"Expected no error from decodeQueryParams\")\n")
 	buf.WriteString("\tassert.Equal(t, 10, result.Limit, \"Limit should be decoded\")\n")
 	buf.WriteString("\tassert.Equal(t, 0, result.Offset, \"Offset should be decoded\")\n")
