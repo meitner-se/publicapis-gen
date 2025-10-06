@@ -1098,8 +1098,10 @@ func TestGenerateUtils(t *testing.T) {
 		"Should call handleRequest with generic types")
 	assert.Contains(t, generatedCode, "c.JSON(successStatusCode, response)",
 		"Should return JSON response with success code")
-	assert.Contains(t, generatedCode, "c.JSON(apiError.HTTPStatusCode(), apiError)",
-		"Should return error with appropriate status code")
+	assert.Contains(t, generatedCode, "c.JSON(server.ErrorHook(err, requestID).Response())",
+		"Should return error using Response() method")
+	assert.Contains(t, generatedCode, "c.JSON(server.ErrorHook(apiError, requestID).Response())",
+		"Should return apiError using Response() method")
 
 	// Check handleRequest implementation
 	assert.Contains(t, generatedCode, "if _, ok := any(request.BodyParams).(struct{}); !ok {",
