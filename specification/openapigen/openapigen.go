@@ -1016,7 +1016,7 @@ func (g *generator) addRequestBodiesToComponents(components *v3.Components, serv
 
 				// Only add if we haven't seen this request body before
 				if _, exists := requestBodyMap[requestBodyName]; !exists {
-					requestBody := g.createComponentRequestBody(endpoint.Request.BodyParams, endpoint.Name, service)
+					requestBody := g.createComponentRequestBody(endpoint.Request.BodyParams, service)
 					requestBodyMap[requestBodyName] = requestBody
 					components.RequestBodies.Set(requestBodyName, requestBody)
 				}
@@ -1231,7 +1231,7 @@ func (g *generator) generateResponseBodyExample(response specification.EndpointR
 }
 
 // createComponentRequestBody creates a v3.RequestBody for the components section.
-func (g *generator) createComponentRequestBody(bodyParams []specification.Field, endpointName string, service *specification.Service) *v3.RequestBody {
+func (g *generator) createComponentRequestBody(bodyParams []specification.Field, service *specification.Service) *v3.RequestBody {
 	var schema *base.Schema
 	var isRequired bool
 
@@ -1274,11 +1274,6 @@ func (g *generator) createComponentRequestBody(bodyParams []specification.Field,
 		}
 
 		isRequired = len(requiredFields) > 0
-	}
-
-	// Search endpoints should always have required request bodies
-	if endpointName == searchEndpointNameValue {
-		isRequired = true
 	}
 
 	// Create media type
