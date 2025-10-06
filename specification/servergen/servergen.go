@@ -562,6 +562,17 @@ func defaultGetRequestID(ctx context.Context) string {
 	}
 }` + "\n\n")
 
+	buf.WriteString(`func getRequestContext(c *gin.Context, requestID string) RequestContext {
+	return RequestContext{
+		RequestID:  requestID,
+		Path:       c.Request.URL.Path,
+		Route:      c.FullPath(),
+		UserAgent:  c.Request.UserAgent(),
+		HTTPMethod: c.Request.Method,
+		IPAddress:  c.ClientIP(),
+	}
+}` + "\n\n")
+
 	buf.WriteString(`func handleRequest[
 	sessionType any,
 	pathParamsType any,
@@ -575,14 +586,7 @@ func defaultGetRequestID(ctx context.Context) string {
 	var nilRequest Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]
 
 	// Build RequestContext first for pre-hooks
-	requestContext := RequestContext{
-		RequestID:  requestID,
-		Path:       c.Request.URL.Path,
-		Route:      c.FullPath(),
-		UserAgent:  c.Request.UserAgent(),
-		HTTPMethod: c.Request.Method,
-		IPAddress:  c.ClientIP(),
-	}
+	requestContext := getRequestContext(c, requestID)
 
 	// Run pre-hooks before parsing request
 	for _, preHook := range server.PreHooks {
