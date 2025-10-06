@@ -269,12 +269,6 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("\t\tpanic(\"GetSessionFunc is nil\")\n")
 	buf.WriteString("\t}\n\n")
 
-	buf.WriteString("\tif api.Server.GetRequestIDFunc == nil {\n")
-	buf.WriteString("\t\tapi.Server.GetRequestIDFunc = func(_ context.Context) string {\n")
-	buf.WriteString("\t\t\treturn uuid.New().String()\n")
-	buf.WriteString("\t\t}\n")
-	buf.WriteString("\t}\n\n")
-
 	buf.WriteString(fmt.Sprintf("\trouterGroup := router.Group(\"/%s/%s\")\n\n", service.PathName(), service.Version))
 
 	buf.WriteString("\t// OpenAPI Documentation in JSON format\n")
@@ -489,6 +483,14 @@ func generateResponseTypes(buf *bytes.Buffer, service *specification.Service) er
 }
 
 func generateUtils(buf *bytes.Buffer) error {
+	buf.WriteString(`// defaultGetRequestID is the default request ID generator function
+// It generates a new UUID for each request
+func defaultGetRequestID(ctx context.Context) string {
+	return uuid.New().String()
+}
+
+`)
+
 	buf.WriteString(`func serveWithResponse[
 	sessionType any,
 	pathParamsType any,
@@ -501,7 +503,11 @@ func generateUtils(buf *bytes.Buffer) error {
 	function func(ctx context.Context, request Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) (*responseType, error),
 ) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		requestID := server.GetRequestIDFunc(c.Request.Context())
+		getRequestID := server.GetRequestIDFunc
+		if getRequestID == nil {
+			getRequestID = defaultGetRequestID
+		}
+		requestID := getRequestID(c.Request.Context())
 
 		request, apiError := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
 		if apiError != nil {
@@ -532,7 +538,11 @@ func generateUtils(buf *bytes.Buffer) error {
 	function func(ctx context.Context, request Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) error,
 ) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		requestID := server.GetRequestIDFunc(c.Request.Context())
+		getRequestID := server.GetRequestIDFunc
+		if getRequestID == nil {
+			getRequestID = defaultGetRequestID
+		}
+		requestID := getRequestID(c.Request.Context())
 
 		request, apiError := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestID, server)
 		if apiError != nil {
