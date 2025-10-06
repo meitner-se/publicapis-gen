@@ -2020,6 +2020,7 @@ func generateInternalPreHookTests(buf *bytes.Buffer) error {
 
 	buf.WriteString("\t\t// Create test request\n")
 	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test/path\", nil)\n")
+	buf.WriteString("\t\treq.RemoteAddr = \"127.0.0.1:12345\"\n")
 	buf.WriteString("\t\treq.Header.Set(\"User-Agent\", \"test-agent\")\n")
 	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create request\")\n")
 	buf.WriteString("\t\tw := httptest.NewRecorder()\n")
@@ -2310,7 +2311,7 @@ func generateInternalSessionHookTests(buf *bytes.Buffer) error {
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t\tErrorHook: func(ctx context.Context, requestContext RequestContext, err error) *Error {\n")
 	buf.WriteString("\t\t\t\treturn &Error{\n")
-	buf.WriteString("\t\t\t\t\tCode:      ErrorCodeInternal,\n")
+	buf.WriteString("\t\t\t\t\tCode:      ErrorCodeUnauthorized,\n")
 	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
 	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestContext.RequestID),\n")
 	buf.WriteString("\t\t\t\t}\n")
@@ -2384,6 +2385,7 @@ func generatePreHookTests(buf *bytes.Buffer, apiPackageName string) error {
 
 	buf.WriteString("\t\t// Create test request\n")
 	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test/path\", nil)\n")
+	buf.WriteString("\t\treq.RemoteAddr = \"127.0.0.1:12345\"\n")
 	buf.WriteString("\t\treq.Header.Set(\"User-Agent\", \"test-agent\")\n")
 	buf.WriteString("\t\tassert.NoError(t, err, \"Failed to create request\")\n")
 	buf.WriteString("\t\tw := httptest.NewRecorder()\n")
@@ -2674,7 +2676,7 @@ func generateSessionHookTests(buf *bytes.Buffer, apiPackageName string) error {
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t\tErrorHook: func(ctx context.Context, requestContext " + apiPackageName + ".RequestContext, err error) *" + apiPackageName + ".Error {\n")
 	buf.WriteString("\t\t\t\treturn &" + apiPackageName + ".Error{\n")
-	buf.WriteString("\t\t\t\t\tCode:      " + apiPackageName + ".ErrorCodeInternal,\n")
+	buf.WriteString("\t\t\t\t\tCode:      " + apiPackageName + ".ErrorCodeUnauthorized,\n")
 	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
 	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestContext.RequestID),\n")
 	buf.WriteString("\t\t\t\t}\n")
