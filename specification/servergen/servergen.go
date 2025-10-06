@@ -269,12 +269,6 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("\t\tpanic(\"GetSessionFunc is nil\")\n")
 	buf.WriteString("\t}\n\n")
 
-	buf.WriteString("\tif api.Server.GetRequestIDFunc == nil {\n")
-	buf.WriteString("\t\tapi.Server.GetRequestIDFunc = func(_ context.Context) string {\n")
-	buf.WriteString("\t\t\treturn uuid.New().String()\n")
-	buf.WriteString("\t\t}\n")
-	buf.WriteString("\t}\n\n")
-
 	buf.WriteString(fmt.Sprintf("\trouterGroup := router.Group(\"/%s/%s\")\n\n", service.PathName(), service.Version))
 
 	buf.WriteString("\t// OpenAPI Documentation in JSON format\n")

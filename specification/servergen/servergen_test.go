@@ -109,8 +109,7 @@ const (
 	expectedObjectComment = "// Address object"
 
 	// GetRequestIDFunc constants
-	expectedGetRequestIDFunc     = "GetRequestIDFunc func(ctx context.Context) string"
-	expectedGetRequestIDNilCheck = "if api.Server.GetRequestIDFunc == nil"
+	expectedGetRequestIDFunc = "GetRequestIDFunc func(ctx context.Context) string"
 )
 
 // ============================================================================
@@ -210,16 +209,6 @@ func TestGenerateServer(t *testing.T) {
 		// Check that GetRequestIDFunc is defined in Server struct
 		assert.Contains(t, generatedCode, expectedGetRequestIDFunc,
 			"Server struct should contain GetRequestIDFunc definition")
-
-		// Check that GetRequestIDFunc nil check is in RegisterAPI function
-		assert.Contains(t, generatedCode, expectedGetRequestIDNilCheck,
-			"RegisterAPI function should check if GetRequestIDFunc is nil")
-
-		// Check default function assignment
-		assert.Contains(t, generatedCode, "api.Server.GetRequestIDFunc = func(_ context.Context) string",
-			"Should assign default GetRequestIDFunc when nil")
-		assert.Contains(t, generatedCode, "return uuid.New().String()",
-			"Default GetRequestIDFunc should generate UUID")
 
 		// Verify defaultGetRequestID function exists
 		assert.Contains(t, generatedCode, "func defaultGetRequestID(ctx context.Context) string",
