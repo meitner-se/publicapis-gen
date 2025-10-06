@@ -97,6 +97,7 @@ const (
 	expectedResponseType       = "type UserCreateUserResponse struct {"
 
 	// Utility function constants
+	expectedGetRequestContext    = "func getRequestContext(c *gin.Context, requestID string) RequestContext"
 	expectedServeWithResponse    = "func serveWithResponse["
 	expectedServeWithoutResponse = "func serveWithoutResponse["
 	expectedHandleRequest        = "func handleRequest["
@@ -1082,6 +1083,7 @@ func TestGenerateUtils(t *testing.T) {
 	generatedCode := buf.String()
 
 	// Check all utility functions are generated
+	assert.Contains(t, generatedCode, expectedGetRequestContext, "Should generate getRequestContext")
 	assert.Contains(t, generatedCode, expectedServeWithResponse, "Should generate serveWithResponse")
 	assert.Contains(t, generatedCode, expectedServeWithoutResponse, "Should generate serveWithoutResponse")
 	assert.Contains(t, generatedCode, expectedHandleRequest, "Should generate handleRequest")
@@ -1102,6 +1104,8 @@ func TestGenerateUtils(t *testing.T) {
 		"Should return error using Response() method")
 
 	// Check handleRequest implementation
+	assert.Contains(t, generatedCode, "requestContext := getRequestContext(c, requestID)",
+		"Should call getRequestContext to build RequestContext")
 	assert.Contains(t, generatedCode, "if _, ok := any(request.BodyParams).(struct{}); !ok {",
 		"Should check if body params exist")
 	assert.Contains(t, generatedCode, "if _, ok := any(request.PathParams).(struct{}); !ok {",
