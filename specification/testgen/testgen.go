@@ -3127,10 +3127,18 @@ func generateHeaderPopulation(buf *bytes.Buffer, service *specification.Service,
 			buf.WriteString(fmt.Sprintf("\t\t\t\t\t%s: types.NewString(\"%s\"),\n", fieldName, testValue))
 		case "Int":
 			buf.WriteString(fmt.Sprintf("\t\t\t\t\t%s: types.NewInt(12345),\n", fieldName))
+		case "Int64":
+			buf.WriteString(fmt.Sprintf("\t\t\t\t\t%s: types.NewInt64(67890),\n", fieldName))
+		case "Bool":
+			buf.WriteString(fmt.Sprintf("\t\t\t\t\t%s: types.NewBool(true),\n", fieldName))
 		case "UUID":
 			buf.WriteString(fmt.Sprintf("\t\t\t\t\t%s: types.NewUUID(uuid.New()),\n", fieldName))
+		case "Date":
+			buf.WriteString(fmt.Sprintf("\t\t\t\t\t%s: types.NewDate(\"2024-01-15\"),\n", fieldName))
+		case "Timestamp":
+			buf.WriteString(fmt.Sprintf("\t\t\t\t\t%s: types.NewTimestamp(\"2024-01-15T10:30:00Z\"),\n", fieldName))
 		default:
-			// For custom types, try to use NewString
+			// For custom types or unknown types, use NewString as fallback
 			buf.WriteString(fmt.Sprintf("\t\t\t\t\t%s: types.NewString(\"%s\"),\n", fieldName, testValue))
 		}
 	}
@@ -3150,9 +3158,18 @@ func generateHeaderAssertions(buf *bytes.Buffer, service *specification.Service)
 			buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, \"%s\", w.Header().Get(\"%s\"), \"Header %s should be set\")\n", testValue, field.Name, field.Name))
 		case "Int":
 			buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, \"12345\", w.Header().Get(\"%s\"), \"Header %s should be set\")\n", field.Name, field.Name))
+		case "Int64":
+			buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, \"67890\", w.Header().Get(\"%s\"), \"Header %s should be set\")\n", field.Name, field.Name))
+		case "Bool":
+			buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, \"true\", w.Header().Get(\"%s\"), \"Header %s should be set\")\n", field.Name, field.Name))
 		case "UUID":
 			buf.WriteString(fmt.Sprintf("\t\tassert.NotEmpty(t, w.Header().Get(\"%s\"), \"Header %s should be set\")\n", field.Name, field.Name))
+		case "Date":
+			buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, \"2024-01-15\", w.Header().Get(\"%s\"), \"Header %s should be set\")\n", field.Name, field.Name))
+		case "Timestamp":
+			buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, \"2024-01-15T10:30:00Z\", w.Header().Get(\"%s\"), \"Header %s should be set\")\n", field.Name, field.Name))
 		default:
+			// For custom or unknown types, check that the header is set
 			buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, \"%s\", w.Header().Get(\"%s\"), \"Header %s should be set\")\n", testValue, field.Name, field.Name))
 		}
 	}
