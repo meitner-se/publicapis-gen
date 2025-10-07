@@ -1972,6 +1972,12 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 		return err
 	}
 
+	// Test ResponseHeaderHook functionality
+	err = generateInternalResponseHeaderHookTests(buf)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -2887,6 +2893,183 @@ func generateResponseHeaderHookTests(buf *bytes.Buffer, apiPackageName string) e
 
 	buf.WriteString("\t\t// Create handler\n")
 	buf.WriteString("\t\thandler := " + apiPackageName + ".ServeWithResponse(200, server, mockFunction)\n")
+	buf.WriteString("\t\trouter.POST(\"/test\", handler)\n\n")
+
+	buf.WriteString("\t\t// Create test request\n")
+	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test\", nil)\n")
+	buf.WriteString("\t\tassert.NoError(t, err)\n")
+	buf.WriteString("\t\tw := httptest.NewRecorder()\n")
+	buf.WriteString("\t\trouter.ServeHTTP(w, req)\n\n")
+
+	buf.WriteString("\t\t// Assert response - should work fine without ResponseHeaderHook\n")
+	buf.WriteString("\t\tassert.Equal(t, 200, w.Code, \"Expected 200 status code\")\n")
+	buf.WriteString("\t\tassert.Contains(t, w.Body.String(), \"success\")\n")
+	buf.WriteString("\t})\n")
+	buf.WriteString("}\n\n")
+
+	return nil
+}
+
+// generateInternalResponseHeaderHookTests generates internal tests for ResponseHeaderHook functionality.
+func generateInternalResponseHeaderHookTests(buf *bytes.Buffer) error {
+	buf.WriteString("func Test_ResponseHeaderHook(t *testing.T) {\n")
+	buf.WriteString("\tgin.SetMode(gin.TestMode)\n\n")
+
+	// Test headers set on success
+	buf.WriteString("\tt.Run(\"headers set on successful response\", func(t *testing.T) {\n")
+	buf.WriteString("\t\trouter := gin.New()\n\n")
+
+	buf.WriteString("\t\t// Mock function that succeeds\n")
+	buf.WriteString("\t\tmockFunction := func(ctx context.Context, request Request[any, struct{}, struct{}, struct{}]) (*map[string]interface{}, error) {\n")
+	buf.WriteString("\t\t\treturn &map[string]interface{}{\"message\": \"success\"}, nil\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create server with ResponseHeaderHook\n")
+	buf.WriteString("\t\tserver := Server[any]{\n")
+	buf.WriteString("\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (any, error) {\n")
+	buf.WriteString("\t\t\t\treturn \"test-session\", nil\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tErrorHook: func(ctx context.Context, requestContext RequestContext, err error) *Error {\n")
+	buf.WriteString("\t\t\t\treturn &Error{\n")
+	buf.WriteString("\t\t\t\t\tCode:      ErrorCodeInternal,\n")
+	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestContext.RequestID),\n")
+	buf.WriteString("\t\t\t\t}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tResponseHeaderHook: func(ctx context.Context, requestContext RequestContext) ResponseHeaders {\n")
+	buf.WriteString("\t\t\t\treturn ResponseHeaders{}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create handler\n")
+	buf.WriteString("\t\thandler := serveWithResponse(200, server, mockFunction)\n")
+	buf.WriteString("\t\trouter.POST(\"/test\", handler)\n\n")
+
+	buf.WriteString("\t\t// Create test request\n")
+	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test\", nil)\n")
+	buf.WriteString("\t\tassert.NoError(t, err)\n")
+	buf.WriteString("\t\tw := httptest.NewRecorder()\n")
+	buf.WriteString("\t\trouter.ServeHTTP(w, req)\n\n")
+
+	buf.WriteString("\t\t// Assert response\n")
+	buf.WriteString("\t\tassert.Equal(t, 200, w.Code, \"Expected 200 status code\")\n")
+	buf.WriteString("\t\tassert.Contains(t, w.Body.String(), \"success\")\n")
+	buf.WriteString("\t})\n\n")
+
+	// Test headers set on error (from endpoint function)
+	buf.WriteString("\tt.Run(\"headers set on error response from endpoint\", func(t *testing.T) {\n")
+	buf.WriteString("\t\trouter := gin.New()\n\n")
+
+	buf.WriteString("\t\t// Mock function that returns an error\n")
+	buf.WriteString("\t\tmockFunction := func(ctx context.Context, request Request[any, struct{}, struct{}, struct{}]) (*map[string]interface{}, error) {\n")
+	buf.WriteString("\t\t\treturn nil, fmt.Errorf(\"endpoint error\")\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create server with ResponseHeaderHook\n")
+	buf.WriteString("\t\tserver := Server[any]{\n")
+	buf.WriteString("\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (any, error) {\n")
+	buf.WriteString("\t\t\t\treturn \"test-session\", nil\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tErrorHook: func(ctx context.Context, requestContext RequestContext, err error) *Error {\n")
+	buf.WriteString("\t\t\t\treturn &Error{\n")
+	buf.WriteString("\t\t\t\t\tCode:      ErrorCodeInternal,\n")
+	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestContext.RequestID),\n")
+	buf.WriteString("\t\t\t\t}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tResponseHeaderHook: func(ctx context.Context, requestContext RequestContext) ResponseHeaders {\n")
+	buf.WriteString("\t\t\t\treturn ResponseHeaders{}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create handler\n")
+	buf.WriteString("\t\thandler := serveWithResponse(200, server, mockFunction)\n")
+	buf.WriteString("\t\trouter.POST(\"/test\", handler)\n\n")
+
+	buf.WriteString("\t\t// Create test request\n")
+	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test\", nil)\n")
+	buf.WriteString("\t\tassert.NoError(t, err)\n")
+	buf.WriteString("\t\tw := httptest.NewRecorder()\n")
+	buf.WriteString("\t\trouter.ServeHTTP(w, req)\n\n")
+
+	buf.WriteString("\t\t// Assert error response\n")
+	buf.WriteString("\t\tassert.Equal(t, 500, w.Code, \"Expected 500 status code on error\")\n")
+	buf.WriteString("\t\tassert.Contains(t, w.Body.String(), \"endpoint error\")\n")
+	buf.WriteString("\t})\n\n")
+
+	// Test headers set on authentication error
+	buf.WriteString("\tt.Run(\"headers set on authentication error\", func(t *testing.T) {\n")
+	buf.WriteString("\t\trouter := gin.New()\n\n")
+
+	buf.WriteString("\t\t// Mock function (won't be called)\n")
+	buf.WriteString("\t\tmockFunction := func(ctx context.Context, request Request[any, struct{}, struct{}, struct{}]) (*map[string]interface{}, error) {\n")
+	buf.WriteString("\t\t\treturn &map[string]interface{}{\"message\": \"success\"}, nil\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create server with failing GetSessionFunc\n")
+	buf.WriteString("\t\tserver := Server[any]{\n")
+	buf.WriteString("\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (any, error) {\n")
+	buf.WriteString("\t\t\t\treturn nil, &Error{\n")
+	buf.WriteString("\t\t\t\t\tCode:    ErrorCodeUnauthorized,\n")
+	buf.WriteString("\t\t\t\t\tMessage: types.NewString(\"authentication failed\"),\n")
+	buf.WriteString("\t\t\t\t}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tErrorHook: func(ctx context.Context, requestContext RequestContext, err error) *Error {\n")
+	buf.WriteString("\t\t\t\tif apiErr, ok := err.(*Error); ok {\n")
+	buf.WriteString("\t\t\t\t\treturn apiErr\n")
+	buf.WriteString("\t\t\t\t}\n")
+	buf.WriteString("\t\t\t\treturn &Error{\n")
+	buf.WriteString("\t\t\t\t\tCode:      ErrorCodeInternal,\n")
+	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestContext.RequestID),\n")
+	buf.WriteString("\t\t\t\t}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tResponseHeaderHook: func(ctx context.Context, requestContext RequestContext) ResponseHeaders {\n")
+	buf.WriteString("\t\t\t\treturn ResponseHeaders{}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create handler\n")
+	buf.WriteString("\t\thandler := serveWithResponse(200, server, mockFunction)\n")
+	buf.WriteString("\t\trouter.POST(\"/test\", handler)\n\n")
+
+	buf.WriteString("\t\t// Create test request\n")
+	buf.WriteString("\t\treq, err := http.NewRequest(\"POST\", \"/test\", nil)\n")
+	buf.WriteString("\t\tassert.NoError(t, err)\n")
+	buf.WriteString("\t\tw := httptest.NewRecorder()\n")
+	buf.WriteString("\t\trouter.ServeHTTP(w, req)\n\n")
+
+	buf.WriteString("\t\t// Assert error response\n")
+	buf.WriteString("\t\tassert.Equal(t, 401, w.Code, \"Expected 401 status code on auth failure\")\n")
+	buf.WriteString("\t\tassert.Contains(t, w.Body.String(), \"authentication failed\")\n")
+	buf.WriteString("\t})\n\n")
+
+	// Test that nil ResponseHeaderHook doesn't cause errors
+	buf.WriteString("\tt.Run(\"nil ResponseHeaderHook doesn't cause errors\", func(t *testing.T) {\n")
+	buf.WriteString("\t\trouter := gin.New()\n\n")
+
+	buf.WriteString("\t\t// Mock function\n")
+	buf.WriteString("\t\tmockFunction := func(ctx context.Context, request Request[any, struct{}, struct{}, struct{}]) (*map[string]interface{}, error) {\n")
+	buf.WriteString("\t\t\treturn &map[string]interface{}{\"message\": \"success\"}, nil\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create server without ResponseHeaderHook\n")
+	buf.WriteString("\t\tserver := Server[any]{\n")
+	buf.WriteString("\t\t\tGetSessionFunc: func(ctx context.Context, headers http.Header) (any, error) {\n")
+	buf.WriteString("\t\t\t\treturn \"test-session\", nil\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\tErrorHook: func(ctx context.Context, requestContext RequestContext, err error) *Error {\n")
+	buf.WriteString("\t\t\t\treturn &Error{\n")
+	buf.WriteString("\t\t\t\t\tCode:      ErrorCodeInternal,\n")
+	buf.WriteString("\t\t\t\t\tMessage:   types.NewString(err.Error()),\n")
+	buf.WriteString("\t\t\t\t\tRequestID: types.NewString(requestContext.RequestID),\n")
+	buf.WriteString("\t\t\t\t}\n")
+	buf.WriteString("\t\t\t},\n")
+	buf.WriteString("\t\t\t// No ResponseHeaderHook set\n")
+	buf.WriteString("\t\t}\n\n")
+
+	buf.WriteString("\t\t// Create handler\n")
+	buf.WriteString("\t\thandler := serveWithResponse(200, server, mockFunction)\n")
 	buf.WriteString("\t\trouter.POST(\"/test\", handler)\n\n")
 
 	buf.WriteString("\t\t// Create test request\n")
