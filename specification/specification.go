@@ -1444,6 +1444,27 @@ func (f *Field) ensureExample() {
 	}
 }
 
+// ensureExampleWithService ensures that the field has an example, setting a default one for primitive and enum types if none exists.
+func (f *Field) ensureExampleWithService(service *Service) {
+	// Skip if example already exists
+	if f.Example != "" {
+		return
+	}
+
+	// Handle primitive types
+	if isPrimitiveType(f.Type) {
+		f.Example = getDefaultExample(f.Type)
+		return
+	}
+
+	// Handle enum types - use the first enum value as the default example
+	if service != nil && service.HasEnum(f.Type) {
+		if enum := service.GetEnum(f.Type); enum != nil && len(enum.Values) > 0 {
+			f.Example = enum.Values[0].Name
+		}
+	}
+}
+
 // EndpointRequest methods
 
 // GetRequiredBodyParams returns the names of required body parameters.
@@ -1621,6 +1642,16 @@ func (s *Service) HasEnum(name string) bool {
 		}
 	}
 	return false
+}
+
+// GetEnum returns the enum with the given name, or nil if not found.
+func (s *Service) GetEnum(name string) *Enum {
+	for _, enum := range s.Enums {
+		if enum.Name == name {
+			return &enum
+		}
+	}
+	return nil
 }
 
 // GetObject returns the object with the given name, or nil if not found.
@@ -2515,7 +2546,7 @@ func parseServiceFromBytes(data []byte, fileExtension string) (*Service, error) 
 }
 
 // ensureAllFieldsHaveExamples ensures that all fields in the service have examples set.
-// This applies default examples to primitive field types that don't already have examples.
+// This applies default examples to primitive and enum field types that don't already have examples.
 func ensureAllFieldsHaveExamples(service *Service) {
 	if service == nil {
 		return
@@ -2524,35 +2555,35 @@ func ensureAllFieldsHaveExamples(service *Service) {
 	// Apply to object fields
 	for i := range service.Objects {
 		for j := range service.Objects[i].Fields {
-			service.Objects[i].Fields[j].ensureExample()
+			service.Objects[i].Fields[j].ensureExampleWithService(service)
 		}
 	}
 
 	// Apply to resource fields
 	for i := range service.Resources {
 		for j := range service.Resources[i].Fields {
-			service.Resources[i].Fields[j].Field.ensureExample()
+			service.Resources[i].Fields[j].Field.ensureExampleWithService(service)
 		}
 		// Also apply to endpoint fields
 		for j := range service.Resources[i].Endpoints {
 			endpoint := &service.Resources[i].Endpoints[j]
 			for k := range endpoint.Request.PathParams {
-				endpoint.Request.PathParams[k].ensureExample()
+				endpoint.Request.PathParams[k].ensureExampleWithService(service)
 			}
 			for k := range endpoint.Request.QueryParams {
-				endpoint.Request.QueryParams[k].ensureExample()
+				endpoint.Request.QueryParams[k].ensureExampleWithService(service)
 			}
 			for k := range endpoint.Request.BodyParams {
-				endpoint.Request.BodyParams[k].ensureExample()
+				endpoint.Request.BodyParams[k].ensureExampleWithService(service)
 			}
 			for k := range endpoint.Request.Headers {
-				endpoint.Request.Headers[k].ensureExample()
+				endpoint.Request.Headers[k].ensureExampleWithService(service)
 			}
 			for k := range endpoint.Response.BodyFields {
-				endpoint.Response.BodyFields[k].ensureExample()
+				endpoint.Response.BodyFields[k].ensureExampleWithService(service)
 			}
 			for k := range endpoint.Response.Headers {
-				endpoint.Response.Headers[k].ensureExample()
+				endpoint.Response.Headers[k].ensureExampleWithService(service)
 			}
 		}
 	}

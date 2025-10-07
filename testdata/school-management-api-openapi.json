@@ -825,6 +825,9 @@
                 "$ref": "#/components/schemas/StudentStatus"
               }
             ],
+            "examples": [
+              "Active"
+            ],
             "description": "Current status of the student"
           },
           "gradeLevel": {
@@ -832,6 +835,9 @@
               {
                 "$ref": "#/components/schemas/GradeLevel"
               }
+            ],
+            "examples": [
+              "Elementary"
             ],
             "description": "Current grade level"
           }
@@ -853,6 +859,9 @@
               {
                 "$ref": "#/components/schemas/ErrorCode"
               }
+            ],
+            "examples": [
+              "BadRequest"
             ],
             "description": "The specific error code indicating the type of error"
           },
@@ -1011,6 +1020,9 @@
                 "$ref": "#/components/schemas/StudentStatus"
               }
             ],
+            "examples": [
+              "Active"
+            ],
             "description": "Current status of the student",
             "default": "Active"
           },
@@ -1019,6 +1031,9 @@
               {
                 "$ref": "#/components/schemas/GradeLevel"
               }
+            ],
+            "examples": [
+              "Elementary"
             ],
             "description": "Current grade level"
           },
@@ -1105,6 +1120,8 @@
                 "firstName": "example",
                 "lastName": "example",
                 "studentId": "example",
+                "status": "Active",
+                "gradeLevel": "Elementary",
                 "contact": {
                   "email": "example",
                   "phone": "example"
@@ -1141,6 +1158,8 @@
                 "firstName": "example",
                 "lastName": "example",
                 "studentId": "example",
+                "status": "Active",
+                "gradeLevel": "Elementary",
                 "contact": {
                   "email": "example",
                   "phone": "example"
@@ -1267,6 +1286,12 @@
                 "studentId": [
                   "example"
                 ],
+                "status": [
+                  "Active"
+                ],
+                "gradeLevel": [
+                  "Elementary"
+                ],
                 "contact": {
                   "email": [
                     "example"
@@ -1328,6 +1353,12 @@
                 ],
                 "studentId": [
                   "example"
+                ],
+                "status": [
+                  "Active"
+                ],
+                "gradeLevel": [
+                  "Elementary"
                 ],
                 "contact": {
                   "email": [
@@ -1486,6 +1517,8 @@
                     "firstName": "example",
                     "lastName": "example",
                     "studentId": "example",
+                    "status": "Active",
+                    "gradeLevel": "Elementary",
                     "contact": {
                       "email": "example",
                       "phone": "example"
@@ -1510,6 +1543,8 @@
                     "firstName": "example",
                     "lastName": "example",
                     "studentId": "example",
+                    "status": "Active",
+                    "gradeLevel": "Elementary",
                     "contact": {
                       "email": "example",
                       "phone": "example"
@@ -1576,6 +1611,12 @@
                     "studentId": [
                       "example"
                     ],
+                    "status": [
+                      "Active"
+                    ],
+                    "gradeLevel": [
+                      "Elementary"
+                    ],
                     "contact": {
                       "email": [
                         "example"
@@ -1625,6 +1666,12 @@
                     ],
                     "studentId": [
                       "example"
+                    ],
+                    "status": [
+                      "Active"
+                    ],
+                    "gradeLevel": [
+                      "Elementary"
                     ],
                     "contact": {
                       "email": [
@@ -1790,6 +1837,10 @@
                 "$ref": "#/components/schemas/StudentStatus"
               }
             ],
+            "examples": [
+              "Active",
+              null
+            ],
             "description": "Current status of the student",
             "nullable": true
           },
@@ -1798,6 +1849,10 @@
               {
                 "$ref": "#/components/schemas/GradeLevel"
               }
+            ],
+            "examples": [
+              "Elementary",
+              null
             ],
             "description": "Current grade level",
             "nullable": true
@@ -1993,6 +2048,11 @@
           },
           "status": {
             "type": "array",
+            "examples": [
+              [
+                "Active"
+              ]
+            ],
             "items": {
               "allOf": [
                 {
@@ -2004,6 +2064,11 @@
           },
           "gradeLevel": {
             "type": "array",
+            "examples": [
+              [
+                "Elementary"
+              ]
+            ],
             "items": {
               "allOf": [
                 {
@@ -3584,7 +3649,9 @@
                       {
                         "firstName": "example",
                         "lastName": "example",
-                        "studentId": "example"
+                        "studentId": "example",
+                        "status": "Active",
+                        "gradeLevel": "Elementary"
                       }
                     ]
                   ],
@@ -3621,7 +3688,9 @@
                     {
                       "firstName": "example",
                       "lastName": "example",
-                      "studentId": "example"
+                      "studentId": "example",
+                      "status": "Active",
+                      "gradeLevel": "Elementary"
                     }
                   ],
                   "totalCount": 42,
@@ -3698,6 +3767,8 @@
                   "firstName": "example",
                   "lastName": "example",
                   "studentId": "example",
+                  "status": "Active",
+                  "gradeLevel": "Elementary",
                   "contact": {
                     "email": "example",
                     "phone": "example"
@@ -3782,6 +3853,8 @@
                   "firstName": "example",
                   "lastName": "example",
                   "studentId": "example",
+                  "status": "Active",
+                  "gradeLevel": "Elementary",
                   "contact": {
                     "email": "example",
                     "phone": "example"
@@ -3866,6 +3939,8 @@
                   "firstName": "example",
                   "lastName": "example",
                   "studentId": "example",
+                  "status": "Active",
+                  "gradeLevel": "Elementary",
                   "contact": {
                     "email": "example",
                     "phone": "example"
@@ -3906,6 +3981,8 @@
                         "firstName": "example",
                         "lastName": "example",
                         "studentId": "example",
+                        "status": "Active",
+                        "gradeLevel": "Elementary",
                         "contact": {
                           "email": "example",
                           "phone": "example"
@@ -3963,6 +4040,8 @@
                       "firstName": "example",
                       "lastName": "example",
                       "studentId": "example",
+                      "status": "Active",
+                      "gradeLevel": "Elementary",
                       "contact": {
                         "email": "example",
                         "phone": "example"
@@ -4010,6 +4089,8 @@
                         "firstName": "example",
                         "lastName": "example",
                         "studentId": "example",
+                        "status": "Active",
+                        "gradeLevel": "Elementary",
                         "contact": {
                           "email": "example",
                           "phone": "example"
@@ -4067,6 +4148,8 @@
                       "firstName": "example",
                       "lastName": "example",
                       "studentId": "example",
+                      "status": "Active",
+                      "gradeLevel": "Elementary",
                       "contact": {
                         "email": "example",
                         "phone": "example"
@@ -4436,7 +4519,9 @@
                       {
                         "firstName": "example",
                         "lastName": "example",
-                        "studentId": "example"
+                        "studentId": "example",
+                        "status": "Active",
+                        "gradeLevel": "Elementary"
                       }
                     ]
                   ],
@@ -4467,7 +4552,9 @@
                     {
                       "firstName": "example",
                       "lastName": "example",
-                      "studentId": "example"
+                      "studentId": "example",
+                      "status": "Active",
+                      "gradeLevel": "Elementary"
                     }
                   ],
                   "overwriteExisting": true
@@ -4491,6 +4578,10 @@
                       "$ref": "#/components/schemas/GradeLevel"
                     }
                   ],
+                  "examples": [
+                    "Elementary",
+                    null
+                  ],
                   "description": "Filter by specific grade level",
                   "nullable": true
                 },
@@ -4499,6 +4590,10 @@
                     {
                       "$ref": "#/components/schemas/StudentStatus"
                     }
+                  ],
+                  "examples": [
+                    "Active",
+                    null
                   ],
                   "description": "Filter by student status",
                   "nullable": true
@@ -4537,6 +4632,8 @@
               "requestExample": {
                 "summary": "Request body example",
                 "value": {
+                  "gradeLevel": "Elementary",
+                  "status": "Active",
                   "enrollmentDateFrom": "2024-01-15",
                   "enrollmentDateTo": "2024-01-15",
                   "includeInactive": true
@@ -4565,6 +4662,12 @@
                 },
                 "gradeLevel": {
                   "type": "array",
+                  "examples": [
+                    [
+                      "Elementary"
+                    ],
+                    null
+                  ],
                   "items": {
                     "allOf": [
                       {
@@ -4577,6 +4680,12 @@
                 },
                 "status": {
                   "type": "array",
+                  "examples": [
+                    [
+                      "Active"
+                    ],
+                    null
+                  ],
                   "items": {
                     "allOf": [
                       {
@@ -4618,6 +4727,12 @@
                 "summary": "Request body example",
                 "value": {
                   "nameQuery": "example",
+                  "gradeLevel": [
+                    "Elementary"
+                  ],
+                  "status": [
+                    "Active"
+                  ],
                   "enrollmentDateRange": [
                     "2024-01-15"
                   ],
@@ -4663,6 +4778,9 @@
                       "$ref": "#/components/schemas/StudentStatus"
                     }
                   ],
+                  "examples": [
+                    "Active"
+                  ],
                   "description": "Current status of the student",
                   "default": "Active"
                 },
@@ -4671,6 +4789,9 @@
                     {
                       "$ref": "#/components/schemas/GradeLevel"
                     }
+                  ],
+                  "examples": [
+                    "Elementary"
                   ],
                   "description": "Current grade level"
                 },
@@ -4730,6 +4851,8 @@
                   "firstName": "example",
                   "lastName": "example",
                   "studentId": "example",
+                  "status": "Active",
+                  "gradeLevel": "Elementary",
                   "contact": {
                     "email": "example",
                     "phone": "example"
@@ -4775,6 +4898,9 @@
                       "$ref": "#/components/schemas/StudentStatus"
                     }
                   ],
+                  "examples": [
+                    "Active"
+                  ],
                   "description": "Current status of the student",
                   "default": "Active"
                 },
@@ -4783,6 +4909,9 @@
                     {
                       "$ref": "#/components/schemas/GradeLevel"
                     }
+                  ],
+                  "examples": [
+                    "Elementary"
                   ],
                   "description": "Current grade level"
                 },
@@ -4841,6 +4970,8 @@
                 "value": {
                   "firstName": "example",
                   "lastName": "example",
+                  "status": "Active",
+                  "gradeLevel": "Elementary",
                   "contact": {
                     "email": "example",
                     "phone": "example"
@@ -4864,250 +4995,529 @@
         "content": {
           "application/json": {
             "schema": {
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/StudentsFilter"
+              "type": "object",
+              "properties": {
+                "filter": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StudentsFilter"
+                    }
+                  ],
+                  "examples": [
+                    {
+                      "equals": {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "meta": {
+                          "createdAt": "2024-01-15T10:30:00Z",
+                          "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                          "updatedAt": "2024-01-15T10:30:00Z",
+                          "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                        },
+                        "firstName": "example",
+                        "lastName": "example",
+                        "studentId": "example",
+                        "status": "Active",
+                        "gradeLevel": "Elementary",
+                        "contact": {
+                          "email": "example",
+                          "phone": "example"
+                        },
+                        "address": {
+                          "street": "example",
+                          "city": "example",
+                          "state": "example",
+                          "zipCode": "example"
+                        },
+                        "enrollmentDate": "2024-01-15",
+                        "graduationDate": "2024-01-15"
+                      },
+                      "notEquals": {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "meta": {
+                          "createdAt": "2024-01-15T10:30:00Z",
+                          "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                          "updatedAt": "2024-01-15T10:30:00Z",
+                          "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                        },
+                        "firstName": "example",
+                        "lastName": "example",
+                        "studentId": "example",
+                        "status": "Active",
+                        "gradeLevel": "Elementary",
+                        "contact": {
+                          "email": "example",
+                          "phone": "example"
+                        },
+                        "address": {
+                          "street": "example",
+                          "city": "example",
+                          "state": "example",
+                          "zipCode": "example"
+                        },
+                        "enrollmentDate": "2024-01-15",
+                        "graduationDate": "2024-01-15"
+                      },
+                      "greaterThan": {
+                        "meta": {
+                          "createdAt": "2024-01-15T10:30:00Z",
+                          "updatedAt": "2024-01-15T10:30:00Z"
+                        },
+                        "enrollmentDate": "2024-01-15",
+                        "graduationDate": "2024-01-15"
+                      },
+                      "smallerThan": {
+                        "meta": {
+                          "createdAt": "2024-01-15T10:30:00Z",
+                          "updatedAt": "2024-01-15T10:30:00Z"
+                        },
+                        "enrollmentDate": "2024-01-15",
+                        "graduationDate": "2024-01-15"
+                      },
+                      "greaterOrEqual": {
+                        "meta": {
+                          "createdAt": "2024-01-15T10:30:00Z",
+                          "updatedAt": "2024-01-15T10:30:00Z"
+                        },
+                        "enrollmentDate": "2024-01-15",
+                        "graduationDate": "2024-01-15"
+                      },
+                      "smallerOrEqual": {
+                        "meta": {
+                          "createdAt": "2024-01-15T10:30:00Z",
+                          "updatedAt": "2024-01-15T10:30:00Z"
+                        },
+                        "enrollmentDate": "2024-01-15",
+                        "graduationDate": "2024-01-15"
+                      },
+                      "contains": {
+                        "id": [
+                          "123e4567-e89b-12d3-a456-426614174000"
+                        ],
+                        "meta": {
+                          "createdBy": [
+                            "123e4567-e89b-12d3-a456-426614174000"
+                          ],
+                          "updatedBy": [
+                            "123e4567-e89b-12d3-a456-426614174000"
+                          ]
+                        },
+                        "firstName": [
+                          "example"
+                        ],
+                        "lastName": [
+                          "example"
+                        ],
+                        "studentId": [
+                          "example"
+                        ],
+                        "status": [
+                          "Active"
+                        ],
+                        "gradeLevel": [
+                          "Elementary"
+                        ],
+                        "contact": {
+                          "email": [
+                            "example"
+                          ],
+                          "phone": [
+                            "example"
+                          ]
+                        },
+                        "address": {
+                          "street": [
+                            "example"
+                          ],
+                          "city": [
+                            "example"
+                          ],
+                          "state": [
+                            "example"
+                          ],
+                          "zipCode": [
+                            "example"
+                          ]
+                        },
+                        "enrollmentDate": [
+                          "2024-01-15"
+                        ],
+                        "graduationDate": [
+                          "2024-01-15"
+                        ]
+                      },
+                      "notContains": {
+                        "id": [
+                          "123e4567-e89b-12d3-a456-426614174000"
+                        ],
+                        "meta": {
+                          "createdBy": [
+                            "123e4567-e89b-12d3-a456-426614174000"
+                          ],
+                          "updatedBy": [
+                            "123e4567-e89b-12d3-a456-426614174000"
+                          ]
+                        },
+                        "firstName": [
+                          "example"
+                        ],
+                        "lastName": [
+                          "example"
+                        ],
+                        "studentId": [
+                          "example"
+                        ],
+                        "status": [
+                          "Active"
+                        ],
+                        "gradeLevel": [
+                          "Elementary"
+                        ],
+                        "contact": {
+                          "email": [
+                            "example"
+                          ],
+                          "phone": [
+                            "example"
+                          ]
+                        },
+                        "address": {
+                          "street": [
+                            "example"
+                          ],
+                          "city": [
+                            "example"
+                          ],
+                          "state": [
+                            "example"
+                          ],
+                          "zipCode": [
+                            "example"
+                          ]
+                        },
+                        "enrollmentDate": [
+                          "2024-01-15"
+                        ],
+                        "graduationDate": [
+                          "2024-01-15"
+                        ]
+                      },
+                      "like": {
+                        "firstName": "example",
+                        "lastName": "example",
+                        "studentId": "example",
+                        "contact": {
+                          "email": "example",
+                          "phone": "example"
+                        },
+                        "address": {
+                          "street": "example",
+                          "city": "example",
+                          "state": "example",
+                          "zipCode": "example"
+                        }
+                      },
+                      "notLike": {
+                        "firstName": "example",
+                        "lastName": "example",
+                        "studentId": "example",
+                        "contact": {
+                          "email": "example",
+                          "phone": "example"
+                        },
+                        "address": {
+                          "street": "example",
+                          "city": "example",
+                          "state": "example",
+                          "zipCode": "example"
+                        }
+                      },
+                      "null": {
+                        "meta": {
+                          "createdBy": true,
+                          "updatedAt": true,
+                          "updatedBy": true
+                        },
+                        "contact": {
+                          "phone": true
+                        },
+                        "graduationDate": true
+                      },
+                      "notNull": {
+                        "meta": {
+                          "createdBy": true,
+                          "updatedAt": true,
+                          "updatedBy": true
+                        },
+                        "contact": {
+                          "phone": true
+                        },
+                        "graduationDate": true
+                      },
+                      "orCondition": true
+                    }
+                  ],
+                  "description": "Filter criteria to search for specific records"
                 }
-              ],
-              "description": "Filter criteria to search for specific records"
+              },
+              "required": [
+                "filter"
+              ]
             },
             "examples": {
               "requestExample": {
                 "summary": "Request body example",
                 "value": {
-                  "equals": {
-                    "id": "123e4567-e89b-12d3-a456-426614174000",
-                    "meta": {
-                      "createdAt": "2024-01-15T10:30:00Z",
-                      "createdBy": "123e4567-e89b-12d3-a456-426614174000",
-                      "updatedAt": "2024-01-15T10:30:00Z",
-                      "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                  "filter": {
+                    "equals": {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "meta": {
+                        "createdAt": "2024-01-15T10:30:00Z",
+                        "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                        "updatedAt": "2024-01-15T10:30:00Z",
+                        "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                      },
+                      "firstName": "example",
+                      "lastName": "example",
+                      "studentId": "example",
+                      "status": "Active",
+                      "gradeLevel": "Elementary",
+                      "contact": {
+                        "email": "example",
+                        "phone": "example"
+                      },
+                      "address": {
+                        "street": "example",
+                        "city": "example",
+                        "state": "example",
+                        "zipCode": "example"
+                      },
+                      "enrollmentDate": "2024-01-15",
+                      "graduationDate": "2024-01-15"
                     },
-                    "firstName": "example",
-                    "lastName": "example",
-                    "studentId": "example",
-                    "contact": {
-                      "email": "example",
-                      "phone": "example"
+                    "notEquals": {
+                      "id": "123e4567-e89b-12d3-a456-426614174000",
+                      "meta": {
+                        "createdAt": "2024-01-15T10:30:00Z",
+                        "createdBy": "123e4567-e89b-12d3-a456-426614174000",
+                        "updatedAt": "2024-01-15T10:30:00Z",
+                        "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                      },
+                      "firstName": "example",
+                      "lastName": "example",
+                      "studentId": "example",
+                      "status": "Active",
+                      "gradeLevel": "Elementary",
+                      "contact": {
+                        "email": "example",
+                        "phone": "example"
+                      },
+                      "address": {
+                        "street": "example",
+                        "city": "example",
+                        "state": "example",
+                        "zipCode": "example"
+                      },
+                      "enrollmentDate": "2024-01-15",
+                      "graduationDate": "2024-01-15"
                     },
-                    "address": {
-                      "street": "example",
-                      "city": "example",
-                      "state": "example",
-                      "zipCode": "example"
+                    "greaterThan": {
+                      "meta": {
+                        "createdAt": "2024-01-15T10:30:00Z",
+                        "updatedAt": "2024-01-15T10:30:00Z"
+                      },
+                      "enrollmentDate": "2024-01-15",
+                      "graduationDate": "2024-01-15"
                     },
-                    "enrollmentDate": "2024-01-15",
-                    "graduationDate": "2024-01-15"
-                  },
-                  "notEquals": {
-                    "id": "123e4567-e89b-12d3-a456-426614174000",
-                    "meta": {
-                      "createdAt": "2024-01-15T10:30:00Z",
-                      "createdBy": "123e4567-e89b-12d3-a456-426614174000",
-                      "updatedAt": "2024-01-15T10:30:00Z",
-                      "updatedBy": "123e4567-e89b-12d3-a456-426614174000"
+                    "smallerThan": {
+                      "meta": {
+                        "createdAt": "2024-01-15T10:30:00Z",
+                        "updatedAt": "2024-01-15T10:30:00Z"
+                      },
+                      "enrollmentDate": "2024-01-15",
+                      "graduationDate": "2024-01-15"
                     },
-                    "firstName": "example",
-                    "lastName": "example",
-                    "studentId": "example",
-                    "contact": {
-                      "email": "example",
-                      "phone": "example"
+                    "greaterOrEqual": {
+                      "meta": {
+                        "createdAt": "2024-01-15T10:30:00Z",
+                        "updatedAt": "2024-01-15T10:30:00Z"
+                      },
+                      "enrollmentDate": "2024-01-15",
+                      "graduationDate": "2024-01-15"
                     },
-                    "address": {
-                      "street": "example",
-                      "city": "example",
-                      "state": "example",
-                      "zipCode": "example"
+                    "smallerOrEqual": {
+                      "meta": {
+                        "createdAt": "2024-01-15T10:30:00Z",
+                        "updatedAt": "2024-01-15T10:30:00Z"
+                      },
+                      "enrollmentDate": "2024-01-15",
+                      "graduationDate": "2024-01-15"
                     },
-                    "enrollmentDate": "2024-01-15",
-                    "graduationDate": "2024-01-15"
-                  },
-                  "greaterThan": {
-                    "meta": {
-                      "createdAt": "2024-01-15T10:30:00Z",
-                      "updatedAt": "2024-01-15T10:30:00Z"
-                    },
-                    "enrollmentDate": "2024-01-15",
-                    "graduationDate": "2024-01-15"
-                  },
-                  "smallerThan": {
-                    "meta": {
-                      "createdAt": "2024-01-15T10:30:00Z",
-                      "updatedAt": "2024-01-15T10:30:00Z"
-                    },
-                    "enrollmentDate": "2024-01-15",
-                    "graduationDate": "2024-01-15"
-                  },
-                  "greaterOrEqual": {
-                    "meta": {
-                      "createdAt": "2024-01-15T10:30:00Z",
-                      "updatedAt": "2024-01-15T10:30:00Z"
-                    },
-                    "enrollmentDate": "2024-01-15",
-                    "graduationDate": "2024-01-15"
-                  },
-                  "smallerOrEqual": {
-                    "meta": {
-                      "createdAt": "2024-01-15T10:30:00Z",
-                      "updatedAt": "2024-01-15T10:30:00Z"
-                    },
-                    "enrollmentDate": "2024-01-15",
-                    "graduationDate": "2024-01-15"
-                  },
-                  "contains": {
-                    "id": [
-                      "123e4567-e89b-12d3-a456-426614174000"
-                    ],
-                    "meta": {
-                      "createdBy": [
+                    "contains": {
+                      "id": [
                         "123e4567-e89b-12d3-a456-426614174000"
                       ],
-                      "updatedBy": [
+                      "meta": {
+                        "createdBy": [
+                          "123e4567-e89b-12d3-a456-426614174000"
+                        ],
+                        "updatedBy": [
+                          "123e4567-e89b-12d3-a456-426614174000"
+                        ]
+                      },
+                      "firstName": [
+                        "example"
+                      ],
+                      "lastName": [
+                        "example"
+                      ],
+                      "studentId": [
+                        "example"
+                      ],
+                      "status": [
+                        "Active"
+                      ],
+                      "gradeLevel": [
+                        "Elementary"
+                      ],
+                      "contact": {
+                        "email": [
+                          "example"
+                        ],
+                        "phone": [
+                          "example"
+                        ]
+                      },
+                      "address": {
+                        "street": [
+                          "example"
+                        ],
+                        "city": [
+                          "example"
+                        ],
+                        "state": [
+                          "example"
+                        ],
+                        "zipCode": [
+                          "example"
+                        ]
+                      },
+                      "enrollmentDate": [
+                        "2024-01-15"
+                      ],
+                      "graduationDate": [
+                        "2024-01-15"
+                      ]
+                    },
+                    "notContains": {
+                      "id": [
                         "123e4567-e89b-12d3-a456-426614174000"
+                      ],
+                      "meta": {
+                        "createdBy": [
+                          "123e4567-e89b-12d3-a456-426614174000"
+                        ],
+                        "updatedBy": [
+                          "123e4567-e89b-12d3-a456-426614174000"
+                        ]
+                      },
+                      "firstName": [
+                        "example"
+                      ],
+                      "lastName": [
+                        "example"
+                      ],
+                      "studentId": [
+                        "example"
+                      ],
+                      "status": [
+                        "Active"
+                      ],
+                      "gradeLevel": [
+                        "Elementary"
+                      ],
+                      "contact": {
+                        "email": [
+                          "example"
+                        ],
+                        "phone": [
+                          "example"
+                        ]
+                      },
+                      "address": {
+                        "street": [
+                          "example"
+                        ],
+                        "city": [
+                          "example"
+                        ],
+                        "state": [
+                          "example"
+                        ],
+                        "zipCode": [
+                          "example"
+                        ]
+                      },
+                      "enrollmentDate": [
+                        "2024-01-15"
+                      ],
+                      "graduationDate": [
+                        "2024-01-15"
                       ]
                     },
-                    "firstName": [
-                      "example"
-                    ],
-                    "lastName": [
-                      "example"
-                    ],
-                    "studentId": [
-                      "example"
-                    ],
-                    "contact": {
-                      "email": [
-                        "example"
-                      ],
-                      "phone": [
-                        "example"
-                      ]
+                    "like": {
+                      "firstName": "example",
+                      "lastName": "example",
+                      "studentId": "example",
+                      "contact": {
+                        "email": "example",
+                        "phone": "example"
+                      },
+                      "address": {
+                        "street": "example",
+                        "city": "example",
+                        "state": "example",
+                        "zipCode": "example"
+                      }
                     },
-                    "address": {
-                      "street": [
-                        "example"
-                      ],
-                      "city": [
-                        "example"
-                      ],
-                      "state": [
-                        "example"
-                      ],
-                      "zipCode": [
-                        "example"
-                      ]
+                    "notLike": {
+                      "firstName": "example",
+                      "lastName": "example",
+                      "studentId": "example",
+                      "contact": {
+                        "email": "example",
+                        "phone": "example"
+                      },
+                      "address": {
+                        "street": "example",
+                        "city": "example",
+                        "state": "example",
+                        "zipCode": "example"
+                      }
                     },
-                    "enrollmentDate": [
-                      "2024-01-15"
-                    ],
-                    "graduationDate": [
-                      "2024-01-15"
-                    ]
-                  },
-                  "notContains": {
-                    "id": [
-                      "123e4567-e89b-12d3-a456-426614174000"
-                    ],
-                    "meta": {
-                      "createdBy": [
-                        "123e4567-e89b-12d3-a456-426614174000"
-                      ],
-                      "updatedBy": [
-                        "123e4567-e89b-12d3-a456-426614174000"
-                      ]
+                    "null": {
+                      "meta": {
+                        "createdBy": true,
+                        "updatedAt": true,
+                        "updatedBy": true
+                      },
+                      "contact": {
+                        "phone": true
+                      },
+                      "graduationDate": true
                     },
-                    "firstName": [
-                      "example"
-                    ],
-                    "lastName": [
-                      "example"
-                    ],
-                    "studentId": [
-                      "example"
-                    ],
-                    "contact": {
-                      "email": [
-                        "example"
-                      ],
-                      "phone": [
-                        "example"
-                      ]
+                    "notNull": {
+                      "meta": {
+                        "createdBy": true,
+                        "updatedAt": true,
+                        "updatedBy": true
+                      },
+                      "contact": {
+                        "phone": true
+                      },
+                      "graduationDate": true
                     },
-                    "address": {
-                      "street": [
-                        "example"
-                      ],
-                      "city": [
-                        "example"
-                      ],
-                      "state": [
-                        "example"
-                      ],
-                      "zipCode": [
-                        "example"
-                      ]
-                    },
-                    "enrollmentDate": [
-                      "2024-01-15"
-                    ],
-                    "graduationDate": [
-                      "2024-01-15"
-                    ]
-                  },
-                  "like": {
-                    "firstName": "example",
-                    "lastName": "example",
-                    "studentId": "example",
-                    "contact": {
-                      "email": "example",
-                      "phone": "example"
-                    },
-                    "address": {
-                      "street": "example",
-                      "city": "example",
-                      "state": "example",
-                      "zipCode": "example"
-                    }
-                  },
-                  "notLike": {
-                    "firstName": "example",
-                    "lastName": "example",
-                    "studentId": "example",
-                    "contact": {
-                      "email": "example",
-                      "phone": "example"
-                    },
-                    "address": {
-                      "street": "example",
-                      "city": "example",
-                      "state": "example",
-                      "zipCode": "example"
-                    }
-                  },
-                  "null": {
-                    "meta": {
-                      "createdBy": true,
-                      "updatedAt": true,
-                      "updatedBy": true
-                    },
-                    "contact": {
-                      "phone": true
-                    },
-                    "graduationDate": true
-                  },
-                  "notNull": {
-                    "meta": {
-                      "createdBy": true,
-                      "updatedAt": true,
-                      "updatedBy": true
-                    },
-                    "contact": {
-                      "phone": true
-                    },
-                    "graduationDate": true
-                  },
-                  "orCondition": true
+                    "orCondition": true
+                  }
                 }
               }
             }
