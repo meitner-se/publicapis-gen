@@ -38,6 +38,18 @@ func convertOpenAPIPathToGin(path string) string {
 	return result
 }
 
+// toKebabCase converts PascalCase to kebab-case for HTTP header names
+func toKebabCase(s string) string {
+	var result []rune
+	for i, r := range s {
+		if i > 0 && r >= 'A' && r <= 'Z' {
+			result = append(result, '-')
+		}
+		result = append(result, r)
+	}
+	return string(result)
+}
+
 func GenerateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString(disclaimerComment)
 	buf.WriteString("package api\n\n")
@@ -47,14 +59,7 @@ func GenerateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("\t\"embed\"\n")
 	buf.WriteString("\t\"encoding/json\"\n")
 	buf.WriteString("\t\"fmt\"\n")
-	buf.WriteString("\t\"net/http\"\n")
-
-	// Only import reflect if there are response headers
-	if len(service.ResponseHeaders) > 0 {
-		buf.WriteString("\t\"reflect\"\n")
-	}
-
-	buf.WriteString("\n")
+	buf.WriteString("\t\"net/http\"\n\n")
 	buf.WriteString(fmt.Sprintf("\t\"%s\"\n", "github.com/google/uuid"))
 	buf.WriteString(fmt.Sprintf("\t\"%s\"\n", "github.com/gin-gonic/gin"))
 	buf.WriteString(fmt.Sprintf("\t\"%s\"\n", "github.com/meitner-se/go-types"))
@@ -566,25 +571,17 @@ func setResponseHeaders(c *gin.Context, headers ResponseHeaders) {
 		}
 	}
 
-	// Use reflection to iterate over the struct fields
-	v := reflect.ValueOf(headers)
-	t := v.Type()
-
-	for i := 0; i < v.NumField(); i++ {
-		field := v.Field(i)
-		fieldType := t.Field(i)
-		
-		// Convert field name from PascalCase to kebab-case for HTTP headers
-		headerName := toKebabCase(fieldType.Name)
-		headerVal := headerValue(field.Interface())
-		
-		if headerVal != "" {
-			c.Header(headerName, headerVal)
+`)
+		// Generate explicit header setting code for each response header
+		for _, field := range service.ResponseHeaders {
+			headerName := toKebabCase(field.Name)
+			buf.WriteString(fmt.Sprintf("\tc.Header(\"%s\", headerValue(headers.%s))\n", headerName, field.Name))
 		}
-	}
-}
 
-// toKebabCase converts PascalCase to kebab-case
+		buf.WriteString("}\n\n")
+
+		// Generate toKebabCase helper function
+		buf.WriteString(`// toKebabCase converts PascalCase to kebab-case
 func toKebabCase(s string) string {
 	var result []rune
 	for i, r := range s {
