@@ -38,6 +38,11 @@ func convertOpenAPIPathToGin(path string) string {
 	return result
 }
 
+// sanitizeHeaderName converts a header name to a valid Go identifier by removing hyphens
+func sanitizeHeaderName(name string) string {
+	return strings.ReplaceAll(name, "-", "")
+}
+
 func GenerateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString(disclaimerComment)
 	buf.WriteString("package api\n\n")
@@ -506,7 +511,9 @@ func generateResponseHeaderTypes(buf *bytes.Buffer, service *specification.Servi
 	buf.WriteString("// ResponseHeaders contains the common response headers returned by all endpoints\n")
 	buf.WriteString("type ResponseHeaders struct {\n")
 	for _, field := range service.ResponseHeaders {
-		buf.WriteString(fmt.Sprintf("\t%s %s\n", field.Name, getTypeForGo(field, service)))
+		// Sanitize field name to ensure it's a valid Go identifier (remove hyphens)
+		fieldName := sanitizeHeaderName(field.Name)
+		buf.WriteString(fmt.Sprintf("\t%s %s\n", fieldName, getTypeForGo(field, service)))
 	}
 	buf.WriteString("}\n\n")
 
@@ -536,7 +543,9 @@ func setResponseHeaders(c *gin.Context, headers ResponseHeaders) {
 	// Generate explicit header setting code for each response header
 	if len(service.ResponseHeaders) > 0 {
 		for _, field := range service.ResponseHeaders {
-			buf.WriteString(fmt.Sprintf("\tc.Header(\"%s\", headers.%s.String())\n", field.Name, field.Name))
+			// Use original name for HTTP header, sanitized name for Go struct field
+			fieldName := sanitizeHeaderName(field.Name)
+			buf.WriteString(fmt.Sprintf("\tc.Header(\"%s\", headers.%s.String())\n", field.Name, fieldName))
 		}
 	}
 
