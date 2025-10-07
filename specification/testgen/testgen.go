@@ -916,7 +916,7 @@ func generateUtilityTests(buf *bytes.Buffer, service *specification.Service, api
 	}
 
 	// Test ResponseHeaderHook functionality
-	err = generateResponseHeaderHookTests(buf, apiPackageName)
+	err = generateResponseHeaderHookTests(buf, service, apiPackageName)
 	if err != nil {
 		return err
 	}
@@ -1973,7 +1973,7 @@ func generateInternalUtilityTests(buf *bytes.Buffer, service *specification.Serv
 	}
 
 	// Test ResponseHeaderHook functionality
-	err = generateInternalResponseHeaderHookTests(buf)
+	err = generateInternalResponseHeaderHookTests(buf, service)
 	if err != nil {
 		return err
 	}
@@ -2734,7 +2734,7 @@ func generateSessionHookTests(buf *bytes.Buffer, apiPackageName string) error {
 }
 
 // generateResponseHeaderHookTests generates tests for ResponseHeaderHook functionality.
-func generateResponseHeaderHookTests(buf *bytes.Buffer, apiPackageName string) error {
+func generateResponseHeaderHookTests(buf *bytes.Buffer, service *specification.Service, apiPackageName string) error {
 	buf.WriteString("func Test_ResponseHeaderHook(t *testing.T) {\n")
 	buf.WriteString("\tgin.SetMode(gin.TestMode)\n\n")
 
@@ -2760,7 +2760,9 @@ func generateResponseHeaderHookTests(buf *bytes.Buffer, apiPackageName string) e
 	buf.WriteString("\t\t\t\t}\n")
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t\tResponseHeaderHook: func(ctx context.Context, requestContext " + apiPackageName + ".RequestContext) " + apiPackageName + ".ResponseHeaders {\n")
-	buf.WriteString("\t\t\t\treturn " + apiPackageName + ".ResponseHeaders{}\n")
+	buf.WriteString("\t\t\t\treturn " + apiPackageName + ".ResponseHeaders{\n")
+	generateHeaderPopulation(buf, service, apiPackageName+".")
+	buf.WriteString("\t\t\t\t}\n")
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t}\n\n")
 
@@ -2777,6 +2779,8 @@ func generateResponseHeaderHookTests(buf *bytes.Buffer, apiPackageName string) e
 	buf.WriteString("\t\t// Assert response\n")
 	buf.WriteString("\t\tassert.Equal(t, 200, w.Code, \"Expected 200 status code\")\n")
 	buf.WriteString("\t\tassert.Contains(t, w.Body.String(), \"success\")\n")
+	buf.WriteString("\t\t// Assert response headers are set\n")
+	generateHeaderAssertions(buf, service)
 	buf.WriteString("\t})\n\n")
 
 	// Test headers set on error (from endpoint function)
@@ -2911,7 +2915,7 @@ func generateResponseHeaderHookTests(buf *bytes.Buffer, apiPackageName string) e
 }
 
 // generateInternalResponseHeaderHookTests generates internal tests for ResponseHeaderHook functionality.
-func generateInternalResponseHeaderHookTests(buf *bytes.Buffer) error {
+func generateInternalResponseHeaderHookTests(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("func Test_ResponseHeaderHook(t *testing.T) {\n")
 	buf.WriteString("\tgin.SetMode(gin.TestMode)\n\n")
 
@@ -3085,4 +3089,56 @@ func generateInternalResponseHeaderHookTests(buf *bytes.Buffer) error {
 	buf.WriteString("}\n\n")
 
 	return nil
+}
+
+// generateHeaderPopulation generates code to populate ResponseHeaders struct fields
+func generateHeaderPopulation(buf *bytes.Buffer, service *specification.Service, packagePrefix string) {
+	if len(service.ResponseHeaders) == 0 {
+		return
+	}
+
+	for _, field := range service.ResponseHeaders {
+		fieldName := sanitizeHeaderName(field.Name)
+		testValue := fmt.Sprintf("test-%s-value", strings.ToLower(field.Name))
+
+		// Generate field assignment based on type
+		switch field.Type {
+		case "String":
+			buf.WriteString(fmt.Sprintf("\t\t\t\t\t%s: types.NewString(\"%s\"),\n", fieldName, testValue))
+		case "Int":
+			buf.WriteString(fmt.Sprintf("\t\t\t\t\t%s: types.NewInt(12345),\n", fieldName))
+		case "UUID":
+			buf.WriteString(fmt.Sprintf("\t\t\t\t\t%s: types.NewUUID(uuid.New()),\n", fieldName))
+		default:
+			// For custom types, try to use NewString
+			buf.WriteString(fmt.Sprintf("\t\t\t\t\t%s: types.NewString(\"%s\"),\n", fieldName, testValue))
+		}
+	}
+}
+
+// generateHeaderAssertions generates test assertions for response headers
+func generateHeaderAssertions(buf *bytes.Buffer, service *specification.Service) {
+	if len(service.ResponseHeaders) == 0 {
+		return
+	}
+
+	for _, field := range service.ResponseHeaders {
+		testValue := fmt.Sprintf("test-%s-value", strings.ToLower(field.Name))
+
+		switch field.Type {
+		case "String":
+			buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, \"%s\", w.Header().Get(\"%s\"), \"Header %s should be set\")\n", testValue, field.Name, field.Name))
+		case "Int":
+			buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, \"12345\", w.Header().Get(\"%s\"), \"Header %s should be set\")\n", field.Name, field.Name))
+		case "UUID":
+			buf.WriteString(fmt.Sprintf("\t\tassert.NotEmpty(t, w.Header().Get(\"%s\"), \"Header %s should be set\")\n", field.Name, field.Name))
+		default:
+			buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, \"%s\", w.Header().Get(\"%s\"), \"Header %s should be set\")\n", testValue, field.Name, field.Name))
+		}
+	}
+}
+
+// sanitizeHeaderName removes hyphens from header names to create valid Go identifiers
+func sanitizeHeaderName(name string) string {
+	return strings.ReplaceAll(name, "-", "")
 }
