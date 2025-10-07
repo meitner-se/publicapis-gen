@@ -38,18 +38,6 @@ func convertOpenAPIPathToGin(path string) string {
 	return result
 }
 
-// toKebabCase converts PascalCase to kebab-case for HTTP header names
-func toKebabCase(s string) string {
-	var result []rune
-	for i, r := range s {
-		if i > 0 && r >= 'A' && r <= 'Z' {
-			result = append(result, '-')
-		}
-		result = append(result, r)
-	}
-	return string(result)
-}
-
 func GenerateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString(disclaimerComment)
 	buf.WriteString("package api\n\n")
@@ -574,26 +562,10 @@ func setResponseHeaders(c *gin.Context, headers ResponseHeaders) {
 `)
 		// Generate explicit header setting code for each response header
 		for _, field := range service.ResponseHeaders {
-			headerName := toKebabCase(field.Name)
-			buf.WriteString(fmt.Sprintf("\tc.Header(\"%s\", headerValue(headers.%s))\n", headerName, field.Name))
+			buf.WriteString(fmt.Sprintf("\tc.Header(\"%s\", headerValue(headers.%s))\n", field.Name, field.Name))
 		}
 
 		buf.WriteString("}\n\n")
-
-		// Generate toKebabCase helper function
-		buf.WriteString(`// toKebabCase converts PascalCase to kebab-case
-func toKebabCase(s string) string {
-	var result []rune
-	for i, r := range s {
-		if i > 0 && r >= 'A' && r <= 'Z' {
-			result = append(result, '-')
-		}
-		result = append(result, r)
-	}
-	return string(result)
-}
-
-`)
 	}
 
 	// Generate serveWithResponse with conditional ResponseHeaderHook call

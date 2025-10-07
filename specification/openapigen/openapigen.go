@@ -1407,7 +1407,7 @@ func (g *generator) createResponseHeaders(service *specification.Service) *order
 			Description: headerField.Description,
 			Schema:      base.CreateSchemaProxy(g.createParameterSchema(headerField, service)),
 		}
-		headers.Set(headerField.TagJSON(), header)
+		headers.Set(headerField.Name, header)
 	}
 	return headers
 }
