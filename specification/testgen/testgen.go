@@ -2805,7 +2805,9 @@ func generateResponseHeaderHookTests(buf *bytes.Buffer, service *specification.S
 	buf.WriteString("\t\t\t\t}\n")
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t\tResponseHeaderHook: func(ctx context.Context, requestContext " + apiPackageName + ".RequestContext) " + apiPackageName + ".ResponseHeaders {\n")
-	buf.WriteString("\t\t\t\treturn " + apiPackageName + ".ResponseHeaders{}\n")
+	buf.WriteString("\t\t\t\treturn " + apiPackageName + ".ResponseHeaders{\n")
+	generateHeaderPopulation(buf, service, apiPackageName+".")
+	buf.WriteString("\t\t\t\t}\n")
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t}\n\n")
 
@@ -2822,6 +2824,8 @@ func generateResponseHeaderHookTests(buf *bytes.Buffer, service *specification.S
 	buf.WriteString("\t\t// Assert error response\n")
 	buf.WriteString("\t\tassert.Equal(t, 500, w.Code, \"Expected 500 status code on error\")\n")
 	buf.WriteString("\t\tassert.Contains(t, w.Body.String(), \"endpoint error\")\n")
+	buf.WriteString("\t\t// Assert response headers are set even on error\n")
+	generateHeaderAssertions(buf, service)
 	buf.WriteString("\t})\n\n")
 
 	// Test headers set on authentication error
@@ -2852,7 +2856,9 @@ func generateResponseHeaderHookTests(buf *bytes.Buffer, service *specification.S
 	buf.WriteString("\t\t\t\t}\n")
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t\tResponseHeaderHook: func(ctx context.Context, requestContext " + apiPackageName + ".RequestContext) " + apiPackageName + ".ResponseHeaders {\n")
-	buf.WriteString("\t\t\t\treturn " + apiPackageName + ".ResponseHeaders{}\n")
+	buf.WriteString("\t\t\t\treturn " + apiPackageName + ".ResponseHeaders{\n")
+	generateHeaderPopulation(buf, service, apiPackageName+".")
+	buf.WriteString("\t\t\t\t}\n")
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t}\n\n")
 
@@ -2869,6 +2875,8 @@ func generateResponseHeaderHookTests(buf *bytes.Buffer, service *specification.S
 	buf.WriteString("\t\t// Assert error response\n")
 	buf.WriteString("\t\tassert.Equal(t, 401, w.Code, \"Expected 401 status code on auth failure\")\n")
 	buf.WriteString("\t\tassert.Contains(t, w.Body.String(), \"authentication failed\")\n")
+	buf.WriteString("\t\t// Assert response headers are set even on auth failure\n")
+	generateHeaderAssertions(buf, service)
 	buf.WriteString("\t})\n\n")
 
 	// Test that nil ResponseHeaderHook doesn't cause errors
@@ -2941,7 +2949,9 @@ func generateInternalResponseHeaderHookTests(buf *bytes.Buffer, service *specifi
 	buf.WriteString("\t\t\t\t}\n")
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t\tResponseHeaderHook: func(ctx context.Context, requestContext RequestContext) ResponseHeaders {\n")
-	buf.WriteString("\t\t\t\treturn ResponseHeaders{}\n")
+	buf.WriteString("\t\t\t\treturn ResponseHeaders{\n")
+	generateHeaderPopulation(buf, service, "")
+	buf.WriteString("\t\t\t\t}\n")
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t}\n\n")
 
@@ -2958,6 +2968,8 @@ func generateInternalResponseHeaderHookTests(buf *bytes.Buffer, service *specifi
 	buf.WriteString("\t\t// Assert response\n")
 	buf.WriteString("\t\tassert.Equal(t, 200, w.Code, \"Expected 200 status code\")\n")
 	buf.WriteString("\t\tassert.Contains(t, w.Body.String(), \"success\")\n")
+	buf.WriteString("\t\t// Assert response headers are set\n")
+	generateHeaderAssertions(buf, service)
 	buf.WriteString("\t})\n\n")
 
 	// Test headers set on error (from endpoint function)
@@ -2982,7 +2994,9 @@ func generateInternalResponseHeaderHookTests(buf *bytes.Buffer, service *specifi
 	buf.WriteString("\t\t\t\t}\n")
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t\tResponseHeaderHook: func(ctx context.Context, requestContext RequestContext) ResponseHeaders {\n")
-	buf.WriteString("\t\t\t\treturn ResponseHeaders{}\n")
+	buf.WriteString("\t\t\t\treturn ResponseHeaders{\n")
+	generateHeaderPopulation(buf, service, "")
+	buf.WriteString("\t\t\t\t}\n")
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t}\n\n")
 
@@ -2999,6 +3013,8 @@ func generateInternalResponseHeaderHookTests(buf *bytes.Buffer, service *specifi
 	buf.WriteString("\t\t// Assert error response\n")
 	buf.WriteString("\t\tassert.Equal(t, 500, w.Code, \"Expected 500 status code on error\")\n")
 	buf.WriteString("\t\tassert.Contains(t, w.Body.String(), \"endpoint error\")\n")
+	buf.WriteString("\t\t// Assert response headers are set even on error\n")
+	generateHeaderAssertions(buf, service)
 	buf.WriteString("\t})\n\n")
 
 	// Test headers set on authentication error
@@ -3029,7 +3045,9 @@ func generateInternalResponseHeaderHookTests(buf *bytes.Buffer, service *specifi
 	buf.WriteString("\t\t\t\t}\n")
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t\tResponseHeaderHook: func(ctx context.Context, requestContext RequestContext) ResponseHeaders {\n")
-	buf.WriteString("\t\t\t\treturn ResponseHeaders{}\n")
+	buf.WriteString("\t\t\t\treturn ResponseHeaders{\n")
+	generateHeaderPopulation(buf, service, "")
+	buf.WriteString("\t\t\t\t}\n")
 	buf.WriteString("\t\t\t},\n")
 	buf.WriteString("\t\t}\n\n")
 
@@ -3046,6 +3064,8 @@ func generateInternalResponseHeaderHookTests(buf *bytes.Buffer, service *specifi
 	buf.WriteString("\t\t// Assert error response\n")
 	buf.WriteString("\t\tassert.Equal(t, 401, w.Code, \"Expected 401 status code on auth failure\")\n")
 	buf.WriteString("\t\tassert.Contains(t, w.Body.String(), \"authentication failed\")\n")
+	buf.WriteString("\t\t// Assert response headers are set even on auth failure\n")
+	generateHeaderAssertions(buf, service)
 	buf.WriteString("\t})\n\n")
 
 	// Test that nil ResponseHeaderHook doesn't cause errors
