@@ -19,6 +19,14 @@ import (
 	"github.com/meitner-se/publicapis-gen/specification/testgen"
 )
 
+// Version information - can be set at build time using ldflags:
+// go build -ldflags="-X main.version=1.0.0 -X main.commit=abc123 -X main.date=2025-01-01"
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
+
 // Error messages and log keys
 const (
 	errorNotImplemented = "not implemented"
@@ -96,6 +104,7 @@ const (
 const (
 	commandGenerate     = "generate"
 	commandDiff         = "diff"
+	commandVersion      = "version"
 	commandHelp         = "help"
 	errorInvalidCommand = "invalid command"
 	errorMissingCommand = "missing command"
@@ -104,9 +113,10 @@ const (
 // Command usage messages
 const (
 	mainUsageDescription     = "publicapis-gen - Generate API specifications and OpenAPI documents"
-	mainUsageCommands        = "\nAvailable Commands:\n  generate    Generate API specifications and OpenAPI documents\n  diff        Check for differences between generated files and files on disk\n  help        Show help for commands\n\nUse \"publicapis-gen [command] --help\" for more information about a command."
+	mainUsageCommands        = "\nAvailable Commands:\n  generate    Generate API specifications and OpenAPI documents\n  diff        Check for differences between generated files and files on disk\n  version     Show version information\n  help        Show help for commands\n\nUse \"publicapis-gen [command] --help\" for more information about a command."
 	generateUsageDescription = "Generate API specifications and OpenAPI documents from specification files"
 	diffUsageDescription     = "Check for differences between generated files and files on disk"
+	versionUsageDescription  = "Show version information for publicapis-gen"
 )
 
 // Job represents a single generation job in the config file
@@ -147,6 +157,8 @@ func run(ctx context.Context) error {
 		return runGenerateCommand(ctx, os.Args[2:])
 	case commandDiff:
 		return runDiffCommand(ctx, os.Args[2:])
+	case commandVersion:
+		return runVersionCommand()
 	case commandHelp:
 		if len(os.Args) >= 3 {
 			return showCommandHelp(os.Args[2])
@@ -156,6 +168,8 @@ func run(ctx context.Context) error {
 	case "-help", "--help", "-h":
 		showMainUsage()
 		return nil
+	case "-v", "--version", "-version":
+		return runVersionCommand()
 	default:
 		showMainUsage()
 		return fmt.Errorf("%s: unknown command '%s'", errorInvalidCommand, command)
@@ -175,6 +189,9 @@ func showCommandHelp(command string) error {
 		return nil
 	case commandDiff:
 		showDiffUsage()
+		return nil
+	case commandVersion:
+		showVersionUsage()
 		return nil
 	default:
 		showMainUsage()
@@ -206,6 +223,24 @@ func showDiffUsage() {
 	fmt.Fprintf(os.Stderr, "  # Using default config file (automatically detects publicapis.yaml or publicapis.yml)\n")
 	fmt.Fprintf(os.Stderr, "  publicapis-gen diff\n")
 	fmt.Fprintf(os.Stderr, "  publicapis-gen diff -log-level=info\n")
+}
+
+func showVersionUsage() {
+	fmt.Fprintf(os.Stderr, "%s\n\n", versionUsageDescription)
+	fmt.Fprintf(os.Stderr, "Usage: %s version\n\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "Displays the version, commit hash, and build date of publicapis-gen.\n")
+	fmt.Fprintf(os.Stderr, "\nExamples:\n")
+	fmt.Fprintf(os.Stderr, "  publicapis-gen version\n")
+	fmt.Fprintf(os.Stderr, "  publicapis-gen -v\n")
+	fmt.Fprintf(os.Stderr, "  publicapis-gen --version\n")
+}
+
+func runVersionCommand() error {
+	fmt.Printf("publicapis-gen\n")
+	fmt.Printf("  Version: %s\n", version)
+	fmt.Printf("  Commit:  %s\n", commit)
+	fmt.Printf("  Built:   %s\n", date)
+	return nil
 }
 
 func runGenerateCommand(ctx context.Context, args []string) error {
