@@ -1395,6 +1395,23 @@ func (g *generator) generateAutoErrorDescription(resourceName, endpointName, sta
 	}
 }
 
+// createResponseHeaders creates an ordered map of response headers from the service's common response headers.
+func (g *generator) createResponseHeaders(service *specification.Service) *orderedmap.Map[string, *v3.Header] {
+	if len(service.ResponseHeaders) == 0 {
+		return nil
+	}
+
+	headers := orderedmap.New[string, *v3.Header]()
+	for _, headerField := range service.ResponseHeaders {
+		header := &v3.Header{
+			Description: headerField.Description,
+			Schema:      base.CreateSchemaProxy(g.createParameterSchema(headerField, service)),
+		}
+		headers.Set(headerField.Name, header)
+	}
+	return headers
+}
+
 // createComponentResponse creates a v3.Response for the components section.
 func (g *generator) createComponentResponse(response specification.EndpointResponse, resourceName, endpointName string, service *specification.Service) *v3.Response {
 	componentResponse := &v3.Response{}
@@ -1403,6 +1420,11 @@ func (g *generator) createComponentResponse(response specification.EndpointRespo
 	description := g.generateAutoResponseDescription(resourceName, endpointName, response.Description)
 	if description != "" {
 		componentResponse.Description = description
+	}
+
+	// Add common response headers
+	if headers := g.createResponseHeaders(service); headers != nil {
+		componentResponse.Headers = headers
 	}
 
 	// Add response content if present
@@ -1613,10 +1635,17 @@ func (g *generator) createEndpointSpecific422ErrorResponse(resourceName, endpoin
 
 	content.Set(contentTypeJSON, mediaType)
 
-	return &v3.Response{
+	response := &v3.Response{
 		Description: g.generateAutoErrorDescription(resourceName, endpointName, httpStatus422),
 		Content:     content,
 	}
+
+	// Add common response headers
+	if headers := g.createResponseHeaders(service); headers != nil {
+		response.Headers = headers
+	}
+
+	return response
 }
 
 // createResponseReference creates a v3.Response that references a component response body.
@@ -1902,6 +1931,12 @@ func (g *generator) addErrorResponseBodiesToComponents(components *v3.Components
 			Description: errorResponse.description,
 			Content:     content,
 		}
+
+		// Add common response headers to error responses as well
+		if headers := g.createResponseHeaders(service); headers != nil {
+			standardResponse.Headers = headers
+		}
+
 		components.Responses.Set(standardResponseBodyName, standardResponse)
 	}
 }
@@ -1914,6 +1949,11 @@ func (g *generator) createResponse(response specification.EndpointResponse, reso
 	description := g.generateAutoResponseDescription(resourceName, endpointName, response.Description)
 	if description != "" {
 		openAPIResponse.Description = description
+	}
+
+	// Add common response headers
+	if headers := g.createResponseHeaders(service); headers != nil {
+		openAPIResponse.Headers = headers
 	}
 
 	// Add response content if present

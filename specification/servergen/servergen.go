@@ -38,6 +38,11 @@ func convertOpenAPIPathToGin(path string) string {
 	return result
 }
 
+// sanitizeHeaderName converts a header name to a valid Go identifier by removing hyphens
+func sanitizeHeaderName(name string) string {
+	return strings.ReplaceAll(name, "-", "")
+}
+
 func GenerateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString(disclaimerComment)
 	buf.WriteString("package api\n\n")
@@ -77,7 +82,12 @@ func GenerateServer(buf *bytes.Buffer, service *specification.Service) error {
 		return err
 	}
 
-	err = generateUtils(buf)
+	err = generateResponseHeaderTypes(buf, service)
+	if err != nil {
+		return err
+	}
+
+	err = generateUtils(buf, service)
 	if err != nil {
 		return err
 	}
@@ -324,7 +334,11 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("\tGetSessionFunc getSessionFunc[Session]\n")
 
 	buf.WriteString("\t// ErrorHook is a function that is used on each endpoint to convert an error to an Error object\n")
-	buf.WriteString("\tErrorHook ErrorHook\n")
+	buf.WriteString("\tErrorHook ErrorHook\n\n")
+
+	// Always add ResponseHeaderHook
+	buf.WriteString("\t// ResponseHeaderHook is a function that returns common response headers for each request\n")
+	buf.WriteString("\tResponseHeaderHook ResponseHeaderHook\n\n")
 
 	buf.WriteString("\t// PreHooks are executed before endpoint logic. The first non-nil error aborts request processing.\n")
 	buf.WriteString("\tPreHooks []PreHook\n")
@@ -492,7 +506,27 @@ func generateResponseTypes(buf *bytes.Buffer, service *specification.Service) er
 	return nil
 }
 
-func generateUtils(buf *bytes.Buffer) error {
+func generateResponseHeaderTypes(buf *bytes.Buffer, service *specification.Service) error {
+	// Always generate ResponseHeaders struct (empty if no headers defined)
+	buf.WriteString("// ResponseHeaders contains the common response headers returned by all endpoints\n")
+	buf.WriteString("type ResponseHeaders struct {\n")
+	for _, field := range service.ResponseHeaders {
+		// Sanitize field name to ensure it's a valid Go identifier (remove hyphens)
+		fieldName := sanitizeHeaderName(field.Name)
+		buf.WriteString(fmt.Sprintf("\t%s %s\n", fieldName, getTypeForGo(field, service)))
+	}
+	buf.WriteString("}\n\n")
+
+	// Always generate ResponseHeaderHook type
+	buf.WriteString("// ResponseHeaderHook returns the common response headers for each request.\n")
+	buf.WriteString("// This hook is called for every successful request to generate standard headers\n")
+	buf.WriteString("// such as RateLimit-Reset, TraceID, etc.\n")
+	buf.WriteString("type ResponseHeaderHook func(ctx context.Context, requestContext RequestContext) ResponseHeaders\n\n")
+
+	return nil
+}
+
+func generateUtils(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString(`// defaultGetRequestID is the default request ID generator function
 // It generates a new UUID for each request
 func defaultGetRequestID(ctx context.Context) string {
@@ -501,6 +535,23 @@ func defaultGetRequestID(ctx context.Context) string {
 
 `)
 
+	// Always generate setResponseHeaders function
+	buf.WriteString(`// setResponseHeaders sets the response headers from ResponseHeaders struct to gin context
+func setResponseHeaders(c *gin.Context, headers ResponseHeaders) {
+`)
+
+	// Generate explicit header setting code for each response header
+	if len(service.ResponseHeaders) > 0 {
+		for _, field := range service.ResponseHeaders {
+			// Use original name for HTTP header, sanitized name for Go struct field
+			fieldName := sanitizeHeaderName(field.Name)
+			buf.WriteString(fmt.Sprintf("\tc.Header(\"%s\", headers.%s.String())\n", field.Name, fieldName))
+		}
+	}
+
+	buf.WriteString("}\n\n")
+
+	// Always generate serveWithResponse with ResponseHeaderHook call
 	buf.WriteString(`func serveWithResponse[
 	sessionType any,
 	pathParamsType any,
@@ -520,6 +571,11 @@ func defaultGetRequestID(ctx context.Context) string {
 		requestID := getRequestID(c.Request.Context())
 		requestContext := getRequestContext(c, requestID)
 
+		// Set response headers as the last operation before returning
+		if server.ResponseHeaderHook != nil {
+			defer setResponseHeaders(c, server.ResponseHeaderHook(c.Request.Context(), requestContext))
+		}
+
 		request, err := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)
 		if err != nil {
 			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err).Response())
@@ -536,6 +592,7 @@ func defaultGetRequestID(ctx context.Context) string {
 	}
 }` + "\n\n")
 
+	// Always generate serveWithoutResponse with ResponseHeaderHook call
 	buf.WriteString(`func serveWithoutResponse[
 	sessionType any,
 	pathParamsType any,
@@ -554,6 +611,11 @@ func defaultGetRequestID(ctx context.Context) string {
 		requestID := getRequestID(c.Request.Context())
 		requestContext := getRequestContext(c, requestID)
 
+		// Set response headers as the last operation before returning
+		if server.ResponseHeaderHook != nil {
+			defer setResponseHeaders(c, server.ResponseHeaderHook(c.Request.Context(), requestContext))
+		}
+
 		request, err := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)
 		if err != nil {
 			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err).Response())
@@ -565,7 +627,7 @@ func defaultGetRequestID(ctx context.Context) string {
 			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err).Response())
 			return
 		}
-		
+
 		c.JSON(successStatusCode, nil)
 	}
 }` + "\n\n")
