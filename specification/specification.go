@@ -48,6 +48,7 @@ const (
 const (
 	ModifierNullable = "Nullable"
 	ModifierArray    = "Array"
+	ModifierRequired = "Required"
 )
 
 // Retry Strategies
@@ -919,6 +920,7 @@ func generateSearchEndpoint(result *Service, resource Resource) {
 			Name:        searchFilterParamName,
 			Description: searchFilterParamDesc,
 			Type:        resource.Name + filterSuffix,
+			Modifiers:   []string{ModifierRequired},
 		}
 		paginationField := createPaginationField()
 		dataField := createDataField(resource.Name)
@@ -1384,6 +1386,11 @@ func (t Field) GetComment(tabs string) string {
 
 // IsRequired determines if the field is required based on its properties and service context.
 func (f Field) IsRequired(service *Service) bool {
+	// Explicitly marked as required via modifier
+	if slices.Contains(f.Modifiers, ModifierRequired) {
+		return true
+	}
+
 	if f.IsNullable() {
 		return false
 	}
