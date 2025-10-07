@@ -337,7 +337,7 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("\tErrorHook ErrorHook\n\n")
 
 	// Always add ResponseHeaderHook
-	buf.WriteString("\t// ResponseHeaderHook is a function that returns common response headers for each successful request\n")
+	buf.WriteString("\t// ResponseHeaderHook is a function that returns common response headers for each request\n")
 	buf.WriteString("\tResponseHeaderHook ResponseHeaderHook\n\n")
 
 	buf.WriteString("\t// PreHooks are executed before endpoint logic. The first non-nil error aborts request processing.\n")
@@ -571,10 +571,9 @@ func setResponseHeaders(c *gin.Context, headers ResponseHeaders) {
 		requestID := getRequestID(c.Request.Context())
 		requestContext := getRequestContext(c, requestID)
 
-		// Set response headers early so they're included in all responses (including errors)
+		// Set response headers as the last operation before returning
 		if server.ResponseHeaderHook != nil {
-			headers := server.ResponseHeaderHook(c.Request.Context(), requestContext)
-			setResponseHeaders(c, headers)
+			defer setResponseHeaders(c, server.ResponseHeaderHook(c.Request.Context(), requestContext))
 		}
 
 		request, err := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)
@@ -612,10 +611,9 @@ func setResponseHeaders(c *gin.Context, headers ResponseHeaders) {
 		requestID := getRequestID(c.Request.Context())
 		requestContext := getRequestContext(c, requestID)
 
-		// Set response headers early so they're included in all responses (including errors)
+		// Set response headers as the last operation before returning
 		if server.ResponseHeaderHook != nil {
-			headers := server.ResponseHeaderHook(c.Request.Context(), requestContext)
-			setResponseHeaders(c, headers)
+			defer setResponseHeaders(c, server.ResponseHeaderHook(c.Request.Context(), requestContext))
 		}
 
 		request, err := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)
