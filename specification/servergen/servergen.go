@@ -571,6 +571,12 @@ func setResponseHeaders(c *gin.Context, headers ResponseHeaders) {
 		requestID := getRequestID(c.Request.Context())
 		requestContext := getRequestContext(c, requestID)
 
+		// Set response headers early so they're included in all responses (including errors)
+		if server.ResponseHeaderHook != nil {
+			headers := server.ResponseHeaderHook(c.Request.Context(), requestContext)
+			setResponseHeaders(c, headers)
+		}
+
 		request, err := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)
 		if err != nil {
 			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err).Response())
@@ -581,12 +587,6 @@ func setResponseHeaders(c *gin.Context, headers ResponseHeaders) {
 		if err != nil {
 			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err).Response())
 			return
-		}
-
-		// Set response headers if ResponseHeaderHook is provided
-		if server.ResponseHeaderHook != nil {
-			headers := server.ResponseHeaderHook(c.Request.Context(), requestContext)
-			setResponseHeaders(c, headers)
 		}
 
 		c.JSON(successStatusCode, response)
@@ -612,6 +612,12 @@ func setResponseHeaders(c *gin.Context, headers ResponseHeaders) {
 		requestID := getRequestID(c.Request.Context())
 		requestContext := getRequestContext(c, requestID)
 
+		// Set response headers early so they're included in all responses (including errors)
+		if server.ResponseHeaderHook != nil {
+			headers := server.ResponseHeaderHook(c.Request.Context(), requestContext)
+			setResponseHeaders(c, headers)
+		}
+
 		request, err := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)
 		if err != nil {
 			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err).Response())
@@ -622,12 +628,6 @@ func setResponseHeaders(c *gin.Context, headers ResponseHeaders) {
 		if err != nil {
 			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err).Response())
 			return
-		}
-		
-		// Set response headers if ResponseHeaderHook is provided
-		if server.ResponseHeaderHook != nil {
-			headers := server.ResponseHeaderHook(c.Request.Context(), requestContext)
-			setResponseHeaders(c, headers)
 		}
 
 		c.JSON(successStatusCode, nil)
