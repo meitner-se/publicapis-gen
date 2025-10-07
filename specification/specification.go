@@ -436,6 +436,9 @@ type Service struct {
 	// Timeout configuration for the service
 	Timeout *TimeoutConfiguration `json:"timeout,omitempty"`
 
+	// ResponseHeaders are common headers returned by all endpoints
+	ResponseHeaders []Field `json:"responseHeaders,omitempty"`
+
 	// Enums that are used in the service
 	Enums []Enum `json:"enums"`
 
@@ -621,6 +624,7 @@ func ApplyOverlay(input *Service) *Service {
 		Security:        input.Security,                              // Copy security requirements
 		Retry:           input.Retry,                                 // Copy retry configuration
 		Timeout:         input.Timeout,                               // Copy timeout configuration
+		ResponseHeaders: append([]Field{}, input.ResponseHeaders...), // Copy response headers
 		Enums:           make([]Enum, 0, len(input.Enums)+1),         // +1 for ErrorCode enum
 		Objects:         make([]Object, 0, len(input.Objects)+3),     // +3 for Error, Pagination, and Meta objects
 		Resources:       make([]Resource, len(input.Resources)),
@@ -1115,6 +1119,7 @@ func ApplyFilterOverlay(input *Service) *Service {
 		Security:        input.Security,                              // Copy security requirements
 		Retry:           input.Retry,                                 // Copy retry configuration
 		Timeout:         input.Timeout,                               // Copy timeout configuration
+		ResponseHeaders: append([]Field{}, input.ResponseHeaders...), // Copy response headers
 		Enums:           make([]Enum, len(input.Enums)),
 		Objects:         make([]Object, 0, len(input.Objects)*7), // Estimate for filter objects
 		Resources:       make([]Resource, len(input.Resources)),

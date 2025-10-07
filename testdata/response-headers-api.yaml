@@ -1,0 +1,28 @@
+name: "Response Headers Test API"
+version: "1.0.0"
+
+# Common response headers returned by all endpoints
+responseHeaders:
+  - name: "TraceID"
+    type: "String"
+    description: "Unique trace identifier for request tracing"
+  - name: "RateLimitReset"
+    type: "Timestamp"
+    description: "Time when the rate limit will reset"
+  - name: "RequestID"
+    type: "UUID"
+    description: "Unique identifier for this request"
+
+resources:
+  - name: "Users"
+    description: "User management resource"
+    operations: ["Create", "Read"]
+    fields:
+      - name: "id"
+        type: "UUID"
+        description: "Unique user identifier"
+        operations: ["Read"]
+      - name: "name"
+        type: "String"
+        description: "User's name"
+        operations: ["Create", "Read"]

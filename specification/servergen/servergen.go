@@ -46,7 +46,15 @@ func GenerateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("\t\"context\"\n")
 	buf.WriteString("\t\"embed\"\n")
 	buf.WriteString("\t\"encoding/json\"\n")
-	buf.WriteString("\t\"net/http\"\n\n")
+	buf.WriteString("\t\"fmt\"\n")
+	buf.WriteString("\t\"net/http\"\n")
+
+	// Only import reflect if there are response headers
+	if len(service.ResponseHeaders) > 0 {
+		buf.WriteString("\t\"reflect\"\n")
+	}
+
+	buf.WriteString("\n")
 	buf.WriteString(fmt.Sprintf("\t\"%s\"\n", "github.com/google/uuid"))
 	buf.WriteString(fmt.Sprintf("\t\"%s\"\n", "github.com/gin-gonic/gin"))
 	buf.WriteString(fmt.Sprintf("\t\"%s\"\n", "github.com/meitner-se/go-types"))
@@ -77,7 +85,12 @@ func GenerateServer(buf *bytes.Buffer, service *specification.Service) error {
 		return err
 	}
 
-	err = generateUtils(buf)
+	err = generateResponseHeaderTypes(buf, service)
+	if err != nil {
+		return err
+	}
+
+	err = generateUtils(buf, service)
 	if err != nil {
 		return err
 	}
@@ -324,7 +337,13 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("\tGetSessionFunc getSessionFunc[Session]\n")
 
 	buf.WriteString("\t// ErrorHook is a function that is used on each endpoint to convert an error to an Error object\n")
-	buf.WriteString("\tErrorHook ErrorHook\n")
+	buf.WriteString("\tErrorHook ErrorHook\n\n")
+
+	// Only add ResponseHeaderHook if there are response headers defined
+	if len(service.ResponseHeaders) > 0 {
+		buf.WriteString("\t// ResponseHeaderHook is a function that returns common response headers for each successful request\n")
+		buf.WriteString("\tResponseHeaderHook ResponseHeaderHook\n\n")
+	}
 
 	buf.WriteString("\t// PreHooks are executed before endpoint logic. The first non-nil error aborts request processing.\n")
 	buf.WriteString("\tPreHooks []PreHook\n")
@@ -492,7 +511,30 @@ func generateResponseTypes(buf *bytes.Buffer, service *specification.Service) er
 	return nil
 }
 
-func generateUtils(buf *bytes.Buffer) error {
+func generateResponseHeaderTypes(buf *bytes.Buffer, service *specification.Service) error {
+	// Only generate if there are response headers defined
+	if len(service.ResponseHeaders) == 0 {
+		return nil
+	}
+
+	// Generate ResponseHeaders struct
+	buf.WriteString("// ResponseHeaders contains the common response headers returned by all endpoints\n")
+	buf.WriteString("type ResponseHeaders struct {\n")
+	for _, field := range service.ResponseHeaders {
+		buf.WriteString(fmt.Sprintf("\t%s %s\n", field.Name, getTypeForGo(field, service)))
+	}
+	buf.WriteString("}\n\n")
+
+	// Generate ResponseHeaderHook type
+	buf.WriteString("// ResponseHeaderHook returns the common response headers for each request.\n")
+	buf.WriteString("// This hook is called for every successful request to generate standard headers\n")
+	buf.WriteString("// such as RateLimit-Reset, TraceID, etc.\n")
+	buf.WriteString("type ResponseHeaderHook func(ctx context.Context, requestContext RequestContext) ResponseHeaders\n\n")
+
+	return nil
+}
+
+func generateUtils(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString(`// defaultGetRequestID is the default request ID generator function
 // It generates a new UUID for each request
 func defaultGetRequestID(ctx context.Context) string {
@@ -501,7 +543,106 @@ func defaultGetRequestID(ctx context.Context) string {
 
 `)
 
-	buf.WriteString(`func serveWithResponse[
+	// Only generate setResponseHeaders if there are response headers
+	if len(service.ResponseHeaders) > 0 {
+		buf.WriteString(`// setResponseHeaders sets the response headers from ResponseHeaders struct to gin context
+func setResponseHeaders(c *gin.Context, headers ResponseHeaders) {
+	headerValue := func(v any) string {
+		switch val := v.(type) {
+		case types.String:
+			return val.String()
+		case types.Int:
+			return fmt.Sprintf("%d", val.Int())
+		case types.Bool:
+			return fmt.Sprintf("%t", val.Bool())
+		case types.UUID:
+			return val.String()
+		case types.Date:
+			return val.String()
+		case types.Timestamp:
+			return val.String()
+		default:
+			return fmt.Sprintf("%v", val)
+		}
+	}
+
+	// Use reflection to iterate over the struct fields
+	v := reflect.ValueOf(headers)
+	t := v.Type()
+
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		fieldType := t.Field(i)
+		
+		// Convert field name from PascalCase to kebab-case for HTTP headers
+		headerName := toKebabCase(fieldType.Name)
+		headerVal := headerValue(field.Interface())
+		
+		if headerVal != "" {
+			c.Header(headerName, headerVal)
+		}
+	}
+}
+
+// toKebabCase converts PascalCase to kebab-case
+func toKebabCase(s string) string {
+	var result []rune
+	for i, r := range s {
+		if i > 0 && r >= 'A' && r <= 'Z' {
+			result = append(result, '-')
+		}
+		result = append(result, r)
+	}
+	return string(result)
+}
+
+`)
+	}
+
+	// Generate serveWithResponse with conditional ResponseHeaderHook call
+	if len(service.ResponseHeaders) > 0 {
+		buf.WriteString(`func serveWithResponse[
+	sessionType any,
+	pathParamsType any,
+	queryParamsType any,
+	bodyParamsType any,
+	responseType any,
+](
+	successStatusCode int,
+	server Server[sessionType],
+	function func(ctx context.Context, request Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) (*responseType, error),
+) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		getRequestID := server.GetRequestIDFunc
+		if getRequestID == nil {
+			getRequestID = defaultGetRequestID
+		}
+		requestID := getRequestID(c.Request.Context())
+		requestContext := getRequestContext(c, requestID)
+
+		request, err := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)
+		if err != nil {
+			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err).Response())
+			return
+		}
+
+		response, err := function(c.Request.Context(), request)
+		if err != nil {
+			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err).Response())
+			return
+		}
+
+		// Set response headers if ResponseHeaderHook is provided
+		if server.ResponseHeaderHook != nil {
+			headers := server.ResponseHeaderHook(c.Request.Context(), requestContext)
+			setResponseHeaders(c, headers)
+		}
+
+		c.JSON(successStatusCode, response)
+	}
+}` + "\n\n")
+	} else {
+		buf.WriteString(`func serveWithResponse[
 	sessionType any,
 	pathParamsType any,
 	queryParamsType any,
@@ -535,8 +676,51 @@ func defaultGetRequestID(ctx context.Context) string {
 		c.JSON(successStatusCode, response)
 	}
 }` + "\n\n")
+	}
 
-	buf.WriteString(`func serveWithoutResponse[
+	// Generate serveWithoutResponse with conditional ResponseHeaderHook call
+	if len(service.ResponseHeaders) > 0 {
+		buf.WriteString(`func serveWithoutResponse[
+	sessionType any,
+	pathParamsType any,
+	queryParamsType any,
+	bodyParamsType any,
+](
+	successStatusCode int,
+	server Server[sessionType],
+	function func(ctx context.Context, request Request[sessionType, pathParamsType, queryParamsType, bodyParamsType]) error,
+) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		getRequestID := server.GetRequestIDFunc
+		if getRequestID == nil {
+			getRequestID = defaultGetRequestID
+		}
+		requestID := getRequestID(c.Request.Context())
+		requestContext := getRequestContext(c, requestID)
+
+		request, err := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)
+		if err != nil {
+			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err).Response())
+			return
+		}
+
+		err = function(c.Request.Context(), request)
+		if err != nil {
+			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err).Response())
+			return
+		}
+		
+		// Set response headers if ResponseHeaderHook is provided
+		if server.ResponseHeaderHook != nil {
+			headers := server.ResponseHeaderHook(c.Request.Context(), requestContext)
+			setResponseHeaders(c, headers)
+		}
+
+		c.JSON(successStatusCode, nil)
+	}
+}` + "\n\n")
+	} else {
+		buf.WriteString(`func serveWithoutResponse[
 	sessionType any,
 	pathParamsType any,
 	queryParamsType any,
@@ -569,6 +753,7 @@ func defaultGetRequestID(ctx context.Context) string {
 		c.JSON(successStatusCode, nil)
 	}
 }` + "\n\n")
+	}
 
 	buf.WriteString(`func getRequestContext(c *gin.Context, requestID string) RequestContext {
 	return RequestContext{

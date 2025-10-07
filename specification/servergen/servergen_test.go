@@ -1073,9 +1073,10 @@ func TestGenerateResponseTypes(t *testing.T) {
 func TestGenerateUtils(t *testing.T) {
 	// Arrange
 	buf := &bytes.Buffer{}
+	service := createTestService()
 
 	// Act
-	err := generateUtils(buf)
+	err := generateUtils(buf, service)
 
 	// Assert
 	assert.Nil(t, err, "Expected no error when generating utils")
@@ -1129,9 +1130,10 @@ func TestGenerateUtils(t *testing.T) {
 		// Generate twice and compare
 		buf1 := &bytes.Buffer{}
 		buf2 := &bytes.Buffer{}
+		service := createTestService()
 
-		err1 := generateUtils(buf1)
-		err2 := generateUtils(buf2)
+		err1 := generateUtils(buf1, service)
+		err2 := generateUtils(buf2, service)
 
 		assert.Nil(t, err1, "First generation should not error")
 		assert.Nil(t, err2, "Second generation should not error")
