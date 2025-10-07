@@ -46,7 +46,6 @@ func GenerateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("\t\"context\"\n")
 	buf.WriteString("\t\"embed\"\n")
 	buf.WriteString("\t\"encoding/json\"\n")
-	buf.WriteString("\t\"fmt\"\n")
 	buf.WriteString("\t\"net/http\"\n\n")
 	buf.WriteString(fmt.Sprintf("\t\"%s\"\n", "github.com/google/uuid"))
 	buf.WriteString(fmt.Sprintf("\t\"%s\"\n", "github.com/gin-gonic/gin"))
@@ -534,31 +533,10 @@ func defaultGetRequestID(ctx context.Context) string {
 func setResponseHeaders(c *gin.Context, headers ResponseHeaders) {
 `)
 
-	// Only generate headerValue helper and header setting code if there are headers
+	// Generate explicit header setting code for each response header
 	if len(service.ResponseHeaders) > 0 {
-		buf.WriteString(`	headerValue := func(v any) string {
-		switch val := v.(type) {
-		case types.String:
-			return val.String()
-		case types.Int:
-			return fmt.Sprintf("%d", val.Int())
-		case types.Bool:
-			return fmt.Sprintf("%t", val.Bool())
-		case types.UUID:
-			return val.String()
-		case types.Date:
-			return val.String()
-		case types.Timestamp:
-			return val.String()
-		default:
-			return fmt.Sprintf("%v", val)
-		}
-	}
-
-`)
-		// Generate explicit header setting code for each response header
 		for _, field := range service.ResponseHeaders {
-			buf.WriteString(fmt.Sprintf("\tc.Header(\"%s\", headerValue(headers.%s))\n", field.Name, field.Name))
+			buf.WriteString(fmt.Sprintf("\tc.Header(\"%s\", headers.%s.String())\n", field.Name, field.Name))
 		}
 	}
 
