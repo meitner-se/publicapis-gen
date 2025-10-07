@@ -1501,14 +1501,10 @@ func TestRequestBodySchemaReferences(t *testing.T) {
 	jsonString := string(jsonBytes)
 
 	// Verify that a single body parameter referencing a component schema
-	// uses direct schema reference instead of object wrapper
-	assert.Contains(t, jsonString, "\"allOf\"", "Request body should use allOf for direct schema reference")
-	assert.Contains(t, jsonString, "\"$ref\": \"#/components/schemas/CreateUserRequest\"", "Request body should directly reference the component schema")
-
-	// Should NOT contain object wrapper with properties in the request body schema
-	// (error responses will still have properties, so we need to check specifically for the request body)
-	assert.NotContains(t, jsonString, "\"type\": \"object\",\n                \"properties\"", "Request body should not use object wrapper for single component schema parameter")
-	assert.NotContains(t, jsonString, "\"request\":", "Request body should not contain the parameter name as a property")
+	// wraps it in an object with the field name as a property
+	assert.Contains(t, jsonString, "\"request\":", "Request body should contain the parameter name as a property")
+	assert.Contains(t, jsonString, "\"$ref\": \"#/components/schemas/CreateUserRequest\"", "Request body should reference the component schema")
+	assert.Contains(t, jsonString, "\"allOf\"", "Request body should use allOf for schema reference")
 
 	t.Logf("Generated request body schema:\n%s", jsonString)
 }

@@ -1093,31 +1093,8 @@ func (g *generator) generateRequestBodyExample(bodyParams []specification.Field,
 		return nil
 	}
 
-	// If there's only one body parameter and it's an object/enum with no direct example,
-	// try to generate example from the object definition
-	if len(bodyParams) == 1 {
-		field := bodyParams[0]
-
-		// For enum or primitive types, use field example if available
-		if g.isPrimitiveType(field.Type) || service.HasEnum(field.Type) {
-			if field.Example != "" {
-				return g.createTypedExampleNode(field.Type, field.Example)
-			}
-			return nil
-		}
-
-		// For object types, traverse to object example
-		if service.HasObject(field.Type) {
-			obj := service.GetObject(field.Type)
-			if obj != nil {
-				visited := make(map[string]bool)
-				return g.generateObjectExampleWithVisited(*obj, service, visited)
-			}
-		}
-		return nil
-	}
-
-	// For multiple fields, create an object example
+	// Always create an object example with field names as keys
+	// This ensures the example matches the actual request body structure
 	return g.generateObjectExampleFromFields(bodyParams, service)
 }
 
@@ -1232,49 +1209,29 @@ func (g *generator) generateResponseBodyExample(response specification.EndpointR
 
 // createComponentRequestBody creates a v3.RequestBody for the components section.
 func (g *generator) createComponentRequestBody(bodyParams []specification.Field, service *specification.Service) *v3.RequestBody {
-	var schema *base.Schema
-	var isRequired bool
+	// Always wrap body parameters in an object with field names as properties
+	// This ensures consistency between schema and examples
+	schema := &base.Schema{
+		Type:       []string{schemaTypeObject},
+		Properties: orderedmap.New[string, *base.SchemaProxy](),
+	}
 
-	// If there's only one body parameter and it references a component schema,
-	// use the component schema directly instead of wrapping it in an object
-	if len(bodyParams) == 1 {
-		field := bodyParams[0]
-		if service.HasObject(field.Type) || service.HasEnum(field.Type) {
-			// Create a direct reference to the component schema using allOf
-			refString := schemaReferencePrefix + field.Type
-			refProxy := base.CreateSchemaProxyRef(refString)
-			schema = &base.Schema{
-				AllOf:       []*base.SchemaProxy{refProxy},
-				Description: field.Description,
-			}
-			isRequired = field.IsRequired(service)
+	requiredFields := []string{}
+	for _, field := range bodyParams {
+		fieldSchema := g.createFieldSchema(field, service)
+		proxy := base.CreateSchemaProxy(fieldSchema)
+		schema.Properties.Set(field.TagJSON(), proxy)
+
+		if field.IsRequired(service) {
+			requiredFields = append(requiredFields, field.TagJSON())
 		}
 	}
 
-	// If we didn't create a direct reference schema, fall back to the object wrapper approach
-	if schema == nil {
-		schema = &base.Schema{
-			Type:       []string{schemaTypeObject},
-			Properties: orderedmap.New[string, *base.SchemaProxy](),
-		}
-
-		requiredFields := []string{}
-		for _, field := range bodyParams {
-			fieldSchema := g.createFieldSchema(field, service)
-			proxy := base.CreateSchemaProxy(fieldSchema)
-			schema.Properties.Set(field.TagJSON(), proxy)
-
-			if field.IsRequired(service) {
-				requiredFields = append(requiredFields, field.TagJSON())
-			}
-		}
-
-		if len(requiredFields) > 0 {
-			schema.Required = requiredFields
-		}
-
-		isRequired = len(requiredFields) > 0
+	if len(requiredFields) > 0 {
+		schema.Required = requiredFields
 	}
+
+	isRequired := len(requiredFields) > 0
 
 	// Create media type
 	mediaType := &v3.MediaType{
