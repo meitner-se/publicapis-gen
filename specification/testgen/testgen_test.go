@@ -539,3 +539,249 @@ func getResourceNamePtr() *string {
 	name := testResourceName
 	return &name
 }
+
+// ============================================================================
+// Header Generation Tests
+// ============================================================================
+
+func TestGenerateHeaderPopulation(t *testing.T) {
+	testCases := []struct {
+		name             string
+		responseHeaders  []specification.Field
+		packagePrefix    string
+		expectedContains []string
+	}{
+		{
+			name: "String type header",
+			responseHeaders: []specification.Field{
+				{Name: "X-Custom-Header", Type: "String"},
+			},
+			packagePrefix: "",
+			expectedContains: []string{
+				"XCustomHeader: types.NewString(",
+				"test-x-custom-header-value",
+			},
+		},
+		{
+			name: "Int type header",
+			responseHeaders: []specification.Field{
+				{Name: "X-Rate-Limit", Type: "Int"},
+			},
+			packagePrefix: "",
+			expectedContains: []string{
+				"XRateLimit: types.NewInt(12345)",
+			},
+		},
+		{
+			name: "Int64 type header",
+			responseHeaders: []specification.Field{
+				{Name: "RateLimit-Reset", Type: "Int64"},
+			},
+			packagePrefix: "",
+			expectedContains: []string{
+				"RateLimitReset: types.NewInt64(67890)",
+			},
+		},
+		{
+			name: "Bool type header",
+			responseHeaders: []specification.Field{
+				{Name: "X-Is-Active", Type: "Bool"},
+			},
+			packagePrefix: "",
+			expectedContains: []string{
+				"XIsActive: types.NewBool(true)",
+			},
+		},
+		{
+			name: "UUID type header",
+			responseHeaders: []specification.Field{
+				{Name: "X-Request-ID", Type: "UUID"},
+			},
+			packagePrefix: "",
+			expectedContains: []string{
+				"XRequestID: types.NewUUID(uuid.New())",
+			},
+		},
+		{
+			name: "Date type header",
+			responseHeaders: []specification.Field{
+				{Name: "X-Created-Date", Type: "Date"},
+			},
+			packagePrefix: "",
+			expectedContains: []string{
+				"XCreatedDate: types.NewDate(\"2024-01-15\")",
+			},
+		},
+		{
+			name: "Timestamp type header",
+			responseHeaders: []specification.Field{
+				{Name: "X-Created-At", Type: "Timestamp"},
+			},
+			packagePrefix: "",
+			expectedContains: []string{
+				"XCreatedAt: types.NewTimestamp(\"2024-01-15T10:30:00Z\")",
+			},
+		},
+		{
+			name: "Multiple headers with different types",
+			responseHeaders: []specification.Field{
+				{Name: "X-Rate-Limit", Type: "Int"},
+				{Name: "RateLimit-Reset", Type: "Int64"},
+				{Name: "X-Request-ID", Type: "UUID"},
+			},
+			packagePrefix: "",
+			expectedContains: []string{
+				"XRateLimit: types.NewInt(12345)",
+				"RateLimitReset: types.NewInt64(67890)",
+				"XRequestID: types.NewUUID(uuid.New())",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			service := &specification.Service{
+				ResponseHeaders: tc.responseHeaders,
+			}
+			buf := &bytes.Buffer{}
+
+			// Act
+			generateHeaderPopulation(buf, service, tc.packagePrefix)
+
+			// Assert
+			generatedCode := buf.String()
+			for _, expected := range tc.expectedContains {
+				assert.Contains(t, generatedCode, expected, "Generated code should contain expected string")
+			}
+		})
+	}
+
+	t.Run("edge cases", func(t *testing.T) {
+		t.Run("empty response headers", func(t *testing.T) {
+			service := &specification.Service{
+				ResponseHeaders: []specification.Field{},
+			}
+			buf := &bytes.Buffer{}
+
+			generateHeaderPopulation(buf, service, "")
+
+			assert.Empty(t, buf.String(), "Should generate nothing for empty response headers")
+		})
+
+		t.Run("nil response headers", func(t *testing.T) {
+			service := &specification.Service{
+				ResponseHeaders: nil,
+			}
+			buf := &bytes.Buffer{}
+
+			generateHeaderPopulation(buf, service, "")
+
+			assert.Empty(t, buf.String(), "Should generate nothing for nil response headers")
+		})
+	})
+}
+
+func TestGenerateHeaderAssertions(t *testing.T) {
+	testCases := []struct {
+		name             string
+		responseHeaders  []specification.Field
+		expectedContains []string
+	}{
+		{
+			name: "String type header assertion",
+			responseHeaders: []specification.Field{
+				{Name: "X-Custom-Header", Type: "String"},
+			},
+			expectedContains: []string{
+				"assert.Equal(t, \"test-x-custom-header-value\", w.Header().Get(\"X-Custom-Header\")",
+			},
+		},
+		{
+			name: "Int type header assertion",
+			responseHeaders: []specification.Field{
+				{Name: "X-Rate-Limit", Type: "Int"},
+			},
+			expectedContains: []string{
+				"assert.Equal(t, \"12345\", w.Header().Get(\"X-Rate-Limit\")",
+			},
+		},
+		{
+			name: "Int64 type header assertion",
+			responseHeaders: []specification.Field{
+				{Name: "RateLimit-Reset", Type: "Int64"},
+			},
+			expectedContains: []string{
+				"assert.Equal(t, \"67890\", w.Header().Get(\"RateLimit-Reset\")",
+			},
+		},
+		{
+			name: "Bool type header assertion",
+			responseHeaders: []specification.Field{
+				{Name: "X-Is-Active", Type: "Bool"},
+			},
+			expectedContains: []string{
+				"assert.Equal(t, \"true\", w.Header().Get(\"X-Is-Active\")",
+			},
+		},
+		{
+			name: "UUID type header assertion",
+			responseHeaders: []specification.Field{
+				{Name: "X-Request-ID", Type: "UUID"},
+			},
+			expectedContains: []string{
+				"assert.NotEmpty(t, w.Header().Get(\"X-Request-ID\")",
+			},
+		},
+		{
+			name: "Date type header assertion",
+			responseHeaders: []specification.Field{
+				{Name: "X-Created-Date", Type: "Date"},
+			},
+			expectedContains: []string{
+				"assert.Equal(t, \"2024-01-15\", w.Header().Get(\"X-Created-Date\")",
+			},
+		},
+		{
+			name: "Timestamp type header assertion",
+			responseHeaders: []specification.Field{
+				{Name: "X-Created-At", Type: "Timestamp"},
+			},
+			expectedContains: []string{
+				"assert.Equal(t, \"2024-01-15T10:30:00Z\", w.Header().Get(\"X-Created-At\")",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			service := &specification.Service{
+				ResponseHeaders: tc.responseHeaders,
+			}
+			buf := &bytes.Buffer{}
+
+			// Act
+			generateHeaderAssertions(buf, service)
+
+			// Assert
+			generatedCode := buf.String()
+			for _, expected := range tc.expectedContains {
+				assert.Contains(t, generatedCode, expected, "Generated code should contain expected assertion")
+			}
+		})
+	}
+
+	t.Run("edge cases", func(t *testing.T) {
+		t.Run("empty response headers", func(t *testing.T) {
+			service := &specification.Service{
+				ResponseHeaders: []specification.Field{},
+			}
+			buf := &bytes.Buffer{}
+
+			generateHeaderAssertions(buf, service)
+
+			assert.Empty(t, buf.String(), "Should generate nothing for empty response headers")
+		})
+	})
+}
