@@ -42,7 +42,7 @@ func TestValidateService(t *testing.T) {
 			{
 				Name:        "Users",
 				Description: "User resource",
-				Operations:  []string{OperationCreate, OperationRead},
+				Operations:  []string{OperationCreate, OperationGet, OperationList, OperationSearch},
 				Fields: []ResourceField{
 					{
 						Field: Field{
@@ -77,7 +77,7 @@ func TestValidateService(t *testing.T) {
 				{
 					Name:        "Users",
 					Description: "User resource",
-					Operations:  []string{OperationCreate, OperationRead}, // Valid operations
+					Operations:  []string{OperationCreate, OperationGet}, // Valid resource operations
 					Fields: []ResourceField{
 						{
 							Field: Field{
@@ -85,7 +85,7 @@ func TestValidateService(t *testing.T) {
 								Description: "User name",
 								Type:        "InvalidType", // Invalid type
 							},
-							Operations: []string{OperationCreate, OperationRead},
+							Operations: []string{OperationCreate, OperationRead}, // Field operations use Read
 						},
 					},
 				},
@@ -99,22 +99,68 @@ func TestValidateService(t *testing.T) {
 }
 
 // ============================================================================
-// validateOperations Tests
+// validateResourceOperations Tests
 // ============================================================================
 
-func TestValidateOperations(t *testing.T) {
-	// Test valid operations
-	validOperations := []string{OperationCreate, OperationRead, OperationUpdate, OperationDelete}
-	err := validateOperations(validOperations)
-	assert.NoError(t, err, "Valid operations should pass validation")
+func TestValidateResourceOperations(t *testing.T) {
+	// Test valid resource operations (Create, Get, List, Search, Update, Delete)
+	validOperations := []string{OperationCreate, OperationGet, OperationList, OperationSearch, OperationUpdate, OperationDelete}
+	err := validateResourceOperations(validOperations)
+	assert.NoError(t, err, "Valid resource operations should pass validation")
 
 	// Test empty operations
-	err = validateOperations([]string{})
+	err = validateResourceOperations([]string{})
 	assert.NoError(t, err, "Empty operations should pass validation")
 
 	t.Run("invalid operation", func(t *testing.T) {
 		invalidOperations := []string{OperationCreate, "invalid"}
-		err := validateOperations(invalidOperations)
+		err := validateResourceOperations(invalidOperations)
+		assert.Error(t, err, "Invalid operation should fail validation")
+		assert.Contains(t, err.Error(), "invalid operation")
+		assert.Contains(t, err.Error(), "invalid")
+	})
+
+	t.Run("lowercase operation", func(t *testing.T) {
+		invalidOperations := []string{"create", OperationGet}
+		err := validateResourceOperations(invalidOperations)
+		assert.Error(t, err, "Lowercase operation should fail validation")
+		assert.Contains(t, err.Error(), "invalid operation")
+		assert.Contains(t, err.Error(), "create")
+	})
+
+	t.Run("Read is not valid for resources", func(t *testing.T) {
+		invalidOperations := []string{OperationCreate, OperationRead}
+		err := validateResourceOperations(invalidOperations)
+		assert.Error(t, err, "Read should not be valid for resources")
+		assert.Contains(t, err.Error(), "invalid operation")
+		assert.Contains(t, err.Error(), "Read")
+	})
+
+	t.Run("multiple invalid operations", func(t *testing.T) {
+		invalidOperations := []string{"create", "read", "invalid"}
+		err := validateResourceOperations(invalidOperations)
+		assert.Error(t, err, "Multiple invalid operations should fail validation")
+		assert.Contains(t, err.Error(), "invalid operation")
+	})
+}
+
+// ============================================================================
+// validateFieldOperations Tests
+// ============================================================================
+
+func TestValidateFieldOperations(t *testing.T) {
+	// Test valid field operations (Create, Read, Update, Delete)
+	validOperations := []string{OperationCreate, OperationRead, OperationUpdate, OperationDelete}
+	err := validateFieldOperations(validOperations)
+	assert.NoError(t, err, "Valid field operations should pass validation")
+
+	// Test empty operations
+	err = validateFieldOperations([]string{})
+	assert.NoError(t, err, "Empty operations should pass validation")
+
+	t.Run("invalid operation", func(t *testing.T) {
+		invalidOperations := []string{OperationCreate, "invalid"}
+		err := validateFieldOperations(invalidOperations)
 		assert.Error(t, err, "Invalid operation should fail validation")
 		assert.Contains(t, err.Error(), "invalid operation")
 		assert.Contains(t, err.Error(), "invalid")
@@ -122,17 +168,34 @@ func TestValidateOperations(t *testing.T) {
 
 	t.Run("lowercase operation", func(t *testing.T) {
 		invalidOperations := []string{"create", OperationRead}
-		err := validateOperations(invalidOperations)
+		err := validateFieldOperations(invalidOperations)
 		assert.Error(t, err, "Lowercase operation should fail validation")
 		assert.Contains(t, err.Error(), "invalid operation")
 		assert.Contains(t, err.Error(), "create")
 	})
 
-	t.Run("multiple invalid operations", func(t *testing.T) {
-		invalidOperations := []string{"create", "read", "invalid"}
-		err := validateOperations(invalidOperations)
-		assert.Error(t, err, "Multiple invalid operations should fail validation")
+	t.Run("Get is not valid for fields", func(t *testing.T) {
+		invalidOperations := []string{OperationCreate, OperationGet}
+		err := validateFieldOperations(invalidOperations)
+		assert.Error(t, err, "Get should not be valid for fields")
 		assert.Contains(t, err.Error(), "invalid operation")
+		assert.Contains(t, err.Error(), "Get")
+	})
+
+	t.Run("List is not valid for fields", func(t *testing.T) {
+		invalidOperations := []string{OperationCreate, OperationList}
+		err := validateFieldOperations(invalidOperations)
+		assert.Error(t, err, "List should not be valid for fields")
+		assert.Contains(t, err.Error(), "invalid operation")
+		assert.Contains(t, err.Error(), "List")
+	})
+
+	t.Run("Search is not valid for fields", func(t *testing.T) {
+		invalidOperations := []string{OperationCreate, OperationSearch}
+		err := validateFieldOperations(invalidOperations)
+		assert.Error(t, err, "Search should not be valid for fields")
+		assert.Contains(t, err.Error(), "invalid operation")
+		assert.Contains(t, err.Error(), "Search")
 	})
 }
 
@@ -338,7 +401,7 @@ func TestValidateResource(t *testing.T) {
 	validResource := Resource{
 		Name:        "Users",
 		Description: "User resource",
-		Operations:  []string{OperationCreate, OperationRead},
+		Operations:  []string{OperationCreate, OperationGet, OperationList},
 		Fields: []ResourceField{
 			{
 				Field: Field{
@@ -519,7 +582,7 @@ objects: []
 resources:
   - name: "Users"
     description: "User resource"
-    operations: ["Create", "Read"]
+    operations: ["Create", "Get", "List", "Search"]
     fields:
       - name: "name"
         description: "User name"
@@ -542,7 +605,7 @@ objects: []
 resources:
   - name: "Users"
     description: "User resource"
-    operations: ["Create", "Read"]
+    operations: ["Create", "Get"]
     fields:
       - name: "name"
         description: "User name"

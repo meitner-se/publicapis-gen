@@ -43,7 +43,7 @@ func TestService(t *testing.T) {
 				{
 					Name:        "Users",
 					Description: "User resource",
-					Operations:  []string{"Create", "Read", "Update", "Delete"},
+					Operations:  []string{"Create", "Get", "List", "Search", "Update", "Delete"},
 					Fields: []ResourceField{
 						{
 							Field: Field{
@@ -121,7 +121,7 @@ func TestService(t *testing.T) {
 				{
 					Name:        "Users",
 					Description: "User resource",
-					Operations:  []string{"Create", "Read"},
+					Operations:  []string{"Create", "Get", "List"},
 				},
 			},
 		}
@@ -203,7 +203,7 @@ func TestService(t *testing.T) {
 				{
 					Name:        "Users",
 					Description: "User management resource",
-					Operations:  []string{"Create", "Read", "Update", "Delete"},
+					Operations:  []string{"Create", "Get", "List", "Search", "Update", "Delete"},
 					Fields: []ResourceField{
 						{
 							Field: Field{
@@ -1661,7 +1661,7 @@ func TestApplyOverlay(t *testing.T) {
 				{
 					Name:        "Users",
 					Description: "User resource",
-					Operations:  []string{OperationCreate, OperationRead},
+					Operations:  []string{OperationCreate, OperationGet, OperationList, OperationSearch},
 					Fields: []ResourceField{
 						{
 							Field: Field{
@@ -1703,7 +1703,7 @@ func TestApplyOverlay(t *testing.T) {
 				{
 					Name:        "Users",
 					Description: "User resource",
-					Operations:  []string{OperationRead},
+					Operations:  []string{OperationGet},
 					Fields: []ResourceField{
 						{
 							Field: Field{
@@ -1817,7 +1817,7 @@ func TestApplyFilterOverlay(t *testing.T) {
 				{
 					Name:        "Users",
 					Description: "User management",
-					Operations:  []string{OperationCreate, OperationRead},
+					Operations:  []string{OperationCreate, OperationGet, OperationList, OperationSearch},
 					Fields:      []ResourceField{},
 					Endpoints: []Endpoint{
 						{
@@ -1943,7 +1943,7 @@ func TestApplyFilterOverlay(t *testing.T) {
 				{
 					Name:        "Users",
 					Description: "User management",
-					Operations:  []string{OperationCreate, OperationRead},
+					Operations:  []string{OperationCreate, OperationGet, OperationList, OperationSearch},
 					Fields:      []ResourceField{},
 					Endpoints: []Endpoint{
 						{
@@ -2203,7 +2203,7 @@ func TestResourceField_HasUpdateOperation(t *testing.T) {
 			Name: "email",
 			Type: FieldTypeString,
 		},
-		Operations: []string{OperationCreate, OperationUpdate, OperationRead},
+		Operations: []string{OperationCreate, OperationUpdate, OperationGet, OperationList, OperationSearch},
 	}
 
 	result := fieldWithUpdate.HasUpdateOperation()
@@ -2227,7 +2227,7 @@ func TestResourceField_HasDeleteOperation(t *testing.T) {
 			Name: "adminField",
 			Type: FieldTypeString,
 		},
-		Operations: []string{OperationDelete, OperationRead},
+		Operations: []string{OperationDelete, OperationGet, OperationList, OperationSearch},
 	}
 
 	result := fieldWithDelete.HasDeleteOperation()
@@ -2253,7 +2253,7 @@ func TestResource_HasCreateOperation(t *testing.T) {
 	resourceWithCreate := Resource{
 		Name:        "Users",
 		Description: "User resource",
-		Operations:  []string{OperationCreate, OperationRead},
+		Operations:  []string{OperationCreate, OperationGet},
 	}
 
 	result := resourceWithCreate.HasCreateOperation()
@@ -2262,7 +2262,7 @@ func TestResource_HasCreateOperation(t *testing.T) {
 	resourceWithoutCreate := Resource{
 		Name:        "Users",
 		Description: "User resource",
-		Operations:  []string{OperationRead, OperationUpdate},
+		Operations:  []string{OperationGet, OperationList, OperationSearch, OperationUpdate},
 	}
 
 	result = resourceWithoutCreate.HasCreateOperation()
@@ -2270,30 +2270,109 @@ func TestResource_HasCreateOperation(t *testing.T) {
 }
 
 func TestResource_HasReadOperation(t *testing.T) {
-	resourceWithRead := Resource{
+	// HasReadOperation now returns true if any of Get, List, or Search is present
+	resourceWithGet := Resource{
 		Name:        "Users",
 		Description: "User resource",
-		Operations:  []string{OperationCreate, OperationRead},
+		Operations:  []string{OperationCreate, OperationGet},
 	}
 
-	result := resourceWithRead.HasReadOperation()
-	assert.True(t, result, "Resource with Read operation should return true")
+	result := resourceWithGet.HasReadOperation()
+	assert.True(t, result, "Resource with Get operation should return true for HasReadOperation")
 
-	resourceWithoutRead := Resource{
+	resourceWithList := Resource{
+		Name:        "Users",
+		Description: "User resource",
+		Operations:  []string{OperationCreate, OperationList},
+	}
+
+	result = resourceWithList.HasReadOperation()
+	assert.True(t, result, "Resource with List operation should return true for HasReadOperation")
+
+	resourceWithSearch := Resource{
+		Name:        "Users",
+		Description: "User resource",
+		Operations:  []string{OperationCreate, OperationSearch},
+	}
+
+	result = resourceWithSearch.HasReadOperation()
+	assert.True(t, result, "Resource with Search operation should return true for HasReadOperation")
+
+	resourceWithoutReadLike := Resource{
 		Name:        "Users",
 		Description: "User resource",
 		Operations:  []string{OperationCreate, OperationUpdate},
 	}
 
-	result = resourceWithoutRead.HasReadOperation()
-	assert.False(t, result, "Resource without Read operation should return false")
+	result = resourceWithoutReadLike.HasReadOperation()
+	assert.False(t, result, "Resource without Get/List/Search operations should return false")
+}
+
+func TestResource_HasGetOperation(t *testing.T) {
+	resourceWithGet := Resource{
+		Name:        "Users",
+		Description: "User resource",
+		Operations:  []string{OperationCreate, OperationGet},
+	}
+
+	result := resourceWithGet.HasGetOperation()
+	assert.True(t, result, "Resource with Get operation should return true")
+
+	resourceWithoutGet := Resource{
+		Name:        "Users",
+		Description: "User resource",
+		Operations:  []string{OperationCreate, OperationList, OperationSearch},
+	}
+
+	result = resourceWithoutGet.HasGetOperation()
+	assert.False(t, result, "Resource without Get operation should return false")
+}
+
+func TestResource_HasListOperation(t *testing.T) {
+	resourceWithList := Resource{
+		Name:        "Users",
+		Description: "User resource",
+		Operations:  []string{OperationCreate, OperationList},
+	}
+
+	result := resourceWithList.HasListOperation()
+	assert.True(t, result, "Resource with List operation should return true")
+
+	resourceWithoutList := Resource{
+		Name:        "Users",
+		Description: "User resource",
+		Operations:  []string{OperationCreate, OperationGet, OperationSearch},
+	}
+
+	result = resourceWithoutList.HasListOperation()
+	assert.False(t, result, "Resource without List operation should return false")
+}
+
+func TestResource_HasSearchOperation(t *testing.T) {
+	resourceWithSearch := Resource{
+		Name:        "Users",
+		Description: "User resource",
+		Operations:  []string{OperationCreate, OperationSearch},
+	}
+
+	result := resourceWithSearch.HasSearchOperation()
+	assert.True(t, result, "Resource with Search operation should return true")
+
+	resourceWithoutSearch := Resource{
+		Name:        "Users",
+		Description: "User resource",
+		Operations:  []string{OperationCreate, OperationGet, OperationList},
+	}
+
+	result = resourceWithoutSearch.HasSearchOperation()
+	assert.False(t, result, "Resource without Search operation should return false")
 }
 
 func TestResource_HasUpdateOperation(t *testing.T) {
 	resourceWithUpdate := Resource{
 		Name:        "Users",
 		Description: "User resource",
-		Operations:  []string{OperationUpdate, OperationRead},
+		Operations:  []string{OperationUpdate, OperationGet, OperationList, OperationSearch},
 	}
 
 	result := resourceWithUpdate.HasUpdateOperation()
@@ -2302,7 +2381,7 @@ func TestResource_HasUpdateOperation(t *testing.T) {
 	resourceWithoutUpdate := Resource{
 		Name:        "Users",
 		Description: "User resource",
-		Operations:  []string{OperationCreate, OperationRead},
+		Operations:  []string{OperationCreate, OperationGet},
 	}
 
 	result = resourceWithoutUpdate.HasUpdateOperation()
@@ -2313,7 +2392,7 @@ func TestResource_HasDeleteOperation(t *testing.T) {
 	resourceWithDelete := Resource{
 		Name:        "Users",
 		Description: "User resource",
-		Operations:  []string{OperationDelete, OperationRead},
+		Operations:  []string{OperationDelete, OperationGet, OperationList, OperationSearch},
 	}
 
 	result := resourceWithDelete.HasDeleteOperation()
@@ -2322,7 +2401,7 @@ func TestResource_HasDeleteOperation(t *testing.T) {
 	resourceWithoutDelete := Resource{
 		Name:        "Users",
 		Description: "User resource",
-		Operations:  []string{OperationCreate, OperationRead},
+		Operations:  []string{OperationCreate, OperationGet},
 	}
 
 	result = resourceWithoutDelete.HasDeleteOperation()
@@ -2656,7 +2735,7 @@ func TestApplyOverlay_SkipAutoColumns(t *testing.T) {
 				{
 					Name:            "SpecialResource",
 					Description:     "Resource that should skip auto columns",
-					Operations:      []string{OperationRead},
+					Operations:      []string{OperationGet},
 					SkipAutoColumns: true,
 					Fields: []ResourceField{
 						{
@@ -2705,7 +2784,7 @@ func TestApplyOverlay_SkipAutoColumns(t *testing.T) {
 				{
 					Name:            "NormalResource",
 					Description:     "Resource that should include auto columns",
-					Operations:      []string{OperationRead},
+					Operations:      []string{OperationGet},
 					SkipAutoColumns: false,
 					Fields: []ResourceField{
 						{
@@ -2755,7 +2834,7 @@ func TestApplyOverlay_SkipAutoColumns(t *testing.T) {
 				{
 					Name:        "DefaultResource",
 					Description: "Resource with default behavior",
-					Operations:  []string{OperationRead},
+					Operations:  []string{OperationGet},
 					// SkipAutoColumns not explicitly set, should default to false
 					Fields: []ResourceField{
 						{
@@ -2896,7 +2975,7 @@ func TestApplyOverlay_SearchEndpointFilterObjects(t *testing.T) {
 				{
 					Name:        "School",
 					Description: "School management",
-					Operations:  []string{OperationRead}, // Read operation should trigger search endpoint generation
+					Operations:  []string{OperationGet, OperationList, OperationSearch}, // Read operation should trigger search endpoint generation
 					Fields:      []ResourceField{},
 					Endpoints:   []Endpoint{},
 				},
@@ -2956,7 +3035,7 @@ func TestApplyOverlay_AutoGeneratedEndpointSummaries(t *testing.T) {
 				{
 					Name:        "User",
 					Description: "User management resource",
-					Operations:  []string{OperationCreate, OperationRead, OperationUpdate, OperationDelete},
+					Operations:  []string{OperationCreate, OperationGet, OperationList, OperationSearch, OperationUpdate, OperationDelete},
 					Fields: []ResourceField{
 						{
 							Field: Field{
@@ -2964,7 +3043,7 @@ func TestApplyOverlay_AutoGeneratedEndpointSummaries(t *testing.T) {
 								Type:        FieldTypeString,
 								Description: "User email address",
 							},
-							Operations: []string{OperationCreate, OperationRead, OperationUpdate},
+							Operations: []string{OperationCreate, OperationGet, OperationList, OperationSearch, OperationUpdate},
 						},
 						{
 							Field: Field{
@@ -2972,7 +3051,7 @@ func TestApplyOverlay_AutoGeneratedEndpointSummaries(t *testing.T) {
 								Type:        FieldTypeString,
 								Description: "User full name",
 							},
-							Operations: []string{OperationCreate, OperationRead, OperationUpdate},
+							Operations: []string{OperationCreate, OperationGet, OperationList, OperationSearch, OperationUpdate},
 						},
 					},
 				},
@@ -3074,7 +3153,7 @@ func TestApplyFilterOverlay_NestedObjects(t *testing.T) {
 				{
 					Name:        "People",
 					Description: "People management",
-					Operations:  []string{OperationCreate, OperationRead},
+					Operations:  []string{OperationCreate, OperationGet, OperationList, OperationSearch},
 					Fields:      []ResourceField{},
 					Endpoints: []Endpoint{
 						{
@@ -3144,7 +3223,7 @@ func TestApplyFilterOverlay_MetaObjectFilters(t *testing.T) {
 				{
 					Name:        "User",
 					Description: "User resource",
-					Operations:  []string{OperationCreate, OperationRead, OperationUpdate, OperationDelete},
+					Operations:  []string{OperationCreate, OperationGet, OperationList, OperationSearch, OperationUpdate, OperationDelete},
 					Fields: []ResourceField{
 						{
 							Field: Field{
@@ -3152,7 +3231,7 @@ func TestApplyFilterOverlay_MetaObjectFilters(t *testing.T) {
 								Description: "User name",
 								Type:        FieldTypeString,
 							},
-							Operations: []string{OperationCreate, OperationRead, OperationUpdate},
+							Operations: []string{OperationCreate, OperationGet, OperationList, OperationSearch, OperationUpdate},
 						},
 					},
 				},
@@ -3315,7 +3394,7 @@ enums:
 resources:
   - name: "User"
     description: "User resource"
-    operations: ["Create", "Read"]
+    operations: ["Create", "Get", "List", "Search"]
     fields:
       - name: "email"
         description: "User email"
@@ -3358,6 +3437,7 @@ resources:
 		hasCreateEndpoint := false
 		hasGetEndpoint := false
 		hasListEndpoint := false
+		hasSearchEndpoint := false
 		for _, endpoint := range user.Endpoints {
 			switch endpoint.Name {
 			case "Create":
@@ -3366,11 +3446,14 @@ resources:
 				hasGetEndpoint = true
 			case "List":
 				hasListEndpoint = true
+			case "Search":
+				hasSearchEndpoint = true
 			}
 		}
 		assert.True(t, hasCreateEndpoint, "Should have Create endpoint from overlay")
 		assert.True(t, hasGetEndpoint, "Should have Get endpoint from overlay")
 		assert.True(t, hasListEndpoint, "Should have List endpoint from overlay")
+		assert.True(t, hasSearchEndpoint, "Should have Search endpoint from overlay")
 	})
 
 	// Test with invalid YAML
@@ -3409,7 +3492,7 @@ func TestParseServiceFromJSON(t *testing.T) {
 				{
 					"name": "User",
 					"description": "User resource",
-					"operations": ["Create", "Read"],
+					"operations": ["Create", "Get", "List", "Search"],
 					"fields": [
 						{
 							"name": "email",
@@ -3475,7 +3558,7 @@ func TestParseServiceFromBytes(t *testing.T) {
 name: "TestService"
 resources:
   - name: "User"
-    operations: ["Read"]
+    operations: ["Get"]
     fields: []
 `
 
@@ -3497,7 +3580,7 @@ resources:
 
 	// Test with JSON extension
 	t.Run("JSON extension parses correctly", func(t *testing.T) {
-		jsonData := `{"name": "TestService", "resources": [{"name": "User", "operations": ["Read"], "fields": []}]}`
+		jsonData := `{"name": "TestService", "resources": [{"name": "User", "operations": ["Get"], "fields": []}]}`
 
 		service, err := ParseServiceFromBytes([]byte(jsonData), ".json")
 		assert.NoError(t, err, "Should parse JSON bytes successfully")

@@ -37,7 +37,7 @@ enums:
 resources:
   - name: "Pets"
     description: "Pet management"
-    operations: ["Create", "Read", "Update", "Delete"]
+    operations: ["Create", "Get", "List", "Search", "Update", "Delete"]
     fields:
       - field:
           name: "name"

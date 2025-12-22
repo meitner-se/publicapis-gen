@@ -35,7 +35,7 @@ objects:
 resources:
   - name: "Products"
     description: "Product catalog"
-    operations: ["Create", "Read", "Update", "Delete"]
+    operations: ["Create", "Get", "List", "Search", "Update", "Delete"]
     fields:
       - field:
           name: "title"

@@ -513,7 +513,7 @@ name: "My API"
 version: "1.0.0"
 resources:
   - name: "Users"
-    operations: ["Create", "Read", "Update", "Delete"]
+    operations: ["Create", "Get", "List", "Search", "Update", "Delete"]
     fields:
       - field:
           name: "username"

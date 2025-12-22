@@ -53,6 +53,9 @@ func GenerateInternalTests(buf *bytes.Buffer, service *specification.Service, pa
 		return err
 	}
 
+	// Generate import guards to prevent unused import errors
+	generateImportGuards(buf)
+
 	// Format the buffer content
 	formatted, err := format.Source(buf.Bytes())
 	if err != nil {
@@ -105,6 +108,9 @@ func GenerateTests(buf *bytes.Buffer, service *specification.Service, packageNam
 		return err
 	}
 
+	// Generate import guards to prevent unused import errors
+	generateImportGuards(buf)
+
 	// Format the buffer content
 	formatted, err := format.Source(buf.Bytes())
 	if err != nil {
@@ -116,6 +122,19 @@ func GenerateTests(buf *bytes.Buffer, service *specification.Service, packageNam
 	buf.Write(formatted)
 
 	return nil
+}
+
+// generateImportGuards generates blank identifier assignments to ensure imports are used.
+// This prevents "unused import" compilation errors when certain operations (like Create, Get)
+// are not present on a resource, which would otherwise leave bytes or uuid unused.
+func generateImportGuards(buf *bytes.Buffer) {
+	buf.WriteString("// ============================================================================\n")
+	buf.WriteString("// Import guards - ensure imports are used regardless of resource operations\n")
+	buf.WriteString("// ============================================================================\n\n")
+	buf.WriteString("var (\n")
+	buf.WriteString("\t_ = bytes.MinRead\n")
+	buf.WriteString("\t_ = uuid.Nil\n")
+	buf.WriteString(")\n")
 }
 
 // generateInternalImports generates the import section for internal test files.

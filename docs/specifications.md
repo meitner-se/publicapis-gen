@@ -45,7 +45,7 @@ objects:
 resources:
   - name: "Users"
     description: "User account management"
-    operations: ["Create", "Read", "Update", "Delete"]
+    operations: ["Create", "Get", "List", "Search", "Update", "Delete"]
     fields:
       - field:
           name: "username"
@@ -94,7 +94,7 @@ retry:
 resources:
   - name: "Users"
     description: "User management with built-in retry support"
-    operations: ["Create", "Read", "Update", "Delete"]
+    operations: ["Create", "Get", "List", "Search", "Update", "Delete"]
     fields:
       - field:
           name: "email"
@@ -125,7 +125,7 @@ retry:
 resources:
   - name: "Orders"
     description: "Critical order processing"
-    operations: ["Create", "Read", "Update"]
+    operations: ["Create", "Get", "List", "Search", "Update"]
     fields:
       - field:
           name: "amount"
@@ -165,7 +165,7 @@ timeout:
 resources:
   - name: "Users"
     description: "User management with custom timeout"
-    operations: ["Create", "Read", "Update", "Delete"]
+    operations: ["Create", "Get", "List", "Search", "Update", "Delete"]
     fields:
       - field:
           name: "email"
@@ -189,7 +189,7 @@ timeout:
 resources:
   - name: "RealTimeData"
     description: "Real-time data processing"
-    operations: ["Create", "Read"]
+    operations: ["Create", "Get", "List", "Search"]
     fields:
       - field:
           name: "data"
@@ -326,7 +326,7 @@ objects:
 resources:
   - name: "Students"
     description: "Student management"
-    operations: ["Create", "Read", "Update", "Delete"]
+    operations: ["Create", "Get", "List", "Search", "Update", "Delete"]
     fields:
       - field:
           name: "person"
@@ -346,7 +346,7 @@ resources:
 
   - name: "Teachers"
     description: "Teacher management"
-    operations: ["Create", "Read", "Update"]
+    operations: ["Create", "Get", "List", "Search", "Update"]
     fields:
       - field:
           name: "person"
