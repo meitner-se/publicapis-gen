@@ -153,7 +153,7 @@ func TestValidateFieldType(t *testing.T) {
 	// Test valid primitive types
 	primitiveTypes := []string{
 		FieldTypeUUID, FieldTypeDate, FieldTypeTimestamp,
-		FieldTypeString, FieldTypeInt, FieldTypeBool,
+		FieldTypeString, FieldTypeInt, FieldTypeFloat64, FieldTypeBool,
 	}
 	for _, primitiveType := range primitiveTypes {
 		err := validateFieldType(service, primitiveType)

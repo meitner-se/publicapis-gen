@@ -31,6 +31,7 @@ const (
 	FieldTypeTimestamp = "Timestamp"
 	FieldTypeString    = "String"
 	FieldTypeInt       = "Int"
+	FieldTypeFloat64   = "Float64"
 	FieldTypeBool      = "Bool"
 )
 
@@ -41,6 +42,7 @@ const (
 	defaultExampleTimestamp = "2024-01-15T10:30:00Z"
 	defaultExampleString    = "example"
 	defaultExampleInt       = "42"
+	defaultExampleFloat64   = "3.14"
 	defaultExampleBool      = "true"
 )
 
@@ -512,7 +514,7 @@ type Field struct {
 	// Description of the field, explain the reason what it is used for and why it's needed
 	Description string `json:"description"`
 
-	// Type of the field, can be one of the types (UUID, Date, Timestamp, String, Int, Bool) or one of the custom Objects
+	// Type of the field, can be one of the types (UUID, Date, Timestamp, String, Int, Float64, Bool) or one of the custom Objects
 	Type string `json:"type"`
 
 	// Default value of the field
@@ -993,7 +995,7 @@ func createListResponse(statusCode int, description string, dataField Field, pag
 // isComparableType returns true if the field type supports range operations.
 func isComparableType(fieldType string) bool {
 	switch fieldType {
-	case FieldTypeInt, FieldTypeDate, FieldTypeTimestamp:
+	case FieldTypeInt, FieldTypeFloat64, FieldTypeDate, FieldTypeTimestamp:
 		return true
 	default:
 		return false
@@ -1013,7 +1015,7 @@ func canBeNull(field Field) bool {
 // isPrimitiveType returns true if the field type is a primitive type.
 func isPrimitiveType(fieldType string) bool {
 	switch fieldType {
-	case FieldTypeUUID, FieldTypeDate, FieldTypeTimestamp, FieldTypeString, FieldTypeInt, FieldTypeBool:
+	case FieldTypeUUID, FieldTypeDate, FieldTypeTimestamp, FieldTypeString, FieldTypeInt, FieldTypeFloat64, FieldTypeBool:
 		return true
 	default:
 		return false
@@ -1428,6 +1430,8 @@ func getDefaultExample(fieldType string) string {
 		return defaultExampleString
 	case FieldTypeInt:
 		return defaultExampleInt
+	case FieldTypeFloat64:
+		return defaultExampleFloat64
 	case FieldTypeBool:
 		return defaultExampleBool
 	default:
@@ -2392,7 +2396,7 @@ func validateFieldType(service *Service, fieldType string) error {
 	// Check if it's a primitive type
 	validPrimitiveTypes := []string{
 		FieldTypeUUID, FieldTypeDate, FieldTypeTimestamp,
-		FieldTypeString, FieldTypeInt, FieldTypeBool,
+		FieldTypeString, FieldTypeInt, FieldTypeFloat64, FieldTypeBool,
 	}
 
 	if slices.Contains(validPrimitiveTypes, fieldType) {
