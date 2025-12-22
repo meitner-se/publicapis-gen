@@ -2057,6 +2057,7 @@ func Test_isComparableType(t *testing.T) {
 	}{
 		{FieldTypeString, false},
 		{FieldTypeInt, true},
+		{FieldTypeFloat64, true},
 		{FieldTypeDate, true},
 		{FieldTypeTimestamp, true},
 		{FieldTypeUUID, false},
@@ -2079,6 +2080,7 @@ func Test_isStringType(t *testing.T) {
 	}{
 		{FieldTypeString, true},
 		{FieldTypeInt, false},
+		{FieldTypeFloat64, false},
 		{FieldTypeBool, false},
 		{FieldTypeUUID, false},
 		{"CustomObject", false},

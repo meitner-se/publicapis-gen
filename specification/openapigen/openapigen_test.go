@@ -2165,6 +2165,12 @@ func TestResponseBodyExamples(t *testing.T) {
 						Example:     "true",
 					},
 					{
+						Name:        "score",
+						Description: "User score",
+						Type:        specification.FieldTypeFloat64,
+						Example:     "95.5",
+					},
+					{
 						Name:        "status",
 						Description: "User status",
 						Type:        "Status",
@@ -2332,6 +2338,9 @@ func TestResponseBodyExamples(t *testing.T) {
 
 	// Verify integer types are unquoted in response examples
 	assert.Contains(t, jsonString, "\"age\": 30", "Should contain integer field example without quotes in response")
+
+	// Verify float64 types are unquoted in response examples
+	assert.Contains(t, jsonString, "\"score\": 95.5", "Should contain float64 field example without quotes in response")
 
 	// Verify boolean types are unquoted in response examples
 	assert.Contains(t, jsonString, "\"active\": true", "Should contain boolean field example without quotes in response")

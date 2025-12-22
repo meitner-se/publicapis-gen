@@ -255,6 +255,12 @@ func generateTestParameterValue(buf *bytes.Buffer, param specification.Field, pa
 		}
 		// Use float64 for consistency with JSON unmarshaling
 		buf.WriteString(fmt.Sprintf("\t\t%s := float64(%s)\n", varName, defaultValue))
+	case "Float64":
+		defaultValue := "3.14"
+		if param.Example != "" {
+			defaultValue = param.Example
+		}
+		buf.WriteString(fmt.Sprintf("\t\t%s := %s\n", varName, defaultValue))
 	case "Bool":
 		defaultValue := "true"
 		if param.Example != "" {
@@ -305,6 +311,12 @@ func generateTestBody(buf *bytes.Buffer, bodyParams []specification.Field, servi
 					defaultValue = param.Example
 				}
 				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []interface{}{float64(%s)},\n", jsonKey, defaultValue))
+			case "Float64":
+				defaultValue := "3.14"
+				if param.Example != "" {
+					defaultValue = param.Example
+				}
+				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": []interface{}{%s},\n", jsonKey, defaultValue))
 			case "Bool":
 				defaultValue := "true"
 				if param.Example != "" {
@@ -350,6 +362,12 @@ func generateTestBody(buf *bytes.Buffer, bodyParams []specification.Field, servi
 					defaultValue = param.Example
 				}
 				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": float64(%s),\n", jsonKey, defaultValue))
+			case "Float64":
+				defaultValue := "3.14"
+				if param.Example != "" {
+					defaultValue = param.Example
+				}
+				buf.WriteString(fmt.Sprintf("\t\t\t\"%s\": %s,\n", jsonKey, defaultValue))
 			case "Bool":
 				defaultValue := "true"
 				if param.Example != "" {
@@ -767,6 +785,12 @@ func getObjectTestDataWithVisited(objectType string, service *specification.Serv
 							defaultValue = field.Example
 						}
 						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []interface{}{float64(%s)}", jsonKey, defaultValue))
+					case "Float64":
+						defaultValue := "3.14"
+						if field.Example != "" {
+							defaultValue = field.Example
+						}
+						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": []interface{}{%s}", jsonKey, defaultValue))
 					case "Bool":
 						defaultValue := "true"
 						if field.Example != "" {
@@ -816,6 +840,12 @@ func getObjectTestDataWithVisited(objectType string, service *specification.Serv
 							defaultValue = field.Example
 						}
 						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": float64(%s)", jsonKey, defaultValue))
+					case "Float64":
+						defaultValue := "3.14"
+						if field.Example != "" {
+							defaultValue = field.Example
+						}
+						fields = append(fields, fmt.Sprintf("\n\t\t\t\t\"%s\": %s", jsonKey, defaultValue))
 					case "Bool":
 						defaultValue := "true"
 						if field.Example != "" {
@@ -3129,6 +3159,8 @@ func generateHeaderPopulation(buf *bytes.Buffer, service *specification.Service,
 			buf.WriteString(fmt.Sprintf("\t\t\t\t\t%s: types.NewInt(12345),\n", fieldName))
 		case "Int64":
 			buf.WriteString(fmt.Sprintf("\t\t\t\t\t%s: types.NewInt64(67890),\n", fieldName))
+		case "Float64":
+			buf.WriteString(fmt.Sprintf("\t\t\t\t\t%s: types.NewFloat64(3.14),\n", fieldName))
 		case "Bool":
 			buf.WriteString(fmt.Sprintf("\t\t\t\t\t%s: types.NewBool(true),\n", fieldName))
 		case "UUID":
@@ -3160,6 +3192,8 @@ func generateHeaderAssertions(buf *bytes.Buffer, service *specification.Service)
 			buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, \"12345\", w.Header().Get(\"%s\"), \"Header %s should be set\")\n", field.Name, field.Name))
 		case "Int64":
 			buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, \"67890\", w.Header().Get(\"%s\"), \"Header %s should be set\")\n", field.Name, field.Name))
+		case "Float64":
+			buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, \"3.14\", w.Header().Get(\"%s\"), \"Header %s should be set\")\n", field.Name, field.Name))
 		case "Bool":
 			buf.WriteString(fmt.Sprintf("\t\tassert.Equal(t, \"true\", w.Header().Get(\"%s\"), \"Header %s should be set\")\n", field.Name, field.Name))
 		case "UUID":

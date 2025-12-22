@@ -115,6 +115,7 @@ const (
 const (
 	schemaTypeString  = "string"
 	schemaTypeInteger = "integer"
+	schemaTypeNumber  = "number"
 	schemaTypeBoolean = "boolean"
 	schemaTypeArray   = "array"
 	schemaTypeObject  = "object"
@@ -130,6 +131,7 @@ const (
 	schemaFormatUUID     = "uuid"
 	schemaFormatDate     = "date"
 	schemaFormatDateTime = "date-time"
+	schemaFormatDouble   = "double"
 )
 
 // Speakeasy retry configuration constants
@@ -858,6 +860,11 @@ func (g *generator) getTypeSchema(fieldType string, service *specification.Servi
 		return &base.Schema{Type: []string{schemaTypeString}}
 	case specification.FieldTypeInt:
 		return &base.Schema{Type: []string{schemaTypeInteger}}
+	case specification.FieldTypeFloat64:
+		return &base.Schema{
+			Type:   []string{schemaTypeNumber},
+			Format: schemaFormatDouble,
+		}
 	case specification.FieldTypeBool:
 		return &base.Schema{Type: []string{schemaTypeBoolean}}
 	case specification.FieldTypeUUID:
@@ -1034,7 +1041,7 @@ func (g *generator) createRequestBodyName(resourceName, endpointName string) str
 func (g *generator) isPrimitiveType(fieldType string) bool {
 	switch fieldType {
 	case specification.FieldTypeUUID, specification.FieldTypeDate, specification.FieldTypeTimestamp,
-		specification.FieldTypeString, specification.FieldTypeInt, specification.FieldTypeBool:
+		specification.FieldTypeString, specification.FieldTypeInt, specification.FieldTypeFloat64, specification.FieldTypeBool:
 		return true
 	default:
 		return false
@@ -1049,6 +1056,13 @@ func (g *generator) createTypedExampleNode(fieldType, exampleValue string) *yaml
 		return &yaml.Node{
 			Kind:  yaml.ScalarNode,
 			Tag:   "!!int",
+			Value: exampleValue,
+		}
+	case specification.FieldTypeFloat64:
+		// For float64 types, create a float node
+		return &yaml.Node{
+			Kind:  yaml.ScalarNode,
+			Tag:   "!!float",
 			Value: exampleValue,
 		}
 	case specification.FieldTypeBool:
