@@ -102,7 +102,7 @@ func TestGenerator_GenerateFromService(t *testing.T) {
 				{
 					Name:        "User",
 					Description: "User resource",
-					Operations:  []string{specification.OperationCreate, specification.OperationRead},
+					Operations:  []string{specification.OperationCreate, specification.OperationGet, specification.OperationList, specification.OperationSearch},
 					Fields: []specification.ResourceField{
 						{
 							Field: specification.Field{
@@ -595,7 +595,7 @@ func TestEndToEndErrorResponseGeneration(t *testing.T) {
 			{
 				Name:        "User",
 				Description: "User resource",
-				Operations:  []string{specification.OperationCreate, specification.OperationRead},
+				Operations:  []string{specification.OperationCreate, specification.OperationGet, specification.OperationList, specification.OperationSearch},
 				Fields: []specification.ResourceField{
 					{
 						Field: specification.Field{
@@ -954,7 +954,7 @@ func TestSpeakeasyPaginationExtension(t *testing.T) {
 			{
 				Name:        "User",
 				Description: "User resource for testing pagination",
-				Operations:  []string{specification.OperationRead},
+				Operations:  []string{specification.OperationGet, specification.OperationList, specification.OperationSearch},
 				Fields: []specification.ResourceField{
 					{
 						Field: specification.Field{
@@ -3005,7 +3005,7 @@ func TestGenerator_GenerateFromServiceWithSecurity(t *testing.T) {
 			{
 				Name:        "TestResource",
 				Description: "Test resource with security",
-				Operations:  []string{"Create", "Read"},
+				Operations:  []string{"Create", "Get", "List", "Search"},
 				Fields: []specification.ResourceField{
 					{
 						Field: specification.Field{
@@ -3013,7 +3013,7 @@ func TestGenerator_GenerateFromServiceWithSecurity(t *testing.T) {
 							Type:        "String",
 							Description: "Resource name",
 						},
-						Operations: []string{"Create", "Read"},
+						Operations: []string{"Create", "Get", "List", "Search"},
 					},
 				},
 			},
@@ -3307,7 +3307,7 @@ func TestArrayFieldExamples(t *testing.T) {
 			{
 				Name:        "TestResource",
 				Description: "Test resource",
-				Operations:  []string{specification.OperationRead},
+				Operations:  []string{specification.OperationGet, specification.OperationList, specification.OperationSearch},
 				Fields: []specification.ResourceField{
 					{
 						Field: specification.Field{
@@ -3402,7 +3402,7 @@ func TestNullableFieldExamples(t *testing.T) {
 			{
 				Name:        "TestResource",
 				Description: "Test resource with nullable fields",
-				Operations:  []string{specification.OperationCreate, specification.OperationRead},
+				Operations:  []string{specification.OperationCreate, specification.OperationGet, specification.OperationList, specification.OperationSearch},
 				Fields: []specification.ResourceField{
 					{
 						Field: specification.Field{
@@ -3761,7 +3761,7 @@ func TestDeterministicGeneration(t *testing.T) {
 			{
 				Name:        "User",
 				Description: "User resource",
-				Operations:  []string{specification.OperationCreate, specification.OperationRead, specification.OperationUpdate, specification.OperationDelete},
+				Operations:  []string{specification.OperationCreate, specification.OperationGet, specification.OperationList, specification.OperationSearch, specification.OperationUpdate, specification.OperationDelete},
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "Get",

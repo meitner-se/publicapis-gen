@@ -24,7 +24,7 @@ enums:
 resources:
   - name: "Posts"
     description: "Blog post management"
-    operations: ["Create", "Read", "Update", "Delete"]
+    operations: ["Create", "Get", "List", "Search", "Update", "Delete"]
     fields:
       - field:
           name: "title"

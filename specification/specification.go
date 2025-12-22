@@ -16,12 +16,19 @@ import (
 	"github.com/goccy/go-yaml/token"
 )
 
-// CRUD Operations
+// CRUD Operations for fields
 const (
 	OperationCreate = "Create"
 	OperationRead   = "Read"
 	OperationUpdate = "Update"
 	OperationDelete = "Delete"
+)
+
+// Resource-specific operations (replacing Read with Get, List, Search)
+const (
+	OperationGet    = "Get"
+	OperationList   = "List"
+	OperationSearch = "Search"
 )
 
 // Field Types
@@ -493,7 +500,7 @@ type Resource struct {
 	// Description about the resource
 	Description string `json:"description"`
 
-	// Operations that are allowed for the resource can be all of Create, Update, Read, Delete
+	// Operations that are allowed for the resource can be all of Create, Get, List, Search, Update, Delete
 	Operations []string `json:"operations"`
 
 	// Fields of the resource
@@ -605,10 +612,10 @@ type EndpointResponse struct {
 }
 
 // ApplyOverlay applies an overlay to a specification, generating Objects and endpoints from Resources.
-// It creates Objects for Resources that have the "Read" operation, including all fields
+// It creates Objects for Resources that have any read-like operation (Get, List, or Search), including all fields
 // that support the "Read" operation in the generated Object.
-// It generates standard CRUD endpoints (Create, Read, Update, Delete) and additional endpoints (List, Search)
-// based on the operations supported by each Resource.
+// It generates standard endpoints (Create, Get, List, Search, Update, Delete) based on the operations
+// supported by each Resource.
 // It also adds default error handling objects and pagination support to every service.
 func ApplyOverlay(input *Service) *Service {
 	if input == nil {
@@ -869,9 +876,9 @@ func generateDeleteEndpoint(result *Service, resource Resource) {
 	}
 }
 
-// generateGetEndpoint generates a Get endpoint for resources that have Read operations.
+// generateGetEndpoint generates a Get endpoint for resources that have Get operations.
 func generateGetEndpoint(result *Service, resource Resource) {
-	if resource.HasReadOperation() && !resource.HasEndpoint(getEndpointName) {
+	if resource.HasGetOperation() && !resource.HasEndpoint(getEndpointName) {
 		idParam := Field{
 			Name:        getIDParamName,
 			Description: fmt.Sprintf(getIDParamDescTemplate, resource.Name),
@@ -893,9 +900,9 @@ func generateGetEndpoint(result *Service, resource Resource) {
 	}
 }
 
-// generateListEndpoint generates a List endpoint for resources that have Read operations.
+// generateListEndpoint generates a List endpoint for resources that have List operations.
 func generateListEndpoint(result *Service, resource Resource) {
-	if resource.HasReadOperation() && !resource.HasEndpoint(listEndpointName) {
+	if resource.HasListOperation() && !resource.HasEndpoint(listEndpointName) {
 		limitParam := createListLimitParamForResource(resource)
 		offsetParam := createListOffsetParamForResource(resource)
 		paginationField := createPaginationField()
@@ -917,9 +924,9 @@ func generateListEndpoint(result *Service, resource Resource) {
 	}
 }
 
-// generateSearchEndpoint generates a Search endpoint for resources that have Read operations.
+// generateSearchEndpoint generates a Search endpoint for resources that have Search operations.
 func generateSearchEndpoint(result *Service, resource Resource) {
-	if resource.HasReadOperation() && !resource.HasEndpoint(searchEndpointName) {
+	if resource.HasSearchOperation() && !resource.HasEndpoint(searchEndpointName) {
 		limitParam := createSearchLimitParamForResource(resource)
 		offsetParam := createSearchOffsetParamForResource(resource)
 		filterParam := Field{
@@ -1083,12 +1090,12 @@ func generateNestedFilterField(originalField Field, filterSuffix string, isNulla
 	}
 }
 
-// generateFilterObjectsForSearchableResources generates filter objects for resources that have Read operations.
+// generateFilterObjectsForSearchableResources generates filter objects for resources that have Search operations.
 // This ensures filter objects exist before search endpoints are generated.
 func generateFilterObjectsForSearchableResources(service *Service, resources []Resource) {
 	for _, resource := range resources {
-		// Only generate filter objects for resources that have Read operations (which will have search endpoints)
-		if resource.HasReadOperation() {
+		// Only generate filter objects for resources that have Search operations (which will have search endpoints)
+		if resource.HasSearchOperation() {
 			// Find the corresponding object for this resource
 			for _, obj := range service.Objects {
 				if obj.Name == resource.Name {
@@ -1138,10 +1145,10 @@ func ApplyFilterOverlay(input *Service) *Service {
 
 	hasFilter := make(map[string]bool)
 
-	// Generate filter objects ONLY for field types in resource objects that have Read operations
+	// Generate filter objects ONLY for field types in resource objects that have Search operations
 	for _, resource := range result.Resources {
-		// Only process resources with Read operations
-		if !resource.HasReadOperation() {
+		// Only process resources with Search operations
+		if !resource.HasSearchOperation() {
 			continue
 		}
 
@@ -1528,9 +1535,25 @@ func (r Resource) HasDeleteOperation() bool {
 	return slices.Contains(r.Operations, OperationDelete)
 }
 
-// HasReadOperation checks if the Resource supports Read operations.
+// HasGetOperation checks if the Resource supports Get operations.
+func (r Resource) HasGetOperation() bool {
+	return slices.Contains(r.Operations, OperationGet)
+}
+
+// HasListOperation checks if the Resource supports List operations.
+func (r Resource) HasListOperation() bool {
+	return slices.Contains(r.Operations, OperationList)
+}
+
+// HasSearchOperation checks if the Resource supports Search operations.
+func (r Resource) HasSearchOperation() bool {
+	return slices.Contains(r.Operations, OperationSearch)
+}
+
+// HasReadOperation checks if the Resource supports any read-like operations (Get, List, or Search).
+// This is used for determining if objects need to be generated from resources.
 func (r Resource) HasReadOperation() bool {
-	return slices.Contains(r.Operations, OperationRead)
+	return r.HasGetOperation() || r.HasListOperation() || r.HasSearchOperation()
 }
 
 // HasUpdateOperation checks if the Resource supports Update operations.
@@ -2204,8 +2227,8 @@ func validateService(service *Service) error {
 
 // validateResource validates a resource and its fields against the defined rules.
 func validateResource(service *Service, resource *Resource) error {
-	// Validate operations
-	if err := validateOperations(resource.Operations); err != nil {
+	// Validate resource operations (Get, List, Search, Create, Update, Delete)
+	if err := validateResourceOperations(resource.Operations); err != nil {
 		return fmt.Errorf("resource operations: %w", err)
 	}
 
@@ -2240,8 +2263,8 @@ func validateObject(service *Service, object *Object) error {
 
 // validateResourceField validates a resource field against the defined rules.
 func validateResourceField(service *Service, field *ResourceField) error {
-	// Validate operations
-	if err := validateOperations(field.Operations); err != nil {
+	// Validate field operations (Create, Read, Update, Delete)
+	if err := validateFieldOperations(field.Operations); err != nil {
 		return fmt.Errorf("field operations: %w", err)
 	}
 
@@ -2378,8 +2401,23 @@ func isValidStatusCode(code string) bool {
 	return false
 }
 
-// validateOperations validates that all operations are in PascalCase and are valid CRUD operations.
-func validateOperations(operations []string) error {
+// validateResourceOperations validates that all operations are valid resource operations.
+// Resource operations are: Create, Get, List, Search, Update, Delete
+func validateResourceOperations(operations []string) error {
+	validOperations := []string{OperationCreate, OperationGet, OperationList, OperationSearch, OperationUpdate, OperationDelete}
+
+	for _, operation := range operations {
+		if !slices.Contains(validOperations, operation) {
+			return fmt.Errorf("%s: operation '%s' must be one of: %v", errorInvalidOperation, operation, validOperations)
+		}
+	}
+
+	return nil
+}
+
+// validateFieldOperations validates that all operations are valid field operations.
+// Field operations are: Create, Read, Update, Delete
+func validateFieldOperations(operations []string) error {
 	validOperations := []string{OperationCreate, OperationRead, OperationUpdate, OperationDelete}
 
 	for _, operation := range operations {

@@ -42,7 +42,7 @@ enums:
 resources:
   - name: "Users"
     description: "User management resource"
-    operations: ["Create", "Read", "Update", "Delete"]
+    operations: ["Create", "Get", "List", "Search", "Update", "Delete"]
     fields:
       - field:
           name: "username"
