@@ -1406,6 +1406,68 @@ func TestCreateAutoColumnsWithMeta(t *testing.T) {
 	})
 }
 
+func TestCreateAutoColumnsForResource(t *testing.T) {
+	t.Run("default resource with all auto columns", func(t *testing.T) {
+		resource := Resource{
+			Name:        "TestResource",
+			Description: "Test resource",
+		}
+
+		autoColumns := createAutoColumnsForResource(resource)
+
+		assert.Len(t, autoColumns, 2, "Should have 2 auto columns (ID and Meta)")
+		assert.Equal(t, autoColumnIDName, autoColumns[0].Name, "First column should be ID")
+		assert.Equal(t, metaObjectName, autoColumns[1].Name, "Second column should be Meta")
+	})
+
+	t.Run("resource with SkipID", func(t *testing.T) {
+		resource := Resource{
+			Name:   "AggregatedData",
+			SkipID: true,
+		}
+
+		autoColumns := createAutoColumnsForResource(resource)
+
+		assert.Len(t, autoColumns, 1, "Should have 1 auto column (only Meta)")
+		assert.Equal(t, metaObjectName, autoColumns[0].Name, "Only column should be Meta")
+	})
+
+	t.Run("resource with SkipMeta", func(t *testing.T) {
+		resource := Resource{
+			Name:     "SimpleData",
+			SkipMeta: true,
+		}
+
+		autoColumns := createAutoColumnsForResource(resource)
+
+		assert.Len(t, autoColumns, 1, "Should have 1 auto column (only ID)")
+		assert.Equal(t, autoColumnIDName, autoColumns[0].Name, "Only column should be ID")
+	})
+
+	t.Run("resource with both SkipID and SkipMeta", func(t *testing.T) {
+		resource := Resource{
+			Name:     "PureData",
+			SkipID:   true,
+			SkipMeta: true,
+		}
+
+		autoColumns := createAutoColumnsForResource(resource)
+
+		assert.Len(t, autoColumns, 0, "Should have no auto columns")
+	})
+
+	t.Run("resource with SkipAutoColumns", func(t *testing.T) {
+		resource := Resource{
+			Name:            "LegacyResource",
+			SkipAutoColumns: true,
+		}
+
+		autoColumns := createAutoColumnsForResource(resource)
+
+		assert.Len(t, autoColumns, 0, "Should have no auto columns when SkipAutoColumns is true")
+	})
+}
+
 // ============================================================================
 // Utility Function Tests
 // ============================================================================
@@ -2434,6 +2496,90 @@ func TestResource_ShouldSkipAutoColumns(t *testing.T) {
 	})
 }
 
+func TestResource_ShouldSkipID(t *testing.T) {
+	// Test with SkipID=true
+	resourceWithSkipID := Resource{
+		Name:   "AggregatedData",
+		SkipID: true,
+	}
+	assert.True(t, resourceWithSkipID.ShouldSkipID(), "Resource with SkipID=true should skip ID")
+
+	// Test with SkipAutoColumns=true (should also skip ID)
+	resourceWithSkipAutoColumns := Resource{
+		Name:            "LegacyResource",
+		SkipAutoColumns: true,
+	}
+	assert.True(t, resourceWithSkipAutoColumns.ShouldSkipID(), "Resource with SkipAutoColumns=true should skip ID")
+
+	// Test with neither flag set
+	resourceDefault := Resource{
+		Name: "NormalResource",
+	}
+	assert.False(t, resourceDefault.ShouldSkipID(), "Resource with no skip flags should not skip ID")
+
+	t.Run("edge cases", func(t *testing.T) {
+		t.Run("both SkipID and SkipAutoColumns true", func(t *testing.T) {
+			resource := Resource{
+				Name:            "BothSkipped",
+				SkipID:          true,
+				SkipAutoColumns: true,
+			}
+			assert.True(t, resource.ShouldSkipID(), "Resource with both flags should skip ID")
+		})
+
+		t.Run("SkipMeta true but SkipID false", func(t *testing.T) {
+			resource := Resource{
+				Name:     "OnlySkipMeta",
+				SkipMeta: true,
+				SkipID:   false,
+			}
+			assert.False(t, resource.ShouldSkipID(), "Resource with only SkipMeta=true should not skip ID")
+		})
+	})
+}
+
+func TestResource_ShouldSkipMeta(t *testing.T) {
+	// Test with SkipMeta=true
+	resourceWithSkipMeta := Resource{
+		Name:     "SimpleData",
+		SkipMeta: true,
+	}
+	assert.True(t, resourceWithSkipMeta.ShouldSkipMeta(), "Resource with SkipMeta=true should skip Meta")
+
+	// Test with SkipAutoColumns=true (should also skip Meta)
+	resourceWithSkipAutoColumns := Resource{
+		Name:            "LegacyResource",
+		SkipAutoColumns: true,
+	}
+	assert.True(t, resourceWithSkipAutoColumns.ShouldSkipMeta(), "Resource with SkipAutoColumns=true should skip Meta")
+
+	// Test with neither flag set
+	resourceDefault := Resource{
+		Name: "NormalResource",
+	}
+	assert.False(t, resourceDefault.ShouldSkipMeta(), "Resource with no skip flags should not skip Meta")
+
+	t.Run("edge cases", func(t *testing.T) {
+		t.Run("both SkipMeta and SkipAutoColumns true", func(t *testing.T) {
+			resource := Resource{
+				Name:            "BothSkipped",
+				SkipMeta:        true,
+				SkipAutoColumns: true,
+			}
+			assert.True(t, resource.ShouldSkipMeta(), "Resource with both flags should skip Meta")
+		})
+
+		t.Run("SkipID true but SkipMeta false", func(t *testing.T) {
+			resource := Resource{
+				Name:     "OnlySkipID",
+				SkipID:   true,
+				SkipMeta: false,
+			}
+			assert.False(t, resource.ShouldSkipMeta(), "Resource with only SkipID=true should not skip Meta")
+		})
+	})
+}
+
 func TestResource_GetPluralName(t *testing.T) {
 	testCases := []struct {
 		resourceName   string
@@ -2867,6 +3013,189 @@ func TestApplyOverlay_SkipAutoColumns(t *testing.T) {
 		// Should have auto columns by default
 		expectedFieldCount := 3 // 2 auto columns (ID + Meta) + 1 original field
 		assert.Equal(t, expectedFieldCount, len(defaultResourceObject.Fields), "Should have auto columns by default")
+	})
+}
+
+func TestApplyOverlay_SkipIDAndMeta(t *testing.T) {
+	t.Run("resource with only SkipID enabled", func(t *testing.T) {
+		input := &Service{
+			Name: "TestService",
+			Resources: []Resource{
+				{
+					Name:        "AggregatedStats",
+					Description: "Aggregated statistics without individual IDs",
+					Operations:  []string{OperationGet},
+					SkipID:      true,
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "totalCount",
+								Type:        FieldTypeInt,
+								Description: "Total count",
+							},
+							Operations: []string{OperationRead},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Find the generated AggregatedStats object
+		var statsObject *Object
+		for i := range result.Objects {
+			if result.Objects[i].Name == "AggregatedStats" {
+				statsObject = &result.Objects[i]
+				break
+			}
+		}
+
+		require.NotNil(t, statsObject, "Should have generated AggregatedStats object")
+
+		// Should have Meta + 1 original field = 2 fields (no ID)
+		expectedFieldCount := 2
+		assert.Equal(t, expectedFieldCount, len(statsObject.Fields), "Should have Meta and original field, but no ID")
+
+		// First field should be Meta (not ID)
+		assert.Equal(t, metaObjectName, statsObject.Fields[0].Name, "First field should be Meta")
+		assert.Equal(t, "totalCount", statsObject.Fields[1].Name, "Second field should be totalCount")
+	})
+
+	t.Run("resource with only SkipMeta enabled", func(t *testing.T) {
+		input := &Service{
+			Name: "TestService",
+			Resources: []Resource{
+				{
+					Name:        "SimpleRecord",
+					Description: "Simple record without metadata tracking",
+					Operations:  []string{OperationGet},
+					SkipMeta:    true,
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "value",
+								Type:        FieldTypeString,
+								Description: "Value field",
+							},
+							Operations: []string{OperationRead},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Find the generated SimpleRecord object
+		var recordObject *Object
+		for i := range result.Objects {
+			if result.Objects[i].Name == "SimpleRecord" {
+				recordObject = &result.Objects[i]
+				break
+			}
+		}
+
+		require.NotNil(t, recordObject, "Should have generated SimpleRecord object")
+
+		// Should have ID + 1 original field = 2 fields (no Meta)
+		expectedFieldCount := 2
+		assert.Equal(t, expectedFieldCount, len(recordObject.Fields), "Should have ID and original field, but no Meta")
+
+		// First field should be ID
+		assert.Equal(t, autoColumnIDName, recordObject.Fields[0].Name, "First field should be ID")
+		assert.Equal(t, "value", recordObject.Fields[1].Name, "Second field should be value")
+	})
+
+	t.Run("resource with both SkipID and SkipMeta enabled", func(t *testing.T) {
+		input := &Service{
+			Name: "TestService",
+			Resources: []Resource{
+				{
+					Name:        "PureData",
+					Description: "Pure data object without ID or metadata",
+					Operations:  []string{OperationGet},
+					SkipID:      true,
+					SkipMeta:    true,
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "data",
+								Type:        FieldTypeString,
+								Description: "Data field",
+							},
+							Operations: []string{OperationRead},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Find the generated PureData object
+		var dataObject *Object
+		for i := range result.Objects {
+			if result.Objects[i].Name == "PureData" {
+				dataObject = &result.Objects[i]
+				break
+			}
+		}
+
+		require.NotNil(t, dataObject, "Should have generated PureData object")
+
+		// Should only have 1 original field (no ID, no Meta)
+		expectedFieldCount := 1
+		assert.Equal(t, expectedFieldCount, len(dataObject.Fields), "Should only have original field, no auto columns")
+		assert.Equal(t, "data", dataObject.Fields[0].Name, "Only field should be data")
+	})
+
+	t.Run("SkipAutoColumns takes precedence", func(t *testing.T) {
+		input := &Service{
+			Name: "TestService",
+			Resources: []Resource{
+				{
+					Name:            "LegacyResource",
+					Description:     "Resource using legacy SkipAutoColumns flag",
+					Operations:      []string{OperationGet},
+					SkipAutoColumns: true,
+					SkipID:          false, // Even though these are false
+					SkipMeta:        false, // SkipAutoColumns should skip both
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "legacyField",
+								Type:        FieldTypeString,
+								Description: "Legacy field",
+							},
+							Operations: []string{OperationRead},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result)
+
+		// Find the generated LegacyResource object
+		var legacyObject *Object
+		for i := range result.Objects {
+			if result.Objects[i].Name == "LegacyResource" {
+				legacyObject = &result.Objects[i]
+				break
+			}
+		}
+
+		require.NotNil(t, legacyObject, "Should have generated LegacyResource object")
+
+		// Should only have 1 original field (no auto columns due to SkipAutoColumns)
+		expectedFieldCount := 1
+		assert.Equal(t, expectedFieldCount, len(legacyObject.Fields), "SkipAutoColumns should skip both ID and Meta")
+		assert.Equal(t, "legacyField", legacyObject.Fields[0].Name, "Only field should be legacyField")
 	})
 }
 

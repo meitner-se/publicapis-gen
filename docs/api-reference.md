@@ -39,12 +39,14 @@ Defines an API resource with operations and fields.
 
 ```go
 type Resource struct {
-    Name            string          `json:"name"`                      // Resource name
-    Description     string          `json:"description"`               // Resource description
-    Operations      []string        `json:"operations"`                // Allowed operations
-    Fields          []ResourceField `json:"fields"`                    // Resource fields
-    Endpoints       []Endpoint      `json:"endpoints"`                 // Custom endpoints
-    SkipAutoColumns bool            `json:"skip_auto_columns,omitempty"` // Skip auto fields
+    Name            string          `json:"name"`                        // Resource name
+    Description     string          `json:"description"`                 // Resource description
+    Operations      []string        `json:"operations"`                  // Allowed operations
+    Fields          []ResourceField `json:"fields"`                      // Resource fields
+    Endpoints       []Endpoint      `json:"endpoints"`                   // Custom endpoints
+    SkipAutoColumns bool            `json:"skip_auto_columns,omitempty"` // Skip all auto fields (ID and Meta)
+    SkipID          bool            `json:"skip_id,omitempty"`           // Skip ID field generation
+    SkipMeta        bool            `json:"skip_meta,omitempty"`         // Skip Meta object field generation
 }
 ```
 
@@ -58,7 +60,9 @@ type Resource struct {
 - `GetUpdateBodyParams() []Field` - Get fields for Update endpoint
 - `GetReadableFields() []Field` - Get fields for Read operations
 - `HasEndpoint(name string) bool` - Check if endpoint exists
-- `ShouldSkipAutoColumns() bool` - Check if auto-columns should be skipped
+- `ShouldSkipAutoColumns() bool` - Check if all auto-columns should be skipped
+- `ShouldSkipID() bool` - Check if ID field should be skipped
+- `ShouldSkipMeta() bool` - Check if Meta object field should be skipped
 
 #### Field
 Basic field definition with type and metadata.

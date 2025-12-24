@@ -511,6 +511,14 @@ type Resource struct {
 
 	// SkipAutoColumns indicates whether to skip generating auto columns (ID, CreatedAt, etc.) for this resource
 	SkipAutoColumns bool `json:"skip_auto_columns,omitempty"`
+
+	// SkipID indicates whether to skip generating the ID field for this resource.
+	// Useful for aggregated data resources that don't represent individual database records.
+	SkipID bool `json:"skip_id,omitempty"`
+
+	// SkipMeta indicates whether to skip generating the Meta object field for this resource.
+	// Useful for resources that don't need creation/update tracking metadata.
+	SkipMeta bool `json:"skip_meta,omitempty"`
 }
 
 // Field contains information about a field within an endpoint or resource or Object.
@@ -776,9 +784,9 @@ func generateObjectsFromResources(result *Service, resources []Resource) {
 				// Get readable fields from the resource
 				fields := resource.GetReadableFields()
 
-				// Add auto-columns to the object if not skipped
-				if !resource.ShouldSkipAutoColumns() {
-					autoColumns := createAutoColumnsWithMeta(resource.Name)
+				// Add auto-columns to the object based on skip flags
+				autoColumns := createAutoColumnsForResource(resource)
+				if len(autoColumns) > 0 {
 					fields = append(autoColumns, fields...)
 				}
 
@@ -1566,6 +1574,18 @@ func (r Resource) ShouldSkipAutoColumns() bool {
 	return r.SkipAutoColumns
 }
 
+// ShouldSkipID checks if the Resource should skip generating the ID field.
+// Returns true if either SkipAutoColumns or SkipID is true.
+func (r Resource) ShouldSkipID() bool {
+	return r.SkipAutoColumns || r.SkipID
+}
+
+// ShouldSkipMeta checks if the Resource should skip generating the Meta object field.
+// Returns true if either SkipAutoColumns or SkipMeta is true.
+func (r Resource) ShouldSkipMeta() bool {
+	return r.SkipAutoColumns || r.SkipMeta
+}
+
 // GetPluralName returns the pluralized name of the resource.
 func (r Resource) GetPluralName() string {
 	return strmangle.Plural(r.Name)
@@ -1910,6 +1930,29 @@ func createAutoColumnsWithMeta(resourceName string) []Field {
 			Type:        metaObjectName,
 		},
 	}
+}
+
+// createAutoColumnsForResource creates auto-column fields based on the resource's skip flags.
+// It respects SkipID and SkipMeta flags for granular control over which auto-columns to generate.
+func createAutoColumnsForResource(resource Resource) []Field {
+	var fields []Field
+
+	// Add ID field unless skipped
+	if !resource.ShouldSkipID() {
+		fields = append(fields, createAutoColumnID(resource.Name))
+	}
+
+	// Add Meta field unless skipped
+	if !resource.ShouldSkipMeta() {
+		metaField := Field{
+			Name:        metaObjectName,
+			Description: fmt.Sprintf("Metadata information for the %s", resource.Name),
+			Type:        metaObjectName,
+		}
+		fields = append(fields, metaField)
+	}
+
+	return fields
 }
 
 // Helper functions
