@@ -50,7 +50,6 @@ const (
 	testEndpointName         = "CreateUser"
 	testEndpointMethod       = "POST"
 	testEndpointPath         = "/users"
-	testEndpointTitle        = "Create User"
 	testEndpointSummary      = "Create a new user"
 	testEndpointDesc         = "Creates a new user in the system"
 	testEndpointResponseCode = 201
@@ -1234,7 +1233,6 @@ func createTestServiceWithEndpoints() *specification.Service {
 			Name:        "CreateUser",
 			Method:      "POST",
 			Path:        "",
-			Title:       testEndpointTitle,
 			Summary:     testEndpointSummary,
 			Description: testEndpointDesc,
 			Request: specification.EndpointRequest{

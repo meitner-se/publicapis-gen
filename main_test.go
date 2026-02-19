@@ -1265,7 +1265,6 @@ func Test_generateServerFromSpecification_e2e(t *testing.T) {
 						Name:        "CreateUser",
 						Method:      "POST",
 						Path:        "/users",
-						Title:       "Create User",
 						Summary:     "Create a new user",
 						Description: "Creates a new user in the system",
 						Request: specification.EndpointRequest{
@@ -1286,7 +1285,6 @@ func Test_generateServerFromSpecification_e2e(t *testing.T) {
 						Name:        "GetUser",
 						Method:      "GET",
 						Path:        "/users/{id}",
-						Title:       "Get User",
 						Summary:     "Get a user by ID",
 						Description: "Retrieves a user by their ID",
 						Request: specification.EndpointRequest{

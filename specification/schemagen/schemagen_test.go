@@ -187,7 +187,7 @@ func TestGenerateSchemasStructure(t *testing.T) {
 		endpointSchema := schemas["Endpoint"].(map[string]interface{})
 		properties := endpointSchema["properties"].(map[string]interface{})
 
-		expectedProperties := []string{"name", "title", "description", "method", "path", "request", "response"}
+		expectedProperties := []string{"name", "summary", "description", "method", "path", "request", "response"}
 		for _, prop := range expectedProperties {
 			assert.Contains(t, properties, prop, "Endpoint schema should have '%s' property", prop)
 		}

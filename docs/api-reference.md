@@ -138,7 +138,6 @@ Custom endpoint definition.
 ```go
 type Endpoint struct {
     Name        string            `json:"name"`        // Endpoint name
-    Title       string            `json:"title"`       // Endpoint title
     Summary     string            `json:"summary"`     // Endpoint summary (short plain text)
     Description string            `json:"description"` // Endpoint description (longer, supports markdown)
     Method      string            `json:"method"`      // HTTP method

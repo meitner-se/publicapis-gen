@@ -216,7 +216,6 @@ const (
 const (
 	createEndpointName          = "Create"
 	createEndpointPath          = ""
-	createEndpointTitlePrefix   = "Create "
 	createEndpointSummaryPrefix = "Create a new "
 	createEndpointDescPrefix    = "Create a new "
 	createResponseStatusCode    = 201
@@ -226,7 +225,6 @@ const (
 const (
 	updateEndpointName          = "Update"
 	updateEndpointPath          = "/{id}"
-	updateEndpointTitlePrefix   = "Update "
 	updateEndpointSummaryPrefix = "Update a "
 	updateEndpointDescPrefix    = "Update a "
 	updateResponseStatusCode    = 200
@@ -238,7 +236,6 @@ const (
 const (
 	deleteEndpointName          = "Delete"
 	deleteEndpointPath          = "/{id}"
-	deleteEndpointTitlePrefix   = "Delete "
 	deleteEndpointSummaryPrefix = "Delete a "
 	deleteEndpointDescPrefix    = "Delete a "
 	deleteResponseStatusCode    = 204
@@ -250,7 +247,6 @@ const (
 const (
 	getEndpointName          = "Get"
 	getEndpointPath          = "/{id}"
-	getEndpointTitlePrefix   = "Retrieve an existing "
 	getEndpointSummaryPrefix = "Get a "
 	getResponseStatusCode    = 200
 	getIDParamName           = "ID"
@@ -261,7 +257,6 @@ const (
 const (
 	listEndpointName            = "List"
 	listEndpointPath            = ""
-	listEndpointTitlePrefix     = "List all "
 	listEndpointSummaryPrefix   = "List "
 	listEndpointDescTemplate    = "Returns a paginated list of all `%s` in your organization."
 	listResponseStatusCode      = 200
@@ -281,7 +276,6 @@ const (
 const (
 	searchEndpointName            = "Search"
 	searchEndpointPath            = "/_search"
-	searchEndpointTitlePrefix     = "Search "
 	searchEndpointSummaryPrefix   = "Search "
 	searchEndpointDescTemplate    = "Search for `%s` with filtering capabilities."
 	searchResponseStatusCode      = 200
@@ -548,10 +542,6 @@ type Endpoint struct {
 	// For example: "Get", "Create", "Update", "Delete", "Search"...
 	Name string `json:"name"`
 
-	// Title for the endpoint, should be unique within the resource.
-	// For example: "Get School", "Create School", "Update School", "Delete School", "Search School"...
-	Title string `json:"title"`
-
 	// Summary is a short plain text description of the endpoint
 	// For example: "Create a new school", "Update an existing school", "Delete a school"...
 	Summary string `json:"summary"`
@@ -815,7 +805,6 @@ func generateCreateEndpoint(result *Service, resource Resource) {
 		resourceName := resource.Name
 		createEndpoint := Endpoint{
 			Name:        createEndpointName,
-			Title:       createEndpointTitlePrefix + resource.Name,
 			Summary:     createEndpointSummaryPrefix + resource.Name,
 			Description: createEndpointDescPrefix + resource.Name,
 			Method:      httpMethodPost,
@@ -840,7 +829,6 @@ func generateUpdateEndpoint(result *Service, resource Resource) {
 		resourceName := resource.Name
 		updateEndpoint := Endpoint{
 			Name:        updateEndpointName,
-			Title:       updateEndpointTitlePrefix + resource.Name,
 			Summary:     updateEndpointSummaryPrefix + resource.Name,
 			Description: updateEndpointDescPrefix + resource.Name,
 			Method:      httpMethodPatch,
@@ -863,13 +851,12 @@ func generateDeleteEndpoint(result *Service, resource Resource) {
 		}
 		deleteEndpoint := Endpoint{
 			Name:        deleteEndpointName,
-			Title:       deleteEndpointTitlePrefix + resource.Name,
 			Summary:     deleteEndpointSummaryPrefix + resource.Name,
 			Description: deleteEndpointDescPrefix + resource.Name,
 			Method:      httpMethodDelete,
 			Path:        deleteEndpointPath,
 			Request:     createStandardRequest([]Field{idParam}, []Field{}, []Field{}),
-			Response:    createStandardResponse(deleteResponseStatusCode, fmt.Sprintf(deleteResponseDescTemplate, resource.Name), nil), // No body object for delete
+			Response:    createStandardResponse(deleteResponseStatusCode, fmt.Sprintf(deleteResponseDescTemplate, resource.Name), nil),
 		}
 
 		addEndpointToResource(result, resource.Name, deleteEndpoint)
@@ -887,7 +874,6 @@ func generateGetEndpoint(result *Service, resource Resource) {
 		resourceName := resource.Name
 		getEndpoint := Endpoint{
 			Name:        getEndpointName,
-			Title:       getEndpointTitlePrefix + resource.Name,
 			Summary:     getEndpointSummaryPrefix + resource.Name,
 			Description: fmt.Sprintf("Retrieves the `%s` with the given ID.", resource.Name),
 			Method:      httpMethodGet,
@@ -911,7 +897,6 @@ func generateListEndpoint(result *Service, resource Resource) {
 
 		listEndpoint := Endpoint{
 			Name:        listEndpointName,
-			Title:       listEndpointTitlePrefix + pluralResourceName,
 			Summary:     listEndpointSummaryPrefix + pluralResourceName,
 			Description: fmt.Sprintf(listEndpointDescTemplate, pluralResourceName),
 			Method:      httpMethodGet,
@@ -941,7 +926,6 @@ func generateSearchEndpoint(result *Service, resource Resource) {
 
 		searchEndpoint := Endpoint{
 			Name:        searchEndpointName,
-			Title:       searchEndpointTitlePrefix + pluralResourceName,
 			Summary:     searchEndpointSummaryPrefix + pluralResourceName,
 			Description: fmt.Sprintf(searchEndpointDescTemplate, pluralResourceName),
 			Method:      httpMethodPost,

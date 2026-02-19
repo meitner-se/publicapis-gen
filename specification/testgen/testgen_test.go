@@ -31,7 +31,6 @@ const (
 	testEndpointName         = "CreateStudent"
 	testEndpointMethod       = "POST"
 	testEndpointPath         = ""
-	testEndpointTitle        = "Create Student"
 	testEndpointSummary      = "Create a new student"
 	testEndpointDesc         = "Creates a new student in the system"
 	testEndpointResponseCode = 201
@@ -485,7 +484,6 @@ func createTestService() *specification.Service {
 						Name:        testEndpointName,
 						Method:      testEndpointMethod,
 						Path:        testEndpointPath,
-						Title:       testEndpointTitle,
 						Summary:     testEndpointSummary,
 						Description: testEndpointDesc,
 						Request: specification.EndpointRequest{
