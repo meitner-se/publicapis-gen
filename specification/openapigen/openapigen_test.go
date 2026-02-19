@@ -124,7 +124,7 @@ func TestGenerator_GenerateFromService(t *testing.T) {
 					Endpoints: []specification.Endpoint{
 						{
 							Name:        "Create",
-							Title:       "Create User",
+							Summary:     "Create User",
 							Description: "Create a new user",
 							Method:      "POST",
 							Path:        "",
@@ -669,7 +669,7 @@ func TestCamelCaseParametersInOpenAPI(t *testing.T) {
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "GetUser",
-						Title:       "Get User",
+						Summary:     "Get User",
 						Description: "Get user with parameters",
 						Method:      "GET",
 						Path:        "/{user_id}",
@@ -713,7 +713,7 @@ func TestCamelCaseParametersInOpenAPI(t *testing.T) {
 					},
 					{
 						Name:        "CreateUser",
-						Title:       "Create User",
+						Summary:     "Create User",
 						Description: "Create new user",
 						Method:      "POST",
 						Path:        "",
@@ -976,7 +976,7 @@ func TestSpeakeasyPaginationExtension(t *testing.T) {
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "List",
-						Title:       "List Users",
+						Summary:     "List Users",
 						Description: "Get a paginated list of users",
 						Method:      "GET",
 						Path:        "",
@@ -1017,7 +1017,7 @@ func TestSpeakeasyPaginationExtension(t *testing.T) {
 					},
 					{
 						Name:        "Search",
-						Title:       "Search Users",
+						Summary:     "Search Users",
 						Description: "Search for users with pagination",
 						Method:      "POST",
 						Path:        "/_search",
@@ -1065,7 +1065,7 @@ func TestSpeakeasyPaginationExtension(t *testing.T) {
 					},
 					{
 						Name:        "GetUser",
-						Title:       "Get User",
+						Summary:     "Get User",
 						Description: "Get a single user (non-paginated)",
 						Method:      "GET",
 						Path:        "/{id}",
@@ -1163,7 +1163,7 @@ func TestOperationIdPrefixing(t *testing.T) {
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "Get",
-						Title:       "Get User",
+						Summary:     "Get User",
 						Description: "Get a user by ID",
 						Method:      "GET",
 						Path:        "/{id}",
@@ -1176,7 +1176,7 @@ func TestOperationIdPrefixing(t *testing.T) {
 					},
 					{
 						Name:        "Create",
-						Title:       "Create User",
+						Summary:     "Create User",
 						Description: "Create a new user",
 						Method:      "POST",
 						Path:        "",
@@ -1196,7 +1196,7 @@ func TestOperationIdPrefixing(t *testing.T) {
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "Get",
-						Title:       "Get Product",
+						Summary:     "Get Product",
 						Description: "Get a product by ID",
 						Method:      "GET",
 						Path:        "/{id}",
@@ -1209,7 +1209,7 @@ func TestOperationIdPrefixing(t *testing.T) {
 					},
 					{
 						Name:        "Create",
-						Title:       "Create Product",
+						Summary:     "Create Product",
 						Description: "Create a new product",
 						Method:      "POST",
 						Path:        "",
@@ -1399,7 +1399,7 @@ func TestSchemaReferences(t *testing.T) {
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "Search",
-						Title:       "Search Schools",
+						Summary:     "Search Schools",
 						Description: "Search for schools using filters",
 						Method:      "POST",
 						Path:        "/_search",
@@ -1471,7 +1471,7 @@ func TestRequestBodySchemaReferences(t *testing.T) {
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "Create",
-						Title:       "Create User",
+						Summary:     "Create User",
 						Description: "Create a new user",
 						Method:      "POST",
 						Path:        "",
@@ -1534,7 +1534,7 @@ func TestRequestBodyMultipleParams(t *testing.T) {
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "Create",
-						Title:       "Create User",
+						Summary:     "Create User",
 						Description: "Create a new user",
 						Method:      "POST",
 						Path:        "",
@@ -1744,7 +1744,7 @@ func TestRequestBodiesMarkedAsRequired(t *testing.T) {
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "Create",
-						Title:       "Create User",
+						Summary:     "Create User",
 						Description: "Create a new user",
 						Method:      "POST",
 						Path:        "",
@@ -1800,7 +1800,7 @@ func TestRequestBodiesRequiredInJSON(t *testing.T) {
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "Create",
-						Title:       "Create User",
+						Summary:     "Create User",
 						Description: "Create a new user",
 						Method:      "POST",
 						Path:        "",
@@ -1882,7 +1882,7 @@ func TestRequestBodiesComponentsSection(t *testing.T) {
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "Create",
-						Title:       "Create User",
+						Summary:     "Create User",
 						Description: "Create a new user",
 						Method:      "POST",
 						Path:        "",
@@ -1904,7 +1904,7 @@ func TestRequestBodiesComponentsSection(t *testing.T) {
 					},
 					{
 						Name:        "Update",
-						Title:       "Update User",
+						Summary:     "Update User",
 						Description: "Update an existing user",
 						Method:      "PATCH",
 						Path:        "/{id}",
@@ -1931,7 +1931,7 @@ func TestRequestBodiesComponentsSection(t *testing.T) {
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "Create",
-						Title:       "Create Product",
+						Summary:     "Create Product",
 						Description: "Create a new product",
 						Method:      "POST",
 						Path:        "",
@@ -2035,7 +2035,7 @@ func TestRequestBodyExamples(t *testing.T) {
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "Create",
-						Title:       "Create User",
+						Summary:     "Create User",
 						Description: "Create a new user",
 						Method:      "POST",
 						Path:        "",
@@ -2071,7 +2071,7 @@ func TestRequestBodyExamples(t *testing.T) {
 					},
 					{
 						Name:        "CreateFromObject",
-						Title:       "Create User From Object",
+						Summary:     "Create User From Object",
 						Description: "Create a user using object type",
 						Method:      "POST",
 						Path:        "/from-object",
@@ -2248,7 +2248,7 @@ func TestResponseBodyExamples(t *testing.T) {
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "Create",
-						Title:       "Create User",
+						Summary:     "Create User",
 						Description: "Create a new user",
 						Method:      "POST",
 						Path:        "",
@@ -2270,7 +2270,7 @@ func TestResponseBodyExamples(t *testing.T) {
 					},
 					{
 						Name:        "Get",
-						Title:       "Get User",
+						Summary:     "Get User",
 						Description: "Get a user by ID",
 						Method:      "GET",
 						Path:        "/{id}",
@@ -2291,7 +2291,7 @@ func TestResponseBodyExamples(t *testing.T) {
 					},
 					{
 						Name:        "List",
-						Title:       "List Users",
+						Summary:     "List Users",
 						Description: "List all users",
 						Method:      "GET",
 						Path:        "",
@@ -2426,7 +2426,7 @@ func TestRequestBodyReferencesWithComponentSchemas(t *testing.T) {
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "Create",
-						Title:       "Create User",
+						Summary:     "Create User",
 						Description: "Create a new user",
 						Method:      "POST",
 						Path:        "",
@@ -2483,7 +2483,7 @@ func TestRequestBodyDuplicationPrevention(t *testing.T) {
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "Create",
-						Title:       "Create User",
+						Summary:     "Create User",
 						Description: "Create a new user",
 						Method:      "POST",
 						Path:        "",
@@ -2496,7 +2496,7 @@ func TestRequestBodyDuplicationPrevention(t *testing.T) {
 					},
 					{
 						Name:        "CreateAlternative",
-						Title:       "Create User Alternative",
+						Summary:     "Create User Alternative",
 						Description: "Alternative endpoint to create a new user with same request body",
 						Method:      "PUT",
 						Path:        "/alternative",
@@ -2825,7 +2825,7 @@ func TestParameterDescriptionNotDuplicated(t *testing.T) {
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "ListSchools",
-						Title:       "List Schools",
+						Summary:     "List Schools",
 						Description: "List schools with pagination",
 						Method:      "GET",
 						Path:        "",
@@ -3189,7 +3189,7 @@ func TestStringFieldsWithNumericExamples(t *testing.T) {
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "Create",
-						Title:       "Create Address",
+						Summary:     "Create Address",
 						Description: "Create a new address",
 						Method:      "POST",
 						Path:        "",
@@ -3437,7 +3437,7 @@ func TestNullableFieldExamples(t *testing.T) {
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "Create",
-						Title:       "Create Test Resource",
+						Summary:     "Create Test Resource",
 						Description: "Create a new test resource",
 						Method:      "POST",
 						Path:        "",
@@ -3574,7 +3574,7 @@ func TestAllOfSchemaExamples(t *testing.T) {
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "Create",
-						Title:       "Create Employee",
+						Summary:     "Create Employee",
 						Description: "Create a new employee",
 						Method:      "POST",
 						Path:        "",
@@ -3687,7 +3687,7 @@ func TestCircularReferenceHandling(t *testing.T) {
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "Create",
-						Title:       "Create Test Resource",
+						Summary:     "Create Test Resource",
 						Description: "Create a new test resource",
 						Method:      "POST",
 						Path:        "",
@@ -3765,7 +3765,7 @@ func TestDeterministicGeneration(t *testing.T) {
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "Get",
-						Title:       "Get User",
+						Summary:     "Get User",
 						Description: "Get a user by ID",
 						Method:      "GET",
 						Path:        "/{id}",
@@ -3778,7 +3778,7 @@ func TestDeterministicGeneration(t *testing.T) {
 					},
 					{
 						Name:        "Create",
-						Title:       "Create User",
+						Summary:     "Create User",
 						Description: "Create a new user",
 						Method:      "POST",
 						Path:        "",
@@ -3798,7 +3798,7 @@ func TestDeterministicGeneration(t *testing.T) {
 				Endpoints: []specification.Endpoint{
 					{
 						Name:        "Get",
-						Title:       "Get Product",
+						Summary:     "Get Product",
 						Description: "Get a product by ID",
 						Method:      "GET",
 						Path:        "/{id}",
@@ -3811,7 +3811,7 @@ func TestDeterministicGeneration(t *testing.T) {
 					},
 					{
 						Name:        "Create",
-						Title:       "Create Product",
+						Summary:     "Create Product",
 						Description: "Create a new product",
 						Method:      "POST",
 						Path:        "",

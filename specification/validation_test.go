@@ -486,7 +486,7 @@ func TestValidateEndpoint(t *testing.T) {
 	// Test valid endpoint
 	validEndpoint := Endpoint{
 		Name:        "GetUser",
-		Title:       "Get User",
+		Summary:     "Get User",
 		Description: "Get user by ID",
 		Method:      "GET",
 		Path:        "/{id}",
@@ -526,7 +526,7 @@ func TestValidateEndpoint(t *testing.T) {
 		// Create endpoint with only response fields (no request fields to avoid conflicts)
 		endpointWithInvalidResponse := Endpoint{
 			Name:        "GetUser",
-			Title:       "Get User",
+			Summary:     "Get User",
 			Description: "Get user by ID",
 			Method:      "GET",
 			Path:        "/{id}",
