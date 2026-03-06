@@ -270,7 +270,7 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	serviceName := strmangle.TitleCase(service.Name)
 	buf.WriteString(fmt.Sprintf("func Register%sAPI[Session any](router *gin.Engine, api *%sAPI[Session]) {\n", serviceName, serviceName))
 	buf.WriteString("\tif api.Server.ErrorHook == nil {\n")
-	buf.WriteString("\t\tapi.Server.ErrorHook = func(ctx context.Context, requestContext RequestContext, err error) *Error {\n")
+	buf.WriteString("\t\tapi.Server.ErrorHook = func(ctx context.Context, requestContext RequestContext, session *Session, err error) *Error {\n")
 	buf.WriteString("\t\t\treturn &Error{\n")
 	buf.WriteString("\t\t\t\tCode:    ErrorCodeInternal,\n")
 	buf.WriteString("\t\t\t\tMessage: types.NewString(err.Error()),\n")
@@ -334,7 +334,7 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("\tGetSessionFunc getSessionFunc[Session]\n")
 
 	buf.WriteString("\t// ErrorHook is a function that is used on each endpoint to convert an error to an Error object\n")
-	buf.WriteString("\tErrorHook ErrorHook\n\n")
+	buf.WriteString("\tErrorHook ErrorHook[Session]\n\n")
 
 	// Always add ResponseHeaderHook
 	buf.WriteString("\t// ResponseHeaderHook is a function that returns common response headers for each request\n")
@@ -405,7 +405,7 @@ func generateRequestTypes(buf *bytes.Buffer, service *specification.Service) err
 	buf.WriteString("// ErrorHook converts application errors into API Error responses.\n")
 	buf.WriteString("// This hook is called whenever an error occurs during request processing,\n")
 	buf.WriteString("// allowing you to customize error formatting, logging, and HTTP status codes.\n")
-	buf.WriteString("type ErrorHook func(ctx context.Context, requestContext RequestContext, err error) *Error\n\n")
+	buf.WriteString("type ErrorHook[Session any] func(ctx context.Context, requestContext RequestContext, session *Session, err error) *Error\n\n")
 
 	// Generate PreHook types
 	buf.WriteString("// PreHook runs before endpoint logic. Return nil to continue; non-nil to abort.\n")
@@ -578,13 +578,13 @@ func setResponseHeaders(c *gin.Context, headers ResponseHeaders) {
 
 		request, err := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)
 		if err != nil {
-			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err).Response())
+			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, nil, err).Response())
 			return
 		}
 
 		response, err := function(c.Request.Context(), request)
 		if err != nil {
-			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err).Response())
+			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, &request.Session, err).Response())
 			return
 		}
 
@@ -618,13 +618,13 @@ func setResponseHeaders(c *gin.Context, headers ResponseHeaders) {
 
 		request, err := handleRequest[sessionType, pathParamsType, queryParamsType, bodyParamsType](c, requestContext, server)
 		if err != nil {
-			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err).Response())
+			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, nil, err).Response())
 			return
 		}
 
 		err = function(c.Request.Context(), request)
 		if err != nil {
-			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err).Response())
+			c.JSON(server.ErrorHook(c.Request.Context(), requestContext, &request.Session, err).Response())
 			return
 		}
 

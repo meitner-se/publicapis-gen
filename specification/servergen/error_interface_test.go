@@ -403,19 +403,23 @@ func TestErrorInterfaceIntegration(t *testing.T) {
 
 	generatedCode := buf.String()
 
-	// Verify ErrorHook type is defined
-	assert.Contains(t, generatedCode, "type ErrorHook func(ctx context.Context, requestContext RequestContext, err error) *Error",
-		"ErrorHook should be defined as a type")
+	// Verify ErrorHook type is defined as a generic type with session parameter
+	assert.Contains(t, generatedCode, "type ErrorHook[Session any] func(ctx context.Context, requestContext RequestContext, session *Session, err error) *Error",
+		"ErrorHook should be defined as a generic type with session parameter")
 
-	// Verify ErrorHook is used in Server struct
-	assert.Contains(t, generatedCode, "ErrorHook ErrorHook",
-		"Server struct should use ErrorHook type")
+	// Verify ErrorHook is used in Server struct with generic type
+	assert.Contains(t, generatedCode, "ErrorHook ErrorHook[Session]",
+		"Server struct should use generic ErrorHook type")
 
 	// Verify Error is used in error handling
 	assert.Contains(t, generatedCode, "return &Error{",
 		"Error handling should create Error instances")
 
-	// Verify the Response method is used in error handling
-	assert.Contains(t, generatedCode, "c.JSON(server.ErrorHook(c.Request.Context(), requestContext, err).Response())",
-		"Should use Response() method for error responses")
+	// Verify the Response method is used in error handling with nil session for pre-auth errors
+	assert.Contains(t, generatedCode, "c.JSON(server.ErrorHook(c.Request.Context(), requestContext, nil, err).Response())",
+		"Should use Response() method for pre-auth error responses with nil session")
+
+	// Verify the Response method is used in error handling with session for post-auth errors
+	assert.Contains(t, generatedCode, "c.JSON(server.ErrorHook(c.Request.Context(), requestContext, &request.Session, err).Response())",
+		"Should use Response() method for post-auth error responses with session")
 }
