@@ -91,7 +91,7 @@
 //	type Server[Session any] struct {
 //	    GetRequestIDFunc  func(ctx context.Context) string
 //	    GetSessionFunc    func(ctx context.Context, headers http.Header) (Session, error)
-//	    ErrorHook  ErrorHook
+//	    ErrorHook  ErrorHook[Session]
 //	}
 //
 // # Error Handling
