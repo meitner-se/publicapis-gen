@@ -361,14 +361,45 @@ type ServiceLicense struct {
 	Identifier string `json:"identifier,omitempty"`
 }
 
+// OAuth2Flow represents a single OAuth2 authorization flow definition.
+type OAuth2Flow struct {
+	// TokenURL is the token endpoint URL (required for clientCredentials flow)
+	TokenURL string `json:"tokenUrl,omitempty"`
+
+	// AuthorizationURL is the authorization endpoint URL (required for implicit and authorizationCode flows)
+	AuthorizationURL string `json:"authorizationUrl,omitempty"`
+
+	// RefreshURL is the refresh token endpoint URL (optional)
+	RefreshURL string `json:"refreshUrl,omitempty"`
+
+	// Scopes is a map of available scope names to their descriptions
+	Scopes map[string]string `json:"scopes,omitempty"`
+}
+
+// OAuth2Flows represents the supported OAuth2 flow configurations.
+type OAuth2Flows struct {
+	// ClientCredentials defines the OAuth2 client credentials flow
+	ClientCredentials *OAuth2Flow `json:"clientCredentials,omitempty"`
+
+	// AuthorizationCode defines the OAuth2 authorization code flow
+	AuthorizationCode *OAuth2Flow `json:"authorizationCode,omitempty"`
+
+	// Implicit defines the OAuth2 implicit flow
+	Implicit *OAuth2Flow `json:"implicit,omitempty"`
+
+	// Password defines the OAuth2 resource owner password credentials flow
+	Password *OAuth2Flow `json:"password,omitempty"`
+}
+
 // SecurityScheme represents a security scheme definition.
 type SecurityScheme struct {
-	Type         string `json:"type"`
-	Description  string `json:"description,omitempty"`
-	Scheme       string `json:"scheme,omitempty"`
-	BearerFormat string `json:"bearerFormat,omitempty"`
-	Name         string `json:"name,omitempty"`
-	In           string `json:"in,omitempty"`
+	Type         string       `json:"type"`
+	Description  string       `json:"description,omitempty"`
+	Scheme       string       `json:"scheme,omitempty"`
+	BearerFormat string       `json:"bearerFormat,omitempty"`
+	Name         string       `json:"name,omitempty"`
+	In           string       `json:"in,omitempty"`
+	Flows        *OAuth2Flows `json:"flows,omitempty"`
 }
 
 // SecurityRequirement represents scheme names that must be satisfied together.
