@@ -206,6 +206,7 @@ const (
 const (
 	securityTypeHTTP   = "http"
 	securityTypeAPIKey = "apiKey"
+	securityTypeOAuth2 = "oauth2"
 )
 
 // generator handles OpenAPI 3.1 specification generation from specification.Service.
@@ -2264,10 +2265,59 @@ func (g *generator) createSecurityScheme(scheme specification.SecurityScheme) *v
 	case securityTypeAPIKey:
 		securityScheme.Name = scheme.Name
 		securityScheme.In = scheme.In
+	case securityTypeOAuth2:
+		securityScheme.Flows = g.createOAuthFlows(scheme.Flows)
 	}
 	// mutualTLS type doesn't require additional fields
 
 	return securityScheme
+}
+
+// createOAuthFlows creates a v3.OAuthFlows from a specification.OAuth2Flows.
+func (g *generator) createOAuthFlows(flows *specification.OAuth2Flows) *v3.OAuthFlows {
+	if flows == nil {
+		return &v3.OAuthFlows{}
+	}
+
+	oauthFlows := &v3.OAuthFlows{}
+
+	if flows.ClientCredentials != nil {
+		oauthFlows.ClientCredentials = g.createOAuthFlow(flows.ClientCredentials)
+	}
+
+	if flows.AuthorizationCode != nil {
+		oauthFlows.AuthorizationCode = g.createOAuthFlow(flows.AuthorizationCode)
+	}
+
+	if flows.Implicit != nil {
+		oauthFlows.Implicit = g.createOAuthFlow(flows.Implicit)
+	}
+
+	if flows.Password != nil {
+		oauthFlows.Password = g.createOAuthFlow(flows.Password)
+	}
+
+	return oauthFlows
+}
+
+// createOAuthFlow creates a v3.OAuthFlow from a specification.OAuth2Flow.
+func (g *generator) createOAuthFlow(flow *specification.OAuth2Flow) *v3.OAuthFlow {
+	if flow == nil {
+		return nil
+	}
+
+	oauthFlow := &v3.OAuthFlow{
+		TokenUrl:         flow.TokenURL,
+		AuthorizationUrl: flow.AuthorizationURL,
+		RefreshUrl:       flow.RefreshURL,
+		Scopes:           orderedmap.New[string, string](),
+	}
+
+	for scopeName, scopeDesc := range flow.Scopes {
+		oauthFlow.Scopes.Set(scopeName, scopeDesc)
+	}
+
+	return oauthFlow
 }
 
 // addSecurityToDocument adds security requirements from the service to the OpenAPI document.

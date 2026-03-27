@@ -3925,3 +3925,172 @@ func TestGenerator_SecuritySchemesConsistentOrder(t *testing.T) {
 	expectedKeys := []string{"Bearer", "ClientCredentials", "ClientSecret"}
 	assert.Equal(t, expectedKeys, keys, "All security schemes should be present")
 }
+
+// ============================================================================
+// OAuth2 Security Scheme Tests
+// ============================================================================
+
+// TestGenerator_OAuth2ClientCredentials tests that OAuth2 client credentials flow is generated correctly.
+func TestGenerator_OAuth2ClientCredentials(t *testing.T) {
+	service := &specification.Service{
+		Name:    "OAuth2 Test API",
+		Version: "1.0.0",
+		SecuritySchemes: map[string]specification.SecurityScheme{
+			"ClientCredentials": {
+				Type:        "apiKey",
+				Name:        "Client-ID",
+				In:          "header",
+				Description: "Client ID header",
+			},
+			"ClientSecret": {
+				Type:        "apiKey",
+				Name:        "Client-Secret",
+				In:          "header",
+				Description: "Client secret header",
+			},
+			"OAuth2": {
+				Type:        "oauth2",
+				Description: "OAuth2 client credentials flow",
+				Flows: &specification.OAuth2Flows{
+					ClientCredentials: &specification.OAuth2Flow{
+						TokenURL: "/oauth/token",
+						Scopes:   map[string]string{},
+					},
+				},
+			},
+		},
+		Security: []specification.SecurityRequirement{
+			{"ClientCredentials", "ClientSecret"},
+			{"OAuth2"},
+		},
+		Enums:     []specification.Enum{},
+		Objects:   []specification.Object{},
+		Resources: []specification.Resource{},
+	}
+
+	generator := newGenerator()
+	document, err := generator.generateFromService(service)
+
+	assert.NoError(t, err, "Should generate document without error")
+	assert.NotNil(t, document, "Generated document should not be nil")
+	assert.NotNil(t, document.Components, "Document should have components")
+	assert.NotNil(t, document.Components.SecuritySchemes, "Components should have security schemes")
+
+	// Verify OAuth2 scheme exists
+	oauth2Scheme, ok := document.Components.SecuritySchemes.Get("OAuth2")
+	assert.True(t, ok, "OAuth2 scheme should exist")
+	assert.NotNil(t, oauth2Scheme, "OAuth2 scheme should not be nil")
+	assert.Equal(t, "oauth2", oauth2Scheme.Type, "OAuth2 scheme type should be oauth2")
+	assert.Equal(t, "OAuth2 client credentials flow", oauth2Scheme.Description, "OAuth2 scheme description should match")
+	assert.NotNil(t, oauth2Scheme.Flows, "OAuth2 scheme should have flows")
+	assert.NotNil(t, oauth2Scheme.Flows.ClientCredentials, "OAuth2 scheme should have client credentials flow")
+	assert.Equal(t, "/oauth/token", oauth2Scheme.Flows.ClientCredentials.TokenUrl, "Token URL should match")
+	assert.NotNil(t, oauth2Scheme.Flows.ClientCredentials.Scopes, "Client credentials flow should have scopes (empty)")
+
+	// Verify other schemes still present
+	clientCredScheme, ok := document.Components.SecuritySchemes.Get("ClientCredentials")
+	assert.True(t, ok, "ClientCredentials scheme should exist")
+	assert.Equal(t, "apiKey", clientCredScheme.Type, "ClientCredentials type should be apiKey")
+
+	clientSecretScheme, ok := document.Components.SecuritySchemes.Get("ClientSecret")
+	assert.True(t, ok, "ClientSecret scheme should exist")
+	assert.Equal(t, "apiKey", clientSecretScheme.Type, "ClientSecret type should be apiKey")
+
+	// Verify security requirements
+	assert.NotNil(t, document.Security, "Document should have security requirements")
+	assert.Len(t, document.Security, 2, "Should have 2 security requirements")
+
+	t.Run("edge cases", func(t *testing.T) {
+		t.Run("nil flows produces empty OAuthFlows", func(t *testing.T) {
+			serviceNilFlows := &specification.Service{
+				Name: "Nil Flows Test",
+				SecuritySchemes: map[string]specification.SecurityScheme{
+					"OAuth2": {
+						Type:  "oauth2",
+						Flows: nil,
+					},
+				},
+				Enums:     []specification.Enum{},
+				Objects:   []specification.Object{},
+				Resources: []specification.Resource{},
+			}
+
+			gen := newGenerator()
+			doc, genErr := gen.generateFromService(serviceNilFlows)
+			assert.NoError(t, genErr, "Should generate without error when flows is nil")
+			assert.NotNil(t, doc, "Document should not be nil")
+
+			scheme, schemeOk := doc.Components.SecuritySchemes.Get("OAuth2")
+			assert.True(t, schemeOk, "OAuth2 scheme should exist")
+			assert.NotNil(t, scheme.Flows, "Flows should not be nil even when spec flows is nil")
+		})
+
+		t.Run("OAuth2 YAML output contains expected structure", func(t *testing.T) {
+			yamlBytes, renderErr := document.Render()
+			assert.NoError(t, renderErr, "Should render document to YAML without error")
+
+			yamlStr := string(yamlBytes)
+			assert.Contains(t, yamlStr, "oauth2", "YAML should contain oauth2 type")
+			assert.Contains(t, yamlStr, "clientCredentials:", "YAML should contain clientCredentials flow")
+			assert.Contains(t, yamlStr, "tokenUrl:", "YAML should contain tokenUrl")
+			assert.Contains(t, yamlStr, "/oauth/token", "YAML should contain token URL value")
+			assert.Contains(t, yamlStr, "scopes:", "YAML should contain scopes")
+
+			t.Logf("Generated OAuth2 YAML:\n%s", yamlStr)
+		})
+	})
+}
+
+// TestGenerator_OAuth2WithMultipleFlows tests that OAuth2 with multiple flows generates correctly.
+func TestGenerator_OAuth2WithMultipleFlows(t *testing.T) {
+	service := &specification.Service{
+		Name:    "OAuth2 Multi-Flow Test API",
+		Version: "1.0.0",
+		SecuritySchemes: map[string]specification.SecurityScheme{
+			"OAuth2": {
+				Type: "oauth2",
+				Flows: &specification.OAuth2Flows{
+					ClientCredentials: &specification.OAuth2Flow{
+						TokenURL: "/oauth/token",
+						Scopes:   map[string]string{"read": "Read access", "write": "Write access"},
+					},
+					AuthorizationCode: &specification.OAuth2Flow{
+						AuthorizationURL: "/oauth/authorize",
+						TokenURL:         "/oauth/token",
+						Scopes:           map[string]string{"read": "Read access"},
+					},
+				},
+			},
+		},
+		Security: []specification.SecurityRequirement{
+			{"OAuth2"},
+		},
+		Enums:     []specification.Enum{},
+		Objects:   []specification.Object{},
+		Resources: []specification.Resource{},
+	}
+
+	generator := newGenerator()
+	document, err := generator.generateFromService(service)
+
+	assert.NoError(t, err, "Should generate document without error")
+	assert.NotNil(t, document, "Generated document should not be nil")
+
+	oauth2Scheme, ok := document.Components.SecuritySchemes.Get("OAuth2")
+	assert.True(t, ok, "OAuth2 scheme should exist")
+	assert.NotNil(t, oauth2Scheme.Flows, "OAuth2 scheme should have flows")
+
+	// Check client credentials flow
+	assert.NotNil(t, oauth2Scheme.Flows.ClientCredentials, "Should have client credentials flow")
+	assert.Equal(t, "/oauth/token", oauth2Scheme.Flows.ClientCredentials.TokenUrl, "Client credentials token URL should match")
+	assert.Equal(t, 2, oauth2Scheme.Flows.ClientCredentials.Scopes.Len(), "Client credentials should have 2 scopes")
+
+	readScopeDesc, readExists := oauth2Scheme.Flows.ClientCredentials.Scopes.Get("read")
+	assert.True(t, readExists, "read scope should exist in client credentials")
+	assert.Equal(t, "Read access", readScopeDesc, "read scope description should match")
+
+	// Check authorization code flow
+	assert.NotNil(t, oauth2Scheme.Flows.AuthorizationCode, "Should have authorization code flow")
+	assert.Equal(t, "/oauth/authorize", oauth2Scheme.Flows.AuthorizationCode.AuthorizationUrl, "Authorization code auth URL should match")
+	assert.Equal(t, "/oauth/token", oauth2Scheme.Flows.AuthorizationCode.TokenUrl, "Authorization code token URL should match")
+}
