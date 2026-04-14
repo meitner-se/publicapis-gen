@@ -1552,3 +1552,78 @@ func TestGenerateServer_DevelopmentFlag(t *testing.T) {
 		assert.Contains(t, generated, "ListStudents", "Stable resource endpoint should still appear in generated code")
 	})
 }
+
+// TestGenerateServer_DevelopmentFlagEnumsObjects tests that development enums and objects
+// are still included in generated server Go code (servergen is intentionally unaffected).
+func TestGenerateServer_DevelopmentFlagEnumsObjects(t *testing.T) {
+	const (
+		devEnumName    = "InternalGradeType"
+		stableEnumName = "Status"
+		devObjectName  = "GradeElementary"
+		stableObjName  = "Student"
+	)
+
+	t.Run("development enum is still generated as Go type in server code", func(t *testing.T) {
+		service := &specification.Service{
+			Name:    testServiceName,
+			Version: testServiceVersion,
+			Enums: []specification.Enum{
+				{
+					Name:        stableEnumName,
+					Description: "Stable status enum",
+					Values: []specification.EnumValue{
+						{Name: "Active", Description: "Active state"},
+					},
+				},
+				{
+					Name:        devEnumName,
+					Description: "Internal grade type in development",
+					Development: true,
+					Values: []specification.EnumValue{
+						{Name: "Grade1", Description: "Grade 1"},
+					},
+				},
+			},
+		}
+
+		buf := &bytes.Buffer{}
+		err := GenerateServer(buf, service)
+		assert.Nil(t, err, "Should not return error when generating server with development enum")
+
+		generated := buf.String()
+		assert.Contains(t, generated, stableEnumName, "Stable enum type should appear in generated Go code")
+		assert.Contains(t, generated, devEnumName, "Development enum type should still appear in generated Go code (servergen unaffected)")
+	})
+
+	t.Run("development object is still generated as Go type in server code", func(t *testing.T) {
+		service := &specification.Service{
+			Name:    testServiceName,
+			Version: testServiceVersion,
+			Objects: []specification.Object{
+				{
+					Name:        stableObjName,
+					Description: "Stable student object",
+					Fields: []specification.Field{
+						{Name: "Name", Description: "Student name", Type: "String"},
+					},
+				},
+				{
+					Name:        devObjectName,
+					Description: "Development grade object",
+					Development: true,
+					Fields: []specification.Field{
+						{Name: "Grade", Description: "Grade value", Type: "String"},
+					},
+				},
+			},
+		}
+
+		buf := &bytes.Buffer{}
+		err := GenerateServer(buf, service)
+		assert.Nil(t, err, "Should not return error when generating server with development object")
+
+		generated := buf.String()
+		assert.Contains(t, generated, stableObjName, "Stable object type should appear in generated Go code")
+		assert.Contains(t, generated, devObjectName, "Development object type should still appear in generated Go code (servergen unaffected)")
+	})
+}

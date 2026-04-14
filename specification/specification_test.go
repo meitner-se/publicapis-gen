@@ -3854,3 +3854,266 @@ func TestIsValidStatusCode(t *testing.T) {
 		})
 	}
 }
+
+// ============================================================================
+// Development Flag Tests - Enum and Object Structs
+// ============================================================================
+
+// TestEnum_DevelopmentFlag tests that the Development field on Enum is properly set and serialized.
+func TestEnum_DevelopmentFlag(t *testing.T) {
+	t.Run("development enum has Development set to true", func(t *testing.T) {
+		enum := Enum{
+			Name:        "InternalStatus",
+			Description: "Internal status enum",
+			Development: true,
+			Values: []EnumValue{
+				{Name: "Draft", Description: "Draft state"},
+			},
+		}
+
+		assert.True(t, enum.Development, "Development flag should be true")
+		assert.Equal(t, "InternalStatus", enum.Name, "Name should match")
+	})
+
+	t.Run("non-development enum has Development set to false by default", func(t *testing.T) {
+		enum := Enum{
+			Name:        "Status",
+			Description: "Status enum",
+			Values: []EnumValue{
+				{Name: "Active", Description: "Active state"},
+			},
+		}
+
+		assert.False(t, enum.Development, "Development flag should be false by default")
+	})
+
+	t.Run("development enum is marshaled and unmarshaled correctly in YAML", func(t *testing.T) {
+		yamlInput := `
+name: TestService
+enums:
+  - name: InternalStatus
+    description: Internal status
+    development: true
+    values:
+      - name: Draft
+        description: Draft state
+  - name: Status
+    description: Public status
+    values:
+      - name: Active
+        description: Active state
+`
+		var service Service
+		err := yaml.Unmarshal([]byte(yamlInput), &service)
+		require.NoError(t, err, "Should parse YAML without error")
+
+		require.Len(t, service.Enums, 2, "Should have two enums")
+
+		assert.True(t, service.Enums[0].Development, "InternalStatus should have Development=true")
+		assert.Equal(t, "InternalStatus", service.Enums[0].Name, "First enum name should be InternalStatus")
+
+		assert.False(t, service.Enums[1].Development, "Status should have Development=false")
+		assert.Equal(t, "Status", service.Enums[1].Name, "Second enum name should be Status")
+	})
+}
+
+// TestObject_DevelopmentFlag tests that the Development field on Object is properly set and serialized.
+func TestObject_DevelopmentFlag(t *testing.T) {
+	t.Run("development object has Development set to true", func(t *testing.T) {
+		obj := Object{
+			Name:        "InternalGrade",
+			Description: "Internal grade object",
+			Development: true,
+			Fields: []Field{
+				{Name: "Grade", Description: "Grade value", Type: FieldTypeString},
+			},
+		}
+
+		assert.True(t, obj.Development, "Development flag should be true")
+		assert.Equal(t, "InternalGrade", obj.Name, "Name should match")
+	})
+
+	t.Run("non-development object has Development set to false by default", func(t *testing.T) {
+		obj := Object{
+			Name:        "Student",
+			Description: "Student object",
+			Fields: []Field{
+				{Name: "Name", Description: "Student name", Type: FieldTypeString},
+			},
+		}
+
+		assert.False(t, obj.Development, "Development flag should be false by default")
+	})
+
+	t.Run("development object is marshaled and unmarshaled correctly in YAML", func(t *testing.T) {
+		yamlInput := `
+name: TestService
+objects:
+  - name: InternalGrade
+    description: Internal grade
+    development: true
+    fields:
+      - name: Grade
+        description: Grade value
+        type: String
+        operations: []
+  - name: Student
+    description: Student
+    fields:
+      - name: Name
+        description: Student name
+        type: String
+        operations: []
+`
+		var service Service
+		err := yaml.Unmarshal([]byte(yamlInput), &service)
+		require.NoError(t, err, "Should parse YAML without error")
+
+		require.Len(t, service.Objects, 2, "Should have two objects")
+
+		assert.True(t, service.Objects[0].Development, "InternalGrade should have Development=true")
+		assert.Equal(t, "InternalGrade", service.Objects[0].Name, "First object name should be InternalGrade")
+
+		assert.False(t, service.Objects[1].Development, "Student should have Development=false")
+		assert.Equal(t, "Student", service.Objects[1].Name, "Second object name should be Student")
+	})
+}
+
+// TestApplyOverlay_DevelopmentFlagPropagation tests that the Development flag is propagated
+// from Resource to its auto-generated Object in generateObjectsFromResources.
+func TestApplyOverlay_DevelopmentFlagPropagation(t *testing.T) {
+	t.Run("development resource propagates Development flag to auto-generated object", func(t *testing.T) {
+		input := &Service{
+			Name: "TestService",
+			Resources: []Resource{
+				{
+					Name:        "GradeElementary",
+					Description: "Grade elementary resource in development",
+					Development: true,
+					Operations:  []string{OperationGet, OperationList},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "Grade",
+								Description: "Grade value",
+								Type:        FieldTypeString,
+							},
+							Operations: []string{OperationRead},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result, "ApplyOverlay result should not be nil")
+
+		var gradeObj *Object
+		for i := range result.Objects {
+			if result.Objects[i].Name == "GradeElementary" {
+				gradeObj = &result.Objects[i]
+				break
+			}
+		}
+
+		require.NotNil(t, gradeObj, "Auto-generated object should exist in service")
+		assert.True(t, gradeObj.Development, "Auto-generated object should have Development=true when resource has Development=true")
+	})
+
+	t.Run("non-development resource auto-generated object has Development false", func(t *testing.T) {
+		input := &Service{
+			Name: "TestService",
+			Resources: []Resource{
+				{
+					Name:        "Student",
+					Description: "Student resource",
+					Development: false,
+					Operations:  []string{OperationGet, OperationList},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "Name",
+								Description: "Student name",
+								Type:        FieldTypeString,
+							},
+							Operations: []string{OperationRead},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result, "ApplyOverlay result should not be nil")
+
+		var studentObj *Object
+		for i := range result.Objects {
+			if result.Objects[i].Name == "Student" {
+				studentObj = &result.Objects[i]
+				break
+			}
+		}
+
+		require.NotNil(t, studentObj, "Auto-generated object should exist in service")
+		assert.False(t, studentObj.Development, "Auto-generated object should have Development=false when resource has Development=false")
+	})
+
+	t.Run("mixed development and non-development resources propagate flags correctly", func(t *testing.T) {
+		input := &Service{
+			Name: "TestService",
+			Resources: []Resource{
+				{
+					Name:        "Student",
+					Description: "Student resource",
+					Development: false,
+					Operations:  []string{OperationGet},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "Name",
+								Description: "Student name",
+								Type:        FieldTypeString,
+							},
+							Operations: []string{OperationRead},
+						},
+					},
+				},
+				{
+					Name:        "GradeElementary",
+					Description: "Grade elementary resource in development",
+					Development: true,
+					Operations:  []string{OperationGet},
+					Fields: []ResourceField{
+						{
+							Field: Field{
+								Name:        "Grade",
+								Description: "Grade value",
+								Type:        FieldTypeString,
+							},
+							Operations: []string{OperationRead},
+						},
+					},
+				},
+			},
+		}
+
+		result := ApplyOverlay(input)
+		require.NotNil(t, result, "ApplyOverlay result should not be nil")
+
+		var studentObj, gradeObj *Object
+		for i := range result.Objects {
+			if result.Objects[i].Name == "Student" {
+				studentObj = &result.Objects[i]
+			}
+			if result.Objects[i].Name == "GradeElementary" {
+				gradeObj = &result.Objects[i]
+			}
+		}
+
+		require.NotNil(t, studentObj, "Auto-generated Student object should exist")
+		require.NotNil(t, gradeObj, "Auto-generated GradeElementary object should exist")
+
+		assert.False(t, studentObj.Development, "Student object should have Development=false")
+		assert.True(t, gradeObj.Development, "GradeElementary object should have Development=true")
+	})
+}
