@@ -534,9 +534,10 @@ type Resource struct {
 	Description string `json:"description"`
 
 	// Development indicates this resource is not ready for public use.
-	// Resources with Development set to true are excluded from all generated output.
-	// (OpenAPI spec, server code, API types). This allows resources to be defined
-	// and implemented without being surfaced to third parties prematurely.
+	// Resources with Development set to true are excluded from the generated OpenAPI output,
+	// allowing resources to be defined and implemented without being surfaced to third parties
+	// prematurely. Server code (interfaces, struct fields, route registrations) is always
+	// generated regardless of this flag.
 	Development bool `json:"development,omitempty" yaml:"development,omitempty"`
 
 	// Operations that are allowed for the resource can be all of Create, Get, List, Search, Update, Delete

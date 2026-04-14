@@ -289,9 +289,6 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("\trouterGroup.StaticFileFS(\"/openapi.json\", \"openapi.json\", http.FS(api.OpenAPI_JSON))\n\n")
 
 	for _, resource := range service.Resources {
-		if resource.Development {
-			continue
-		}
 		for _, endpoint := range resource.Endpoints {
 			if endpoint.HasResponseType() {
 				buf.WriteString(fmt.Sprintf("\trouterGroup.%s(\"%s\", serveWithResponse(%d, api.Server, api.%s.%s))\n",
@@ -324,9 +321,6 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 
 	buf.WriteString("\tOpenAPI_JSON embed.FS\n")
 	for _, resource := range service.Resources {
-		if resource.Development {
-			continue
-		}
 		buf.WriteString(fmt.Sprintf("\t%s %sAPI[Session] // Endpoints for the %s resource\n", resource.Name, resource.Name, resource.Name))
 	}
 	buf.WriteString("}\n\n")
@@ -381,9 +375,6 @@ func generateServer(buf *bytes.Buffer, service *specification.Service) error {
 	buf.WriteString("}\n\n")
 
 	for _, resource := range service.Resources {
-		if resource.Development {
-			continue
-		}
 		buf.WriteString(fmt.Sprintf("type %sAPI[Session any] interface {\n", resource.Name))
 		for _, endpoint := range resource.Endpoints {
 			if endpoint.HasResponseType() {
@@ -467,9 +458,6 @@ func generateRequestTypes(buf *bytes.Buffer, service *specification.Service) err
 	buf.WriteString("}\n\n")
 
 	for _, resource := range service.Resources {
-		if resource.Development {
-			continue
-		}
 		for _, endpoint := range resource.Endpoints {
 			if len(endpoint.Request.PathParams) > 0 {
 				buf.WriteString(fmt.Sprintf("type %s struct {\n", endpoint.GetPathParamsType(resource.Name)))
@@ -502,9 +490,6 @@ func generateRequestTypes(buf *bytes.Buffer, service *specification.Service) err
 
 func generateResponseTypes(buf *bytes.Buffer, service *specification.Service) error {
 	for _, resource := range service.Resources {
-		if resource.Development {
-			continue
-		}
 		for _, endpoint := range resource.Endpoints {
 			if len(endpoint.Response.BodyFields) == 0 {
 				continue
