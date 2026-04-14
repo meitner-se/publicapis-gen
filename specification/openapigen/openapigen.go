@@ -607,6 +607,9 @@ func (g *generator) buildV3Document(service *specification.Service) *v3.Document
 	// Create Paths
 	paths := orderedmap.New[string, *v3.PathItem]()
 	for _, resource := range service.Resources {
+		if resource.Development {
+			continue
+		}
 		g.addResourceToPaths(resource, paths, service)
 	}
 	document.Paths = &v3.Paths{
@@ -625,12 +628,19 @@ func (g *generator) createTagsFromResources(service *specification.Service) []*b
 		return nil
 	}
 
-	tags := make([]*base.Tag, len(service.Resources))
-	for i, resource := range service.Resources {
-		tags[i] = &base.Tag{
+	tags := make([]*base.Tag, 0, len(service.Resources))
+	for _, resource := range service.Resources {
+		if resource.Development {
+			continue
+		}
+		tags = append(tags, &base.Tag{
 			Name:        resource.Name,
 			Description: resource.Description,
-		}
+		})
+	}
+
+	if len(tags) == 0 {
+		return nil
 	}
 
 	return tags
@@ -1018,6 +1028,9 @@ func (g *generator) addRequestBodiesToComponents(components *v3.Components, serv
 
 	// Iterate through all resources and endpoints to collect request bodies
 	for _, resource := range service.Resources {
+		if resource.Development {
+			continue
+		}
 		for _, endpoint := range resource.Endpoints {
 			if len(endpoint.Request.BodyParams) > 0 {
 				requestBodyName := g.createRequestBodyName(resource.Name, endpoint.Name)
@@ -1281,6 +1294,9 @@ func (g *generator) addResponseBodiesToComponents(components *v3.Components, ser
 
 	// Iterate through all resources and endpoints to collect response bodies
 	for _, resource := range service.Resources {
+		if resource.Development {
+			continue
+		}
 		for _, endpoint := range resource.Endpoints {
 			// Add success response body if it has content
 			if endpoint.Response.BodyObject != nil || len(endpoint.Response.BodyFields) > 0 {

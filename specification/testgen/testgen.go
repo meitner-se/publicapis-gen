@@ -33,6 +33,9 @@ func GenerateInternalTests(buf *bytes.Buffer, service *specification.Service, pa
 
 	// Generate tests for each resource endpoint
 	for _, resource := range service.Resources {
+		if resource.Development {
+			continue
+		}
 		for _, endpoint := range resource.Endpoints {
 			err = generateInternalEndpointTest(buf, service, resource, endpoint)
 			if err != nil {
@@ -88,6 +91,9 @@ func GenerateTests(buf *bytes.Buffer, service *specification.Service, packageNam
 
 	// Generate tests for each resource endpoint
 	for _, resource := range service.Resources {
+		if resource.Development {
+			continue
+		}
 		for _, endpoint := range resource.Endpoints {
 			err = generateEndpointTest(buf, service, resource, endpoint, apiPackageName)
 			if err != nil {
@@ -492,6 +498,9 @@ func generateServerSetup(buf *bytes.Buffer, serviceName string, service *specifi
 
 	// Add all resource mocks to the API struct
 	for _, resource := range service.Resources {
+		if resource.Development {
+			continue
+		}
 		if len(resource.Endpoints) > 0 {
 			if resource.Name == currentResource.Name {
 				// Use the configured mock for the resource being tested
@@ -683,6 +692,9 @@ func generateHelperFunctions(buf *bytes.Buffer, service *specification.Service, 
 
 	// Generate mock interfaces for each resource
 	for _, resource := range service.Resources {
+		if resource.Development {
+			continue
+		}
 		if len(resource.Endpoints) == 0 {
 			continue
 		}
@@ -1500,6 +1512,9 @@ func generateInternalServerSetup(buf *bytes.Buffer, serviceName string, service 
 
 	// Add all resource mocks to the API struct
 	for _, resource := range service.Resources {
+		if resource.Development {
+			continue
+		}
 		if len(resource.Endpoints) > 0 {
 			if resource.Name == currentResource.Name {
 				// Use the configured mock for the resource being tested
@@ -1608,6 +1623,9 @@ func generateInternalHelperFunctions(buf *bytes.Buffer, service *specification.S
 
 	// Generate mock interfaces for each resource (no package prefixes)
 	for _, resource := range service.Resources {
+		if resource.Development {
+			continue
+		}
 		if len(resource.Endpoints) == 0 {
 			continue
 		}
