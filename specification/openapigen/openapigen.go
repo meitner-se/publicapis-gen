@@ -578,6 +578,9 @@ func (g *generator) buildV3Document(service *specification.Service) *v3.Document
 
 	// Add enums to components
 	for _, enum := range service.Enums {
+		if enum.Development {
+			continue
+		}
 		schema := g.createEnumSchema(enum)
 		proxy := base.CreateSchemaProxy(schema)
 		components.Schemas.Set(enum.Name, proxy)
@@ -585,6 +588,9 @@ func (g *generator) buildV3Document(service *specification.Service) *v3.Document
 
 	// Add objects to components
 	for _, obj := range service.Objects {
+		if obj.Development {
+			continue
+		}
 		schema := g.createObjectSchema(obj, service)
 		proxy := base.CreateSchemaProxy(schema)
 		components.Schemas.Set(obj.Name, proxy)

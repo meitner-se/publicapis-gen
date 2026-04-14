@@ -491,6 +491,10 @@ type Enum struct {
 	// Description of the enum
 	Description string `json:"description"`
 
+	// Development indicates this enum is not ready for public use and should
+	// be excluded from the generated OpenAPI output.
+	Development bool `json:"development,omitempty" yaml:"development,omitempty"`
+
 	// Values that are possible for the enum
 	Values []EnumValue `json:"values"`
 }
@@ -512,6 +516,10 @@ type Object struct {
 
 	// Description about the object
 	Description string `json:"description"`
+
+	// Development indicates this object is not ready for public use and should
+	// be excluded from the generated OpenAPI output.
+	Development bool `json:"development,omitempty" yaml:"development,omitempty"`
 
 	// Fields in the object
 	Fields []Field `json:"fields"`
@@ -813,6 +821,7 @@ func generateObjectsFromResources(result *Service, resources []Resource) {
 				newObject := Object{
 					Name:        resource.Name,
 					Description: resource.Description,
+					Development: resource.Development,
 					Fields:      fields,
 				}
 

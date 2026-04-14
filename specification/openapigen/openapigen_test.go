@@ -1916,6 +1916,193 @@ func TestGenerator_DevelopmentFlag(t *testing.T) {
 }
 
 // ============================================================================
+// Development Flag Tests - Enums and Objects
+// ============================================================================
+
+// TestGenerator_DevelopmentFlagEnumsObjects tests that enums and objects marked as development
+// are excluded from the generated OpenAPI schemas, while server generation is unaffected.
+func TestGenerator_DevelopmentFlagEnumsObjects(t *testing.T) {
+	const (
+		devEnumName    = "InternalGradeType"
+		devEnumDesc    = "Internal grade type enum in development"
+		stableEnumName = "Status"
+		stableEnumDesc = "Status enumeration"
+
+		devObjectName    = "GradeElementary"
+		devObjectDesc    = "Grade elementary object in development"
+		stableObjectName = "Student"
+		stableObjectDesc = "Student object"
+	)
+
+	generator := newGenerator()
+
+	t.Run("development enum is excluded from OpenAPI schemas", func(t *testing.T) {
+		service := &specification.Service{
+			Name: "TestService",
+			Enums: []specification.Enum{
+				{
+					Name:        stableEnumName,
+					Description: stableEnumDesc,
+					Values: []specification.EnumValue{
+						{Name: "Active", Description: "Active status"},
+						{Name: "Inactive", Description: "Inactive status"},
+					},
+				},
+				{
+					Name:        devEnumName,
+					Description: devEnumDesc,
+					Development: true,
+					Values: []specification.EnumValue{
+						{Name: "Grade1", Description: "Grade 1"},
+						{Name: "Grade2", Description: "Grade 2"},
+					},
+				},
+			},
+		}
+
+		document, err := generator.generateFromService(service)
+		assert.NoError(t, err, "Should not return error for valid service")
+		assert.NotNil(t, document, "Document should not be nil")
+		assert.NotNil(t, document.Components, "Document should have components")
+
+		_, stableExists := document.Components.Schemas.Get(stableEnumName)
+		assert.True(t, stableExists, "Stable enum should be present in component schemas")
+
+		_, devExists := document.Components.Schemas.Get(devEnumName)
+		assert.False(t, devExists, "Development enum should NOT be present in component schemas")
+	})
+
+	t.Run("development object is excluded from OpenAPI schemas", func(t *testing.T) {
+		service := &specification.Service{
+			Name: "TestService",
+			Objects: []specification.Object{
+				{
+					Name:        stableObjectName,
+					Description: stableObjectDesc,
+					Fields: []specification.Field{
+						{Name: "ID", Description: "Student ID", Type: specification.FieldTypeUUID, Example: "123e4567-e89b-12d3-a456-426614174000"},
+					},
+				},
+				{
+					Name:        devObjectName,
+					Description: devObjectDesc,
+					Development: true,
+					Fields: []specification.Field{
+						{Name: "Grade", Description: "Grade value", Type: specification.FieldTypeString, Example: "A"},
+					},
+				},
+			},
+		}
+
+		document, err := generator.generateFromService(service)
+		assert.NoError(t, err, "Should not return error for valid service")
+		assert.NotNil(t, document, "Document should not be nil")
+		assert.NotNil(t, document.Components, "Document should have components")
+
+		_, stableExists := document.Components.Schemas.Get(stableObjectName)
+		assert.True(t, stableExists, "Stable object should be present in component schemas")
+
+		_, devExists := document.Components.Schemas.Get(devObjectName)
+		assert.False(t, devExists, "Development object should NOT be present in component schemas")
+	})
+
+	t.Run("development resource auto-generated object is excluded from OpenAPI schemas", func(t *testing.T) {
+		const (
+			devResourceName    = "GradeUpperSecondary"
+			stableResourceName = "Student"
+		)
+
+		service := &specification.Service{
+			Name: "TestService",
+			Resources: []specification.Resource{
+				{
+					Name:        stableResourceName,
+					Description: "Student resource",
+					Operations:  []string{specification.OperationGet, specification.OperationList},
+					Fields: []specification.ResourceField{
+						{
+							Field: specification.Field{
+								Name:        "Name",
+								Description: "Student name",
+								Type:        specification.FieldTypeString,
+								Example:     "John Doe",
+							},
+							Operations: []string{specification.OperationRead},
+						},
+					},
+				},
+				{
+					Name:        devResourceName,
+					Description: "Grade upper secondary resource in development",
+					Development: true,
+					Operations:  []string{specification.OperationGet, specification.OperationList},
+					Fields: []specification.ResourceField{
+						{
+							Field: specification.Field{
+								Name:        "Grade",
+								Description: "Grade value",
+								Type:        specification.FieldTypeString,
+								Example:     "A",
+							},
+							Operations: []string{specification.OperationRead},
+						},
+					},
+				},
+			},
+		}
+
+		result := specification.ApplyOverlay(service)
+		assert.NotNil(t, result, "ApplyOverlay result should not be nil")
+
+		document, err := generator.generateFromService(result)
+		assert.NoError(t, err, "Should not return error for valid service")
+		assert.NotNil(t, document, "Document should not be nil")
+		assert.NotNil(t, document.Components, "Document should have components")
+
+		_, stableExists := document.Components.Schemas.Get(stableResourceName)
+		assert.True(t, stableExists, "Auto-generated object for stable resource should be present in component schemas")
+
+		_, devExists := document.Components.Schemas.Get(devResourceName)
+		assert.False(t, devExists, "Auto-generated object for development resource should NOT be present in component schemas")
+	})
+
+	t.Run("non-development enums and objects are completely unaffected", func(t *testing.T) {
+		service := &specification.Service{
+			Name: "TestService",
+			Enums: []specification.Enum{
+				{
+					Name:        stableEnumName,
+					Description: stableEnumDesc,
+					Values: []specification.EnumValue{
+						{Name: "Active", Description: "Active status"},
+					},
+				},
+			},
+			Objects: []specification.Object{
+				{
+					Name:        stableObjectName,
+					Description: stableObjectDesc,
+					Fields: []specification.Field{
+						{Name: "ID", Description: "Student ID", Type: specification.FieldTypeUUID, Example: "123e4567-e89b-12d3-a456-426614174000"},
+					},
+				},
+			},
+		}
+
+		document, err := generator.generateFromService(service)
+		assert.NoError(t, err, "Should not return error for valid service")
+		assert.NotNil(t, document, "Document should not be nil")
+		assert.NotNil(t, document.Components, "Document should have components")
+
+		_, stableEnumExists := document.Components.Schemas.Get(stableEnumName)
+		assert.True(t, stableEnumExists, "Non-development enum should be present in component schemas")
+
+		_, stableObjectExists := document.Components.Schemas.Get(stableObjectName)
+		assert.True(t, stableObjectExists, "Non-development object should be present in component schemas")
+	})
+}
+
+// ============================================================================
 // RequestBodies Section Tests
 // ============================================================================
 
