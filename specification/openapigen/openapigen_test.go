@@ -1673,6 +1673,44 @@ func TestGenerator_createTagsFromResources(t *testing.T) {
 		assert.Equal(t, "Products", tags[0].Name, "Tag name should match resource name")
 		assert.Equal(t, "", tags[0].Description, "Tag description should be empty when resource has no description")
 	})
+
+	t.Run("development resources are excluded from tags", func(t *testing.T) {
+		service := &specification.Service{
+			Name: "TestService",
+			Resources: []specification.Resource{
+				{
+					Name:        "Users",
+					Description: "User management operations",
+				},
+				{
+					Name:        "NewFeature",
+					Description: "Feature not yet released",
+					Development: true,
+				},
+			},
+		}
+
+		tags := generator.createTagsFromResources(service)
+		assert.NotNil(t, tags, "Tags should not be nil with non-development resources")
+		assert.Equal(t, 1, len(tags), "Should create one tag, excluding the development resource")
+		assert.Equal(t, "Users", tags[0].Name, "Tag should be for the non-development resource")
+	})
+
+	t.Run("all development resources returns nil", func(t *testing.T) {
+		service := &specification.Service{
+			Name: "TestService",
+			Resources: []specification.Resource{
+				{
+					Name:        "NewFeature",
+					Description: "Feature not yet released",
+					Development: true,
+				},
+			},
+		}
+
+		tags := generator.createTagsFromResources(service)
+		assert.Nil(t, tags, "Tags should be nil when all resources are in development")
+	})
 }
 
 // TestGenerator_GenerateFromService_IncludesTags tests that generated documents include tags from resources.
@@ -1727,8 +1765,153 @@ func TestGenerator_GenerateFromService_IncludesTags(t *testing.T) {
 }
 
 // ============================================================================
-// RequestBodies Section Tests
+// Development Flag Tests
 // ============================================================================
+
+// TestGenerator_DevelopmentFlag tests that resources marked as development are excluded from generated output.
+func TestGenerator_DevelopmentFlag(t *testing.T) {
+	const (
+		devResourceName    = "GradeElementary"
+		devResourceDesc    = "Grade elementary resource in development"
+		stableResourceName = "Students"
+		stableResourceDesc = "Student management operations"
+	)
+
+	generator := newGenerator()
+
+	t.Run("development resource is excluded from paths", func(t *testing.T) {
+		service := &specification.Service{
+			Name: "TestService",
+			Resources: []specification.Resource{
+				{
+					Name:        stableResourceName,
+					Description: stableResourceDesc,
+					Endpoints: []specification.Endpoint{
+						{
+							Name:    "ListStudents",
+							Method:  "GET",
+							Path:    "",
+							Summary: "List students",
+							Response: specification.EndpointResponse{
+								StatusCode:  200,
+								ContentType: "application/json",
+							},
+						},
+					},
+				},
+				{
+					Name:        devResourceName,
+					Description: devResourceDesc,
+					Development: true,
+					Endpoints: []specification.Endpoint{
+						{
+							Name:    "ListGrades",
+							Method:  "GET",
+							Path:    "",
+							Summary: "List grades",
+							Response: specification.EndpointResponse{
+								StatusCode:  200,
+								ContentType: "application/json",
+							},
+						},
+					},
+				},
+			},
+		}
+
+		document, err := generator.generateFromService(service)
+		assert.NoError(t, err, "Should not return error for valid service")
+		assert.NotNil(t, document, "Document should not be nil")
+
+		assert.NotNil(t, document.Paths, "Document should have paths")
+		// Stable resource should contribute exactly one path; development resource should contribute nothing
+		assert.Equal(t, 1, document.Paths.PathItems.Len(), "Only the stable resource path should appear in document")
+
+		// The stable resource path uses kebab-case: /students
+		_, stableExists := document.Paths.PathItems.Get("/students")
+		assert.True(t, stableExists, "Stable resource path /students should be present in document")
+
+		// The development resource path (/grade-elementary) must not appear
+		_, devExists := document.Paths.PathItems.Get("/grade-elementary")
+		assert.False(t, devExists, "Development resource path should NOT be present in document")
+	})
+
+	t.Run("development resource is excluded from tags", func(t *testing.T) {
+		service := &specification.Service{
+			Name: "TestService",
+			Resources: []specification.Resource{
+				{
+					Name:        stableResourceName,
+					Description: stableResourceDesc,
+				},
+				{
+					Name:        devResourceName,
+					Description: devResourceDesc,
+					Development: true,
+				},
+			},
+		}
+
+		document, err := generator.generateFromService(service)
+		assert.NoError(t, err, "Should not return error for valid service")
+		assert.NotNil(t, document, "Document should not be nil")
+
+		assert.NotNil(t, document.Tags, "Document should have tags for non-development resources")
+		assert.Equal(t, 1, len(document.Tags), "Should have exactly one tag (the non-development resource)")
+		assert.Equal(t, stableResourceName, document.Tags[0].Name, "Tag should be for the stable resource")
+	})
+
+	t.Run("non-development resource is included normally", func(t *testing.T) {
+		service := &specification.Service{
+			Name: "TestService",
+			Resources: []specification.Resource{
+				{
+					Name:        stableResourceName,
+					Description: stableResourceDesc,
+					Endpoints: []specification.Endpoint{
+						{
+							Name:    "ListStudents",
+							Method:  "GET",
+							Path:    "",
+							Summary: "List students",
+							Response: specification.EndpointResponse{
+								StatusCode:  200,
+								ContentType: "application/json",
+							},
+						},
+					},
+				},
+			},
+		}
+
+		document, err := generator.generateFromService(service)
+		assert.NoError(t, err, "Should not return error for valid service")
+		assert.NotNil(t, document, "Document should not be nil")
+
+		assert.NotNil(t, document.Tags, "Document should have tags")
+		assert.Equal(t, 1, len(document.Tags), "Should have exactly one tag")
+		assert.Equal(t, stableResourceName, document.Tags[0].Name, "Tag should be for the stable resource")
+	})
+
+	t.Run("service with only development resources has nil tags and empty paths", func(t *testing.T) {
+		service := &specification.Service{
+			Name: "TestService",
+			Resources: []specification.Resource{
+				{
+					Name:        devResourceName,
+					Description: devResourceDesc,
+					Development: true,
+				},
+			},
+		}
+
+		document, err := generator.generateFromService(service)
+		assert.NoError(t, err, "Should not return error for valid service")
+		assert.NotNil(t, document, "Document should not be nil")
+
+		assert.Nil(t, document.Tags, "Document should have no tags when all resources are in development")
+	})
+}
 
 // TestRequestBodiesMarkedAsRequired verifies that request bodies in operations are marked as required.
 func TestRequestBodiesMarkedAsRequired(t *testing.T) {
