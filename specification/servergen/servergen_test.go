@@ -1434,7 +1434,9 @@ func TestConvertOpenAPIPathToGin(t *testing.T) {
 // Development Flag Tests
 // ============================================================================
 
-// TestGenerateServer_DevelopmentFlag tests that resources with Development: true are excluded from all generated server code.
+// TestGenerateServer_DevelopmentFlag tests that resources with Development: true are still fully
+// generated into server code. The development flag is an OpenAPI documentation gate only — it
+// must never suppress interface definitions, API struct fields, or route registrations.
 func TestGenerateServer_DevelopmentFlag(t *testing.T) {
 	const (
 		devResourceName    = "GradeElementary"
@@ -1467,8 +1469,8 @@ func TestGenerateServer_DevelopmentFlag(t *testing.T) {
 		},
 	}
 
-	t.Run("development resource route is not registered", func(t *testing.T) {
-		service := &specification.Service{
+	buildService := func() *specification.Service {
+		return &specification.Service{
 			Name:    testServiceName,
 			Version: testServiceVersion,
 			Resources: []specification.Resource{
@@ -1476,51 +1478,34 @@ func TestGenerateServer_DevelopmentFlag(t *testing.T) {
 				{Name: devResourceName, Description: devResourceDesc, Development: true, Endpoints: []specification.Endpoint{devEndpoint}},
 			},
 		}
+	}
 
+	t.Run("development resource route is registered", func(t *testing.T) {
 		buf := &bytes.Buffer{}
-		err := GenerateServer(buf, service)
+		err := GenerateServer(buf, buildService())
 		assert.Nil(t, err, "Should not return error when generating server with a development resource")
 
 		generated := buf.String()
 		assert.Contains(t, generated, stableResourceName, "Stable resource should appear in generated code")
-		assert.NotContains(t, generated, devResourceName, "Development resource should NOT appear in generated code")
+		assert.Contains(t, generated, devResourceName, "Development resource MUST appear in generated server code")
+		assert.Contains(t, generated, "api."+devResourceName+".ListGrades",
+			"Development resource route should be registered in server code")
 	})
 
-	t.Run("development resource has no API struct field", func(t *testing.T) {
-		service := &specification.Service{
-			Name:    testServiceName,
-			Version: testServiceVersion,
-			Resources: []specification.Resource{
-				{Name: stableResourceName, Description: stableResourceDesc, Endpoints: []specification.Endpoint{stableEndpoint}},
-				{Name: devResourceName, Description: devResourceDesc, Development: true, Endpoints: []specification.Endpoint{devEndpoint}},
-			},
-		}
-
+	t.Run("development resource has API struct field", func(t *testing.T) {
 		buf := &bytes.Buffer{}
-		err := GenerateServer(buf, service)
+		err := GenerateServer(buf, buildService())
 		assert.Nil(t, err, "Should not return error when generating server with a development resource")
 
 		generated := buf.String()
 
-		expectedStableField := stableResourceName + "API[Session]"
-		assert.Contains(t, generated, expectedStableField, "Stable resource API field should appear in generated struct")
-
-		expectedDevField := devResourceName + "API[Session]"
-		assert.NotContains(t, generated, expectedDevField, "Development resource API field should NOT appear in generated struct")
+		assert.Contains(t, generated, "StudentsAPI[Session]", "Stable resource API field should appear in generated struct")
+		assert.Contains(t, generated, "GradeElementaryAPI[Session]", "Development resource API field MUST appear in generated struct")
 	})
 
-	t.Run("development resource has no interface definition", func(t *testing.T) {
-		service := &specification.Service{
-			Name:    testServiceName,
-			Version: testServiceVersion,
-			Resources: []specification.Resource{
-				{Name: stableResourceName, Description: stableResourceDesc, Endpoints: []specification.Endpoint{stableEndpoint}},
-				{Name: devResourceName, Description: devResourceDesc, Development: true, Endpoints: []specification.Endpoint{devEndpoint}},
-			},
-		}
-
+	t.Run("development resource has interface definition", func(t *testing.T) {
 		buf := &bytes.Buffer{}
-		err := GenerateServer(buf, service)
+		err := GenerateServer(buf, buildService())
 		assert.Nil(t, err, "Should not return error when generating server with a development resource")
 
 		generated := buf.String()
@@ -1529,21 +1514,12 @@ func TestGenerateServer_DevelopmentFlag(t *testing.T) {
 		assert.Contains(t, generated, expectedStableInterface, "Stable resource interface should appear in generated code")
 
 		expectedDevInterface := "type " + devResourceName + "API[Session any] interface {"
-		assert.NotContains(t, generated, expectedDevInterface, "Development resource interface should NOT appear in generated code")
+		assert.Contains(t, generated, expectedDevInterface, "Development resource interface MUST appear in generated code")
 	})
 
 	t.Run("non-development resource is unaffected when other resources are in development", func(t *testing.T) {
-		service := &specification.Service{
-			Name:    testServiceName,
-			Version: testServiceVersion,
-			Resources: []specification.Resource{
-				{Name: stableResourceName, Description: stableResourceDesc, Endpoints: []specification.Endpoint{stableEndpoint}},
-				{Name: devResourceName, Description: devResourceDesc, Development: true, Endpoints: []specification.Endpoint{devEndpoint}},
-			},
-		}
-
 		buf := &bytes.Buffer{}
-		err := GenerateServer(buf, service)
+		err := GenerateServer(buf, buildService())
 		assert.Nil(t, err, "Should not return error when generating server with a development resource")
 
 		generated := buf.String()
