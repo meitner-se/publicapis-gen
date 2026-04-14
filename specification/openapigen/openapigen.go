@@ -628,23 +628,19 @@ func (g *generator) createTagsFromResources(service *specification.Service) []*b
 		return nil
 	}
 
-	var nonDevResources []specification.Resource
-	for _, r := range service.Resources {
-		if !r.Development {
-			nonDevResources = append(nonDevResources, r)
+	tags := make([]*base.Tag, 0, len(service.Resources))
+	for _, resource := range service.Resources {
+		if resource.Development {
+			continue
 		}
-	}
-
-	if len(nonDevResources) == 0 {
-		return nil
-	}
-
-	tags := make([]*base.Tag, len(nonDevResources))
-	for i, resource := range nonDevResources {
-		tags[i] = &base.Tag{
+		tags = append(tags, &base.Tag{
 			Name:        resource.Name,
 			Description: resource.Description,
-		}
+		})
+	}
+
+	if len(tags) == 0 {
+		return nil
 	}
 
 	return tags

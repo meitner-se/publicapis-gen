@@ -1910,8 +1910,14 @@ func TestGenerator_DevelopmentFlag(t *testing.T) {
 		assert.NotNil(t, document, "Document should not be nil")
 
 		assert.Nil(t, document.Tags, "Document should have no tags when all resources are in development")
+		assert.NotNil(t, document.Paths, "Document paths should be initialized even when all resources are excluded")
+		assert.Equal(t, 0, document.Paths.PathItems.Len(), "Document should have no paths when all resources are in development")
 	})
 }
+
+// ============================================================================
+// RequestBodies Section Tests
+// ============================================================================
 
 // TestRequestBodiesMarkedAsRequired verifies that request bodies in operations are marked as required.
 func TestRequestBodiesMarkedAsRequired(t *testing.T) {
