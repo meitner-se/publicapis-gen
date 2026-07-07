@@ -921,6 +921,9 @@ func (g *generator) addResourceToPaths(resource specification.Resource, paths *o
 	// Group endpoints by path
 	pathGroups := make(map[string][]*specification.Endpoint)
 	for _, endpoint := range resource.Endpoints {
+		if endpoint.Development {
+			continue
+		}
 		fullPath := endpoint.GetFullPath(resource.Name)
 		pathGroups[fullPath] = append(pathGroups[fullPath], &endpoint)
 	}
@@ -1038,6 +1041,9 @@ func (g *generator) addRequestBodiesToComponents(components *v3.Components, serv
 			continue
 		}
 		for _, endpoint := range resource.Endpoints {
+			if endpoint.Development {
+				continue
+			}
 			if len(endpoint.Request.BodyParams) > 0 {
 				requestBodyName := g.createRequestBodyName(resource.Name, endpoint.Name)
 
@@ -1304,6 +1310,9 @@ func (g *generator) addResponseBodiesToComponents(components *v3.Components, ser
 			continue
 		}
 		for _, endpoint := range resource.Endpoints {
+			if endpoint.Development {
+				continue
+			}
 			// Add success response body if it has content
 			if endpoint.Response.BodyObject != nil || len(endpoint.Response.BodyFields) > 0 {
 				responseBodyName := g.createResponseBodyName(resource.Name, endpoint.Name, endpoint.Response.StatusCode)

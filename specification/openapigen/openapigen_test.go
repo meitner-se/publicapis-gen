@@ -1916,6 +1916,160 @@ func TestGenerator_DevelopmentFlag(t *testing.T) {
 }
 
 // ============================================================================
+// Development Flag Tests - Endpoints
+// ============================================================================
+
+// TestGenerator_DevelopmentFlagEndpoint tests that individual endpoints marked as development
+// are excluded from the generated OpenAPI output while other endpoints in the same resource remain.
+func TestGenerator_DevelopmentFlagEndpoint(t *testing.T) {
+	const (
+		resourceName    = "StudentPlacement"
+		resourceDesc    = "Student placement operations"
+		stableEndpoint  = "List"
+		devEndpointName = "Cleanup"
+	)
+
+	generator := newGenerator()
+
+	t.Run("development endpoint is excluded but stable endpoint remains", func(t *testing.T) {
+		service := &specification.Service{
+			Name: "TestService",
+			Resources: []specification.Resource{
+				{
+					Name:        resourceName,
+					Description: resourceDesc,
+					Endpoints: []specification.Endpoint{
+						{
+							Name:    stableEndpoint,
+							Method:  "GET",
+							Path:    "",
+							Summary: "List student placements",
+							Response: specification.EndpointResponse{
+								StatusCode:  200,
+								ContentType: "application/json",
+							},
+						},
+						{
+							Name:        devEndpointName,
+							Method:      "POST",
+							Path:        "/cleanup",
+							Summary:     "Cleanup student placements",
+							Development: true,
+							Response: specification.EndpointResponse{
+								StatusCode:  204,
+								ContentType: "application/json",
+							},
+						},
+					},
+				},
+			},
+		}
+
+		document, err := generator.generateFromService(service)
+		assert.NoError(t, err, "Should not return error for valid service")
+		assert.NotNil(t, document, "Document should not be nil")
+
+		assert.NotNil(t, document.Paths, "Document should have paths")
+		// The stable endpoint path (/student-placement) should be present
+		_, stableExists := document.Paths.PathItems.Get("/student-placement")
+		assert.True(t, stableExists, "Stable endpoint path /student-placement should be present in document")
+
+		// The development endpoint path (/student-placement/cleanup) must not appear
+		_, devExists := document.Paths.PathItems.Get("/student-placement/cleanup")
+		assert.False(t, devExists, "Development endpoint path should NOT be present in document")
+
+		assert.Equal(t, 1, document.Paths.PathItems.Len(), "Only the stable endpoint path should appear in document")
+	})
+
+	t.Run("development endpoint request and response bodies are excluded from components", func(t *testing.T) {
+		bodyObject := resourceName
+		service := &specification.Service{
+			Name: "TestService",
+			Objects: []specification.Object{
+				{
+					Name:        resourceName,
+					Description: resourceDesc,
+					Fields: []specification.Field{
+						{Name: "ID", Description: "Identifier", Type: specification.FieldTypeUUID},
+					},
+				},
+			},
+			Resources: []specification.Resource{
+				{
+					Name:        resourceName,
+					Description: resourceDesc,
+					Endpoints: []specification.Endpoint{
+						{
+							Name:        devEndpointName,
+							Method:      "POST",
+							Path:        "/cleanup",
+							Summary:     "Cleanup student placements",
+							Development: true,
+							Request: specification.EndpointRequest{
+								ContentType: "application/json",
+								BodyParams: []specification.Field{
+									{Name: "Reason", Description: "Reason for cleanup", Type: specification.FieldTypeString},
+								},
+							},
+							Response: specification.EndpointResponse{
+								StatusCode:  200,
+								ContentType: "application/json",
+								BodyObject:  &bodyObject,
+							},
+						},
+					},
+				},
+			},
+		}
+
+		document, err := generator.generateFromService(service)
+		assert.NoError(t, err, "Should not return error for valid service")
+		assert.NotNil(t, document, "Document should not be nil")
+		assert.NotNil(t, document.Components, "Document should have components")
+
+		// The development endpoint's request body must not appear in components
+		_, requestBodyExists := document.Components.RequestBodies.Get(resourceName + devEndpointName)
+		assert.False(t, requestBodyExists, "Development endpoint request body should NOT be present in components")
+
+		// The development endpoint's response body must not appear in components
+		_, responseBodyExists := document.Components.Responses.Get(resourceName + devEndpointName)
+		assert.False(t, responseBodyExists, "Development endpoint response body should NOT be present in components")
+	})
+
+	t.Run("non-development endpoint is included normally", func(t *testing.T) {
+		service := &specification.Service{
+			Name: "TestService",
+			Resources: []specification.Resource{
+				{
+					Name:        resourceName,
+					Description: resourceDesc,
+					Endpoints: []specification.Endpoint{
+						{
+							Name:    stableEndpoint,
+							Method:  "GET",
+							Path:    "",
+							Summary: "List student placements",
+							Response: specification.EndpointResponse{
+								StatusCode:  200,
+								ContentType: "application/json",
+							},
+						},
+					},
+				},
+			},
+		}
+
+		document, err := generator.generateFromService(service)
+		assert.NoError(t, err, "Should not return error for valid service")
+		assert.NotNil(t, document, "Document should not be nil")
+
+		_, stableExists := document.Paths.PathItems.Get("/student-placement")
+		assert.True(t, stableExists, "Stable endpoint path /student-placement should be present in document")
+		assert.Equal(t, 1, document.Paths.PathItems.Len(), "The stable endpoint path should appear in document")
+	})
+}
+
+// ============================================================================
 // Development Flag Tests - Enums and Objects
 // ============================================================================
 

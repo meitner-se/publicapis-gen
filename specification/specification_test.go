@@ -4117,3 +4117,66 @@ func TestApplyOverlay_DevelopmentFlagPropagation(t *testing.T) {
 		assert.True(t, gradeObj.Development, "GradeElementary object should have Development=true")
 	})
 }
+
+// TestEndpoint_DevelopmentFlag tests that the Development field on Endpoint is properly set and serialized.
+func TestEndpoint_DevelopmentFlag(t *testing.T) {
+	t.Run("development endpoint has Development set to true", func(t *testing.T) {
+		endpoint := Endpoint{
+			Name:        "Cleanup",
+			Summary:     "Cleanup student placements",
+			Description: "Cleanup endpoint hidden from public docs",
+			Method:      httpMethodPost,
+			Path:        "/cleanup",
+			Development: true,
+		}
+
+		assert.True(t, endpoint.Development, "Development flag should be true")
+		assert.Equal(t, "Cleanup", endpoint.Name, "Name should match")
+	})
+
+	t.Run("non-development endpoint has Development set to false by default", func(t *testing.T) {
+		endpoint := Endpoint{
+			Name:    "List",
+			Summary: "List student placements",
+			Method:  httpMethodGet,
+			Path:    "",
+		}
+
+		assert.False(t, endpoint.Development, "Development flag should be false by default")
+	})
+
+	t.Run("development endpoint is marshaled and unmarshaled correctly in YAML", func(t *testing.T) {
+		yamlInput := `
+name: TestService
+resources:
+  - name: StudentPlacement
+    description: Student placement operations
+    operations: []
+    fields: []
+    endpoints:
+      - name: Cleanup
+        summary: Cleanup student placements
+        description: Cleanup endpoint hidden from public docs
+        method: POST
+        path: /cleanup
+        development: true
+      - name: List
+        summary: List student placements
+        description: List student placements
+        method: GET
+        path: ""
+`
+		var service Service
+		err := yaml.Unmarshal([]byte(yamlInput), &service)
+		require.NoError(t, err, "Should parse YAML without error")
+
+		require.Len(t, service.Resources, 1, "Should have one resource")
+		require.Len(t, service.Resources[0].Endpoints, 2, "Should have two endpoints")
+
+		assert.True(t, service.Resources[0].Endpoints[0].Development, "Cleanup should have Development=true")
+		assert.Equal(t, "Cleanup", service.Resources[0].Endpoints[0].Name, "First endpoint name should be Cleanup")
+
+		assert.False(t, service.Resources[0].Endpoints[1].Development, "List should have Development=false")
+		assert.Equal(t, "List", service.Resources[0].Endpoints[1].Name, "Second endpoint name should be List")
+	})
+}
