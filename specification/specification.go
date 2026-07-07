@@ -601,6 +601,13 @@ type Endpoint struct {
 	// Path of the endpoint, "/:id". No need to include the resource name, it will be added automatically.
 	Path string `json:"path"`
 
+	// Development indicates this endpoint is not ready for public use.
+	// Endpoints with Development set to true are excluded from the generated OpenAPI output,
+	// allowing endpoints to be defined and implemented without being surfaced to third parties
+	// prematurely. Server code (route registration, handler interface, request/response types)
+	// is always generated regardless of this flag.
+	Development bool `json:"development,omitempty" yaml:"development,omitempty"`
+
 	// Request that is used in the endpoint
 	Request EndpointRequest `json:"request"`
 

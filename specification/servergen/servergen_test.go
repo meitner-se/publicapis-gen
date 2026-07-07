@@ -1529,6 +1529,70 @@ func TestGenerateServer_DevelopmentFlag(t *testing.T) {
 	})
 }
 
+// TestGenerateServer_DevelopmentFlagEndpoint tests that endpoints with Development: true are still
+// fully generated into server code. The endpoint-level development flag is an OpenAPI documentation
+// gate only — it must never suppress route registrations or handler interface methods.
+func TestGenerateServer_DevelopmentFlagEndpoint(t *testing.T) {
+	const (
+		resourceName = "StudentPlacement"
+		resourceDesc = "Student placement operations"
+	)
+
+	stableEndpoint := specification.Endpoint{
+		Name:   "ListPlacements",
+		Method: "GET",
+		Path:   "",
+		Response: specification.EndpointResponse{
+			StatusCode: 200,
+			BodyFields: []specification.Field{
+				{Name: "Total", Type: "Int"},
+			},
+		},
+	}
+
+	devEndpoint := specification.Endpoint{
+		Name:        "Cleanup",
+		Method:      "POST",
+		Path:        "/cleanup",
+		Development: true,
+		Response: specification.EndpointResponse{
+			StatusCode: 204,
+		},
+	}
+
+	buildService := func() *specification.Service {
+		return &specification.Service{
+			Name:    testServiceName,
+			Version: testServiceVersion,
+			Resources: []specification.Resource{
+				{Name: resourceName, Description: resourceDesc, Endpoints: []specification.Endpoint{stableEndpoint, devEndpoint}},
+			},
+		}
+	}
+
+	t.Run("development endpoint route is registered", func(t *testing.T) {
+		buf := &bytes.Buffer{}
+		err := GenerateServer(buf, buildService())
+		assert.Nil(t, err, "Should not return error when generating server with a development endpoint")
+
+		generated := buf.String()
+		assert.Contains(t, generated, "api."+resourceName+".Cleanup",
+			"Development endpoint route should be registered in server code")
+		assert.Contains(t, generated, "api."+resourceName+".ListPlacements",
+			"Stable endpoint route should be registered in server code")
+	})
+
+	t.Run("development endpoint has interface method", func(t *testing.T) {
+		buf := &bytes.Buffer{}
+		err := GenerateServer(buf, buildService())
+		assert.Nil(t, err, "Should not return error when generating server with a development endpoint")
+
+		generated := buf.String()
+		assert.Contains(t, generated, "Cleanup(", "Development endpoint handler method MUST appear in generated code")
+		assert.Contains(t, generated, "ListPlacements(", "Stable endpoint handler method should appear in generated code")
+	})
+}
+
 // TestGenerateServer_DevelopmentFlagEnumsObjects tests that development enums and objects
 // are still included in generated server Go code (servergen is intentionally unaffected).
 func TestGenerateServer_DevelopmentFlagEnumsObjects(t *testing.T) {

@@ -193,6 +193,18 @@ func TestGenerateSchemasStructure(t *testing.T) {
 		}
 	})
 
+	// Test Endpoint schema exposes the development flag so specifications using it validate.
+	t.Run("Endpoint schema has development property", func(t *testing.T) {
+		endpointSchema := schemas["Endpoint"].(map[string]interface{})
+		properties := endpointSchema["properties"].(map[string]interface{})
+
+		assert.Contains(t, properties, "development", "Endpoint schema should have 'development' property")
+
+		developmentProp, ok := properties["development"].(map[string]interface{})
+		require.True(t, ok, "Endpoint 'development' property should be a map")
+		assert.Equal(t, "boolean", developmentProp["type"], "Endpoint 'development' property should be a boolean")
+	})
+
 	// Test EndpointRequest has all parameter types
 	t.Run("EndpointRequest schema completeness", func(t *testing.T) {
 		endpointRequestSchema := schemas["EndpointRequest"].(map[string]interface{})
