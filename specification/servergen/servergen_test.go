@@ -1667,3 +1667,71 @@ func TestGenerateServer_DevelopmentFlagEnumsObjects(t *testing.T) {
 		assert.Contains(t, generated, devObjectName, "Development object type should still appear in generated Go code (servergen unaffected)")
 	})
 }
+
+func TestGenerateServer_ListQueryParams(t *testing.T) {
+	input := &specification.Service{
+		Name:    testServiceName,
+		Version: testServiceVersion,
+		Resources: []specification.Resource{
+			{
+				Name:        "Attendance",
+				Description: "Attendance records",
+				Operations:  []string{specification.OperationList},
+				Fields: []specification.ResourceField{
+					{
+						Field: specification.Field{
+							Name:        "Status",
+							Description: "Attendance status",
+							Type:        specification.FieldTypeString,
+						},
+						Operations: []string{specification.OperationRead},
+					},
+				},
+				ListQueryParams: []specification.Field{
+					{
+						Name:        "ChangedAfter",
+						Description: "Only return records changed strictly after this timestamp",
+						Type:        specification.FieldTypeTimestamp,
+						Modifiers:   []string{specification.ModifierNullable},
+						Example:     "2026-09-01T00:00:00Z",
+					},
+					{
+						Name:        "StatusFilter",
+						Description: "Filter by attendance status",
+						Type:        specification.FieldTypeString,
+						Modifiers:   []string{specification.ModifierNullable},
+					},
+				},
+			},
+		},
+	}
+
+	service := specification.ApplyOverlay(input)
+	buf := &bytes.Buffer{}
+	err := GenerateServer(buf, service)
+	assert.Nil(t, err, "Expected no error when generating server with list_query_params")
+
+	generatedCode := buf.String()
+	assert.Contains(t, generatedCode, "type AttendanceListQueryParams struct {",
+		"Should generate AttendanceListQueryParams struct")
+	assert.Contains(t, generatedCode, "`form:\"limit\" json:\"limit\"`",
+		"Limit should keep form and json tags")
+	assert.Contains(t, generatedCode, "`form:\"offset\" json:\"offset\"`",
+		"Offset should keep form and json tags")
+	assert.Contains(t, generatedCode, "ChangedAfter types.Timestamp",
+		"ChangedAfter should use Timestamp type")
+	assert.Contains(t, generatedCode, "`form:\"changedAfter\" json:\"changedAfter\"`",
+		"ChangedAfter should use form and json tags")
+	assert.Contains(t, generatedCode, "StatusFilter types.String",
+		"StatusFilter should use String type")
+	assert.Contains(t, generatedCode, "`form:\"statusFilter\" json:\"statusFilter\"`",
+		"StatusFilter should use form and json tags")
+
+	limitIndex := strings.Index(generatedCode, "`form:\"limit\" json:\"limit\"`")
+	offsetIndex := strings.Index(generatedCode, "`form:\"offset\" json:\"offset\"`")
+	changedAfterIndex := strings.Index(generatedCode, "`form:\"changedAfter\" json:\"changedAfter\"`")
+	statusFilterIndex := strings.Index(generatedCode, "`form:\"statusFilter\" json:\"statusFilter\"`")
+	assert.True(t, limitIndex >= 0 && offsetIndex > limitIndex, "Offset should appear after Limit")
+	assert.True(t, changedAfterIndex > offsetIndex, "ChangedAfter should appear after Offset")
+	assert.True(t, statusFilterIndex > changedAfterIndex, "StatusFilter should preserve declaration order")
+}

@@ -311,11 +311,19 @@ const (
 	errorFileParse         = "failed to parse file"
 
 	// Validation error constants
-	errorInvalidOperation = "invalid operation"
-	errorInvalidFieldType = "invalid field type"
-	errorInvalidModifier  = "invalid modifier"
-	errorValidationFailed = "validation failed"
-	errorYAMLParsing      = "YAML parsing failed"
+	errorInvalidOperation                = "invalid operation"
+	errorInvalidFieldType                = "invalid field type"
+	errorInvalidModifier                 = "invalid modifier"
+	errorValidationFailed                = "validation failed"
+	errorYAMLParsing                     = "YAML parsing failed"
+	errorDuplicateListQueryParam         = "duplicate list query param"
+	errorListQueryParamCollision         = "list query param collides with reserved name"
+	errorListQueryParamsRequiresList     = "list_query_params requires the List operation"
+	errorListQueryParamsWithCustomList   = "list_query_params cannot be combined with a custom List endpoint"
+	errorListQueryParamsValidationWrap   = "list query params"
+	errorListQueryParamValidationWrapFmt = "list query param %d (%s): %w"
+	errorListQueryParamCollisionFmt      = "%s: list query param '%s' collides with '%s' or '%s'"
+	errorDuplicateListQueryParamFmt      = "%s: '%s'"
 )
 
 // File extension constants
@@ -551,6 +559,11 @@ type Resource struct {
 
 	// SkipAutoColumns indicates whether to skip generating auto columns (ID, CreatedAt, etc.) for this resource
 	SkipAutoColumns bool `json:"skip_auto_columns,omitempty"`
+
+	// ListQueryParams are extra query parameters appended after Limit and Offset
+	// on the auto-generated List endpoint, in declaration order.
+	// Only valid when the resource has a List operation and does not declare its own List endpoint.
+	ListQueryParams []Field `json:"list_query_params,omitempty"`
 }
 
 // Field contains information about a field within an endpoint or resource or Object.
@@ -943,8 +956,6 @@ func generateGetEndpoint(result *Service, resource Resource) {
 // generateListEndpoint generates a List endpoint for resources that have List operations.
 func generateListEndpoint(result *Service, resource Resource) {
 	if resource.HasListOperation() && !resource.HasEndpoint(listEndpointName) {
-		limitParam := createListLimitParamForResource(resource)
-		offsetParam := createListOffsetParamForResource(resource)
 		paginationField := createPaginationField()
 		dataField := createDataField(resource.Name)
 		pluralResourceName := resource.GetPluralName()
@@ -955,7 +966,7 @@ func generateListEndpoint(result *Service, resource Resource) {
 			Description: fmt.Sprintf(listEndpointDescTemplate, pluralResourceName),
 			Method:      httpMethodGet,
 			Path:        listEndpointPath,
-			Request:     createStandardRequest([]Field{}, []Field{limitParam, offsetParam}, []Field{}),
+			Request:     createStandardRequest([]Field{}, resource.GetListEndpointQueryParams(), []Field{}),
 			Response:    createListResponse(listResponseStatusCode, fmt.Sprintf(listResponseDescTemplate, pluralResourceName), dataField, paginationField),
 		}
 
@@ -1661,6 +1672,21 @@ func (r Resource) HasEndpoint(name string) bool {
 	return false
 }
 
+// HasListQueryParams reports whether the resource declares extra List query parameters.
+func (r Resource) HasListQueryParams() bool {
+	return len(r.ListQueryParams) > 0
+}
+
+// GetListEndpointQueryParams returns Limit and Offset followed by any custom
+// list_query_params, preserving declaration order.
+func (r Resource) GetListEndpointQueryParams() []Field {
+	queryParams := []Field{
+		createListLimitParamForResource(r),
+		createListOffsetParamForResource(r),
+	}
+	return append(queryParams, r.ListQueryParams...)
+}
+
 // Service methods
 
 // IsObject checks if the given field type represents a custom object.
@@ -2284,6 +2310,11 @@ func validateResource(service *Service, resource *Resource) error {
 		}
 	}
 
+	// Validate extra List query parameters
+	if err := validateListQueryParams(service, resource); err != nil {
+		return fmt.Errorf("%s: %w", errorListQueryParamsValidationWrap, err)
+	}
+
 	return nil
 }
 
@@ -2500,6 +2531,42 @@ func validateModifiers(modifiers []string) error {
 		if !slices.Contains(validModifiers, modifier) {
 			return fmt.Errorf("%s: modifier '%s' must be one of: %v", errorInvalidModifier, modifier, validModifiers)
 		}
+	}
+
+	return nil
+}
+
+// validateListQueryParams validates extra query parameters declared for the generated List endpoint.
+func validateListQueryParams(service *Service, resource *Resource) error {
+	if !resource.HasListQueryParams() {
+		return nil
+	}
+
+	if !resource.HasListOperation() {
+		return fmt.Errorf("%s", errorListQueryParamsRequiresList)
+	}
+
+	if resource.HasEndpoint(listEndpointName) {
+		return fmt.Errorf("%s", errorListQueryParamsWithCustomList)
+	}
+
+	seenNames := make(map[string]struct{}, len(resource.ListQueryParams))
+	for i, field := range resource.ListQueryParams {
+		if err := validateField(service, &field); err != nil {
+			return fmt.Errorf(errorListQueryParamValidationWrapFmt, i, field.Name, err)
+		}
+
+		normalizedName := strings.ToLower(field.Name)
+		if normalizedName == strings.ToLower(listLimitParamName) ||
+			normalizedName == strings.ToLower(listOffsetParamName) {
+			return fmt.Errorf(errorListQueryParamCollisionFmt,
+				errorListQueryParamCollision, field.Name, listLimitParamName, listOffsetParamName)
+		}
+
+		if _, exists := seenNames[normalizedName]; exists {
+			return fmt.Errorf(errorDuplicateListQueryParamFmt, errorDuplicateListQueryParam, field.Name)
+		}
+		seenNames[normalizedName] = struct{}{}
 	}
 
 	return nil

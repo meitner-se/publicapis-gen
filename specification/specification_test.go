@@ -4180,3 +4180,204 @@ resources:
 		assert.Equal(t, "List", service.Resources[0].Endpoints[1].Name, "Second endpoint name should be List")
 	})
 }
+
+// ============================================================================
+// generateListEndpoint / ListQueryParams Tests
+// ============================================================================
+
+func testListOnlyResource(listQueryParams []Field) Resource {
+	return Resource{
+		Name:        "Attendance",
+		Description: "Attendance records",
+		Operations:  []string{OperationList},
+		Fields: []ResourceField{
+			{
+				Field: Field{
+					Name:        "Status",
+					Description: "Attendance status",
+					Type:        FieldTypeString,
+				},
+				Operations: []string{OperationRead},
+			},
+		},
+		ListQueryParams: listQueryParams,
+	}
+}
+
+func findResourceEndpoint(resource Resource, name string) *Endpoint {
+	for i := range resource.Endpoints {
+		if resource.Endpoints[i].Name == name {
+			return &resource.Endpoints[i]
+		}
+	}
+	return nil
+}
+
+func TestGenerateListEndpoint_ListQueryParams(t *testing.T) {
+	changedAfterParam := Field{
+		Name:        "ChangedAfter",
+		Description: "Only return records changed strictly after this timestamp",
+		Type:        FieldTypeTimestamp,
+		Modifiers:   []string{ModifierNullable},
+		Example:     "2026-09-01T00:00:00Z",
+	}
+	statusParam := Field{
+		Name:        "StatusFilter",
+		Description: "Filter by attendance status",
+		Type:        FieldTypeString,
+		Modifiers:   []string{ModifierNullable},
+	}
+
+	input := &Service{
+		Name:      "AttendanceAPI",
+		Resources: []Resource{testListOnlyResource([]Field{changedAfterParam, statusParam})},
+	}
+
+	result := ApplyOverlay(input)
+	require.NotNil(t, result, "ApplyOverlay result should not be nil")
+	require.Len(t, result.Resources, 1, "Should have one resource")
+
+	listEndpoint := findResourceEndpoint(result.Resources[0], listEndpointName)
+	require.NotNil(t, listEndpoint, "List endpoint should be generated")
+
+	queryParams := listEndpoint.Request.QueryParams
+	assert.Equal(t, 4, len(queryParams), "Should have Limit, Offset, then two custom params")
+	assert.Equal(t, listLimitParamName, queryParams[0].Name, "First query param should be Limit")
+	assert.Equal(t, listOffsetParamName, queryParams[1].Name, "Second query param should be Offset")
+	assert.Equal(t, "ChangedAfter", queryParams[2].Name, "Third query param should be ChangedAfter")
+	assert.Equal(t, FieldTypeTimestamp, queryParams[2].Type, "ChangedAfter should keep Timestamp type")
+	assert.Equal(t, []string{ModifierNullable}, queryParams[2].Modifiers, "ChangedAfter should keep Nullable modifier")
+	assert.Equal(t, "2026-09-01T00:00:00Z", queryParams[2].Example, "ChangedAfter should keep declared example")
+	assert.Equal(t, "StatusFilter", queryParams[3].Name, "Fourth query param should preserve declaration order")
+
+	assert.Equal(t, 2, len(listEndpoint.Response.BodyFields), "List response should keep Data and Pagination")
+	assert.Equal(t, "Data", listEndpoint.Response.BodyFields[0].Name, "First response field should be Data")
+	assert.Equal(t, paginationObjectName, listEndpoint.Response.BodyFields[1].Name, "Second response field should be Pagination")
+
+	t.Run("absent key leaves the endpoint identical to today", func(t *testing.T) {
+		withoutKey := ApplyOverlay(&Service{
+			Name:      "AttendanceAPI",
+			Resources: []Resource{testListOnlyResource(nil)},
+		})
+		withEmptySlice := ApplyOverlay(&Service{
+			Name:      "AttendanceAPI",
+			Resources: []Resource{testListOnlyResource([]Field{})},
+		})
+		require.NotNil(t, withoutKey)
+		require.NotNil(t, withEmptySlice)
+
+		listWithout := findResourceEndpoint(withoutKey.Resources[0], listEndpointName)
+		listEmpty := findResourceEndpoint(withEmptySlice.Resources[0], listEndpointName)
+		require.NotNil(t, listWithout, "List endpoint should exist when key is absent")
+		require.NotNil(t, listEmpty, "List endpoint should exist when key is an empty slice")
+
+		assert.Equal(t, *listWithout, *listEmpty, "Empty list_query_params should match an omitted key")
+		assert.Equal(t, 2, len(listWithout.Request.QueryParams), "Absent key should generate only Limit and Offset")
+		assert.Equal(t, listLimitParamName, listWithout.Request.QueryParams[0].Name, "First param should stay Limit")
+		assert.Equal(t, FieldTypeInt, listWithout.Request.QueryParams[0].Type, "Limit should stay Int")
+		assert.Equal(t, listLimitDefaultValue, listWithout.Request.QueryParams[0].Default, "Limit should keep default 50")
+		assert.Equal(t, listLimitExampleValue, listWithout.Request.QueryParams[0].Example, "Limit should keep example 1")
+		assert.Equal(t, listOffsetParamName, listWithout.Request.QueryParams[1].Name, "Second param should stay Offset")
+		assert.Equal(t, FieldTypeInt, listWithout.Request.QueryParams[1].Type, "Offset should stay Int")
+		assert.Equal(t, listOffsetDefaultValue, listWithout.Request.QueryParams[1].Default, "Offset should keep default 0")
+		assert.Equal(t, listOffsetExampleValue, listWithout.Request.QueryParams[1].Example, "Offset should keep example 0")
+		assert.Equal(t, "Data", listWithout.Response.BodyFields[0].Name, "Response should keep Data")
+		assert.Equal(t, paginationObjectName, listWithout.Response.BodyFields[1].Name, "Response should keep Pagination")
+		assert.Equal(t, listEndpointName, listWithout.Name, "Endpoint name should stay List")
+		assert.Equal(t, httpMethodGet, listWithout.Method, "List method should stay GET")
+		assert.Equal(t, listEndpointPath, listWithout.Path, "List path should stay empty")
+	})
+
+	t.Run("search endpoint is not given list_query_params", func(t *testing.T) {
+		resource := testListOnlyResource([]Field{changedAfterParam})
+		resource.Operations = []string{OperationList, OperationSearch}
+		result := ApplyOverlay(&Service{
+			Name:      "AttendanceAPI",
+			Resources: []Resource{resource},
+		})
+		require.NotNil(t, result)
+
+		searchEndpoint := findResourceEndpoint(result.Resources[0], searchEndpointName)
+		require.NotNil(t, searchEndpoint, "Search endpoint should still be generated")
+		assert.Equal(t, 2, len(searchEndpoint.Request.QueryParams), "Search should keep only Limit and Offset")
+		assert.Equal(t, listLimitParamName, searchEndpoint.Request.QueryParams[0].Name)
+		assert.Equal(t, listOffsetParamName, searchEndpoint.Request.QueryParams[1].Name)
+		assert.Equal(t, 1, len(searchEndpoint.Request.BodyParams), "Search should keep its filter body param")
+		assert.Equal(t, searchFilterParamName, searchEndpoint.Request.BodyParams[0].Name)
+	})
+
+	t.Run("yaml list_query_params are parsed and appended", func(t *testing.T) {
+		yamlData := `
+name: AttendanceAPI
+version: "1.0.0"
+resources:
+  - name: Attendance
+    description: Attendance records
+    operations: [List]
+    fields:
+      - name: Status
+        description: Attendance status
+        type: String
+        operations: [Read]
+    list_query_params:
+      - name: ChangedAfter
+        description: Only return records changed strictly after this timestamp
+        type: Timestamp
+        modifiers: [Nullable]
+        example: "2026-09-01T00:00:00Z"
+      - name: StatusFilter
+        description: Filter by attendance status
+        type: String
+        modifiers: [Nullable]
+`
+		service, err := ParseServiceFromYAML([]byte(yamlData))
+		require.NoError(t, err, "Valid YAML with list_query_params should parse")
+		require.NotNil(t, service)
+
+		listEndpoint := findResourceEndpoint(service.Resources[0], listEndpointName)
+		require.NotNil(t, listEndpoint, "List endpoint should be generated from YAML")
+		assert.Equal(t, 4, len(listEndpoint.Request.QueryParams), "YAML params should be appended after Limit and Offset")
+		assert.Equal(t, listLimitParamName, listEndpoint.Request.QueryParams[0].Name)
+		assert.Equal(t, listOffsetParamName, listEndpoint.Request.QueryParams[1].Name)
+		assert.Equal(t, "ChangedAfter", listEndpoint.Request.QueryParams[2].Name)
+		assert.Equal(t, "StatusFilter", listEndpoint.Request.QueryParams[3].Name)
+	})
+}
+
+func TestResource_GetListEndpointQueryParams(t *testing.T) {
+	customParam := Field{
+		Name:        "ChangedAfter",
+		Description: "Only return records changed strictly after this timestamp",
+		Type:        FieldTypeTimestamp,
+		Modifiers:   []string{ModifierNullable},
+	}
+	resource := testListOnlyResource([]Field{customParam})
+
+	queryParams := resource.GetListEndpointQueryParams()
+	assert.Equal(t, 3, len(queryParams), "Should return Limit, Offset, and the custom param")
+	assert.Equal(t, listLimitParamName, queryParams[0].Name, "First param should be Limit")
+	assert.Equal(t, listOffsetParamName, queryParams[1].Name, "Second param should be Offset")
+	assert.Equal(t, "ChangedAfter", queryParams[2].Name, "Custom param should be last")
+
+	t.Run("edge cases", func(t *testing.T) {
+		t.Run("absent custom params return only limit and offset", func(t *testing.T) {
+			resource := testListOnlyResource(nil)
+			queryParams := resource.GetListEndpointQueryParams()
+			assert.Equal(t, 2, len(queryParams), "Should return only Limit and Offset")
+			assert.Equal(t, listLimitParamName, queryParams[0].Name)
+			assert.Equal(t, listOffsetParamName, queryParams[1].Name)
+		})
+	})
+}
+
+func TestResource_HasListQueryParams(t *testing.T) {
+	resourceWithParams := testListOnlyResource([]Field{{
+		Name:        "ChangedAfter",
+		Description: "Changed after",
+		Type:        FieldTypeTimestamp,
+	}})
+	assert.True(t, resourceWithParams.HasListQueryParams(), "Resource with params should report true")
+
+	resourceWithoutParams := testListOnlyResource(nil)
+	assert.False(t, resourceWithoutParams.HasListQueryParams(), "Resource without params should report false")
+}
