@@ -45,7 +45,23 @@ type Resource struct {
     Fields          []ResourceField `json:"fields"`                    // Resource fields
     Endpoints       []Endpoint      `json:"endpoints"`                 // Custom endpoints
     SkipAutoColumns bool            `json:"skip_auto_columns,omitempty"` // Skip auto fields
+    ListQueryParams []Field         `json:"list_query_params,omitempty"` // Extra List query params
 }
+```
+
+**`list_query_params`**: Optional extra query parameters appended after the generated `Limit` and `Offset` on the auto-generated `List` endpoint, in declaration order. They appear on `<Resource>ListQueryParams` with `form` and `json` tags, and as OpenAPI `in: query` parameters. Omit the key to keep generated output unchanged.
+
+Validation rejects: duplicate names; collision with `Limit`/`Offset` (case-insensitive); unknown field types; `list_query_params` on a resource that also declares its own `List` endpoint; and `list_query_params` on a resource without the `List` operation.
+
+```yaml
+  - name: Attendance
+    operations: [List]
+    list_query_params:
+      - name: ChangedAfter
+        description: Only return records changed strictly after this timestamp
+        type: Timestamp
+        modifiers: [Nullable]
+        example: "2026-09-01T00:00:00Z"
 ```
 
 **Methods:**
@@ -59,6 +75,8 @@ type Resource struct {
 - `GetReadableFields() []Field` - Get fields for Read operations
 - `HasEndpoint(name string) bool` - Check if endpoint exists
 - `ShouldSkipAutoColumns() bool` - Check if auto-columns should be skipped
+- `HasListQueryParams() bool` - Check if extra List query params are declared
+- `GetListEndpointQueryParams() []Field` - Limit, Offset, then custom List query params
 
 #### Field
 Basic field definition with type and metadata.

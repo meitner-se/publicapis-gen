@@ -150,7 +150,7 @@ func TestGenerateSchemasStructure(t *testing.T) {
 		resourceSchema := schemas["Resource"].(map[string]interface{})
 		properties := resourceSchema["properties"].(map[string]interface{})
 
-		expectedProperties := []string{"name", "description", "operations", "fields", "endpoints"}
+		expectedProperties := []string{"name", "description", "operations", "fields", "endpoints", "list_query_params"}
 		for _, prop := range expectedProperties {
 			assert.Contains(t, properties, prop, "Resource schema should have '%s' property", prop)
 		}

@@ -4624,3 +4624,56 @@ func TestGenerator_OAuth2WithMultipleFlows(t *testing.T) {
 	assert.Equal(t, "/oauth/authorize", oauth2Scheme.Flows.AuthorizationCode.AuthorizationUrl, "Authorization code auth URL should match")
 	assert.Equal(t, "/oauth/token", oauth2Scheme.Flows.AuthorizationCode.TokenUrl, "Authorization code token URL should match")
 }
+
+func TestGenerateOpenAPI_ListQueryParams(t *testing.T) {
+	input := &specification.Service{
+		Name:    "AttendanceAPI",
+		Version: "1.0.0",
+		Resources: []specification.Resource{
+			{
+				Name:        "Attendance",
+				Description: "Attendance records",
+				Operations:  []string{specification.OperationList},
+				Fields: []specification.ResourceField{
+					{
+						Field: specification.Field{
+							Name:        "Status",
+							Description: "Attendance status",
+							Type:        specification.FieldTypeString,
+						},
+						Operations: []string{specification.OperationRead},
+					},
+				},
+				ListQueryParams: []specification.Field{
+					{
+						Name:        "ChangedAfter",
+						Description: "Only return records changed strictly after this timestamp",
+						Type:        specification.FieldTypeTimestamp,
+						Modifiers:   []string{specification.ModifierNullable},
+						Example:     "2026-09-01T00:00:00Z",
+					},
+				},
+			},
+		},
+	}
+
+	service := specification.ApplyOverlay(input)
+	var buf bytes.Buffer
+	err := GenerateOpenAPI(&buf, service)
+	assert.NoError(t, err, "Should generate OpenAPI with custom list query params")
+
+	jsonString := buf.String()
+	assert.Contains(t, jsonString, "\"in\": \"query\"", "Custom params should be query parameters")
+	assert.Contains(t, jsonString, "\"name\": \"changedAfter\"", "ChangedAfter should use camelCase query name")
+	assert.Contains(t, jsonString, "\"description\": \"Only return records changed strictly after this timestamp\"",
+		"ChangedAfter should keep its description")
+	assert.Contains(t, jsonString, "\"2026-09-01T00:00:00Z\"", "ChangedAfter should keep its example")
+	assert.Contains(t, jsonString, "\"name\": \"limit\"", "Limit query param must remain")
+	assert.Contains(t, jsonString, "\"name\": \"offset\"", "Offset query param must remain")
+	assert.Contains(t, jsonString, "\"x-speakeasy-pagination\"",
+		"Paginated List with custom params must still emit x-speakeasy-pagination")
+	assert.Contains(t, jsonString, "\"type\": \"offsetLimit\"", "Pagination type should stay offsetLimit")
+
+	paginationExtensionCount := countSubstring(jsonString, "\"x-speakeasy-pagination\"")
+	assert.Equal(t, 1, paginationExtensionCount, "List operation should still carry exactly one pagination extension")
+}

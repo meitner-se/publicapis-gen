@@ -620,3 +620,165 @@ resources:
 		assert.Contains(t, err.Error(), "invalid modifier")
 	})
 }
+
+// ============================================================================
+// validateListQueryParams Tests
+// ============================================================================
+
+func TestValidateListQueryParams(t *testing.T) {
+	service := &Service{
+		Enums:   []Enum{},
+		Objects: []Object{},
+	}
+
+	validParam := Field{
+		Name:        "ChangedAfter",
+		Description: "Only return records changed strictly after this timestamp",
+		Type:        FieldTypeTimestamp,
+		Modifiers:   []string{ModifierNullable},
+		Example:     "2026-09-01T00:00:00Z",
+	}
+
+	validResource := Resource{
+		Name:            "Attendance",
+		Description:     "Attendance records",
+		Operations:      []string{OperationList},
+		ListQueryParams: []Field{validParam},
+	}
+
+	err := validateListQueryParams(service, &validResource)
+	assert.NoError(t, err, "Valid list_query_params on a List resource should pass")
+
+	t.Run("absent params skip validation", func(t *testing.T) {
+		resource := validResource
+		resource.ListQueryParams = nil
+		resource.Operations = []string{OperationGet}
+
+		err := validateListQueryParams(service, &resource)
+		assert.NoError(t, err, "Missing list_query_params should not fail even without List")
+	})
+
+	t.Run("duplicate names within list_query_params", func(t *testing.T) {
+		resource := validResource
+		resource.ListQueryParams = []Field{validParam, validParam}
+
+		err := validateListQueryParams(service, &resource)
+		assert.EqualError(t, err, "duplicate list query param: 'ChangedAfter'")
+	})
+
+	t.Run("duplicate names are compared case-insensitively", func(t *testing.T) {
+		resource := validResource
+		resource.ListQueryParams = []Field{
+			validParam,
+			{
+				Name:        "changedAfter",
+				Description: "Duplicate in different case",
+				Type:        FieldTypeTimestamp,
+				Modifiers:   []string{ModifierNullable},
+			},
+		}
+
+		err := validateListQueryParams(service, &resource)
+		assert.EqualError(t, err, "duplicate list query param: 'changedAfter'")
+	})
+
+	t.Run("collision with Limit is case-insensitive", func(t *testing.T) {
+		resource := validResource
+		resource.ListQueryParams = []Field{{
+			Name:        "limit",
+			Description: "Collides with Limit",
+			Type:        FieldTypeInt,
+		}}
+
+		err := validateListQueryParams(service, &resource)
+		assert.EqualError(t, err, "list query param collides with reserved name: list query param 'limit' collides with 'Limit' or 'Offset'")
+	})
+
+	t.Run("collision with Offset is case-insensitive", func(t *testing.T) {
+		resource := validResource
+		resource.ListQueryParams = []Field{{
+			Name:        "OFFSET",
+			Description: "Collides with Offset",
+			Type:        FieldTypeInt,
+		}}
+
+		err := validateListQueryParams(service, &resource)
+		assert.EqualError(t, err, "list query param collides with reserved name: list query param 'OFFSET' collides with 'Limit' or 'Offset'")
+	})
+
+	t.Run("unknown field type", func(t *testing.T) {
+		resource := validResource
+		resource.ListQueryParams = []Field{{
+			Name:        "ChangedAfter",
+			Description: "Uses an unknown type",
+			Type:        "NotAType",
+		}}
+
+		err := validateListQueryParams(service, &resource)
+		assert.Error(t, err, "Unknown field type should fail validation")
+		assert.Contains(t, err.Error(), "list query param 0 (ChangedAfter)")
+		assert.Contains(t, err.Error(), "invalid field type")
+		assert.Contains(t, err.Error(), "NotAType")
+	})
+
+	t.Run("custom List endpoint is an authoring mistake", func(t *testing.T) {
+		resource := validResource
+		resource.Endpoints = []Endpoint{{
+			Name:   listEndpointName,
+			Method: httpMethodGet,
+		}}
+
+		err := validateListQueryParams(service, &resource)
+		assert.EqualError(t, err, "list_query_params cannot be combined with a custom List endpoint")
+	})
+
+	t.Run("requires the List operation", func(t *testing.T) {
+		resource := validResource
+		resource.Operations = []string{OperationGet, OperationSearch}
+
+		err := validateListQueryParams(service, &resource)
+		assert.EqualError(t, err, "list_query_params requires the List operation")
+	})
+}
+
+func TestValidateResource_ListQueryParams(t *testing.T) {
+	service := &Service{
+		Enums:   []Enum{},
+		Objects: []Object{},
+	}
+
+	t.Run("valid list_query_params pass resource validation", func(t *testing.T) {
+		resource := Resource{
+			Name:        "Attendance",
+			Description: "Attendance records",
+			Operations:  []string{OperationList},
+			ListQueryParams: []Field{{
+				Name:        "ChangedAfter",
+				Description: "Only return records changed strictly after this timestamp",
+				Type:        FieldTypeTimestamp,
+				Modifiers:   []string{ModifierNullable},
+			}},
+		}
+
+		err := validateResource(service, &resource)
+		assert.NoError(t, err, "Valid list_query_params should pass resource validation")
+	})
+
+	t.Run("resource validation wraps list_query_params errors", func(t *testing.T) {
+		resource := Resource{
+			Name:        "Attendance",
+			Description: "Attendance records",
+			Operations:  []string{OperationGet},
+			ListQueryParams: []Field{{
+				Name:        "ChangedAfter",
+				Description: "Only return records changed strictly after this timestamp",
+				Type:        FieldTypeTimestamp,
+			}},
+		}
+
+		err := validateResource(service, &resource)
+		assert.Error(t, err, "list_query_params without List should fail resource validation")
+		assert.Contains(t, err.Error(), "list query params")
+		assert.Contains(t, err.Error(), "list_query_params requires the List operation")
+	})
+}
